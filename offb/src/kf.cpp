@@ -1,4 +1,4 @@
-﻿#include <sstream>
+#include <sstream>
 #include <cmath>
 #include <Eigen/Dense>
 #include <image_transport/image_transport.h>

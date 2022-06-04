@@ -31,7 +31,7 @@
 #include <iomanip>
 #include <string>
 #include <cmath>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 
 using namespace std;
