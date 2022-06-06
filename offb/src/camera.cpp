@@ -13,6 +13,8 @@
 #include <string>
 #include "offb/obj.h"
 
+
+
 using namespace std;
 static cv::Mat frame, res, gt;
 
@@ -145,6 +147,7 @@ int main(int argc, char** argv)
     while(ros::ok())
     {
         time_start = ros::Time::now().toSec();
+        
         if(!frame.empty())
         {
 
