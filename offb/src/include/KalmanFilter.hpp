@@ -89,15 +89,15 @@ void KalmanFilter::update(Eigen::VectorXd& x, Eigen::VectorXd zk)
 
 void KalmanFilter::lkf_predict(Eigen::VectorXd& x, float dt)
 {
-    Eigen::MatrixXd F(state_size, state_size);
-    F << 1, 0, 0, dt,  0,  0,
-         0, 1, 0,  0, dt,  0,
-         0, 0, 1,  0,  0, dt,
-         0, 0, 0,  1,  0,  0,
-         0, 0, 0,  0,  0,  1;
+    // Eigen::MatrixXd F(state_size, state_size);
+    // F << 1, 0, 0, dt,  0,  0,
+    //      0, 1, 0,  0, dt,  0,
+    //      0, 0, 1,  0,  0, dt,
+    //      0, 0, 0,  1,  0,  0,
+    //      0, 0, 0,  0,  0,  1;
 
-    xk = F * x;
-    Pk_bar = F * Pk * F.transpose();
+    xk = Fk * x;
+    Pk_bar = Fk * Pk * Fk.transpose();
     
     x = xk;
 }
@@ -117,15 +117,15 @@ void KalmanFilter::lkf_update(Eigen::VectorXd& x, Eigen::VectorXd zk)
 
 void KalmanFilter::ekf_predict(Eigen::VectorXd& x, float dt)
 {
-    Eigen::MatrixXd F(state_size, state_size);
-    F << 1, 0, 0, dt,  0,  0,
-         0, 1, 0,  0, dt,  0,
-         0, 0, 1,  0,  0, dt,
-         0, 0, 0,  1,  0,  0,
-         0, 0, 0,  0,  0,  1;
+    // Eigen::MatrixXd F(state_size, state_size);
+    // F << 1, 0, 0, dt,  0,  0,
+    //      0, 1, 0,  0, dt,  0,
+    //      0, 0, 1,  0,  0, dt,
+    //      0, 0, 0,  1,  0,  0,
+    //      0, 0, 0,  0,  0,  1;
 
-    xk = F * x;
-    Pk_bar = F * Pk * F.transpose();
+    xk = Fk * x;
+    Pk_bar = Fk * Pk * Fk.transpose();
     
     x = xk;
 }
@@ -145,15 +145,15 @@ void KalmanFilter::ekf_update(Eigen::VectorXd& x, Eigen::VectorXd zk)
 
 void KalmanFilter::ukf_predict(Eigen::VectorXd& x, float dt)
 {
-    Eigen::MatrixXd F(state_size, state_size);
-    F << 1, 0, 0, dt,  0,  0,
-         0, 1, 0,  0, dt,  0,
-         0, 0, 1,  0,  0, dt,
-         0, 0, 0,  1,  0,  0,
-         0, 0, 0,  0,  0,  1;
+    // Eigen::MatrixXd F(state_size, state_size);
+    // F << 1, 0, 0, dt,  0,  0,
+    //      0, 1, 0,  0, dt,  0,
+    //      0, 0, 1,  0,  0, dt,
+    //      0, 0, 0,  1,  0,  0,
+    //      0, 0, 0,  0,  0,  1;
 
-    xk = F * x;
-    Pk_bar = F * Pk * F.transpose();
+    xk = Fk * x;
+    Pk_bar = Fk * Pk * Fk.transpose();
     
     x = xk;
 }
