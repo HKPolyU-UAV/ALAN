@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "run_yolo.h"
+#include "cnn.h"
 #include <math.h>
 #include <ros/ros.h>
 
@@ -14,11 +14,11 @@ run_yolo::run_yolo(const cv::String cfgfile, const cv::String weightfile, const 
     //the above are all usable in this class
     this->mydnn = cv::dnn::readNetFromDarknet(cfg_file, weights_file);
     
-    this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
-    this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+    // this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
+    // this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
     //uncomment the below if CUDA available
-    //this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-    //this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+    this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+    this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
 
 }
 run_yolo::~run_yolo()

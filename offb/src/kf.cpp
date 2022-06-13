@@ -9,7 +9,7 @@
 #include "geometry_msgs/PointStamped.h"
 
 
-#include "include/run_yolo.h"
+#include "include/cnn.h"
 #include <string>
 #include "offb/obj.h"
 #include "include/KalmanFilter.hpp"

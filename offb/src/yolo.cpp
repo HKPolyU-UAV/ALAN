@@ -1,4 +1,4 @@
-﻿#include <sstream>
+#include <sstream>
 #include <cmath>
 #include <Eigen/Dense>
 #include <image_transport/image_transport.h>
@@ -13,15 +13,23 @@
 #include <string>
 #include "offb/obj.h"
 
-static cv::String weightpath ="/home/patty/Downloads/yolo.weights";
-static cv::String cfgpath ="/home/patty/Downloads/yolo.cfg";
-static cv::String classnamepath = "/home/patty/Downloads/yolo.names";
+#include "include/run_ncnn.hpp"
+
+using namespace std;
+static cv::Mat frame, res, gt;
+
+static cv::String weightpath ="/home/patty/pat_ws/src/AUTO/offb/src/include/yolo/better.weights";
+static cv::String cfgpath ="/home/patty/pat_ws/src/AUTO/offb/src/include/yolo/better.cfg";
+static cv::String classnamepath = "/home/patty/pat_ws/src/AUTO/offb/src/include/yolo/better.names";
 
 static run_yolo Yolonet(cfgpath, weightpath, classnamepath, float(0.1));
 
+static int counter = 0;
 
-using namespace std;
-static cv::Mat frame;
+ncnn::Net net;
+
+
+
 
 void callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
@@ -39,20 +47,41 @@ void callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const senso
     cv::Mat image_dep = depth_ptr->image;
     
 
+    Yolonet.getdepthdata(image_dep);
+
     try
     {
         frame = cv::imdecode(cv::Mat(rgbimage->data),1);
+        res   = cv::imdecode(cv::Mat(rgbimage->data),1);
+        gt    = cv::imdecode(cv::Mat(rgbimage->data),1);
     }
     catch (cv_bridge::Exception& e)
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
-    cout<<frame.size<<endl;
+    // cout<<frame.size<<endl;
 }
 
 
 int main(int argc, char** argv)
 {
+
+    ncnn::Net yolov4;
+
+    const char* devicepath;
+
+    int target_size = 416;
+
+    run_ncnn lala;
+    std::vector<Object> objects;
+
+
+    lala.ncnn_init(&yolov4, &target_size);
+    // cv::Mat nano = cv::imread("/home/patty/alan_ws/nano.png");
+    // lala.detect_yolo(nano, objects, 0, &yolov4);
+
+    // return 0;
+
     cout<<"Object detection..."<<endl;
 
     ros::init(argc, argv, "yolotiny");
@@ -69,13 +98,20 @@ int main(int argc, char** argv)
         
         if(!frame.empty())
         {
-            Yolonet.rundarknet(frame);
-            Yolonet.display(frame);
-            // cv::imshow("test", frame);
-            cv::waitKey(20);
-
+            // frame = cv::imread("/home/patty/ncnn/build/examples/test.png");
+            lala.detect_yolo(frame, objects, 0, &yolov4);
+            
         }
         ros::spinOnce();
     }
+    ros::spin();
     return 0;
 }
+
+void testtrack()
+{
+
+}
+
+
+
