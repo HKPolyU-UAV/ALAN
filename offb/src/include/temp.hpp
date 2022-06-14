@@ -26,7 +26,7 @@ public:
     : parampath(param_input), binpath(bin_input), target_size(target_size_input)
     {
         this->cnn_local->opt.num_threads = 4; //You need to compile with libgomp for multi thread support
-        this->cnn_local->opt.use_vulkan_compute = false; //You need to compile with libvulkan for gpu support
+        this->cnn_local->opt.use_vulkan_compute = true; //You need to compile with libvulkan for gpu support
 
         this->cnn_local->opt.use_winograd_convolution = true;
         this->cnn_local->opt.use_sgemm_convolution = true;
@@ -38,13 +38,30 @@ public:
         this->cnn_local->opt.use_image_storage = false;
         cout<<"hi"<<endl;
 
+        int success = -1;
+
+        try
+        {
+            success = this->cnn_local->load_param(this->parampath);
+            success = this->cnn_local->load_model(this->binpath);
+            if(success != 0)
+                throw "bad init"; 
+        }
+        catch(...)
+        {
+            std::cout<<"instantiation fail\n";
+            exit(0);
+        }
         this->cnn_local->load_param(this->parampath);
-        this->cnn_local->load_model(this->binpath);
+        this->cnn_local->load_param(this->binpath);
 
         printf("initialization succeed\n");
     };
 
-    ~run_ncnn(){};
+    ~run_ncnn()
+    {
+        
+    };
 
     void detect_yolo(const cv::Mat& bgr);
     void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects);
@@ -66,10 +83,13 @@ void run_ncnn::detect_yolo(const cv::Mat& bgr)
     ex.input("data", in);
 
     ncnn::Mat out;
+    cout<<"1111"<<endl;
+
     ex.extract("output", out);
+    cout<<"1111"<<endl;
 
     objects.clear();
-    cout<<"why"<<out.h<<endl;
+
     for (int i = 0; i < out.h; i++)
     {
         const float* values = out.row(i);
@@ -89,15 +109,7 @@ void run_ncnn::detect_yolo(const cv::Mat& bgr)
 
 void run_ncnn::draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
 {
-    static const char* class_names[] = {"person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
-        "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
-        "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
-        "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
-        "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
-        "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
-        "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
-        "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
-        "hair drier", "toothbrush"
+    static const char* class_names[] = {"nano", "talon"
                                        };
 
     cv::Mat image = bgr.clone();

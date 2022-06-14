@@ -12,21 +12,13 @@
 using namespace std;
 static cv::Mat frame, res, gt;
 
-char addr1[] = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/yolov4-tiny-opt.param";
-static char* parampath = addr1;
-char addr2[] = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/yolov4-tiny-opt.bin";
-static char* binpath = addr2;
+static char* parampath = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav-opt.param";
+static char* binpath = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav-opt.bin";
 
-static int counter = 0;
-
-ncnn::Net net;
-
-
-
+int target_size = 416;
 
 void callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
-
     cv_bridge::CvImageConstPtr depth_ptr;
     try
     {
@@ -55,22 +47,7 @@ void callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const senso
 
 int main(int argc, char** argv)
 {
-
-    ncnn::Net yolov4;
-
-    const char* devicepath;
-
-    int target_size = 416;
-
-
-    run_ncnn yolonet(parampath, binpath, target_size);
-    // return 0;
-
-
-    // cv::Mat nano = cv::imread("/home/patty/alan_ws/nano.png");
-    // lala.detect_yolo(nano, objects, 0, &yolov4);
-
-    // return 0;
+    static run_ncnn yolonet(parampath, binpath, target_size);
 
     cout<<"Object detection..."<<endl;
 
@@ -82,14 +59,22 @@ int main(int argc, char** argv)
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> MySyncPolicy;
     message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), subimage, subdepth);
     sync.registerCallback(boost::bind(&callback, _1, _2));
+    
+    static double t1;
+    static double t2;
 
     while(ros::ok())
     {
         
         if(!frame.empty())
         {
-            // frame = cv::imread("/home/patty/ncnn/build/examples/test.png");
+            cout<<"hi"<<endl;
+            t1 = ros::Time::now().toSec();
             yolonet.detect_yolo(frame);
+            t2 = ros::Time::now().toSec();
+            cout << 1000 * (t2 - t1) << " ms" <<endl;
+            cout << 1 / (t2 - t1) << " Hz" <<endl<<endl;;
+
             
         }
         ros::spinOnce();
