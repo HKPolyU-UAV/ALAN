@@ -59,10 +59,12 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  /home/patty/ncnn/build/install/include/ncnn
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
-link_directories(
-  /home/patty/ncnn/build/install/lib
+link_directories( 
+  # link another cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn/lib
+  # /home/patty/ncnn/build/install/lib
 )
 
 add_executable(camera
@@ -101,7 +103,7 @@ target_link_libraries(yolo
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
   ncnn
-  /home/patty/ncnn/build/install/lib/libncnn.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn/lib/libncnn.a
   )
 
 

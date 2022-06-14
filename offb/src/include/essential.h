@@ -3,8 +3,9 @@
 #include <istream>
 #include <sstream>
 
+#include <Eigen/Dense>
 
-#include <opencv2/dnn.hpp>
+#include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/tracking.hpp>
@@ -14,6 +15,8 @@
 #include <opencv2/core/utility.hpp>
 #include <opencv2/tracking.hpp>
 #include <opencv2/videoio.hpp>
+
+#include <ros/ros.h>
 
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -31,4 +34,6 @@
 #include <iomanip>
 #include <string>
 #include <cmath>
+#include <vector>
+
 using namespace std;
