@@ -66,22 +66,19 @@ link_directories(
 )
 
 add_executable(camera
-    src/camera.cpp
-    src/include/cnn.cpp)
+    src/camera.cpp)
 target_link_libraries(camera
    ${OpenCV_LIBRARIES}
    ${catkin_LIBRARIES})
 
 add_executable(vis
-    src/vis.cpp
-    src/include/cnn.cpp)
+    src/vis.cpp)
 target_link_libraries(vis
     ${OpenCV_LIBRARIES}
     ${catkin_LIBRARIES})
 
 add_executable(trial
-    src/trial.cpp
-    src/include/cnn.cpp)
+    src/trial.cpp)
 
 target_link_libraries(trial
    ${OpenCV_LIBRARIES}
@@ -89,8 +86,7 @@ target_link_libraries(trial
    ${PCL_LIBRARIES})
 
 add_executable(kf
-   src/kf.cpp
-   src/include/cnn.cpp)
+   src/kf.cpp)
 
 target_link_libraries(kf
   ${OpenCV_LIBRARIES}
@@ -98,8 +94,7 @@ target_link_libraries(kf
   ${PCL_LIBRARIES})
 
 add_executable(yolo
-   src/yolo.cpp
-   src/include/cnn.cpp)
+   src/yolo.cpp)
 
 target_link_libraries(yolo
   ${OpenCV_LIBRARIES}

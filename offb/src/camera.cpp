@@ -9,15 +9,12 @@
 #include "geometry_msgs/PointStamped.h"
 
 
-#include "include/cnn.h"
 #include <string>
 #include "offb/obj.h"
 
-static cv::String weightpath ="/home/patty/Downloads/yolo.weights";
-static cv::String cfgpath ="/home/patty/Downloads/yolo.cfg";
-static cv::String classnamepath = "/home/patty/Downloads/yolo.names";
+#include "include/essential.h"
 
-static run_yolo Yolonet(cfgpath, weightpath, classnamepath, float(0.1));
+
 
 
 using namespace std;
@@ -69,8 +66,7 @@ int main(int argc, char** argv)
         
         if(!frame.empty())
         {
-            Yolonet.rundarknet(frame);
-            Yolonet.display(frame);
+            
             // cv::imshow("test", frame);
             cv::waitKey(20);
 

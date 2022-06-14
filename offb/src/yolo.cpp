@@ -8,8 +8,7 @@
 #include <std_msgs/Bool.h>
 #include "geometry_msgs/PointStamped.h"
 
-
-#include "include/cnn.h"
+#include "include/essential.h"
 #include <string>
 #include "offb/obj.h"
 
@@ -18,11 +17,10 @@
 using namespace std;
 static cv::Mat frame, res, gt;
 
-static cv::String weightpath ="/home/patty/pat_ws/src/AUTO/offb/src/include/yolo/better.weights";
-static cv::String cfgpath ="/home/patty/pat_ws/src/AUTO/offb/src/include/yolo/better.cfg";
-static cv::String classnamepath = "/home/patty/pat_ws/src/AUTO/offb/src/include/yolo/better.names";
-
-static run_yolo Yolonet(cfgpath, weightpath, classnamepath, float(0.1));
+char addr1[] = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/yolov4-tiny-opt.param";
+static char* parampath = addr1;
+char addr2[] = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/yolov4-tiny-opt.bin";
+static char* binpath = addr2;
 
 static int counter = 0;
 
@@ -46,9 +44,6 @@ void callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const senso
     }
     cv::Mat image_dep = depth_ptr->image;
     
-
-    Yolonet.getdepthdata(image_dep);
-
     try
     {
         frame = cv::imdecode(cv::Mat(rgbimage->data),1);
@@ -72,11 +67,11 @@ int main(int argc, char** argv)
 
     int target_size = 416;
 
-    run_ncnn lala;
-    std::vector<Object> objects;
+
+    run_ncnn yolonet(parampath, binpath, target_size);
+    // return 0;
 
 
-    lala.ncnn_init(&yolov4, &target_size);
     // cv::Mat nano = cv::imread("/home/patty/alan_ws/nano.png");
     // lala.detect_yolo(nano, objects, 0, &yolov4);
 
@@ -99,7 +94,7 @@ int main(int argc, char** argv)
         if(!frame.empty())
         {
             // frame = cv::imread("/home/patty/ncnn/build/examples/test.png");
-            lala.detect_yolo(frame, objects, 0, &yolov4);
+            yolonet.detect_yolo(frame);
             
         }
         ros::spinOnce();

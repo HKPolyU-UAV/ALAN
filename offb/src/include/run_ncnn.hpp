@@ -1,17 +1,3 @@
-// Tencent is pleased to support the open source community by making ncnn available.
-//
-// Copyright (C) 2020 THL A29 Limited, a Tencent company. All rights reserved.
-//
-// Licensed under the BSD 3-Clause License (the "License"); you may not use this file except
-// in compliance with the License. You may obtain a copy of the License at
-//
-// https://opensource.org/licenses/BSD-3-Clause
-//
-// Unless required by applicable law or agreed to in writing, software distributed
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
 #include "/home/patty/ncnn/build/install/include/ncnn/net.h"
 // #include "/home/patty/ncnn/src/benchmark.h"
 
@@ -21,16 +7,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#if CV_MAJOR_VERSION >= 3
-#include <opencv2/videoio/videoio.hpp>
-#endif
 
 #include <vector>
 
 #include <stdio.h>
-
-#define NCNN_PROFILING
-#define YOLOV4_TINY //Using yolov4_tiny, if undef, using original yolov4
 
 
 struct Object
@@ -42,66 +22,55 @@ struct Object
 
 class run_ncnn
 {
+    char* parampath = "";
+
+    char* binpath   = "";
+    int target_size = 0;
+    std::vector<Object> objects;
+    ncnn::Net yolov4tiny;
+    ncnn::Net* cnn_local = &yolov4tiny;    
 
 public:
-    run_ncnn()
+    run_ncnn(char* param_input, char* bin_input, int target_size_input) 
+    : parampath(param_input), binpath(bin_input), target_size(target_size_input)
     {
-        
+        this->cnn_local->opt.num_threads = 4; //You need to compile with libgomp for multi thread support
+        this->cnn_local->opt.use_vulkan_compute = true; //You need to compile with libvulkan for gpu support
 
+        this->cnn_local->opt.use_winograd_convolution = true;
+        this->cnn_local->opt.use_sgemm_convolution = true;
+        this->cnn_local->opt.use_fp16_packed = true;
+        this->cnn_local->opt.use_fp16_storage = true;
+        this->cnn_local->opt.use_fp16_arithmetic = true;
+        this->cnn_local->opt.use_packing_layout = true;
+        this->cnn_local->opt.use_shader_pack8 = false;
+        this->cnn_local->opt.use_image_storage = false;
+        cout<<"hi"<<endl;
+
+        this->cnn_local->load_param(this->parampath);
+        this->cnn_local->load_model(this->binpath);
+
+        printf("initialization succeed\n");
     };
+
     ~run_ncnn(){};
-    void ncnn_init(ncnn::Net* yolov4, int* target_size);
-    void detect_yolo(const cv::Mat& bgr, std::vector<Object>& objects, int target_size, ncnn::Net* yolov4);
+
+    void detect_yolo(const cv::Mat& bgr);
     void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects);
 };
 
-void run_ncnn::ncnn_init(ncnn::Net* yolov4, int* target_size)
-{
-    /* --> Set the params you need for the ncnn inference <-- */
-
-    yolov4->opt.num_threads = 4; //You need to compile with libgomp for multi thread support
-
-    yolov4->opt.use_vulkan_compute = true; //You need to compile with libvulkan for gpu support
-
-    yolov4->opt.use_winograd_convolution = true;
-    yolov4->opt.use_sgemm_convolution = true;
-    yolov4->opt.use_fp16_packed = true;
-    yolov4->opt.use_fp16_storage = true;
-    yolov4->opt.use_fp16_arithmetic = true;
-    yolov4->opt.use_packing_layout = true;
-    yolov4->opt.use_shader_pack8 = false;
-    yolov4->opt.use_image_storage = false;
-
-    /* --> End of setting params <-- */
-    int ret = 0;
-
-    // original pretrained model from https://github.com/AlexeyAB/darknet
-    // the ncnn model https://drive.google.com/drive/folders/1YzILvh0SKQPS_lrb33dmGNq7aVTKPWS0?usp=sharing
-    // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
-
-
-    ret = yolov4->load_param("/home/patty/alan_ws/src/alan/offb/src/include/yolo/yolov4-tiny-opt.param");
-    cout << ret << endl;
-    ret = yolov4->load_model("/home/patty/alan_ws/src/alan/offb/src/include/yolo/yolov4-tiny-opt.bin");
-    cout << ret << endl;
-    cout<<endl<<endl;
-    printf("init succeed\n");
-
-
-}
-
-void run_ncnn::detect_yolo(const cv::Mat& bgr, std::vector<Object>& objects, int target_size, ncnn::Net* yolov4)
+void run_ncnn::detect_yolo(const cv::Mat& bgr)
 {
     int img_w = bgr.cols;
     int img_h = bgr.rows;
 
-    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR2RGB, bgr.cols, bgr.rows, 416, 416);
+    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR2RGB, bgr.cols, bgr.rows, target_size, target_size);
 
     const float mean_vals[3] = {0, 0, 0};
     const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
     in.substract_mean_normalize(mean_vals, norm_vals);
 
-    ncnn::Extractor ex = yolov4->create_extractor();
+    ncnn::Extractor ex = cnn_local->create_extractor();
 
     ex.input("data", in);
 
