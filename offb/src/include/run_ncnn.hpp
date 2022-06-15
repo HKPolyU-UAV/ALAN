@@ -34,7 +34,21 @@ public:
         this->cnn_local->opt.use_packing_layout = true;
         this->cnn_local->opt.use_shader_pack8 = false;
         this->cnn_local->opt.use_image_storage = false;
-        cout<<"hi"<<endl;
+
+        int succeed = -1;
+
+        try
+        {
+            succeed = this->cnn_local->load_param(this->parampath);
+            succeed = this->cnn_local->load_model(this->binpath);
+            if(succeed!=0)
+                throw "bad doggie!";
+        }
+        catch(...)
+        {
+            cerr << "check! Initiaion fail!\n";
+            exit(0);
+        }
 
         this->cnn_local->load_param(this->parampath);
         this->cnn_local->load_model(this->binpath);

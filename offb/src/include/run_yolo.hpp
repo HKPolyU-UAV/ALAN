@@ -115,8 +115,8 @@ void run_yolo::findboundingboxes(cv::Mat &frame)
     //    cout<<netOut[2].size()<<endl<<endl;
     double endtime = ros::Time::now().toSec();
     double deltatime = endtime - starttime;
-    cout<<"time:"<<deltatime<<endl;
-    cout<<"fps: "<<1/deltatime<<endl;
+    // cout<<"time:"<<deltatime<<endl;
+    // cout<<"fps: "<<1/deltatime<<endl;
 
     findwhichboundingboxrocks(netOutput, frame);
 }
