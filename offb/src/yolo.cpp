@@ -1,21 +1,28 @@
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
+#include "include/run_ncnn.hpp"
+
 #include <geometry_msgs/Point.h>
 #include <std_msgs/Bool.h>
 #include "geometry_msgs/PointStamped.h"
 
-#include "include/essential.h"
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <sensor_msgs/Image.h>
+
 #include "offb/obj.h"
-#include "include/run_ncnn.hpp"
 
 using namespace std;
 static cv::Mat frame, res, gt;
 
 static char* parampath = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav-opt.param";
+//                       /home/patty/alan_ws/src/alan/offb/src/include/yolo
 static char* binpath = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav-opt.bin";
 
-int target_size = 416;
+int target_size = 608;
 
 void callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {

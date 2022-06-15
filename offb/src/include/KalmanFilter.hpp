@@ -1,4 +1,4 @@
-#include <Eigen/Dense>
+#include "essential.h"
 enum kf_type
 {
     linear,

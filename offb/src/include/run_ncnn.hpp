@@ -1,8 +1,6 @@
 // #include "/home/patty/ncnn/src/benchmark.h"
+#include "essential.h"
 #include "./ncnn/include/ncnn/net.h"
-
-#include <stdio.h>
-
 
 struct Object
 {
