@@ -12,6 +12,11 @@ static int counter = 0;
 
 veh_pose car_info, uav_info;
 
+double fx = 911.2578125,
+       fy = 911.5093994140625,
+       cx = 639.192626953125,
+       cy = 361.2229919433594;
+
 void callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
 
@@ -67,8 +72,11 @@ void uav_position_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 void c2w(Eigen::Vector4d& camera_pt)
 {
     double depth = camera_pt(2);
-    double z = depth;
-    double x = camera_pt
+    double z = camera_pt(2);
+    double x = z * (camera_pt(0) - cx) / fx;
+    double y = z * (camera_pt(1) - cy) / fy;
+    Eigen::Vector4d cam(x,y,z,1);
+
     Eigen::Matrix<double, 4, 4> c2b_transformation;
     c2b_transformation << 
         0.0342161,   -0.334618,  -0.941732, 0.567003,
@@ -86,7 +94,7 @@ void c2w(Eigen::Vector4d& camera_pt)
     q2r_matrix.toRotationMatrix()(2,0), q2r_matrix.toRotationMatrix()(2,1), q2r_matrix.toRotationMatrix()(2,2), car_info.z,
     0, 0, 0, 1;
 
-    camera_pt = b2w_transformation * c2b_transformation * camera_pt;
+    camera_pt = b2w_transformation * c2b_transformation * cam;
 }
 
 int main(int argc, char** argv)
@@ -138,7 +146,16 @@ int main(int argc, char** argv)
                                       z_depth,
                                       1);
 
-            z_state = c2w(z_state);
+            c2w(z_state);
+            // cout<<z_state<<endl;
+            // cout<<
+            // Eigen::Vector4d(
+            //     z_state(0) - uav_info.x,
+            //     z_state(1) - uav_info.y,
+            //     z_state(2) - uav_info.z,
+            //     1 - 1
+            // ).norm()
+            // <<endl;;
         }
         ros::spinOnce();
     }
