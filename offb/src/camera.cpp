@@ -21,7 +21,7 @@ void car_position_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
     car_info.ox = pose->pose.orientation.x;
     car_info.oy = pose->pose.orientation.y;
     car_info.oz = pose->pose.orientation.z;
-    // ROS_INFO("car pose");
+    ROS_INFO("car pose");
 }
 
 void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
@@ -39,7 +39,7 @@ void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, cons
     }
     cv::Mat image_dep = depth_ptr->image;
 
-    Yolonet.getdepthdata(image_dep);
+    // Yolonet.getdepthdata(image_dep);
 
     try
     {
@@ -51,8 +51,9 @@ void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, cons
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
-    Yolonet.rundarknet(frame);
-    // ROS_INFO("processed 1 frame");
+    // Yolonet.rundarknet(frame);
+    ros::Duration(5.0).sleep();
+    ROS_INFO("processed 1 frame");
     // cout<<frame.size<<endl;
 }
 
@@ -73,10 +74,8 @@ int main(int argc, char** argv)
 
    
 
-    ros::Rate rate_manager(50);
-
-    ros::AsyncSpinner spinner_manager(0);
-    spinner_manager.start();
+    // ros::Rate rate_manager(2);
+    // ros::AsyncSpinner spinner_manager(0);
 
     ros::Subscriber sub_car_info = nh.subscribe<geometry_msgs::PoseStamped>
                                     ("/vrpn_client_node/gh034_car/pose", 1, car_position_callback);
@@ -90,14 +89,20 @@ int main(int argc, char** argv)
 
     std_msgs::Bool obj;
     obj.data = true;
-    while(true)
+    
+    // spinner_manager.start();
+
+    while(ros::ok())
     {
-        cout<<"hi"<<endl;
+        // cout<<"hi"<<endl;
+        // obj.data = !obj.data;
         publish_found.publish(obj);
-        rate_manager.sleep();
-        ros::waitForShutdown();
+        // rate_manager.sleep();
+        // ros::spinOnce();
 
     }
+    ros::waitForShutdown();
+
 
     
     cout<<"end"<<endl;
