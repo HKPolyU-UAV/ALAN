@@ -21,13 +21,14 @@ private:
     void ukf_update(Eigen::VectorXd& x, Eigen::VectorXd z);
 public:
     KalmanFilter(
-        Eigen::MatrixXd F, 
-        Eigen::MatrixXd P, 
-        Eigen::MatrixXd Q,  
-        Eigen::MatrixXd H,
-        Eigen::MatrixXd R,
+        Eigen::MatrixXd& F, 
+        Eigen::MatrixXd& P, 
+        Eigen::MatrixXd& Q,  
+        Eigen::MatrixXd& H,
+        Eigen::MatrixXd& R,
         kf_type which,
-        Eigen::Vector2i dim //[0] state [1] measurement
+        int n,
+        int m //[0] state [1] measurement
     );
     ~KalmanFilter();
 
@@ -43,15 +44,47 @@ public:
 };
 
 KalmanFilter::KalmanFilter(
-    Eigen::MatrixXd F, 
-    Eigen::MatrixXd P, 
-    Eigen::MatrixXd Q,  
-    Eigen::MatrixXd H,
-    Eigen::MatrixXd R,
+    Eigen::MatrixXd& F, 
+    Eigen::MatrixXd& P, 
+    Eigen::MatrixXd& Q,  
+    Eigen::MatrixXd& H,
+    Eigen::MatrixXd& R,
     kf_type which,
-    Eigen::Vector2i dim
-) : Fk(F), Pk(P), Qk(Q), Hk(H), Rk(R), state_size(dim[0]), mea_size(dim[1]), type(which)
+    int n,
+    int m
+) : state_size(n), mea_size(m), type(which)
 {
+    //for convenience, all matrix are manually input first here
+
+    F = Eigen::MatrixXd::Identity(n,n);
+    
+    P = Eigen::MatrixXd::Zero(n,n);
+    P << 
+        1.0, 0, 0, 0, 0, 0,
+        0, 1.0, 0, 0, 0, 0,
+        0, 0, 1.0, 0, 0, 0,
+        0, 0, 0, 5.0, 0, 0,
+        0, 0, 0, 0, 5.0, 0,
+        0, 0, 0, 0, 0, 5.0;
+
+    Q = Eigen::MatrixXd::Zero(n,n);
+    Q << 
+        0.001, 0, 0, 0, 0, 0,
+        0, 0.001, 0, 0, 0, 0,
+        0, 0, 0.001, 0, 0, 0,
+        0, 0, 0, 0.100, 0, 0,
+        0, 0, 0, 0, 0.100, 0,
+        0, 0, 0, 0, 0, 0.100;
+
+    H = Eigen::MatrixXd::Zero(m,n);
+    H(0,0) = H(1,1) = H(2,2) = 1;
+
+    R = Eigen::MatrixXd::Zero(m,m);
+    R << 
+        0.05, 0, 0,
+        0, 0.05, 0,
+        0, 0, 1.00;
+
     cerr << "initiation succeed" << endl;
 
     
@@ -91,6 +124,8 @@ void KalmanFilter::lkf_predict(Eigen::VectorXd& x, float dt)
     //      0, 0, 1,  0,  0, dt,
     //      0, 0, 0,  1,  0,  0,
     //      0, 0, 0,  0,  0,  1;
+
+    Fk(0,3) = Fk(1,4) = Fk(2,5) = dt;
 
     xk = Fk * x;
     Pk_bar = Fk * Pk * Fk.transpose();

@@ -51,11 +51,11 @@ run_yolo::run_yolo(const cv::String cfgfile, const cv::String weightfile, const 
     //the above are all usable in this class
     this->mydnn = cv::dnn::readNetFromDarknet(cfg_file, weights_file);
     
-    this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
-    this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+    // this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
+    // this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
     //uncomment the below if CUDA available
-    //this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-    //this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+    this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+    this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
 
 }
 run_yolo::~run_yolo()
@@ -93,10 +93,6 @@ void run_yolo::findboundingboxes(cv::Mat &frame)
     blob = cv::dnn::blobFromImage(frame, 0.00392, cv::Size(608, 608), cv::Scalar(), true, false);
     //    as the dnn::net function does not accept image from image, it only receive blob hence the above function, refer to teams/article/blob
 
-    //instatiate cv::dnn::Net object
-//    cv::dnn::Net mydnnnet = cv::dnn::readNetFromDarknet(cfg_file, weights_file);
-//    mydnnnet.setPreferableTarget(cv::dnn::DNN_BACKEND_DEFAULT);
-//    mydnnnet.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
 
     mydnn.setInput(blob);
     //feed 4-D blob to darknet dnn
