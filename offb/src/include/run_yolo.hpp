@@ -51,11 +51,11 @@ run_yolo::run_yolo(const cv::String cfgfile, const cv::String weightfile, const 
     //the above are all usable in this class
     this->mydnn = cv::dnn::readNetFromDarknet(cfg_file, weights_file);
     
-    // this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
-    // this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+    this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
+    this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
     //uncomment the below if CUDA available
-    this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-    this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+    // this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+    // this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
 
 }
 run_yolo::~run_yolo()
@@ -111,8 +111,8 @@ void run_yolo::findboundingboxes(cv::Mat &frame)
     //    cout<<netOut[2].size()<<endl<<endl;
     double endtime = ros::Time::now().toSec();
     double deltatime = endtime - starttime;
-    // cout<<"time:"<<deltatime<<endl;
-    // cout<<"fps: "<<1/deltatime<<endl;
+    cout<<"time:"<<deltatime<<endl;
+    cout<<"fps: "<<1/deltatime<<endl;
 
     findwhichboundingboxrocks(netOutput, frame);
 }

@@ -8,6 +8,7 @@ static char* binpath = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav-o
 
 int target_size = 608;
 
+
 void callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
     cv_bridge::CvImageConstPtr depth_ptr;
@@ -32,16 +33,8 @@ void callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const senso
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
+
     // cout<<frame.size<<endl;
-}
-
-static bool foundornot;
-
-void found_cb(const std_msgs::Bool::ConstPtr& msg)
-{
-    foundornot = msg->data;
-    cout<<foundornot<<endl;;
-
 }
 
 int main(int argc, char** argv)
@@ -50,7 +43,7 @@ int main(int argc, char** argv)
 
     cout<<"Object detection..."<<endl;
 
-    ros::init(argc, argv, "yoy");
+    ros::init(argc, argv, "ncnn");
     ros::NodeHandle nh;
 
     message_filters::Subscriber<sensor_msgs::CompressedImage> subimage(nh, "/camera/color/image_raw/compressed", 1);
@@ -59,30 +52,28 @@ int main(int argc, char** argv)
     message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), subimage, subdepth);
     sync.registerCallback(boost::bind(&callback, _1, _2));
 
-    ros::Subscriber sub_found= nh.subscribe<std_msgs::Bool>
-                              ("/obj_found", 1, found_cb);
-    
     static double t1;
     static double t2;
 
-    ros::Rate rate_manager(4);
+    ros::Rate rate_manager(40);
 
     while(ros::ok())
     {
+        if(!frame.empty())
+        {
+            cout<<"hi"<<endl;
+            t1 = ros::Time::now().toSec();
+            yolonet.detect_yolo(frame);
+            t2 = ros::Time::now().toSec();
+            cout << 1000 * (t2 - t1) << " ms" <<endl;
+            cout << 1 / (t2 - t1) << " Hz" <<endl<<endl;;        
+        }
+        
         
         // if(!frame.empty())
-        // {
-        //     cout<<"hi"<<endl;
-        //     t1 = ros::Time::now().toSec();
         //     yolonet.detect_yolo(frame);
-        //     t2 = ros::Time::now().toSec();
-        //     cout << 1000 * (t2 - t1) << " ms" <<endl;
-        //     cout << 1 / (t2 - t1) << " Hz" <<endl<<endl;;
 
-            
-        // }
-        // cout<<foundornot<<endl;
-        cout<<"hi"<<endl;
+
         ros::spinOnce();
         rate_manager.sleep();
         

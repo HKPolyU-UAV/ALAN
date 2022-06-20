@@ -12,18 +12,16 @@ struct Object
 class run_ncnn
 {
     char* parampath = "";
-
     char* binpath   = "";
     int target_size = 0;
     std::vector<Object> objects;
-    ncnn::Net yolov4tiny;
-    ncnn::Net* cnn_local = &yolov4tiny;    
+    ncnn::Net* cnn_local = new ncnn::Net();    
 
 public:
     run_ncnn(char* param_input, char* bin_input, int target_size_input) 
     : parampath(param_input), binpath(bin_input), target_size(target_size_input)
     {
-        this->cnn_local->opt.num_threads = 4; //You need to compile with libgomp for multi thread support
+        this->cnn_local->opt.num_threads = 8; //You need to compile with libgomp for multi thread support
         this->cnn_local->opt.use_vulkan_compute = false; //You need to compile with libvulkan for gpu support
 
         this->cnn_local->opt.use_winograd_convolution = true;
@@ -67,18 +65,30 @@ void run_ncnn::detect_yolo(const cv::Mat& bgr)
     int img_w = bgr.cols;
     int img_h = bgr.rows;
 
+    cout<<this->parampath<<endl;
+    cout<<this->binpath<<endl;
+
+    cout<<"lalalala"<<this->cnn_local->opt.use_image_storage<<endl;
+
+
+
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR2RGB, bgr.cols, bgr.rows, target_size, target_size);
 
     const float mean_vals[3] = {0, 0, 0};
     const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
     in.substract_mean_normalize(mean_vals, norm_vals);
 
+
     ncnn::Extractor ex = cnn_local->create_extractor();
 
     ex.input("data", in);
 
     ncnn::Mat out;
+    cout<<4<<endl;
     ex.extract("output", out);
+
+    cout<<"4"<<endl;
+
 
     objects.clear();
     cout<<"why"<<out.h<<endl;
