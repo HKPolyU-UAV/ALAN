@@ -98,6 +98,14 @@ target_link_libraries(imu
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES})
 
+#5
+add_executable(pnp
+   src/pnp.cpp)
+target_link_libraries(pnp
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES})
+
 # add_executable(vis
 #     src/vis.cpp)
 # target_link_libraries(vis
