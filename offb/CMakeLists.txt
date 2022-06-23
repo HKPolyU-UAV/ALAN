@@ -67,47 +67,52 @@ link_directories(
   # /home/patty/ncnn/build/install/lib
 )
 
-add_executable(camera
-    src/camera.cpp)
-target_link_libraries(camera
+#1
+add_executable(yolo
+    src/yolo.cpp)
+target_link_libraries(yolo
    ${OpenCV_LIBRARIES}
    ${catkin_LIBRARIES})
 
-add_executable(vis
-    src/vis.cpp)
-target_link_libraries(vis
-    ${OpenCV_LIBRARIES}
-    ${catkin_LIBRARIES})
-
-add_executable(trial
-    src/trial.cpp)
-
-target_link_libraries(trial
+#2
+add_executable(aruco
+    src/aruco.cpp)
+target_link_libraries(aruco
    ${OpenCV_LIBRARIES}
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES})
 
+#3
 add_executable(kf
    src/kf.cpp)
-
 target_link_libraries(kf
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES})
 
-add_executable(yolo
-   src/yolo.cpp)
-
-target_link_libraries(yolo
+#4
+add_executable(imu
+   src/imu.cpp)
+target_link_libraries(imu
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-  ncnn
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn/lib/libncnn.a
-  )
+  ${PCL_LIBRARIES})
 
+# add_executable(vis
+#     src/vis.cpp)
+# target_link_libraries(vis
+#     ${OpenCV_LIBRARIES}
+#     ${catkin_LIBRARIES})
 
-
+# add_executable(ncnn_yolo
+#    src/ncnn_yolo.cpp)
+# target_link_libraries(ncnn_yolo
+#   ${OpenCV_LIBRARIES}
+#   ${catkin_LIBRARIES}
+#   ${PCL_LIBRARIES}
+#   ncnn
+#   ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn/lib/libncnn.a
+#   )
 
 ###################################################
 

@@ -3,7 +3,15 @@
 #include <opencv2/aruco.hpp>
 #include "include/essential.h"
 #include "include/camera.h"
+
 cv::Mat frame;
+double fx = 911.2578125,
+       fy = 911.5093994140625,
+       cx = 639.192626953125,
+       cy = 361.2229919433594;
+cv::Mat cameraMatrix = cv::Mat::eye(3,3, CV_64F);
+cv::Mat distCoeffs = cv::Mat::zeros(5, 1, CV_64F);
+
 
 void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
@@ -37,7 +45,40 @@ void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, cons
     
     double t1 = ros::Time::now().toSec();
     cv::aruco::detectMarkers(frame, dictionary, markercorners, markerids, parameters, rejected);
-    cv::aruco::drawDetectedMarkers(frame, markercorners, markerids);
+    
+    double area = 0;
+    vector<cv::Point2f> aruco_candidate;
+    int which;
+
+    vector<cv::Vec3d> rvecs, tvecs;
+    
+    if(markercorners.size() != 0)
+    {
+        for(int i = 0; i < markercorners.size();i++)//    auto what : markercorners)
+        {
+            if(cv::Rect2f(markercorners[i][0], markercorners[i][2]).area() > area)
+            {
+                area = cv::Rect2f(markercorners[i][0], markercorners[i][2]).area();
+                which = i;
+            }            
+        }
+
+        // markercorners.clear();
+        // markercorners.push_back(aruco_candidate);
+        cv::aruco::drawDetectedMarkers(frame, markercorners, markerids);
+
+        //pose estimation
+        cv::aruco::estimatePoseSingleMarkers(
+            markercorners, 
+            0.045, 
+            cameraMatrix,
+            distCoeffs, 
+            rvecs, 
+            tvecs);
+
+        cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[0], tvecs[0], 0.1);
+
+    }
 
     cv::imshow("aruco", frame);
     cv::waitKey(20);
@@ -68,11 +109,15 @@ int main(int argc, char** argv)
     // cv::waitKey(0);
     markerImage = cv::imread("testt.jpg");
     ros::Rate rate_manager(40);
+    cameraMatrix.at<double>(0,0) = fx;
+    cameraMatrix.at<double>(1,1) = fy;
+    cameraMatrix.at<double>(0,2) = cx;
+    cameraMatrix.at<double>(1,2) = cy;
 
     while(ros::ok())
     {
         ros::spinOnce();
-        rate_manager.sleep();
+        // rate_manager.sleep();
     }
 
 

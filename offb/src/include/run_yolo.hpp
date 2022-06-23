@@ -51,11 +51,12 @@ run_yolo::run_yolo(const cv::String cfgfile, const cv::String weightfile, const 
     //the above are all usable in this class
     this->mydnn = cv::dnn::readNetFromDarknet(cfg_file, weights_file);
     
-    this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
-    this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+    // this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
+    // this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+   
     //uncomment the below if CUDA available
-    // this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-    // this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+    this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+    this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
 
 }
 run_yolo::~run_yolo()
@@ -68,6 +69,7 @@ run_yolo::~run_yolo()
 void run_yolo::rundarknet(cv::Mat &frame)
 {
     obj_vector.clear();
+    // cout<<"in rundarknet"<<endl;
     this->total_start = std::chrono::steady_clock::now();
     findboundingboxes(frame);
     this->total_end = std::chrono::steady_clock::now();

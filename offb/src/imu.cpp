@@ -1,6 +1,8 @@
-﻿// This ros node process 
+// This ros node process imu (x', y', z', r', p', y')
 
 #include "include/camera.h"
+#include <opencv2/calib3d.hpp>
+#include "sensor_msgs/Imu.h"
 
 static cv::Mat frame, res, gt;
 
@@ -12,7 +14,19 @@ static run_yolo Yolonet(cfgpath, weightpath, classnamepath, float(0.1));
 
 static int counter = 0;
 
+
 veh_pose car_info, uav_info;
+
+void uav_imu_callback(const sensor_msgs::Imu::ConstPtr& msg)
+{
+    ROS_INFO(
+        "Imu Orientation x: [%f], y: [%f], z: [%f], w: [%f]", 
+        msg->orientation.w,
+        msg->orientation.x,
+        msg->orientation.y,
+        msg->orientation.z
+        );
+}
 
 void car_position_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
@@ -55,7 +69,8 @@ void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, cons
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
     Yolonet.rundarknet(frame);
-    Yolonet.display(frame);
+    // Yolonet.display(frame);
+    cv::waitKey(20);
 
     // ros::Duration(5.0).sleep();
     // ROS_INFO("processed 1 frame");
@@ -84,7 +99,8 @@ int main(int argc, char** argv)
 
     ros::Subscriber sub_car_info = nh.subscribe<geometry_msgs::PoseStamped>
                                     ("/vrpn_client_node/gh034_car/pose", 1, car_position_callback);
-    
+    ros::Subscriber sub_imu = nh.subscribe<sensor_msgs::Imu>
+                                    ("/mavros/imu/data", 1, uav_imu_callback);
 
     message_filters::Subscriber<sensor_msgs::CompressedImage> subimage(nh, "/camera/color/image_raw/compressed", 1);
     message_filters::Subscriber<sensor_msgs::Image> subdepth(nh, "/camera/aligned_depth_to_color/image_raw", 1);
@@ -101,9 +117,11 @@ int main(int argc, char** argv)
     {
         // cout<<"hi"<<endl;
         // obj.data = !obj.data;
-        publish_found.publish(obj);
-        // ros::spinOnce();
+        // publish_found.publish(obj);
+        if(!frame.empty())
+            Yolonet.display(frame);
 
+        ros::spinOnce();
         rate_manager.sleep();
 
     }
