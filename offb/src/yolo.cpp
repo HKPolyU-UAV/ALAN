@@ -8,7 +8,7 @@ static cv::String weightpath ="/home/patty/alan_ws/src/alan/offb/src/include/yol
 static cv::String cfgpath ="/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.cfg";
 static cv::String classnamepath = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names";
 
-static run_yolo Yolonet(cfgpath, weightpath, classnamepath, float(0.5));
+static run_yolo Yolonet(cfgpath, weightpath, classnamepath, float(0.1));
 
 static int counter = 0;
 
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 
     while(ros::ok())
     {
-        cout<<"why"<<endl;
+        // cout<<"why"<<endl;
         obj.data = !obj.data;
         if(counter%2 == 0)
             publish_found.publish(obj);

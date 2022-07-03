@@ -9,9 +9,21 @@ double fx = 911.2578125,
        fy = 911.5093994140625,
        cx = 639.192626953125,
        cy = 361.2229919433594;
-cv::Mat cameraMatrix = cv::Mat::eye(3,3, CV_64F);
+Eigen::MatrixXd cameraMatrix;
 cv::Mat distCoeffs = cv::Mat::zeros(5, 1, CV_64F);
 
+vector<cv::Point3d> body_frame_pts;
+
+Eigen::Vector2d reproject_3D_2D(Eigen::Vector4d P, Eigen::MatrixXd T)
+{
+    Eigen::Vector4d result;
+    result = cameraMatrix * T * P;
+    Eigen::Vector2d result2d;
+    result2d <<
+        result(0)/result(2), result(1)/result(2);
+    
+    return result2d;
+}
 
 void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
@@ -38,6 +50,7 @@ void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, cons
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
+
     vector<int> markerids;
     vector<vector<cv::Point2f>> markercorners, rejected;
     cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
@@ -46,39 +59,49 @@ void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, cons
     double t1 = ros::Time::now().toSec();
     cv::aruco::detectMarkers(frame, dictionary, markercorners, markerids, parameters, rejected);
     
+    for(auto& what : markercorners)
+        for(auto& that : what)
+        {
+            // cout<<that<<endl;
+            cout<<"draw"<<endl;
+            cv::circle(frame, that, 4, CV_RGB(255,0,0),-1);
+        }
+    
+    
+    
     double area = 0;
     vector<cv::Point2f> aruco_candidate;
     int which;
 
-    vector<cv::Vec3d> rvecs, tvecs;
+    // vector<cv::Vec3d> rvecs, tvecs;
     
-    if(markercorners.size() != 0)
-    {
-        for(int i = 0; i < markercorners.size();i++)//    auto what : markercorners)
-        {
-            if(cv::Rect2f(markercorners[i][0], markercorners[i][2]).area() > area)
-            {
-                area = cv::Rect2f(markercorners[i][0], markercorners[i][2]).area();
-                which = i;
-            }            
-        }
+    // if(markercorners.size() != 0)
+    // {
+    //     for(int i = 0; i < markercorners.size();i++)//    auto what : markercorners)
+    //     {
+    //         if(cv::Rect2f(markercorners[i][0], markercorners[i][2]).area() > area)
+    //         {
+    //             area = cv::Rect2f(markercorners[i][0], markercorners[i][2]).area();
+    //             which = i;
+    //         }            
+    //     }
 
-        // markercorners.clear();
-        // markercorners.push_back(aruco_candidate);
-        cv::aruco::drawDetectedMarkers(frame, markercorners, markerids);
+    //     // markercorners.clear();
+    //     // markercorners.push_back(aruco_candidate);
+    //     cv::aruco::drawDetectedMarkers(frame, markercorners, markerids);
 
-        //pose estimation
-        cv::aruco::estimatePoseSingleMarkers(
-            markercorners, 
-            0.045, 
-            cameraMatrix,
-            distCoeffs, 
-            rvecs, 
-            tvecs);
+    //     //pose estimation
+    //     cv::aruco::estimatePoseSingleMarkers(
+    //         markercorners, 
+    //         0.045, 
+    //         cameraMatrix,
+    //         distCoeffs, 
+    //         rvecs, 
+    //         tvecs);
 
-        cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[0], tvecs[0], 0.1);
+    //     cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[0], tvecs[0], 0.1);
 
-    }
+    // }
 
     cv::imshow("aruco", frame);
     cv::waitKey(20);
@@ -95,6 +118,12 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     cv::Mat markerImage;
 
+    body_frame_pts.push_back(cv::Point3d(0.055, -0.0225, -0.010)); //LU
+    body_frame_pts.push_back(cv::Point3d(0.055,  0.0225, -0.010)); //RU
+    body_frame_pts.push_back(cv::Point3d(0.055, -0.0225, -0.055)); //LD
+    body_frame_pts.push_back(cv::Point3d(0.055,  0.0225, -0.055)); //RD
+
+
     message_filters::Subscriber<sensor_msgs::CompressedImage> subimage(nh, "/camera/color/image_raw/compressed", 1);
     message_filters::Subscriber<sensor_msgs::Image> subdepth(nh, "/camera/aligned_depth_to_color/image_raw", 1);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> MySyncPolicy;
@@ -109,10 +138,12 @@ int main(int argc, char** argv)
     // cv::waitKey(0);
     markerImage = cv::imread("testt.jpg");
     ros::Rate rate_manager(40);
-    cameraMatrix.at<double>(0,0) = fx;
-    cameraMatrix.at<double>(1,1) = fy;
-    cameraMatrix.at<double>(0,2) = cx;
-    cameraMatrix.at<double>(1,2) = cy;
+
+    cameraMatrix <<
+        fx, 0, cx, 
+        0, fx, cy,
+        0, 0,  1;
+
 
     while(ros::ok())
     {

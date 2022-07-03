@@ -39,19 +39,25 @@ void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, cons
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
     // assert(src.type() == CV_8UC3);
-
-    cv::cvtColor(frame, frame, cv::COLOR_RGB2HSV);
-
-    cv::Mat lowred, onlyred;
-    cv::inRange(frame, cv::Scalar(0,0,220), cv::Scalar(160,255,255), lowred);
-    // cv::inRange(frame, cv::Scalar(0, 0, 100), cv::Scalar(160,0,0), onlyred);
-
-    // cv::Mat higred = cv::inRange
-    
-    cv::imshow("before", lowred);
+    cv::imshow("before", frame);
     cv::waitKey(20);
 
-    // cv::inRange(frame, cv::Scalar(0, 0, 0), cv::Scalar(0, 0, 255), frame);
+    // markerImage = cv::imread("/home/patty/alan_ws/src/alan/offb/src/test/pnp.png");
+    cv::cvtColor(frame, frame, cv::COLOR_RGB2HSV);
+    // cv::imshow("pnp start", markerImage);
+    // cv::waitKey(0);
+
+    cv::Mat lowred, green;
+    cv::inRange(frame, cv::Scalar(20,0,255), cv::Scalar(40,30,255), lowred);
+    // cv::imshow("after1", lowred);
+    // cv::waitKey(0);
+
+    cv::inRange(frame, cv::Scalar(80,0,255), cv::Scalar(100,30,255), green);
+    cv::Mat output;
+    cv::bitwise_or(lowred, green, output);
+
+    cv::imshow("after", output);
+    cv::waitKey(20);
 
 
 
@@ -64,7 +70,7 @@ int main(int argc, char** argv)
 
     cout<<"Object detection..."<<endl;
 
-    ros::init(argc, argv, "arucotest");
+    ros::init(argc, argv, "pnp");
     ros::NodeHandle nh;
     cv::Mat markerImage;
 
@@ -74,13 +80,7 @@ int main(int argc, char** argv)
     message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), subimage, subdepth);
     sync.registerCallback(boost::bind(&camera_callback, _1, _2));
 
-    // cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
-    // cv::aruco::drawMarker(dictionary, 23, 200, markerImage, 1);
-    // cv::imwrite("marker23.png", markerImage);
-    // cv::imshow("aruco", markerImage);
-    // cv::imwrite("aruco.png", markerImage);
-    // cv::waitKey(0);
-    markerImage = cv::imread("testt.jpg");
+    
     ros::Rate rate_manager(40);
     cameraMatrix.at<double>(0,0) = fx;
     cameraMatrix.at<double>(1,1) = fy;
