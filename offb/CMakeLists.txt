@@ -26,6 +26,7 @@ find_package(OpenCV 4.5 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(Sophus REQUIRED)
 
 add_message_files(
  FILES
@@ -59,11 +60,12 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
+  ${Sophus_INCLUDE_DIRS}
+  # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
 link_directories( 
   # link another cmake
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn/lib
+  # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn/lib
   # /home/patty/ncnn/build/install/lib
 )
 
@@ -80,7 +82,8 @@ add_executable(aruco
 target_link_libraries(aruco
    ${OpenCV_LIBRARIES}
    ${catkin_LIBRARIES}
-   ${PCL_LIBRARIES})
+   ${PCL_LIBRARIES}
+   ${Sophus_LIBRARIES})
 
 #3
 add_executable(kf
