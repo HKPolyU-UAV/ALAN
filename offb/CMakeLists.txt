@@ -56,6 +56,8 @@ FIND_PACKAGE( OpenMP REQUIRED)
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
     endif()
 
+set(Sophus_LIBRARIES libSophus.so)
+
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}

@@ -3,28 +3,28 @@
 #include <opencv2/aruco.hpp>
 #include <opencv2/calib3d.hpp>
 #include "include/essential.h"
+#include <sophus/se3.hpp>
 #include "include/camera.h"
-#include "sophus/se3.h"
 
 cv::Mat frame;
-double fx = 634.023193359375,
-       fy = 633.559814453125,
-       cx = 641.8981323242188,
-       cy = 387.1009521484375;
-Eigen::MatrixXd cameraMatrix = Eigen::MatrixXd::Zero(3,3);
-
 vector<Eigen::Vector3d> body_frame_pts;
+Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
 
-Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Eigen::MatrixXd R, Eigen::Vector3d t)
+Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
 {
     Eigen::Vector3d result;
     // cout<<"debug:"<<endl;
     // cout<<T<<endl;
     // cout<<P<<endl;
-    // cout<<cameraMatrix<<endl;
-    
-    result = cameraMatrix * (R * P + t); //dimention not right
-    // cout<<result<<endl;
+    // cout<<cameraMat<<endl;
+
+    Eigen::MatrixXd R = pose.rotationMatrix();
+    Eigen::Vector3d t = pose.translation();
+
+    result = cameraMat * (R * P + t); //dimention not right
+
+    // cout<<"reproject: "<<result<<endl;
+
     Eigen::Vector2d result2d;
     
 
@@ -40,9 +40,10 @@ Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Eigen::MatrixXd R, Eigen::Vec
 }
 
 void solvepnp(
-    vector<Eigen::Vector2d> pts_2d, 
-    Eigen::Vector3d& t, 
-    Eigen::Matrix3d& R
+    vector<Eigen::Vector2d> pts_2d,
+    vector<Eigen::Vector3d> body_frame_pts,
+    Eigen::Matrix3d& R,
+    Eigen::Vector3d& t
     )
 {
     cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
@@ -72,10 +73,10 @@ void solvepnp(
     }
 
 
-    camMat.at<double>(0,0) = cameraMatrix(0,0);
-    camMat.at<double>(0,2) = cameraMatrix(0,2);
-    camMat.at<double>(1,1) = cameraMatrix(1,1);
-    camMat.at<double>(1,2) = cameraMatrix(1,2);
+    camMat.at<double>(0,0) = cameraMat(0,0);
+    camMat.at<double>(0,2) = cameraMat(0,2);
+    camMat.at<double>(1,1) = cameraMat(1,1);
+    camMat.at<double>(1,2) = cameraMat(1,2);
     // cout<<"pnp"<<endl<<camMat<<endl;
 
     cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, false);
@@ -110,7 +111,7 @@ bool aruco_detect(
         
         for(auto& what : markercorners)
         {
-            cout<<"what size: "<<what.size()<<endl;
+            // cout<<"what size: "<<what.size()<<endl;
             if(what.size() != 4)
                 continue;
             for(auto& that : what)
@@ -130,7 +131,7 @@ bool aruco_detect(
             return false;
         else   
         {
-            cout<<"size: "<<pts_2d.size()<<endl;
+            // cout<<"size: "<<pts_2d.size()<<endl;
             return true;
         }                             
     }
@@ -138,16 +139,139 @@ bool aruco_detect(
         return false;
 }
 
+void solveJacobian(
+    Eigen::Matrix<double, 2, 6>& Jacob,
+    Sophus::SE3d pose,
+    Eigen::Vector3d point_3d)
+{
+    Eigen::Matrix3d R = pose.rotationMatrix();
+    Eigen::Vector3d t = pose.translation();
+                // cameraMat
+    double fx = cameraMat(0,0);
+    double fy = cameraMat(1,1);
 
+    Eigen::Vector3d point_in_camera = R * point_3d + t;
+    
+    // cout<<"check jacob: "<<fx<<"\t"<<fy<<endl<<endl;;
 
-void optimize(vector<Eigen::Vector2d>)
+    double x_c = point_in_camera(0),
+           y_c = point_in_camera(1),
+           z_c = point_in_camera(2);
+
+    //save entries to Jacob and return
+    Jacob << 
+        //first row
+        -fx / z_c, 
+        0, 
+        fx * x_c / z_c / z_c, 
+        fx * x_c * y_c / z_c / z_c,
+        -fx - fx * x_c * x_c / z_c / z_c,
+        fx * y_c / z_c,
+
+        //second row
+        0,
+        -fy / z_c,
+        fy * y_c / z_c / z_c,
+        fy + fy * y_c * y_c / z_c / z_c,
+        fy * x_c * y_c / z_c / z_c,
+        fy * x_c / z_c;
+    
+    // cout<<"Jacob here: "<<Jacob<<endl;
+    
+}
+
+void optimize(
+    Sophus::SE3d& pose,
+    vector<Eigen::Vector3d> pts_3d_exists, 
+    vector<Eigen::Vector2d> pts_2d_detected
+    )//converge problem need to be solved
 {
     //execute Gaussian-Newton Method
     cout<<"Bundle Adjustment Optimization"<<endl;
 
+    const int MAX_ITERATION = 400;
+    const double converge_threshold = 1e-5;
 
+    const int points_no = pts_2d_detected.size();
+
+    Eigen::Matrix<double, 2, 6> J;
+    Eigen::Matrix<double, 6, 6> A; // R6*6
+    Eigen::Matrix<double, 6, 1> b; // R6
+    Eigen::Vector2d e; // R2
+    Eigen::Matrix<double, 6, 1> dx;
+
+    int i;
     
+    for(i = 0; i < MAX_ITERATION; i++)
+    {
+        // cout<<"this is the: "<<i<<" th iteration."<<endl;
+        A.setZero();
+        b.setZero();
+
+        for(int i=0; i < points_no; i++)
+        {
+            //get the Jacobian for this point
+            solveJacobian(J, pose, pts_3d_exists[i]);
+            // cout<<"Jacob out here: "<<J<<endl;
+
+            e = reproject_3D_2D(pts_3d_exists[i], pose);
+            // cout<<e<<endl;
+
+            //form Ax = b
+            A += J.transpose() * J;
+            b += -J.transpose() * e;
+        }
+        // cout<<A<<endl;
+        // cout<<b<<endl;
+    
+        //solve Adx = b
+        // cout<<"pass 1"<<endl;
+        dx = A.ldlt().solve(b);
+        // cout<<"pass 2"<<endl;
+
+        bool getout = false;
+        for(int i = 0; i < 6; i++)
+        {
+            if(isnan(dx(i,0)))
+                getout = true;
+            cout<<i;
+        }
+        cout<<endl;
+            
+        
+
+        // cout<<"getout: "<<getout<<endl;
+        cout<<dx<<endl;
+        
+        if(getout)
+        {
+            cout<<"getout-------------------------------------------------------------"<<endl;
+            break;
+        }
+            // break;
+        // cout.precision(8);
+        // cout<<dx<<endl;
+
+        //x = x + dx
+        cout<<"x = x + dx"<<endl;
+        pose = Sophus::SE3d::exp(dx) * pose;
+        cout<<"pass 3"<<endl;
+
+
+        if(dx.norm() < converge_threshold)
+        {
+            // cout<<"error: "<<dx.norm()<<endl;
+            // cout<<i<<endl;
+            break;
+        }
+    }
+    cout<<endl<<dx<<endl;
+    cout<<"gone thru: "<<i<<" th, end optimize"<<endl<<endl;;
+    
+    // cout<<
+
 }
+
 
 void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
@@ -176,49 +300,47 @@ void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, cons
     }
     // cout<<frame.size()<<endl;
 
-    vector<Eigen::Vector2d> pts_2d;
-    if(aruco_detect(frame, pts_2d))
+    vector<Eigen::Vector2d> pts_2d_detect;
+    if(aruco_detect(frame, pts_2d_detect))
     {
-        cout<<"get pnp"<<endl;
+        // cout<<"get pnp"<<endl;
         
         // cout<<rmat<<endl;
         Eigen::Vector3d t;
         Eigen::Matrix3d R;
 
-
-        solvepnp(pts_2d, t, R);
-        Sophus::SE3 pose(R,t);;
-        cout<<"sophus here"<<endl<<pose<<"lala"<<endl;
+        solvepnp(pts_2d_detect, body_frame_pts, R, t);
+        Sophus::SE3d pose(R,t);;
+        // cout<<"sophus here"<<endl<<pose.rotationMatrix()<<"lala"<<endl;
         // cout<<t<<endl<<R<<endl;
-        
-
-        vector<Eigen::Vector2d> pts_2d_reproject;
-
-        // cv::Point
-
-        for(auto what : body_frame_pts)
-        {
-            Eigen::Vector2d reproject = reproject_3D_2D(what, R, t);
+        // for(auto what : body_frame_pts)
+        // {
+        //     Eigen::Vector2d reproject = reproject_3D_2D(what, R, t);            
+        //     // cout<<cv::Point(what(0), what(1))<<endl;
+        //     // cv::circle(frame, cv::Point(reproject(0), reproject(1)),4, CV_RGB(0,0,255),-1);
+        //     pts_2d_reproject.push_back(reproject);
+        // }
+        // if(pts_2d_reproject.size() == pts_2d.size())
+        // {
+        //     for(size_t i = 0; i < pts_2d.size(); i++)
+        //     {
+        //         double e2 = 
+        //             pow(pts_2d_reproject[i](0) - pts_2d[i][0],2) +
+        //             pow(pts_2d_reproject[i](1) - pts_2d[i][1],2);
+        //         double e = sqrt(e2);
+        //         cout<<e<<endl;
+        //     }
             
-            // cout<<cv::Point(what(0), what(1))<<endl;
-            cv::circle(frame, cv::Point(reproject(0), reproject(1)),4, CV_RGB(0,0,255),-1);
-            pts_2d_reproject.push_back(reproject);
-        }
+        //     cout<<endl;
+        // }
 
-        if(pts_2d_reproject.size() == pts_2d.size())
-        {
-            for(size_t i = 0; i < pts_2d.size(); i++)
-            {
-                double e2 = 
-                    pow(pts_2d_reproject[i](0) - pts_2d[i][0],2) +
-                    pow(pts_2d_reproject[i](1) - pts_2d[i][1],2);
-                double e = sqrt(e2);
-                cout<<e<<endl;
-            }
-            
-            cout<<endl;
-        }
+        double t1 = ros::Time::now().toSec();
+        if(body_frame_pts.size() == pts_2d_detect.size())
+            optimize(pose, body_frame_pts, pts_2d_detect);
+        double t2 = ros::Time::now().toSec();
 
+        // cout<<"ms: "<< t2 - t1 <<endl;
+        cout<<"hz: "<<1 / (t2 - t1)<<endl;
     }    
 
     
@@ -258,10 +380,14 @@ int main(int argc, char** argv)
     ros::Rate rate_manager(40);
 
     cout<<"pass1"<<endl;
+    double fx = 634.023193359375,
+       fy = 633.559814453125,
+       cx = 641.8981323242188,
+       cy = 387.1009521484375;
 
-    cameraMatrix << 
+    cameraMat << 
         fx, 0, cx, 
-        0, fx, cy,
+        0, fy, cy,
         0, 0,  1;
     
     // cam_Mat.at<double>(0,0) = fx;
