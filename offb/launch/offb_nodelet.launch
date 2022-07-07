@@ -1,0 +1,5 @@
+
+<launch>
+    <node pkg="nodelet" type="nodelet" name="dadiu" args="manager" output="screen"/>
+    <node pkg="nodelet" type="nodelet" name="aruco" args="load aruco_nodelet/ArucoNodelet dadiu" output="screen"/>
+</launch>
