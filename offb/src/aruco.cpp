@@ -6,7 +6,6 @@
 #include <sophus/se3.hpp>
 #include "include/camera.h"
 
-
 cv::Mat frame;
 vector<Eigen::Vector3d> body_frame_pts;
 Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
@@ -63,7 +62,6 @@ void solvepnp(
         pts_2d_.push_back(temp2d);
     }
 
-
     camMat.at<double>(0,0) = cameraMat(0,0);
     camMat.at<double>(0,2) = cameraMat(0,2);
     camMat.at<double>(1,1) = cameraMat(1,1);
@@ -106,7 +104,7 @@ bool aruco_detect(
 
             for(auto& that : what)
             {
-                cv::circle(frame, that, 4, CV_RGB(255,0,0),-1);
+                cv::circle(frame, cv::Point(that.x, that.y), 4, CV_RGB(0,0,255),-1);
                 Eigen::Vector2d result;
                 result << 
                     that.x,
@@ -179,7 +177,7 @@ void optimize(
 
     const int MAX_ITERATION = 400;
 
-    const double converge_threshold = 1e-14;
+    const double converge_threshold = 1e-12;
 
     const int points_no = pts_2d_detected.size();
 
@@ -197,6 +195,8 @@ void optimize(
         // cout<<"this is the: "<<i<<" th iteration."<<endl;
         A.setZero();
         b.setZero();
+
+        cost = 0;
         
 
         for(int i=0; i < points_no; i++)
@@ -204,8 +204,9 @@ void optimize(
             //get the Jacobian for this point
             solveJacobian(J, pose, pts_3d_exists[i]);
 
-            e = reproject_3D_2D(pts_3d_exists[i], pose) - pts_2d_detected[i];
+            e = pts_2d_detected[i] - reproject_3D_2D(pts_3d_exists[i], pose) ; 
             //jibai, forget to minus the detected points
+            //you set your Jacobian according to "u-KTP/s", and you messed up the order, you fat fuck
     
             cost += e.squaredNorm();
 
@@ -217,14 +218,12 @@ void optimize(
         //solve Adx = b
         dx = A.ldlt().solve(b);
 
-        bool getout = false;
         for(int i = 0; i < 6; i++)
             if(isnan(dx(i,0)))
-                getout = true;
-        
-        
-        if(getout)
-            break;
+                break;
+
+        cout<<"previous: "/*<<cout.precision(10)*/<< lastcost<<endl;
+        cout<<"currentt: "/*<<cout.precision(10)*/<< cost<<endl;
 
         if(i > 0 && cost >= lastcost)
             break;
@@ -236,8 +235,6 @@ void optimize(
         if(dx.norm() < converge_threshold)        
             break;
     }
-    if(i>1)
-        // cout<<"---------------------------------------------------------------"<<endl;
 
     cout<<"gone thru: "<<i<<" th, end optimize"<<endl;;
 
@@ -275,21 +272,36 @@ void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, cons
         Eigen::Matrix3d R;
 
         solvepnp(pts_2d_detect, body_frame_pts, R, t);
-        Sophus::SE3d pose(R,t);;
+        // Eigen::AngleAxisd row()
+        Eigen::AngleAxisd rollAngle(0.174, Eigen::Vector3d::UnitZ());
+        Eigen::AngleAxisd yawAngle(0.174, Eigen::Vector3d::UnitY());
+        Eigen::AngleAxisd pitchAngle(0.174, Eigen::Vector3d::UnitX());
 
-        cout<<pose.translation()<<endl;
+        Eigen::Quaternion<double> q = rollAngle * yawAngle * pitchAngle;
+
+        Eigen::Matrix3d rotationMatrix = q.matrix();
+        R = R * rotationMatrix;
+
+        Eigen::Vector3d error(0.1,0.1,0.1);
+        t = t + error;
+
+        Sophus::SE3d pose(R,t);
+        
+        for(auto what : body_frame_pts)
+        {
+            Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
+            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
+        }
 
         double t1 = ros::Time::now().toSec();
         if(body_frame_pts.size() == pts_2d_detect.size())
-            optimize(pose, body_frame_pts, pts_2d_detect);
+            optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
         double t2 = ros::Time::now().toSec();
-
-        cout<<pose.translation()<<endl;
 
         for(auto what : body_frame_pts)
         {
             Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
-            cv::circle(frame, cv::Point(reproject(0), reproject(1)),3.5, CV_RGB(0,0,255),-1);
+            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
         }
 
         // cout<<"ms: "<< t2 - t1 <<endl;
