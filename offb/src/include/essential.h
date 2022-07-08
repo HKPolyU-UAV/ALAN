@@ -1,3 +1,5 @@
+#include <ros/ros.h>
+
 #include <iostream>
 #include <fstream>
 #include <istream>
@@ -8,9 +10,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
-
-
-#include <ros/ros.h>
 
 #include <math.h>
 #include <stdio.h>

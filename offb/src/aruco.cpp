@@ -7,7 +7,7 @@ namespace aruco_ros_nodelet {
 
     void ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
     {
-                    
+        double t1 = ros::Time::now().toSec();     
         cv_bridge::CvImageConstPtr depth_ptr;
         try
         {
@@ -58,10 +58,8 @@ namespace aruco_ros_nodelet {
                 cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
             }
 
-            double t1 = ros::Time::now().toSec();
             if(body_frame_pts.size() == pts_2d_detect.size())
                 optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
-            double t2 = ros::Time::now().toSec();
 
             for(auto what : body_frame_pts)
             {
@@ -70,20 +68,18 @@ namespace aruco_ros_nodelet {
             }
 
             // cout<<"ms: "<< t2 - t1 <<endl;
-            cout<<"hz: "<<1 / (t2 - t1)<<endl<<endl;
         }    
 
-    
+        this->test.data = !this->test.data;
+        // nodelet_pub.publish(this->test);
 
-    cv::imshow("aruco", frame);
-    cv::waitKey(20);
+        // cv::imshow("aruco", this->frame);
+        // cv::waitKey(20);
+
+        double t2 = ros::Time::now().toSec();
+        cout<<"hz: "<<1 / (t2 - t1)<<endl<<endl;
 
 
-
-
-
-        cv::imshow("aruco", this->frame);
-        cv::waitKey(20);
     }
 
     inline Eigen::Vector2d ArucoNodelet::reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
@@ -283,8 +279,8 @@ namespace aruco_ros_nodelet {
                 if(isnan(dx(i,0)))
                     break;
 
-            cout<<"previous: "/*<<cout.precision(10)*/<< lastcost<<endl;
-            cout<<"currentt: "/*<<cout.precision(10)*/<< cost<<endl;
+            // cout<<"previous: "/*<<cout.precision(10)*/<< lastcost<<endl;
+            // cout<<"currentt: "/*<<cout.precision(10)*/<< cost<<endl;
 
             if(i > 0 && cost >= lastcost)
                 break;
@@ -299,6 +295,25 @@ namespace aruco_ros_nodelet {
 
         cout<<"gone thru: "<<i<<" th, end optimize"<<endl;;
 
+    }
+
+    void* ArucoNodelet::PubMainLoop(void* tmp)
+    {
+        ArucoNodelet* pub = (ArucoNodelet*) tmp;
+
+        // int num = 1;
+        // msgs::data test_msg;
+        // for (int i = 0; i < 100000; i++) {
+        //     test_msg.a.push_back(i);
+        // }
+        ros::Rate loop_rate(50);
+        while (ros::ok()) 
+        {
+            // ROS_INFO("%d,publish!", num++);
+            pub->nodelet_pub.publish(pub->test);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
     }
 
 }

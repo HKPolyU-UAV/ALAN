@@ -5,11 +5,9 @@
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 
-
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
-
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -22,13 +20,18 @@
 #include <pluginlib/class_list_macros.h>
 #include <nodelet/nodelet.h>
 
+#include <pthread.h>
+
 namespace aruco_ros_nodelet
 {
     class ArucoNodelet : public nodelet::Nodelet
     {
         private:
+            pthread_t tid;
             ros::Publisher nodelet_pub ;
-            ros::Subscriber nodelet_sub;
+            std_msgs::Bool test;
+
+
             message_filters::Subscriber<sensor_msgs::CompressedImage> subimage;
             message_filters::Subscriber<sensor_msgs::Image> subdepth;
             typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> MySyncPolicy;
@@ -47,7 +50,7 @@ namespace aruco_ros_nodelet
             );
 
             Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
-            
+
             void solvepnp(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
 
             bool aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& pts_2d);
@@ -56,13 +59,19 @@ namespace aruco_ros_nodelet
 
             void optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected);//converge problem need to be solved //-> fuck you, your Jacobian was wrong
 
-
+            static void* PubMainLoop(void* tmp);
 
 
             virtual void onInit() 
             {
                 ros::NodeHandle& nh = getNodeHandle();
-                
+                nodelet_pub = nh.advertise<std_msgs::Bool>("/obj_found",1);
+
+                pthread_create(&tid, NULL, ArucoNodelet::PubMainLoop, (void*)this);
+
+
+                // PubMainLoop();
+
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
                 subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);
                 

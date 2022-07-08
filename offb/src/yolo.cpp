@@ -77,6 +77,8 @@ int main(int argc, char** argv)
     ros::Publisher publish_found = nh.advertise<std_msgs::Bool>("/obj_found",1);
     ros::Publisher publish_obj_vel = nh.advertise<offb::obj>("/obj_v", 1);
 
+    
+
    
 
     ros::Rate rate_manager(40);
