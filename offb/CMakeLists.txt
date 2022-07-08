@@ -72,24 +72,27 @@ include_directories(
   # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
 
-add_library(aruco_nodelet
-    src/aruco.cpp)
+add_library(alan_pose_estimation
+    src/aruco.cpp
+    src/yolo.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
-  aruco_nodelet
+  alan_pose_estimation
   ${catkin_LIBRARIES}
   ${OpenCV_INCLUDE_DIRS}
   ${Sophus_INCLUDE_DIRS}
 )
 
 
-#1
-add_executable(yolo
-    src/yolo.cpp)
-target_link_libraries(yolo
-   ${OpenCV_LIBRARIES}
-   ${catkin_LIBRARIES})
+
+
+# #1
+# add_executable(yolo
+#     src/yolo.cpp)
+# target_link_libraries(yolo
+#    ${OpenCV_LIBRARIES}
+#    ${catkin_LIBRARIES})
 
 
 

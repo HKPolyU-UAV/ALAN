@@ -22,7 +22,7 @@
 
 #include <pthread.h>
 
-namespace aruco_ros_nodelet
+namespace alan_pose_estimation
 {
     class ArucoNodelet : public nodelet::Nodelet
     {
@@ -66,7 +66,7 @@ namespace aruco_ros_nodelet
                 
                 //publish
                 nodelet_pub = nh.advertise<std_msgs::Bool>("/obj_found",1);
-                test_pub = nh.advertise<std_msgs::Bool>("/ob_found",1);
+                // test_pub = nh.advertise<std_msgs::Bool>("/ob_found",1);
 
                 pthread_create(&tid, NULL, ArucoNodelet::PubMainLoop, (void*)this);
 
@@ -103,5 +103,5 @@ namespace aruco_ros_nodelet
 
     };
     
-    PLUGINLIB_EXPORT_CLASS(aruco_ros_nodelet::ArucoNodelet, nodelet::Nodelet)
+    PLUGINLIB_EXPORT_CLASS(alan_pose_estimation::ArucoNodelet, nodelet::Nodelet)
 }

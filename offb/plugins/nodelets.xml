@@ -1,9 +1,16 @@
-<library path="lib/libaruco_nodelet">
-    <class name ="aruco_nodelet/ArucoNodelet" 
-        type="aruco_ros_nodelet::ArucoNodelet"
+<library path="lib/libalan_pose_estimation">
+    <class name ="alan_pose_estimation/ArucoNodelet" 
+        type="alan_pose_estimation::ArucoNodelet"
         base_class_type="nodelet::Nodelet">
         <description>
             Launch nodelet here. Aruco it is.
         </description>
-        </class>
+    </class>
+    <class name ="alan_pose_estimation/CnnNodelet" 
+        type="alan_pose_estimation::CnnNodelet"
+        base_class_type="nodelet::Nodelet">
+        <description>
+            Launch nodelet here. CNN it is.
+        </description>
+    </class>
 </library> 
