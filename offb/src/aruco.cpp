@@ -70,15 +70,31 @@ namespace aruco_ros_nodelet {
             // cout<<"ms: "<< t2 - t1 <<endl;
         }    
 
-        this->test.data = !this->test.data;
-        // nodelet_pub.publish(this->test);
+        // this->test.data = !this->test.data;
+        // double t2 = ros::Time::now().toSec();
+        // cout<<"hz: "<<1 / (t2 - t1)<<endl<<endl;
+
+        // char hz[40];
+        // char fps[5] = " fps";
+        // sprintf(hz, "%.2f", 1 / (t2 - t1));
+        // strcat(hz, fps);
+        
+        // cv::putText(frame, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+
+        
+
+        // cv::Mat imageoutput = frame.clone();
+        // cv_bridge::CvImage for_visual;
+        // for_visual.header = rgbimage->header;
+        // for_visual.encoding = sensor_msgs::image_encodings::BGR8;
+        // for_visual.image = imageoutput;
+
+        // this->pubimage.publish(for_visual.toImageMsg());
+
+        test_pub.publish(this->test);
 
         // cv::imshow("aruco", this->frame);
         // cv::waitKey(20);
-
-        double t2 = ros::Time::now().toSec();
-        cout<<"hz: "<<1 / (t2 - t1)<<endl<<endl;
-
 
     }
 
@@ -199,8 +215,6 @@ namespace aruco_ros_nodelet {
 
         Eigen::Vector3d point_in_camera = R * point_3d + t;
         
-        // cout<<"check jacob: "<<fx<<"\t"<<fy<<endl<<endl;;
-
         double x_c = point_in_camera(0),
             y_c = point_in_camera(1),
             z_c = point_in_camera(2);
@@ -301,11 +315,6 @@ namespace aruco_ros_nodelet {
     {
         ArucoNodelet* pub = (ArucoNodelet*) tmp;
 
-        // int num = 1;
-        // msgs::data test_msg;
-        // for (int i = 0; i < 100000; i++) {
-        //     test_msg.a.push_back(i);
-        // }
         ros::Rate loop_rate(50);
         while (ros::ok()) 
         {

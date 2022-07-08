@@ -28,9 +28,10 @@ namespace aruco_ros_nodelet
     {
         private:
             pthread_t tid;
-            ros::Publisher nodelet_pub ;
+            ros::Publisher nodelet_pub;
+            ros::Publisher test_pub;
+            image_transport::Publisher pubimage;
             std_msgs::Bool test;
-
 
             message_filters::Subscriber<sensor_msgs::CompressedImage> subimage;
             message_filters::Subscriber<sensor_msgs::Image> subdepth;
@@ -59,27 +60,28 @@ namespace aruco_ros_nodelet
 
             void optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected);//converge problem need to be solved //-> fuck you, your Jacobian was wrong
 
-            static void* PubMainLoop(void* tmp);
-
-
             virtual void onInit() 
             {
                 ros::NodeHandle& nh = getNodeHandle();
+                
+                //publish
                 nodelet_pub = nh.advertise<std_msgs::Bool>("/obj_found",1);
+                test_pub = nh.advertise<std_msgs::Bool>("/ob_found",1);
 
                 pthread_create(&tid, NULL, ArucoNodelet::PubMainLoop, (void*)this);
 
+                image_transport::ImageTransport image_transport_(nh);
+                pubimage = image_transport_.advertise("/processed_image",1);
 
-                // PubMainLoop();
-
+                //subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
-                subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);
-                
+                subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&ArucoNodelet::camera_callback, this, _1, _2));
 
                 ROS_INFO("Aruco Nodelet Initiated...");
 
+                //parameters ini
                 body_frame_pts.push_back(Eigen::Vector3d(0.055, -0.0225, -0.010)); //LU
                 body_frame_pts.push_back(Eigen::Vector3d(0.055,  0.0225, -0.010)); //RU
                 body_frame_pts.push_back(Eigen::Vector3d(0.055,  0.0225, -0.055)); //RD
@@ -93,10 +95,11 @@ namespace aruco_ros_nodelet
                 cameraMat << 
                     fx, 0, cx, 
                     0, fy, cy,
-                    0, 0,  1;
+                    0, 0,  1;        
+            }     
 
-            }
-        
+            public:
+                static void* PubMainLoop(void* tmp);   
 
     };
     
