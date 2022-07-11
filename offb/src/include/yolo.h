@@ -88,7 +88,7 @@ namespace alan_pose_estimation{
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&CnnNodelet::camera_callback, this, _1, _2));
 
-                ROS_INFO("Aruco Nodelet Initiated...");
+                ROS_INFO("CNN Nodelet Initiated...");
             }
 
     };

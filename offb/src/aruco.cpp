@@ -105,7 +105,8 @@ void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::Comp
 
     this->pubimage.publish(for_visual.toImageMsg());
 
-    // test_pub.publish(this->test);
+    this->test.data = !this->test.data;
+    nodelet_pub.publish(this->test);
 
     // cv::imshow("aruco", this->frame);
     // cv::waitKey(20);
@@ -119,7 +120,7 @@ inline Eigen::Vector2d alan_pose_estimation::ArucoNodelet::reproject_3D_2D(Eigen
     Eigen::MatrixXd R = pose.rotationMatrix();
     Eigen::Vector3d t = pose.translation();
 
-    result = this->cameraMat * (R * P + t); //dimention not right
+    result = this->cameraMat * (R * P + t); //dimenㄋion not right
 
     Eigen::Vector2d result2d;
     
@@ -258,7 +259,7 @@ void alan_pose_estimation::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eig
 //converge problem need to be solved //-> fuck you, your Jacobian was wrong
 {
     //execute Gaussian-Newton Method
-    cout<<"Bundle Adjustment Optimization"<<endl;
+    // cout<<"Bundle Adjustment Optimization"<<endl;
 
     const int MAX_ITERATION = 400;
 
@@ -321,7 +322,7 @@ void alan_pose_estimation::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eig
             break;
     }
 
-    cout<<"gone thru: "<<i<<" th, end optimize"<<endl;;
+    // cout<<"gone thru: "<<i<<" th, end optimize"<<endl;;
 
 }
 

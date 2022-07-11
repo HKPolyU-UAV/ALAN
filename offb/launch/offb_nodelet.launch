@@ -1,6 +1,8 @@
 
 <launch>
     <node pkg="nodelet" type="nodelet" name="dadiu" args="manager" output="screen"/>
-    <node pkg="nodelet" type="nodelet" name="aruco" args="load alan_pose_estimation/ArucoNodelet dadiu" output="screen"/>
+    <node pkg="nodelet" type="nodelet" name="aruco" args="load alan_pose_estimation/ArucoNodelet dadiu" output="screen">
+        <rosparam command="load" file="$(find offb)/launch/configs/alan_pose_estimation.yaml" />
+    </node>
     <node pkg="nodelet" type="nodelet" name="cnn" args="standalone alan_pose_estimation/CnnNodelet dadiu" output="screen"/>
 </launch>

@@ -63,8 +63,32 @@ namespace alan_pose_estimation
             virtual void onInit() 
             {
                 ros::NodeHandle& nh = getNodeHandle();
+
+                //load camera intrinsics
+                Eigen::Vector4d intrinsics_value;
+                XmlRpc::XmlRpcValue intrinsics_list;
+                nh.getParam("/aruco/cam_intrinsics", intrinsics_list);                
+                                
+                for(int i = 0; i < 4; i++)
+                {
+                    intrinsics_value[i] = intrinsics_list[i];
+                }
+
+                cameraMat <<    
+                    intrinsics_value[0], 0, intrinsics_value[2], 
+                    0, intrinsics_value[1], intrinsics_value[3],
+                    0, 0,  1;               
+
+                //load LED potisions in body frame
+                XmlRpc::XmlRpcValue LED_list;
+                nh.getParam("/aruco/LED_positions", LED_list); 
+                for(int i = 0; i < LED_list.size(); i++)
+                {
+                    Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
+                    body_frame_pts.push_back(temp);
+                }
                 
-                //publish
+                //initialize publisher
                 nodelet_pub = nh.advertise<std_msgs::Bool>("/obj_found",1);
                 // test_pub = nh.advertise<std_msgs::Bool>("/ob_found",1);
 
@@ -73,29 +97,14 @@ namespace alan_pose_estimation
                 image_transport::ImageTransport image_transport_(nh);
                 pubimage = image_transport_.advertise("/processed_image",1);
 
-                //subscribe
+                //initialize subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
                 subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&ArucoNodelet::camera_callback, this, _1, _2));
 
+                    
                 ROS_INFO("Aruco Nodelet Initiated...");
-
-                //parameters ini
-                body_frame_pts.push_back(Eigen::Vector3d(0.055, -0.0225, -0.010)); //LU
-                body_frame_pts.push_back(Eigen::Vector3d(0.055,  0.0225, -0.010)); //RU
-                body_frame_pts.push_back(Eigen::Vector3d(0.055,  0.0225, -0.055)); //RD
-                body_frame_pts.push_back(Eigen::Vector3d(0.055,  -0.0225, -0.055)); //LD
-                
-                double fx = 634.023193359375,
-                        fy = 633.559814453125,
-                        cx = 641.8981323242188,
-                        cy = 387.1009521484375;
-
-                cameraMat << 
-                    fx, 0, cx, 
-                    0, fy, cy,
-                    0, 0,  1;        
             }     
 
             public:
