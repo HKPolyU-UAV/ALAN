@@ -1,11 +1,23 @@
 
 <launch>
-    <!-- <node pkg="nodelet" type="nodelet" name="dadiu" args="manager" output="screen"/>
+    <!-- VIO through flvis -->
+    <include file="$(find flvis)/launch/flvis_d455_depth.launch"/>
+
+    <!-- ROS Nodelet manager -->
+    <node pkg="nodelet" type="nodelet" name="dadiu" args="manager" output="screen"/>
+
+    <!-- ArucoNodelet -->
     <node pkg="nodelet" type="nodelet" name="aruco" args="load alan_pose_estimation/ArucoNodelet dadiu" output="screen">
         <rosparam command="load" file="$(find alan)/launch/configs/alan_pose_estimation.yaml" />
         <remap from="/alan_pose/pose"  to="/mavros/vision_pose/pose"/>
-    </node> -->
-    <!-- <node pkg="nodelet" type="nodelet" name="cnn" args="standalone alan_pose_estimation/CnnNodelet dadiu" output="screen"/> -->
-    <node pkg="nodelet" type="nodelet" name="led" args="standalone alan_pose_estimation/LedNodelet dadiu" output="screen"/>
+    </node>
+
+    <!-- CnnNodelet -->
+    <node pkg="nodelet" type="nodelet" name="cnn" args="standalone alan_pose_estimation/CnnNodelet dadiu" output="screen">
+        <rosparam command="load" file="$(find alan)/launch/configs/alan_pose_estimation.yaml" />
+    </node>
+
+    <!-- LedNodelet -->
+    <!-- <node pkg="nodelet" tycpe="nodelet" name="led" args="standalone alan_pose_estimation/LedNodelet dadiu" output="screen"/> -->
 
 </launch>

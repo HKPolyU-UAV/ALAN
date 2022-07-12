@@ -13,3 +13,12 @@ LED_positions:
   - x: 0.055
     y: -0.0225
     z: -0.055
+
+weightpath:
+  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.weights"
+
+cfgpath:
+  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.cfg"
+
+classnamepath:
+  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names"

@@ -1,7 +1,7 @@
-#ifndef LED_POSE_H
-#define LED_POSE_H
+#ifndef LED_H
+#define LED_H
 
-#include "include/led_pose.h"
+#include "include/led.h"
 
 void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
@@ -43,12 +43,12 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
     cv::imshow("after1", lowred);
     cv::waitKey(20);
 
-    // cv::inRange(frame, cv::Scalar(80,0,255), cv::Scalar(100,30,255), green);
-    // cv::Mat output;
-    // cv::bitwise_or(lowred, green, output);
-
+    cv::inRange(frame, cv::Scalar(80,0,255), cv::Scalar(100,30,255), green);
     cv::Mat output;
-    cv::inRange(frame, (0,0,255), (180, 255, 255), output);
+    cv::bitwise_or(lowred, green, output);
+
+    // cv::Mat output;
+    // cv::inRange(frame, (0,0,255), (180, 255, 255), output);
 
     cv::imshow("after", output);
     cv::waitKey(20);

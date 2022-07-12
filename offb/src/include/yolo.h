@@ -47,9 +47,9 @@ namespace alan_pose_estimation{
             // cv::String cfg_file;
             // cv::String weights_file;
             // cv::String obj_file;
-            cv::String weightpath ="/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.weights";
-            cv::String cfgpath ="/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.cfg";
-            cv::String classnamepath = "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names";
+            cv::String weightpath; 
+            cv::String cfgpath; 
+            cv::String classnamepath;
 
             cv::Mat depthdata;
 
@@ -80,8 +80,12 @@ namespace alan_pose_estimation{
             
             virtual void onInit() 
             {
-                CnnNodeletInitiate(cfgpath, weightpath, classnamepath, 0.1);
                 ros::NodeHandle& nh = getNodeHandle();
+
+                nh.getParam("/aruco/weightpath", weightpath);
+                nh.getParam("/aruco/cfgpath", cfgpath); 
+                nh.getParam("/aruco/weightpath", classnamepath);
+                CnnNodeletInitiate(cfgpath, weightpath, classnamepath, 0.1);
 
                 //subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);

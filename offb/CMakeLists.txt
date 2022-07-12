@@ -75,7 +75,7 @@ include_directories(
 add_library(alan_pose_estimation
     src/aruco.cpp
     src/yolo.cpp
-    src/led_pose.cpp)
+    src/led.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
