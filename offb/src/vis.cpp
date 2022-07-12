@@ -10,8 +10,10 @@
 #include "geometry_msgs/PointStamped.h"
 #include "visualization_msgs/Marker.h"
 
+
 #include "include/essential.h"
 #include "include/dbscan.hpp"
+#include "alan/obj.h"
 
 
 static double eps = 0.75;

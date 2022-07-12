@@ -36,6 +36,7 @@ namespace alan_pose_estimation{
         private:
 
             cv::Mat frame;
+            bool intiated = false;
 
             message_filters::Subscriber<sensor_msgs::CompressedImage> subimage;
             message_filters::Subscriber<sensor_msgs::Image> subdepth;

@@ -28,27 +28,25 @@ namespace alan_pose_estimation
     {
         private:
             pthread_t tid;
-            ros::Publisher nodelet_pub;
-            ros::Publisher test_pub;
-            image_transport::Publisher pubimage;
-            std_msgs::Bool test;
 
-            message_filters::Subscriber<sensor_msgs::CompressedImage> subimage;
-            message_filters::Subscriber<sensor_msgs::Image> subdepth;
-            typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> MySyncPolicy;
-            typedef message_filters::Synchronizer<MySyncPolicy> sync;//(MySyncPolicy(10), subimage, subdepth);
-            boost::shared_ptr<sync> sync_;
+            //publisher
+            ros::Publisher nodelet_pub;
+            ros::Publisher pubpose;
+            image_transport::Publisher pubimage;
+            
+
+            //subscriber
+            ros::Subscriber subimage;
 
             //private variables
             cv::Mat frame;
             vector<Eigen::Vector3d> body_frame_pts;
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
+            std_msgs::Bool test;
+            geometry_msgs::PoseStamped pose_estimated;
 
             //functions
-            void camera_callback(
-                const sensor_msgs::CompressedImageConstPtr & rgbimage,
-                const sensor_msgs::ImageConstPtr & depth
-            );
+            void camera_callback(const sensor_msgs::CompressedImage::ConstPtr& rgbimage);
 
             Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
 
@@ -59,6 +57,8 @@ namespace alan_pose_estimation
             void solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
 
             void optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected);//converge problem need to be solved //-> fuck you, your Jacobian was wrong
+
+            void map_SE3_to_pose(Sophus::SE3d pose);
 
             virtual void onInit() 
             {
@@ -90,6 +90,7 @@ namespace alan_pose_estimation
                 
                 //initialize publisher
                 nodelet_pub = nh.advertise<std_msgs::Bool>("/obj_found",1);
+                pubpose = nh.advertise<geometry_msgs::PoseStamped>("/alan_pose/pose", 1);
                 // test_pub = nh.advertise<std_msgs::Bool>("/ob_found",1);
 
                 pthread_create(&tid, NULL, ArucoNodelet::PubMainLoop, (void*)this);
@@ -98,10 +99,7 @@ namespace alan_pose_estimation
                 pubimage = image_transport_.advertise("/processed_image",1);
 
                 //initialize subscribe
-                subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
-                subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
-                sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
-                sync_->registerCallback(boost::bind(&ArucoNodelet::camera_callback, this, _1, _2));
+                subimage = nh.subscribe("/camera/color/image_raw/compressed", 1, &ArucoNodelet::camera_callback, this);
 
                     
                 ROS_INFO("Aruco Nodelet Initiated...");

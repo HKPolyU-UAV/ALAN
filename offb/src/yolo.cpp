@@ -1,44 +1,52 @@
-﻿#include "include/yolo.h"
+﻿#ifndef YOLO_H
+#define YOLO_H
+
+#include "include/yolo.h"
 
 void alan_pose_estimation::CnnNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
-    cv_bridge::CvImageConstPtr depth_ptr;
-    try
+    if(intiated)
     {
-        depth_ptr  = cv_bridge::toCvCopy(depth, depth->encoding);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
-    }
-    cv::Mat image_dep = depth_ptr->image;
+        cv_bridge::CvImageConstPtr depth_ptr;
+        try
+        {
+            depth_ptr  = cv_bridge::toCvCopy(depth, depth->encoding);
+        }
+        catch (cv_bridge::Exception& e)
+        {
+            ROS_ERROR("cv_bridge exception: %s", e.what());
+            return;
+        }
+        cv::Mat image_dep = depth_ptr->image;
 
-    this->getdepthdata(image_dep);
+        this->getdepthdata(image_dep);
 
-    try
-    {
-        this->frame = cv::imdecode(cv::Mat(rgbimage->data),1);
-        // res   = cv::imdecode(cv::Mat(rgbimage->data),1);
-        // gt    = cv::imdecode(cv::Mat(rgbimage->data),1);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-    }
-    cout<<frame.size()<<endl;
+        try
+        {
+            this->frame = cv::imdecode(cv::Mat(rgbimage->data),1);
+            // res   = cv::imdecode(cv::Mat(rgbimage->data),1);
+            // gt    = cv::imdecode(cv::Mat(rgbimage->data),1);
+        }
+        catch (cv_bridge::Exception& e)
+        {
+            ROS_ERROR("cv_bridge exception: %s", e.what());
+        }
+        
+        // cout<<frame.size()<<endl;
 
-    char hz[40];
-    char fps[5] = " fps";
-    sprintf(hz, "%.2f", this->appro_fps);
-    strcat(hz, fps);
-    cv::putText(frame, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
-    
-    this->rundarknet(this->frame);
-    ROS_INFO("YOLO");
-    
-    this->display(frame);
-    cv::waitKey(20);
+        char hz[40];
+        char fps[5] = " fps";
+        sprintf(hz, "%.2f", this->appro_fps);
+        strcat(hz, fps);
+        cv::putText(frame, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+        
+        this->rundarknet(this->frame);
+        // ROS_INFO("YOLO");
+        
+        this->display(this->frame);
+        // cout<<this->obj_vector.size()<<endl;
+        cv::waitKey(20);
+    }
 
     // ros::Duration(5.0).sleep();
     // cout<<frame.size<<endl;
@@ -48,11 +56,13 @@ inline void alan_pose_estimation::CnnNodelet::CnnNodeletInitiate(const cv::Strin
 {
     this->mydnn = cv::dnn::readNetFromDarknet(cfgfile, weightfile);
 
-    //opt CUDA
-    // this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
-    // this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
-    this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-    this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+    //opt CUDA or notcc
+    this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
+    this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+    intiated = true;
+    
+    // this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+    // this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
 
 }
 
@@ -101,8 +111,8 @@ void alan_pose_estimation::CnnNodelet::findboundingboxes(cv::Mat &frame)
     //    cout<<netOut[2].size()<<endl<<endl;
     double endtime = ros::Time::now().toSec();
     double deltatime = endtime - starttime;
-    cout<<"time:"<<deltatime<<endl;
-    cout<<"fps: "<<1/deltatime<<endl;
+    // cout<<"time:"<<deltatime<<endl;
+    // cout<<"fps: "<<1/deltatime<<endl;
 
     findwhichboundingboxrocks(netOutput, frame);
 }
@@ -242,3 +252,4 @@ void alan_pose_estimation::CnnNodelet::getclassname(vector<std::string> &classna
     }
 }
 
+#endif

@@ -3,6 +3,7 @@
 #include "include/camera.h"
 #include <opencv2/calib3d.hpp>
 #include "sensor_msgs/Imu.h"
+#include "alan/obj.h"
 
 static cv::Mat frame, res, gt;
 
@@ -90,7 +91,7 @@ int main(int argc, char** argv)
     ros::Publisher publish_obj_w = nh.advertise<geometry_msgs::Point>("/pose_w",1);
     ros::Publisher publish_obj_c = nh.advertise<geometry_msgs::PointStamped>("/pose_camera",1);
     ros::Publisher publish_found = nh.advertise<std_msgs::Bool>("/obj_found",1);
-    ros::Publisher publish_obj_vel = nh.advertise<offb::obj>("/obj_v", 1);
+    ros::Publisher publish_obj_vel = nh.advertise<alan::obj>("/obj_v", 1);
 
    
 

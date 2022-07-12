@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(offb)
+project(alan)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -74,7 +74,8 @@ include_directories(
 
 add_library(alan_pose_estimation
     src/aruco.cpp
-    src/yolo.cpp)
+    src/yolo.cpp
+    src/led_pose.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
@@ -121,13 +122,13 @@ target_link_libraries(imu
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES})
 
-#5
-add_executable(pnp
-   src/pnp.cpp)
-target_link_libraries(pnp
-  ${OpenCV_LIBRARIES}
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES})
+# #5
+# add_executable(pnp
+#    src/pnp.cpp)
+# target_link_libraries(pnp
+#   ${OpenCV_LIBRARIES}
+#   ${catkin_LIBRARIES}
+#   ${PCL_LIBRARIES})
 
 # add_executable(vis
 #     src/vis.cpp)

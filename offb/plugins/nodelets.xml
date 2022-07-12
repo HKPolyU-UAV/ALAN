@@ -13,4 +13,11 @@
             Launch nodelet here. CNN it is.
         </description>
     </class>
+    <class name ="alan_pose_estimation/LedNodelet" 
+        type="alan_pose_estimation::LedNodelet"
+        base_class_type="nodelet::Nodelet">
+        <description>
+            Launch nodelet here. CNN it is.
+        </description>
+    </class>
 </library> 
