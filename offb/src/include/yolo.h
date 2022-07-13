@@ -82,10 +82,14 @@ namespace alan_pose_estimation{
             {
                 ros::NodeHandle& nh = getNodeHandle();
 
-                nh.getParam("/aruco/weightpath", weightpath);
-                nh.getParam("/aruco/cfgpath", cfgpath); 
-                nh.getParam("/aruco/weightpath", classnamepath);
+                nh.getParam("/cnn/weightpath", weightpath);
+                nh.getParam("/cnn/cfgpath", cfgpath); 
+                nh.getParam("/cnn/classnamepath", classnamepath);
                 CnnNodeletInitiate(cfgpath, weightpath, classnamepath, 0.1);
+
+                // cout<<weightpath<<endl;
+                // cout<<cfgpath<<endl;
+                // cout<<classnamepath<<endl;
 
                 //subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);

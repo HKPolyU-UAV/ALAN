@@ -40,11 +40,10 @@ void alan_pose_estimation::CnnNodelet::camera_callback(const sensor_msgs::Compre
         strcat(hz, fps);
         cv::putText(frame, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
         
-        this->rundarknet(this->frame);
+        rundarknet(this->frame);
         // ROS_INFO("YOLO");
         
-        this->display(this->frame);
-        // cout<<this->obj_vector.size()<<endl;
+        display(this->frame);
         cv::waitKey(20);
     }
 
@@ -54,12 +53,16 @@ void alan_pose_estimation::CnnNodelet::camera_callback(const sensor_msgs::Compre
 
 inline void alan_pose_estimation::CnnNodelet::CnnNodeletInitiate(const cv::String cfgfile, const cv::String weightfile, const cv::String objfile, const float confidence)
 {
+    cout<<"start initiation"<<endl;
     this->mydnn = cv::dnn::readNetFromDarknet(cfgfile, weightfile);
 
     //opt CUDA or notcc
     this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
     this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
     intiated = true;
+    set_confidence = confidence;
+
+    cout<<"end   initiation"<<endl;
     
     // this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
     // this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
@@ -105,7 +108,9 @@ void alan_pose_estimation::CnnNodelet::findboundingboxes(cv::Mat &frame)
 
 
     double starttime = ros::Time::now().toSec();
+
     mydnn.forward(netOutput, net_outputNames);
+
     //    cout<<netOut[0].size()<<endl;
     //    cout<<netOut[1].size()<<endl;
     //    cout<<netOut[2].size()<<endl<<endl;
@@ -113,7 +118,6 @@ void alan_pose_estimation::CnnNodelet::findboundingboxes(cv::Mat &frame)
     double deltatime = endtime - starttime;
     // cout<<"time:"<<deltatime<<endl;
     // cout<<"fps: "<<1/deltatime<<endl;
-
     findwhichboundingboxrocks(netOutput, frame);
 }
 

@@ -24,7 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 )
 
-find_package(OpenCV 4.5 REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
