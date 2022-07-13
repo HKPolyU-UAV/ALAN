@@ -38,15 +38,15 @@
 
     "controls-color-autoexposure-auto": "false",
 
-    "controls-color-autoexposure-manual": "4.0",
+    "controls-color-autoexposure-manual": "1.0",
 
     "controls-color-backlight-compensation": "0",
 
     "controls-color-brightness": "0",
 
-    "controls-color-contrast": "50",
+    "controls-color-contrast": "100",
 
-    "controls-color-gain": "64",
+    "controls-color-gain": "128",
 
     "controls-color-gamma": "300",
 
@@ -56,7 +56,7 @@
 
     "controls-color-saturation": "64",
 
-    "controls-color-sharpness": "50",
+    "controls-color-sharpness": "100",
 
     "controls-color-white-balance-auto": "True",
 
