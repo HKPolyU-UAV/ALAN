@@ -77,11 +77,12 @@ namespace alan_pose_estimation
             {
                 ros::NodeHandle& nh = getNodeHandle();
                 //subscribe
-                // subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
-                // subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
-                // sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
-                // sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
-                frame = cv::imread("");
+                subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
+                subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
+                sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
+                sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
+
+                // frame = cv::imread("");
 
 
             }
