@@ -76,6 +76,7 @@ namespace alan_pose_estimation
             virtual void onInit()
             {
                 ros::NodeHandle& nh = getNodeHandle();
+        
                 //subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
                 subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                

@@ -29,39 +29,32 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
+    // assert(src.type() == CV_8UC3);
+    cv::imshow("before", frame);
+    cv::waitKey(20);
 
-    double t1 = ros::Time::now().toSec();     
-    
-    cv::Mat gray;
-    cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-    cv::blur(gray, gray, cv::Size(3,3));
-    
-    cv::Mat canny;
-    cv::Canny(gray, canny, 100, 200);
-    vector<vector<cv::Point> > contours;
-    vector<cv::Vec4i> hierarchy;
-    cv::findContours(canny, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
-    cv::Mat drawing = cv::Mat::zeros(canny.size(), CV_8UC3);
-    
-    
-    for( size_t i = 0; i< contours.size(); i++ )
-    {
-        // cv::Scalar color = cv::Scalar( rng.uniform(0, 256), rng.uniform(0,256), rng.uniform(0,256) );
-        drawContours( drawing, contours, (int)i, CV_RGB(255, 255, 0), 0.5, cv::LINE_8, hierarchy, 0 );
-    }
+    // markerImage = cv::imread("/home/patty/alan_ws/src/alan/offb/src/test/pnp.png");
+    cv::cvtColor(frame, frame, cv::COLOR_RGB2HSV);
+    // // cv::imshow("pnp start", markerImage);
+    // // cv::waitKey(0);
 
-    double t2 = ros::Time::now().toSec();
-    
-    char hz[40];
-    char fps[5] = " fps";
-    sprintf(hz, "%.2f", 1 / (t2 - t1));
-    strcat(hz, fps);
-    cv::putText(drawing, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));     
+    cv::Mat lowred, green;
+    cv::inRange(frame, cv::Scalar(20,0,255), cv::Scalar(40,30,255), lowred);
+    cv::imshow("after1", lowred);
+    cv::waitKey(20);
 
-    cv::imshow("led first", drawing);
-    cv::waitKey(1000/60);
+    cv::inRange(frame, cv::Scalar(80,0,255), cv::Scalar(100,30,255), green);
+    cv::Mat output;
+    cv::bitwise_or(lowred, green, output);
 
+    // cv::Mat output;
+    // cv::inRange(frame, (0,0,255), (180, 255, 255), output);
 
+    cv::imshow("after", output);
+    cv::waitKey(20);
+
+    // cv::imshow("after", frame);
+    // cv::waitKey(20);
 }
 
 vector<alan_pose_estimation::Match> alan_pose_estimation::LedNodelet::solution(vector<cv::Point> measured, vector<cv::Point> previous )
