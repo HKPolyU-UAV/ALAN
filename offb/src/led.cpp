@@ -21,9 +21,7 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
 
     try
     {
-        frame = cv::imdecode(cv::Mat(rgbimage->data),1);
-        // res   = cv::imdecode(cv::Mat(rgbimage->data),1);
-        // gt    = cv::imdecode(cv::Mat(rgbimage->data),1);
+        frame = cv::imdecode(cv::Mat(rgbimage->data), 1);
     }
     catch (cv_bridge::Exception& e)
     {
@@ -60,7 +58,6 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
 
     cv::imshow("led first", drawing);
     cv::waitKey(1000/60);
-
 
 }
 
