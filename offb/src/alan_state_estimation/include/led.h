@@ -87,7 +87,6 @@ namespace alan_pose_estimation
 
                 // frame = cv::imread("");
 
-
             }
 
     };

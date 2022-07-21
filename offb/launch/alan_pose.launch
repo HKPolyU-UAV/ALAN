@@ -14,14 +14,14 @@
     </node>
 
     <!-- CnnNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="cnn" args="standalone alan_pose_estimation/CnnNodelet alan_pose" output="screen">
+    <node pkg="nodelet" type="nodelet" name="cnn" args="standalone alan_pose_estimation/CnnNodelet alan_pose" output="screen">
         <rosparam command="load" file="$(find alan)/launch/configs/alan_pose_estimation.yaml" />
         <param name="/weightpath"    type="string" value="$(find alan)/src/include/yolo/uav_new.weights"/>
         <param name="/cfgpath"       type="string" value="$(find alan)/src/include/yolo/uav_new.cfg    "/>
         <param name="/classnamepath" type="string" value="$(find alan)/src/include/yolo/uav.names      "/>
-    </node> -->
+    </node>
 
     <!-- LedNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="led" args="standalone alan_pose_estimation/LedNodelet alan_pose" output="screen"/> -->
+    <node pkg="nodelet" type="nodelet" name="led" args="standalone alan_pose_estimation/LedNodelet alan_pose" output="screen"/>
 
 </launch>

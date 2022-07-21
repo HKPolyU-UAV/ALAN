@@ -73,9 +73,9 @@ include_directories(
 )
 
 add_library(alan_pose_estimation
-    src/aruco.cpp
-    src/yolo.cpp
-    src/led.cpp)
+    src/alan_state_estimation/aruco.cpp
+    src/alan_state_estimation/yolo.cpp
+    src/alan_state_estimation/led.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
@@ -108,7 +108,7 @@ target_link_libraries(
 
 #3
 add_executable(kf
-   src/kf.cpp)
+   src/alan_state_estimation/kf.cpp)
 target_link_libraries(kf
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
@@ -116,7 +116,7 @@ target_link_libraries(kf
 
 #4
 add_executable(imu
-   src/imu.cpp)
+   src/alan_state_estimation/imu.cpp)
 target_link_libraries(imu
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
