@@ -1,3 +1,6 @@
+//the aruco library is used for baseline validations as well as trial and error of algorithms
+//Author: Li-Yu LO
+
 #ifndef ARUCO_H
 #define ARUCO_H
 #include "include/aruco.h"
@@ -17,10 +20,12 @@ void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::Comp
     }
 
     cv::Mat image_dep = depth_ptr->image;
+    cv::Mat test;
 
     try
     {
         frame = cv::imdecode(cv::Mat(rgbimage->data), 1);
+        test = frame.clone();
     }
     catch (cv_bridge::Exception& e)
     {
@@ -28,10 +33,12 @@ void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::Comp
     }
 
     // std::cout<<frame.size()<<std::endl;
+    // std::cout<<image_dep.size()<<std::endl;
 
     double t1 = ros::Time::now().toSec();  
 
-    pose_w_aruco_pnp(frame);
+    pose_w_aruco_icp(frame, image_dep);
+    // pose_w_aruco_pnp(test);//, image_dep);
 
     double t2 = ros::Time::now().toSec();
    
@@ -62,6 +69,7 @@ void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::Comp
 //pnp + BA implementation
 void alan_pose_estimation::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
 {
+
     vector<Eigen::Vector2d> pts_2d_detect;
     if(aruco_detect(frame, pts_2d_detect))
     {
@@ -95,7 +103,7 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
             cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
         }
 
-        map_SE3_to_pose(pose);
+        // map_SE3_to_pose(pose);
     }    
 
 }
@@ -135,7 +143,7 @@ inline Eigen::Vector2d alan_pose_estimation::ArucoNodelet::reproject_3D_2D(Eigen
     Eigen::Matrix3d R = pose.rotationMatrix();
     Eigen::Vector3d t = pose.translation();
 
-    result = this->cameraMat * (R * P + t); //dimenㄋion not right
+    result = this->cameraMat * (R * P + t); //dimension not right
 
     Eigen::Vector2d result2d;
     
@@ -190,10 +198,17 @@ void alan_pose_estimation::ArucoNodelet::solvepnp(vector<Eigen::Vector2d> pts_2d
         rmat.at<double>(0,0), rmat.at<double>(0,1), rmat.at<double>(0,2),
         rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
         rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
+
+
     t <<
         tvec(0),
         tvec(1),
         tvec(2); 
+
+    // cout<<"PnP: "<<R<<endl<<endl;;
+
+    // cout<<"PnP: "<<t<<endl<<endl;;
+
 }
 
 bool alan_pose_estimation::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& pts_2d)
@@ -369,6 +384,8 @@ void* alan_pose_estimation::ArucoNodelet::PubMainLoop(void* tmp)
     }
 }
 
+
+
 //ICP
 void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv::Mat& depthframe)
 {
@@ -376,7 +393,13 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv:
 
     if(aruco_detect(rgbframe, pts_2d_detect))
     {
-        vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect);
+        vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depthframe);  
+
+        // for(auto what : pts_3d_pcl_detect)
+        // {
+        //     cout<<what<<endl;
+        // }      
+        // cout<<endl;
 
         Eigen::Vector3d t;
         Eigen::Matrix3d R;
@@ -391,19 +414,36 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv:
         else
             pose = Sophus::SE3d(R,t);
 
+        double e = 0;
+        Eigen::Vector2d reproject, error; 
 
-        //draw initial pose estimation
-        // for(auto what : body_frame_pts)
-        // {
-        //     Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
-        //     cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
-        // }
+        for(int i = 0 ; i < body_frame_pts.size(); i++)
+        {
+            reproject = reproject_3D_2D(body_frame_pts[i], pose);  
+            error = pts_2d_detect[i] - reproject;
+            e = e + error.norm();
+        }
 
+        cout<<"error: "<<e<<endl;
 
         for(auto what : body_frame_pts)
         {
             Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
-            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
+        }
+
+        if(e > 20.0)
+        {
+            cout<<"use pnp instead"<<endl;
+            use_pnp_instead(frame, pts_2d_detect, pose);
+        }
+
+        // optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
+
+        for(auto what : body_frame_pts)
+        {
+            Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
+            // cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
         }
 
         map_SE3_to_pose(pose);
@@ -411,14 +451,155 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv:
 
 }
 
-void alan_pose_estimation::ArucoNodelet::solveicp(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+void alan_pose_estimation::ArucoNodelet::use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, Sophus::SE3d& pose)
 {
+    Eigen::Vector3d t;
+    Eigen::Matrix3d R;
+
+    solvepnp(pts_2d_detect, body_frame_pts, R, t);
+    
+    //generate noise to validate BA
+    Sophus::SE3d pose_;
+    if(add_noise)
+        pose_ = pose_add_noise(t,R);
+    else
+        pose_ = Sophus::SE3d(R,t);
+
+
+    optimize(pose_, body_frame_pts, pts_2d_detect);
+
+    pose = pose_;
 
 }
 
-vector<Eigen::Vector3d> alan_pose_estimation::ArucoNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected)
+void alan_pose_estimation::ArucoNodelet::solveicp(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
+    //here we assume known correspondences
 
+    //SVD Solution proposed in ->
+    //Arun, K. Somani, Thomas S. Huang, and Steven D. Blostein. 
+    //"Least-squares fitting of two 3-D point sets." 
+    //IEEE Transactions on pattern analysis and machine intelligence 5 (1987): 698-700.
+    
+    // cout<<"enter icp"<<endl;
+
+
+    Eigen::Vector3d CoM_camera = get_CoM(pts_3d_camera);
+    Eigen::Vector3d CoM_body   = get_CoM(pts_3d_body);
+
+    // cout<<"enter 0"<<endl;
+
+    int no_of_paired_points = pts_3d_body.size();
+
+    vector<Eigen::Vector3d> q(no_of_paired_points), q_(no_of_paired_points);
+
+    // cout<<"enter 1"<<endl;
+    
+    for(int i = 0; i < no_of_paired_points; i++)
+    {
+        q [i] = pts_3d_body[i]   - CoM_body;   //R3*1
+        q_[i] = pts_3d_camera[i] - CoM_camera; //R3*3
+    }
+    
+    // cout<<"icp half"<<endl;
+
+    Eigen::Matrix3d H = Eigen::Matrix3d::Zero();
+
+    for (int i = 0 ; i < no_of_paired_points; i++)
+    {
+        H += Eigen::Vector3d(q_[i].x(), q_[i].y(), q_[i].z()) 
+             * Eigen::Vector3d(q[i].x(), q[i].y(), q[i].z()).transpose();
+    }
+
+    //solve SVD
+    Eigen::JacobiSVD<Eigen::Matrix3d> svd(H, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::Matrix3d U = svd.matrixU();
+    Eigen::Matrix3d V = svd.matrixV();
+
+    Eigen::Matrix3d R_ = U * V.transpose();
+
+    if(R_.determinant() < 0)
+    {
+        // cout<<"R.det < 0" <<endl;
+        R_ = -R_;
+    }
+
+    R = R_;
+    t = CoM_camera  - R * CoM_body;
+}
+
+Eigen::Vector3d alan_pose_estimation::ArucoNodelet::get_CoM(vector<Eigen::Vector3d> pts_3d)
+{
+    double x = 0, y = 0, z = 0;
+    for(int i = 0; i < pts_3d.size(); i++)
+    {
+        x = x + pts_3d[i].x();
+        y = y + pts_3d[i].y();
+        z = z + pts_3d[i].z();
+    }
+
+    Eigen::Vector3d CoM = Eigen::Vector3d(
+        x / pts_3d.size(),
+        y / pts_3d.size(),
+        z / pts_3d.size());
+    
+    // cout<<"CoM: "<<CoM<<endl;
+
+    return CoM;
+}
+
+vector<Eigen::Vector3d> alan_pose_estimation::ArucoNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
+{
+    //get 9 pixels around the point of interest
+
+    int no_pixels = 9;
+    int POI_width = (sqrt(9) - 1 ) / 2;
+
+    vector<Eigen::Vector3d> pointclouds;
+
+    int x_pixel, y_pixel;
+    Eigen::Vector3d temp;
+
+    for(int i = 0; i < pts_2d_detected.size(); i++)
+    {
+
+        x_pixel = pts_2d_detected[i].x();
+        y_pixel = pts_2d_detected[i].y();
+        
+        cv::Point depthbox_vertice1 = cv::Point(x_pixel - POI_width, y_pixel - POI_width);
+        cv::Point depthbox_vertice2 = cv::Point(x_pixel + POI_width, y_pixel + POI_width);
+        cv::Rect letsgetdepth(depthbox_vertice1, depthbox_vertice2);
+
+        cv::Mat ROI(depthimage, letsgetdepth);
+        cv::Mat ROIframe;
+        ROI.copyTo(ROIframe);
+        vector<cv::Point> nonzeros;
+
+        cv::findNonZero(ROIframe, nonzeros);
+        vector<double> nonzerosvalue;
+        for(auto temp : nonzeros)
+        {
+            double depth = ROIframe.at<ushort>(temp);
+            nonzerosvalue.push_back(depth);
+        }
+
+        double depth_average;
+        if(nonzerosvalue.size() != 0)
+            depth_average = accumulate(nonzerosvalue.begin(), nonzerosvalue.end(),0.0)/nonzerosvalue.size();
+
+        double z_depth = 0.001 * depth_average;
+
+        temp.x() = x_pixel;
+        temp.y() = y_pixel;
+        temp.z() = 1;
+
+        temp = z_depth * cameraMat.inverse() * temp;
+
+        
+        pointclouds.push_back(temp);
+    }
+
+    return pointclouds;
 }
 
 #endif

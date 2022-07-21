@@ -48,7 +48,7 @@ namespace alan_pose_estimation
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             std_msgs::Bool test;
             geometry_msgs::PoseStamped pose_estimated;
-            bool add_noise = false;
+            bool add_noise = false;            
 
 
             //functions
@@ -71,12 +71,16 @@ namespace alan_pose_estimation
 
             Sophus::SE3d pose_add_noise(Eigen::Vector3d t, Eigen::Matrix3d R);
 
+            void use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, Sophus::SE3d& pose);
+
             //ICP
             void pose_w_aruco_icp(cv::Mat& rgbframe, cv::Mat& depthframe);
 
             void solveicp(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
 
-            vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected);
+            vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
+
+            Eigen::Vector3d get_CoM(vector<Eigen::Vector3d> pts_3d);
 
 
             virtual void onInit() 
@@ -86,7 +90,7 @@ namespace alan_pose_estimation
                 //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
-                nh.getParam("/aruco/cam_intrinsics", intrinsics_list);                
+                nh.getParam("/aruco/cam_intrinsics_455", intrinsics_list);                
                                 
                 for(int i = 0; i < 4; i++)
                 {
@@ -96,7 +100,10 @@ namespace alan_pose_estimation
                 cameraMat <<    
                     intrinsics_value[0], 0, intrinsics_value[2], 
                     0, intrinsics_value[1], intrinsics_value[3],
-                    0, 0,  1;               
+                    0, 0,  1;    
+
+                cout<<cameraMat.inverse()<<endl;
+
 
                 //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
