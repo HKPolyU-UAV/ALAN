@@ -2,21 +2,66 @@
 #define ARUCO_H
 #include "include/aruco.h"
 
-void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr& rgbimage)
+void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
+//void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr& rgbimage)
 {
+    cv_bridge::CvImageConstPtr depth_ptr;
     try
     {
-        this->frame = cv::imdecode(cv::Mat(rgbimage->data),1);
+        depth_ptr  = cv_bridge::toCvCopy(depth, depth->encoding);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+    }
+
+    cv::Mat image_dep = depth_ptr->image;
+
+    try
+    {
+        frame = cv::imdecode(cv::Mat(rgbimage->data), 1);
     }
     catch (cv_bridge::Exception& e)
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
+
     // std::cout<<frame.size()<<std::endl;
 
-    double t1 = ros::Time::now().toSec();     
+    double t1 = ros::Time::now().toSec();  
+
+    pose_w_aruco_pnp(frame);
+
+    double t2 = ros::Time::now().toSec();
+   
+    char hz[40];
+    char fps[5] = " fps";
+    sprintf(hz, "%.2f", 1 / (t2 - t1));
+    strcat(hz, fps);
+    cv::putText(frame, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+    cv::Mat imageoutput = frame.clone();
+    cv_bridge::CvImage for_visual;
+    for_visual.header = rgbimage->header;
+    for_visual.encoding = sensor_msgs::image_encodings::BGR8;
+    for_visual.image = imageoutput;
+
+    this->pubimage.publish(for_visual.toImageMsg());
+
+    // this->test.data = !this->test.data;
+    // nodelet_pub.publish(this->test);
+
+    // cv::imshow("aruco", this->frame);
+    // cv::waitKey(20);
+
+}
 
 
+
+
+//pnp + BA implementation
+void alan_pose_estimation::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
+{
     vector<Eigen::Vector2d> pts_2d_detect;
     if(aruco_detect(frame, pts_2d_detect))
     {
@@ -27,30 +72,14 @@ void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::Comp
         
 
         //generate noise to validate BA
-        // double noise;
-        
-        // std::default_random_engine generator;
-        // std::normal_distribution<double> dist(0, 0.32);
-
-        // generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-        // noise = dist(generator);   
-                
-        // Eigen::AngleAxisd rollAngle(0.872 * noise, Eigen::Vector3d::UnitZ());
-        // Eigen::AngleAxisd yawAngle(0.872 * noise, Eigen::Vector3d::UnitY());
-        // Eigen::AngleAxisd pitchAngle(0.872 * noise, Eigen::Vector3d::UnitX());
-
-        // Eigen::Quaternion<double> q = rollAngle * yawAngle * pitchAngle;
-        // Eigen::Matrix3d rotationMatrix = q.matrix();
-
-        // R = R * rotationMatrix;
-
-        // Eigen::Vector3d error(0.1 * noise, 0.1 * noise, 0.1 * noise);
-        // t = t + error;
+        Sophus::SE3d pose;
+        if(add_noise)
+            pose = pose_add_noise(t,R);
+        else
+            pose = Sophus::SE3d(R,t);
 
 
-        Sophus::SE3d pose(R,t);
-
-
+        //draw initial pose estimation
         // for(auto what : body_frame_pts)
         // {
         //     Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
@@ -67,35 +96,36 @@ void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::Comp
         }
 
         map_SE3_to_pose(pose);
-
-        // cout<<"ms: "<< t2 - t1 <<endl;
     }    
 
-    // this->test.data = !this->test.data;
-    double t2 = ros::Time::now().toSec();
-    // cout<<"hz: "<<1 / (t2 - t1)<<endl<<endl;
+}
 
-    char hz[40];
-    char fps[5] = " fps";
-    sprintf(hz, "%.2f", 1 / (t2 - t1));
-    strcat(hz, fps);
-    cv::putText(frame, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
-    cv::Mat imageoutput = frame.clone();
-    cv_bridge::CvImage for_visual;
-    for_visual.header = rgbimage->header;
-    for_visual.encoding = sensor_msgs::image_encodings::BGR8;
-    for_visual.image = imageoutput;
+inline Sophus::SE3d alan_pose_estimation::ArucoNodelet::pose_add_noise(Eigen::Vector3d t, Eigen::Matrix3d R)
+{
+    //generate noise to validate BA
+    double noise;
+    
+    std::default_random_engine generator;
+    std::normal_distribution<double> dist(0, 0.32);
 
-    this->pubimage.publish(for_visual.toImageMsg());
+    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+    noise = dist(generator);   
+            
+    Eigen::AngleAxisd rollAngle(0.872 * noise, Eigen::Vector3d::UnitZ());
+    Eigen::AngleAxisd yawAngle(0.872 * noise, Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd pitchAngle(0.872 * noise, Eigen::Vector3d::UnitX());
 
+    Eigen::Quaternion<double> q = rollAngle * yawAngle * pitchAngle;
+    Eigen::Matrix3d rotationMatrix = q.matrix();
 
+    R = R * rotationMatrix;
 
-    // this->test.data = !this->test.data;
-    // nodelet_pub.publish(this->test);
+    Eigen::Vector3d error(0.1 * noise, 0.1 * noise, 0.1 * noise);
+    t = t + error;
 
-    // cv::imshow("aruco", this->frame);
-    // cv::waitKey(20);
-
+    Sophus::SE3d pose_with_noise(R,t);
+    
+    return pose_with_noise;
 }
 
 inline Eigen::Vector2d alan_pose_estimation::ArucoNodelet::reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
@@ -337,6 +367,58 @@ void* alan_pose_estimation::ArucoNodelet::PubMainLoop(void* tmp)
         ros::spinOnce();
         loop_rate.sleep();
     }
+}
+
+//ICP
+void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv::Mat& depthframe)
+{
+    vector<Eigen::Vector2d> pts_2d_detect;
+
+    if(aruco_detect(rgbframe, pts_2d_detect))
+    {
+        vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect);
+
+        Eigen::Vector3d t;
+        Eigen::Matrix3d R;
+
+        solveicp(pts_3d_pcl_detect, body_frame_pts, R, t);
+        
+
+        //generate noise to validate BA
+        Sophus::SE3d pose;
+        if(add_noise)
+            pose = pose_add_noise(t,R);
+        else
+            pose = Sophus::SE3d(R,t);
+
+
+        //draw initial pose estimation
+        // for(auto what : body_frame_pts)
+        // {
+        //     Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
+        //     cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
+        // }
+
+
+        for(auto what : body_frame_pts)
+        {
+            Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
+            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+        }
+
+        map_SE3_to_pose(pose);
+    }    
+
+}
+
+void alan_pose_estimation::ArucoNodelet::solveicp(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+{
+
+}
+
+vector<Eigen::Vector3d> alan_pose_estimation::ArucoNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected)
+{
+
 }
 
 #endif
