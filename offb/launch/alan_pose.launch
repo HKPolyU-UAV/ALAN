@@ -7,11 +7,11 @@
     <node pkg="nodelet" type="nodelet" name="alan_pose" args="manager" output="screen"/>
 
     <!-- ArucoNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="aruco" args="load alan_pose_estimation/ArucoNodelet alan_pose" output="screen">
+    <node pkg="nodelet" type="nodelet" name="aruco" args="load alan_pose_estimation/ArucoNodelet alan_pose" output="screen">
         <rosparam command="load" file="$(find alan)/launch/configs/alan_pose_estimation.yaml" />
 
         <remap from="/alan_pose/pose"  to="/mavros/vision_pose/pose"/>
-    </node> -->
+    </node>
 
     <!-- CnnNodelet -->
     <!-- <node pkg="nodelet" type="nodelet" name="cnn" args="standalone alan_pose_estimation/CnnNodelet alan_pose" output="screen">
@@ -22,6 +22,6 @@
     </node> -->
 
     <!-- LedNodelet -->
-    <node pkg="nodelet" type="nodelet" name="led" args="standalone alan_pose_estimation/LedNodelet alan_pose" output="screen"/>
+    <!-- <node pkg="nodelet" type="nodelet" name="led" args="standalone alan_pose_estimation/LedNodelet alan_pose" output="screen"/> -->
 
 </launch>

@@ -26,44 +26,36 @@ void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::Comp
         solvepnp(pts_2d_detect, body_frame_pts, R, t);
         
 
-        //generate noise
-        double noise;
+        //generate noise to validate BA
+        // double noise;
         
-        
-        std::default_random_engine generator;
-        std::normal_distribution<double> dist(0, 0.32);
+        // std::default_random_engine generator;
+        // std::normal_distribution<double> dist(0, 0.32);
 
-        generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-        noise = dist(generator);   
+        // generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+        // noise = dist(generator);   
                 
-        // cout<<noise<<endl; 
+        // Eigen::AngleAxisd rollAngle(0.872 * noise, Eigen::Vector3d::UnitZ());
+        // Eigen::AngleAxisd yawAngle(0.872 * noise, Eigen::Vector3d::UnitY());
+        // Eigen::AngleAxisd pitchAngle(0.872 * noise, Eigen::Vector3d::UnitX());
 
-        Eigen::AngleAxisd rollAngle(0.872 * noise, Eigen::Vector3d::UnitZ());
+        // Eigen::Quaternion<double> q = rollAngle * yawAngle * pitchAngle;
+        // Eigen::Matrix3d rotationMatrix = q.matrix();
 
-        // noise = - 1 + 2 * ((float)rand()) / RAND_MAX;
-        Eigen::AngleAxisd yawAngle(0.872 * noise, Eigen::Vector3d::UnitY());
+        // R = R * rotationMatrix;
 
-        // noise = - 1 + 2 * ((float)rand()) / RAND_MAX;
-        Eigen::AngleAxisd pitchAngle(0.872 * noise, Eigen::Vector3d::UnitX());
+        // Eigen::Vector3d error(0.1 * noise, 0.1 * noise, 0.1 * noise);
+        // t = t + error;
 
-        Eigen::Quaternion<double> q = rollAngle * yawAngle * pitchAngle;
-
-        Eigen::Matrix3d rotationMatrix = q.matrix();
-        R = R * rotationMatrix;
-
-        // noise = - 1 + 2 * ((float)rand()) / RAND_MAX;
-        // cout<<noise<<endl;
-        Eigen::Vector3d error(0.1 * noise, 0.1 * noise, 0.1 * noise);
-        t = t + error;
 
         Sophus::SE3d pose(R,t);
 
 
-        for(auto what : body_frame_pts)
-        {
-            Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
-            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
-        }
+        // for(auto what : body_frame_pts)
+        // {
+        //     Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
+        //     cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
+        // }
 
         if(body_frame_pts.size() == pts_2d_detect.size())
             optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
@@ -315,7 +307,7 @@ void alan_pose_estimation::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eig
             break;
     }
 
-    // cout<<"gone thru: "<<i<<" th, end optimize"<<endl;;
+    cout<<"gone thru: "<<i<<" th, end optimize"<<endl;;
 
 }
 

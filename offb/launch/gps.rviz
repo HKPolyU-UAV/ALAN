@@ -9,6 +9,7 @@ Panels:
         - /Grid1
         - /Pose1
         - /Pose2
+        - /Axes1
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz/Selection
@@ -56,8 +57,8 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: true
     - Alpha: 1
-      Axes Length: 4
-      Axes Radius: 0.10000000149011612
+      Axes Length: 1
+      Axes Radius: 0.5
       Class: rviz/Pose
       Color: 255; 25; 0
       Enabled: true
@@ -87,6 +88,15 @@ Visualization Manager:
       Topic: /mavros/local_position/pose
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Class: rviz/Axes
+      Enabled: true
+      Length: 5
+      Name: Axes
+      Radius: 0.20000000298023224
+      Reference Frame: <Fixed Frame>
+      Show Trail: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 213; 209; 191
@@ -115,7 +125,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 71.77252197265625
+      Distance: 2.9661073684692383
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -123,17 +133,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -49.45783996582031
-        Y: 13.817523956298828
-        Z: 14.688931465148926
+        X: -39.76084518432617
+        Y: 31.350826263427734
+        Z: 18.85064125061035
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8452025651931763
+      Pitch: 0.5202027559280396
       Target Frame: <Fixed Frame>
-      Yaw: 2.0772392749786377
+      Yaw: 2.247241258621216
     Saved: ~
 Window Geometry:
   Displays:
