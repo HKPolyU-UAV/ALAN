@@ -24,6 +24,7 @@
 
 
 
+
 namespace alan_pose_estimation
 {
     typedef struct Match
@@ -37,6 +38,7 @@ namespace alan_pose_estimation
         private:
 
             cv::Mat frame;
+            double LANDING_DISTANCE = 0;
 
             message_filters::Subscriber<sensor_msgs::CompressedImage> subimage;
             message_filters::Subscriber<sensor_msgs::Image> subdepth;
@@ -46,6 +48,15 @@ namespace alan_pose_estimation
 
             void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth);
             
+            //solve pose
+            void pose_w_LED_pnp(cv::Mat& frame, cv::Mat depth);            
+
+            //LED extraction
+            void LED_extract_POI(cv::Mat& frame, cv::Mat depth);
+
+            void LED_tracking();
+
+
             //Munkres
             void cost_generate(vector<cv::Point> detected, vector<cv::Point> previous);
             vector<Match> solution(vector<cv::Point> measured, vector<cv::Point> previous);//return the corresponding ids
@@ -78,15 +89,15 @@ namespace alan_pose_estimation
             virtual void onInit()
             {
                 ros::NodeHandle& nh = getNodeHandle();
+
+                nh.getParam("/alan_pose/LANDING_DISTANCE", LANDING_DISTANCE);     
+                cout<<"hi"<<LANDING_DISTANCE<<endl;           
         
                 //subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
                 subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
-                sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
-
-                // frame = cv::imread("");
-
+                sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));               
             }
 
     };

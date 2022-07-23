@@ -3,14 +3,12 @@
 
 #include "include/led.h"
 
-
-void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
+void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbmsg, const sensor_msgs::ImageConstPtr & depthmsg)
 {
-
     cv_bridge::CvImageConstPtr depth_ptr;
     try
     {
-        depth_ptr  = cv_bridge::toCvCopy(depth, depth->encoding);
+        depth_ptr  = cv_bridge::toCvCopy(depthmsg, depthmsg->encoding);
     }
     catch (cv_bridge::Exception& e)
     {
@@ -18,48 +16,130 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
         return;
     }
 
-    cv::Mat image_dep = depth_ptr->image;
+    cv::Mat depth = depth_ptr->image;
 
     try
     {
-        frame = cv::imdecode(cv::Mat(rgbimage->data), 1);
+        frame = cv::imdecode(cv::Mat(rgbmsg->data), 1);
     }
     catch (cv_bridge::Exception& e)
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
 
-    double t1 = ros::Time::now().toSec();     
-    
-    cv::Mat gray;
-    cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-    cv::blur(gray, gray, cv::Size(3,3));
-    
-    cv::Mat canny;
-    cv::Canny(gray, canny, 100, 200);
-    vector<vector<cv::Point> > contours;
-    vector<cv::Vec4i> hierarchy;
-    cv::findContours(canny, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
-    cv::Mat drawing = cv::Mat::zeros(canny.size(), CV_8UC3);
-    
-    
-    for( size_t i = 0; i< contours.size(); i++ )
-    {
-        // cv::Scalar color = cv::Scalar( rng.uniform(0, 256), rng.uniform(0,256), rng.uniform(0,256) );
-        drawContours( drawing, contours, (int)i, CV_RGB(255, 255, 0), 0.5, cv::LINE_8, hierarchy, 0 );
-    }
+    double t1 = ros::Time::now().toSec(); 
 
+    pose_w_LED_pnp(frame, depth);
+    
     double t2 = ros::Time::now().toSec();
     
     char hz[40];
     char fps[5] = " fps";
     sprintf(hz, "%.2f", 1 / (t2 - t1));
     strcat(hz, fps);
-    cv::putText(drawing, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));     
+    // cv::putText(frame, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));  
 
-    cv::imshow("led first", drawing);
-    cv::waitKey(1000/60);
+    cout<<hz<<endl;
 
+    // cv::imshow("thres_depth_final", depth_mask_src);
+    // cv::waitKey(20);
+
+    // cv::imshow("led first___", drawing);
+    // cv::waitKey(20);
+
+    // cv::imshow("led first", frame);
+    // cv::waitKey(1000/60);
+
+}
+
+void alan_pose_estimation::LedNodelet::pose_w_LED_pnp(cv::Mat& frame, cv::Mat depth)
+{
+    //vector<Eigen::Vector3d> pts_3d_LED_camera =
+    LED_extract_POI(frame, depth);
+    
+
+}
+
+void alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
+{
+    // frame.resize(frame.rows * 2, frame.cols * 2, cv::INTER_LINEAR);
+    // cv::resize(frame, frame, cv::Size(frame.cols * 2, frame.rows * 2), 0, 0, cv::INTER_LINEAR);
+    // cv::resize(depth, depth, cv::Size(depth.cols * 2, depth.rows * 2), 0, 0, cv::INTER_LINEAR);
+    // cout<<frame.size<<endl;
+    // depth.resize(depth.rows * 2, depth.cols * 2, cv::INTER_LINEAR);
+
+    cv::Mat depth_mask_src = depth.clone(), depth_mask_dst1, depth_mask_dst2;
+
+    cv::threshold(depth_mask_src, depth_mask_dst1, LANDING_DISTANCE * 1000, 50000, cv::THRESH_BINARY_INV);
+
+    cv::threshold(depth_mask_src, depth_mask_dst2, 0.5, 50000, cv::THRESH_BINARY);
+
+    cv::bitwise_and(depth_mask_dst1, depth_mask_dst2, depth_mask_src);
+    
+    depth_mask_src.convertTo(depth_mask_src, CV_8U);
+
+    //contour method
+
+    // cv::Mat gray;
+    // cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+    // cv::blur(gray, gray, cv::Size(3,3));
+    
+    // cv::Mat canny;
+    // cv::Canny(gray, canny, 100, 200);
+    // vector<vector<cv::Point> > contours;
+    // vector<cv::Vec4i> hierarchy;
+    // cv::findContours(canny, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+    // cv::Mat drawing = cv::Mat::zeros(canny.size(), CV_8UC3);
+        
+    // for( size_t i = 0; i< contours.size(); i++ )
+    // {
+    //     drawContours( drawing, contours, (int)i, CV_RGB(255, 255, 0), 0.5, cv::LINE_8, hierarchy, 0 );
+    // }
+    
+    // cv::cvtColor(drawing, drawing, cv::COLOR_RGB2GRAY);
+    // cv::threshold(drawing, drawing, 100, 255, cv::THRESH_BINARY);
+    
+    // cv::Mat final;// = drawing;
+
+    // cv::bitwise_and(depth_mask_src, drawing, final);
+
+    // cv::imshow("led first", frame);
+    // cv::waitKey(1000/60);
+
+    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    cv::threshold(frame, frame, 220, 255, cv::THRESH_BINARY);
+
+
+    // Blob method
+    vector<cv::KeyPoint> keypoints_rgb_d, keypoints_rgb;
+	cv::SimpleBlobDetector::Params params;
+
+	params.filterByArea = false;
+    params.filterByColor = false;
+	params.filterByCircularity = false;
+	params.filterByConvexity = false;
+	params.filterByInertia = false;
+    params.minDistBetweenBlobs = 1;
+
+	cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);   
+    cv::Mat im_with_keypoints;
+
+    //detect frame before filter out background
+	// detector->detect( frame, keypoints_rgb);
+	// cv::drawKeypoints( frame, keypoints_rgb, im_with_keypoints,CV_RGB(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+    // cv::imshow("keypoints", im_with_keypoints );
+	// cv::waitKey(20);
+
+    //detect frame after filter out background
+    cv::bitwise_and(depth_mask_src, frame, frame); //filter out with depth information
+    
+    detector->detect(frame, keypoints_rgb_d);
+	cv::drawKeypoints( frame, keypoints_rgb_d, im_with_keypoints,CV_RGB(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+    // cout<<keypoints.size()<<endl;
+    // cv::drawKeypoints()
+	// Show blobs
+	// cv::imshow("keypoints2", im_with_keypoints );
+	// cv::waitKey(20);
 }
 
 vector<alan_pose_estimation::Match> alan_pose_estimation::LedNodelet::solution(vector<cv::Point> measured, vector<cv::Point> previous )

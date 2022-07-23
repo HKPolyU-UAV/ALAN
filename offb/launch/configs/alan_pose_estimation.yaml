@@ -23,3 +23,6 @@ cfgpath:
 
 classnamepath:
   "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names"
+
+LANDING_DISTANCE:
+  1.6

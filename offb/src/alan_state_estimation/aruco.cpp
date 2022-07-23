@@ -32,6 +32,20 @@ void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::Comp
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
 
+    // if(temp_i < 4)
+    // {
+    //     if(temp_i<1)
+    //     {
+    //         ofstream save("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/test.txt", ios::app); 
+    //         save<<image_dep<<endl;
+    //         save.close();
+    //     }
+    //     cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/" + to_string(temp_i) + ".png", frame);
+    //     cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/" + to_string(temp_i) + "_d.png", image_dep);
+    // }
+
+    // temp_i ++ ;
+
     // std::cout<<frame.size()<<std::endl;
     // std::cout<<image_dep.size()<<std::endl;
 
@@ -76,7 +90,7 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
         Eigen::Vector3d t;
         Eigen::Matrix3d R;
 
-        solvepnp(pts_2d_detect, body_frame_pts, R, t);
+        get_initial_pose(pts_2d_detect, body_frame_pts, R, t);
         
 
         //generate noise to validate BA
@@ -155,7 +169,7 @@ inline Eigen::Vector2d alan_pose_estimation::ArucoNodelet::reproject_3D_2D(Eigen
     return result2d;
 }
 
-void alan_pose_estimation::ArucoNodelet::solvepnp(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+void alan_pose_estimation::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
     cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
     cv::Vec3d rvec, tvec;
@@ -188,7 +202,7 @@ void alan_pose_estimation::ArucoNodelet::solvepnp(vector<Eigen::Vector2d> pts_2d
     camMat.at<double>(1,1) = cameraMat(1,1);
     camMat.at<double>(1,2) = cameraMat(1,2);
 
-    cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, false);
+    cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);
     
     //return values
     cv::Mat rmat = cv::Mat::eye(3,3,CV_64F);
@@ -293,7 +307,7 @@ void alan_pose_estimation::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eig
 
     const int MAX_ITERATION = 400;
 
-    const double converge_threshold = 1e-12;
+    const double converge_threshold = 1e-6;
 
     const int points_no = pts_2d_detected.size();
 
@@ -324,7 +338,7 @@ void alan_pose_estimation::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eig
             //jibai, forget to minus the detected points
             //you set your Jacobian according to "u-KTP/s", and you messed up the order, you fat fuck
     
-            cost += e.squaredNorm();
+            cost += e.norm();
 
             //form Ax = b
             A += J.transpose() * J;
@@ -352,7 +366,9 @@ void alan_pose_estimation::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eig
             break;
     }
 
-    cout<<"gone thru: "<<i<<" th, end optimize"<<endl;;
+    cout<<"BA: "<<lastcost<<endl;
+
+    cout<<"gone thru: "<<i<<" th, end optimize"<<endl<<endl;;;
 
 }
 
@@ -443,7 +459,7 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv:
         for(auto what : body_frame_pts)
         {
             Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
-            // cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
         }
 
         map_SE3_to_pose(pose);
@@ -456,7 +472,7 @@ void alan_pose_estimation::ArucoNodelet::use_pnp_instead(cv::Mat frame, vector<E
     Eigen::Vector3d t;
     Eigen::Matrix3d R;
 
-    solvepnp(pts_2d_detect, body_frame_pts, R, t);
+    get_initial_pose(pts_2d_detect, body_frame_pts, R, t);
     
     //generate noise to validate BA
     Sophus::SE3d pose_;

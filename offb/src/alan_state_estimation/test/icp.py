@@ -1,7 +1,7 @@
 import cv2
- import numpy as np
- import matplotlib.pyplot as plt
- from sklearn.neighbors import NearestNeighbors
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.neighbors import NearestNeighbors
 
 
 def icp(a, b, init_pose=(0,0,0), no_iterations = 13):

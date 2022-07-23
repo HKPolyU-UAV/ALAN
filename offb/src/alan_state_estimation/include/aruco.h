@@ -20,6 +20,8 @@
 #include <pluginlib/class_list_macros.h>
 #include <nodelet/nodelet.h>
 
+#include "alan/obj.h"
+
 #include <pthread.h>
 
 namespace alan_pose_estimation
@@ -48,7 +50,8 @@ namespace alan_pose_estimation
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             std_msgs::Bool test;
             geometry_msgs::PoseStamped pose_estimated;
-            bool add_noise = false;            
+            bool add_noise = false;       
+            int temp_i = 0;     
 
 
             //functions
@@ -59,7 +62,7 @@ namespace alan_pose_estimation
 
             Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
 
-            void solvepnp(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
+            void get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
 
             bool aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& pts_2d);
 
@@ -102,12 +105,12 @@ namespace alan_pose_estimation
                     0, intrinsics_value[1], intrinsics_value[3],
                     0, 0,  1;    
 
-                cout<<cameraMat.inverse()<<endl;
+                // cout<<cameraMat.inverse()<<endl;
 
 
                 //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
-                nh.getParam("/aruco/LED_positions", LED_list); 
+                nh.getParam("/alan_pose/LED_positions", LED_list); 
                 for(int i = 0; i < LED_list.size(); i++)
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
