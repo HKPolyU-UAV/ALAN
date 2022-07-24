@@ -42,6 +42,27 @@ void alan_pose_estimation::CnnNodelet::camera_callback(const sensor_msgs::Compre
         
         rundarknet(this->frame);
         // ROS_INFO("YOLO");
+
+        cv::Rect ROI;
+
+        for(auto what : obj_vector)
+        {
+            ROI = what.boundingbox;
+        }
+        
+        cv::Mat test(frame.rows, frame.cols, CV_8UC3, CV_RGB(255, 255, 255));
+        
+        cv::rectangle(test, ROI, CV_RGB(0, 0, 0), -1);
+
+        // cout<<frame.type()<<endl;
+        // cout<<test.type()<<endl;
+        // cout<<frame.size()<<endl;
+        // cout<<test.size()<<endl;
+
+        cv::subtract(frame, test, frame);
+        
+
+        
         
         display(this->frame);
         cv::waitKey(20);

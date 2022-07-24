@@ -39,12 +39,15 @@ namespace alan_pose_estimation
 
             cv::Mat frame;
             double LANDING_DISTANCE = 0;
+            Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
 
             message_filters::Subscriber<sensor_msgs::CompressedImage> subimage;
             message_filters::Subscriber<sensor_msgs::Image> subdepth;
             typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> MySyncPolicy;
             typedef message_filters::Synchronizer<MySyncPolicy> sync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<sync> sync_;
+            
+            vector<int> id_tracked;
 
             void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth);
             
@@ -52,11 +55,20 @@ namespace alan_pose_estimation
             void pose_w_LED_pnp(cv::Mat& frame, cv::Mat depth);            
 
             //LED extraction
-            void LED_extract_POI(cv::Mat& frame, cv::Mat depth);
+            vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
 
             void LED_tracking();
 
+            void LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
 
+            void reject_outlier(vector<Eigen::Vector3d>& pts_3d_pcl_detect);
+
+            void solveicp_for_initialize(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
+                        
+            void solveicp_svd(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
+
+            vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
+            
             //Munkres
             void cost_generate(vector<cv::Point> detected, vector<cv::Point> previous);
             vector<Match> solution(vector<cv::Point> measured, vector<cv::Point> previous);//return the corresponding ids
@@ -86,12 +98,28 @@ namespace alan_pose_estimation
             vector<int> cover_col;
             int path_row_0, path_col_0, path_count;
 
+
             virtual void onInit()
             {
                 ros::NodeHandle& nh = getNodeHandle();
 
                 nh.getParam("/alan_pose/LANDING_DISTANCE", LANDING_DISTANCE);     
-                cout<<"hi"<<LANDING_DISTANCE<<endl;           
+                cout<<"hi"<<LANDING_DISTANCE<<endl;   
+
+                //load camera intrinsics
+                Eigen::Vector4d intrinsics_value;
+                XmlRpc::XmlRpcValue intrinsics_list;
+                nh.getParam("/aruco/cam_intrinsics_455", intrinsics_list);                
+                                
+                for(int i = 0; i < 4; i++)
+                {
+                    intrinsics_value[i] = intrinsics_list[i];
+                }
+
+                cameraMat <<    
+                    intrinsics_value[0], 0, intrinsics_value[2], 
+                    0, intrinsics_value[1], intrinsics_value[3],
+                    0, 0,  1;         
         
                 //subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);

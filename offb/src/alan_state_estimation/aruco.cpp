@@ -420,7 +420,7 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv:
         Eigen::Vector3d t;
         Eigen::Matrix3d R;
 
-        solveicp(pts_3d_pcl_detect, body_frame_pts, R, t);
+        solveicp_svd(pts_3d_pcl_detect, body_frame_pts, R, t);
         
 
         //generate noise to validate BA
@@ -488,7 +488,7 @@ void alan_pose_estimation::ArucoNodelet::use_pnp_instead(cv::Mat frame, vector<E
 
 }
 
-void alan_pose_estimation::ArucoNodelet::solveicp(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+void alan_pose_estimation::ArucoNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
     //here we assume known correspondences
 

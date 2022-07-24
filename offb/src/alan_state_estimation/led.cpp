@@ -41,12 +41,6 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
 
     cout<<hz<<endl;
 
-    // cv::imshow("thres_depth_final", depth_mask_src);
-    // cv::waitKey(20);
-
-    // cv::imshow("led first___", drawing);
-    // cv::waitKey(20);
-
     // cv::imshow("led first", frame);
     // cv::waitKey(1000/60);
 
@@ -54,13 +48,87 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
 
 void alan_pose_estimation::LedNodelet::pose_w_LED_pnp(cv::Mat& frame, cv::Mat depth)
 {
-    //vector<Eigen::Vector3d> pts_3d_LED_camera =
-    LED_extract_POI(frame, depth);
-    
+    //vector<Eigen::Vector3d> pts_3d_LED_camera =    
+    // cv::threshold(frame, frame, )
+    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+
+    //reject outlier
+
+    //
 
 }
 
-void alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
+void alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
+{
+    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
+    
+    cout<<"before outlier rejection:"<<pts_3d_pcl_detect.size()<<endl;
+    reject_outlier(pts_3d_pcl_detect);
+    cout<<"after outlier rejection: "<<pts_3d_pcl_detect.size()<<endl;
+
+}
+
+vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
+{
+    //get 9 pixels around the point of interest
+
+    int no_pixels = 25;
+    int POI_width = (sqrt(no_pixels) - 1 ) / 2;
+
+    vector<Eigen::Vector3d> pointclouds;
+
+    int x_pixel, y_pixel;
+    Eigen::Vector3d temp;
+
+    for(int i = 0; i < pts_2d_detected.size(); i++)
+    {
+
+        x_pixel = pts_2d_detected[i].x();
+        y_pixel = pts_2d_detected[i].y();
+        
+        cv::Point depthbox_vertice1 = cv::Point(x_pixel - POI_width, y_pixel - POI_width);
+        cv::Point depthbox_vertice2 = cv::Point(x_pixel + POI_width, y_pixel + POI_width);
+        cv::Rect letsgetdepth(depthbox_vertice1, depthbox_vertice2);
+
+        cv::Mat ROI(depthimage, letsgetdepth);
+        cv::Mat ROIframe;
+        ROI.copyTo(ROIframe);
+        vector<cv::Point> nonzeros;
+
+        cv::findNonZero(ROIframe, nonzeros);
+        vector<double> nonzerosvalue;
+        for(auto temp : nonzeros)
+        {
+            double depth = ROIframe.at<ushort>(temp);
+            nonzerosvalue.push_back(depth);
+        }
+
+        double depth_average;
+        if(nonzerosvalue.size() != 0)
+            depth_average = accumulate(nonzerosvalue.begin(), nonzerosvalue.end(),0.0)/nonzerosvalue.size();
+
+        double z_depth = 0.001 * depth_average;
+
+        temp.x() = x_pixel;
+        temp.y() = y_pixel;
+        temp.z() = 1;
+
+        temp = z_depth * cameraMat.inverse() * temp;
+
+        
+        pointclouds.push_back(temp);
+    }
+
+    return pointclouds;
+}
+
+void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_pcl_detect)
+{
+
+}
+
+vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
 {
     // frame.resize(frame.rows * 2, frame.cols * 2, cv::INTER_LINEAR);
     // cv::resize(frame, frame, cv::Size(frame.cols * 2, frame.rows * 2), 0, 0, cv::INTER_LINEAR);
@@ -106,9 +174,15 @@ void alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat d
     // cv::imshow("led first", frame);
     // cv::waitKey(1000/60);
 
-    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-    cv::threshold(frame, frame, 220, 255, cv::THRESH_BINARY);
+    // cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
+    // cv::threshold(frame, frame, 240, 255, cv::THRESH_BINARY);
+    // cv::imshow("test", frame);
+    // cv::waitKey(20);
 
+    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    cv::threshold(frame, frame, 200, 255, cv::THRESH_BINARY);
+    cv::imshow("keypoints", frame );
+	cv::waitKey(20);
 
     // Blob method
     vector<cv::KeyPoint> keypoints_rgb_d, keypoints_rgb;
@@ -135,11 +209,23 @@ void alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat d
     
     detector->detect(frame, keypoints_rgb_d);
 	cv::drawKeypoints( frame, keypoints_rgb_d, im_with_keypoints,CV_RGB(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-    // cout<<keypoints.size()<<endl;
-    // cv::drawKeypoints()
+    // cout<<keypoints_rgb_d.size()<<endl;
+    
+
+    cv::String blob_size = to_string(keypoints_rgb_d.size());
+    cv::putText(im_with_keypoints, blob_size, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+
 	// Show blobs
-	// cv::imshow("keypoints2", im_with_keypoints );
-	// cv::waitKey(20);
+	cv::imshow("keypoints2", im_with_keypoints );
+	cv::waitKey(20);
+
+    vector<Eigen::Vector2d> POI;
+    for(auto what : keypoints_rgb_d)
+    {
+        POI.push_back(Eigen::Vector2d(what.pt.x, what.pt.y));
+    }
+
+    return POI;
 }
 
 vector<alan_pose_estimation::Match> alan_pose_estimation::LedNodelet::solution(vector<cv::Point> measured, vector<cv::Point> previous )
@@ -198,7 +284,6 @@ vector<alan_pose_estimation::Match> alan_pose_estimation::LedNodelet::solution(v
     }
 
     return id_match;
-
 }
 
 void alan_pose_estimation::LedNodelet::cost_generate(vector<cv::Point> detected, vector<cv::Point> previous)
