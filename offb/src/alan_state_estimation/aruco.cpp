@@ -169,6 +169,25 @@ inline Eigen::Vector2d alan_pose_estimation::ArucoNodelet::reproject_3D_2D(Eigen
     return result2d;
 }
 
+inline Eigen::Vector2d alan_pose_estimation::ArucoNodelet::reproject_3D_2D_temp(Eigen::Vector3d P, Sophus::SE3f pose)
+{
+    Eigen::Vector3d result;
+
+    Eigen::Matrix3d R = pose.rotationMatrix().cast<double>();
+    Eigen::Vector3d t = pose.translation().cast<double>();
+
+    result = this->cameraMat * (R * P + t); //dimension not right
+
+    Eigen::Vector2d result2d;
+    
+
+    result2d <<
+        result(0)/result(2), 
+        result(1)/result(2);
+    
+    return result2d;
+}
+
 void alan_pose_estimation::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
     cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
@@ -400,8 +419,6 @@ void* alan_pose_estimation::ArucoNodelet::PubMainLoop(void* tmp)
     }
 }
 
-
-
 //ICP
 void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv::Mat& depthframe)
 {
@@ -417,53 +434,98 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv:
         // }      
         // cout<<endl;
 
-        Eigen::Vector3d t;
-        Eigen::Matrix3d R;
+        Eigen::Vector3f t;
+        Eigen::Matrix3f R;
 
-        solveicp_svd(pts_3d_pcl_detect, body_frame_pts, R, t);
+        // solveicp_svd(pts_3d_pcl_detect, body_frame_pts, R, t);
+
+
+
+
+
+        // cout<<pts_3d_pcl_detect.size()<<endl;
+        // cout<<body_frame_pts.size()<<endl;
+        // cout<<
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr pts_3d_pcl_detect_pcl = eigen_2_pcl(pts_3d_pcl_detect);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr body_frame_pts_pcl = eigen_2_pcl(body_frame_pts);
+
+        // cout<<"here shows the size"<<endl;
+        // cout<<pts_3d_pcl_detect_pcl->size()<<endl;
+        // cout<<body_frame_pts_pcl->size()<<endl<<endl;;
+
+        Eigen::Matrix4f Transformation = icp_pcl(body_frame_pts_pcl, pts_3d_pcl_detect_pcl);
+
+        // cout<<Transformation.size()<<endl;
+
+        R = Transformation.block<3,3>(0,0);
+        t = Transformation.block<3,1>(0,3);
         
-
         //generate noise to validate BA
-        Sophus::SE3d pose;
+        Sophus::SE3f pose;
         if(add_noise)
-            pose = pose_add_noise(t,R);
+            cout<<"hji"<<endl;
+            // pose = pose_add_noise(t,R);
         else
-            pose = Sophus::SE3d(R,t);
-
-        double e = 0;
-        Eigen::Vector2d reproject, error; 
-
-        for(int i = 0 ; i < body_frame_pts.size(); i++)
-        {
-            reproject = reproject_3D_2D(body_frame_pts[i], pose);  
-            error = pts_2d_detect[i] - reproject;
-            e = e + error.norm();
+        {            
+            cout<<R<<endl;
+            cout<<t<<endl;  
+            pose = Sophus::SE3f(R,t);        
         }
 
-        cout<<"error: "<<e<<endl;
+        // double e = 0;
+        // Eigen::Vector2d reproject, error; 
+
+        // for(int i = 0 ; i < body_frame_pts.size(); i++)
+        // {
+        //     reproject = reproject_3D_2D(body_frame_pts[i], pose);  
+        //     error = pts_2d_detect[i] - reproject;
+        //     e = e + error.norm();
+        // }
+
+        // cout<<"error: "<<e<<endl;
 
         for(auto what : body_frame_pts)
         {
-            Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
+            Eigen::Vector2d reproject = reproject_3D_2D_temp(what, pose);            
             cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
         }
 
-        if(e > 20.0)
-        {
-            cout<<"use pnp instead"<<endl;
-            use_pnp_instead(frame, pts_2d_detect, pose);
-        }
+        // if(e > 20.0)
+        // {
+        //     cout<<"use pnp instead"<<endl;
+        //     use_pnp_instead(frame, pts_2d_detect, pose);
+        // }
 
-        // optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
+        // // optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
 
-        for(auto what : body_frame_pts)
-        {
-            Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
-            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
-        }
+        // for(auto what : body_frame_pts)
+        // {
+        //     Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
+        //     cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+        // }
 
-        map_SE3_to_pose(pose);
+        // map_SE3_to_pose(pose);
     }    
+
+}
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr alan_pose_estimation::ArucoNodelet::eigen_2_pcl(vector<Eigen::Vector3d> pts_3d)
+{
+    int N = pts_3d.size();
+    
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pts_3d_pcl(new pcl::PointCloud<pcl::PointXYZ>(N,1));
+    pcl::PointXYZ pt_temp;
+
+    for(int i = 0; i < N; i++)
+    {
+        pts_3d_pcl->at(i).x = pts_3d[i].x();
+        pts_3d_pcl->at(i).y = pts_3d[i].y();
+        pts_3d_pcl->at(i).z = pts_3d[i].z();
+
+    }
+
+    return pts_3d_pcl;
 
 }
 
@@ -618,6 +680,107 @@ vector<Eigen::Vector3d> alan_pose_estimation::ArucoNodelet::pointcloud_generate(
     return pointclouds;
 }
 
+
+Eigen::Matrix4f alan_pose_estimation::ArucoNodelet::icp_pcl(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_body, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_camera)
+{
+    //get SE(3) from  body to camera, i.e., camera = T * body
+    //get T!
+
+    //cloud_in = cloud_body
+    //cloud_out = cloud_camera
+
+    cout<<"hi icp_pcl: "<<endl;
+
+    double t1 = ros::Time::now().toSec();
+
+    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+
+    float scale = 100;
+
+    for(auto& what : *cloud_body)
+    {
+        what.x = what.x * scale;
+        what.y = what.y * scale;
+        what.z = what.z * scale;
+    }
+
+    for(auto& what : *cloud_camera)
+    {
+        what.x = what.x * scale;
+        what.y = what.y * scale;
+        what.z = what.z * scale;
+    }
+
+    pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>::Ptr rej_ransac(new pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>);
+
+    icp.convergence_criteria_->setTranslationThreshold(0.01);
+    icp.convergence_criteria_->setAbsoluteMSE(0.01);
+    icp.setTransformationEpsilon(1e-12); 
+    icp.setEuclideanFitnessEpsilon(1e-12); 
+
+    icp.setInputSource(cloud_body);
+    icp.setInputTarget(cloud_camera);
+
+    for(auto& what : *cloud_body)
+    {
+        cout<<what.x<<", "<<what.y<<", "<<what.z<<", ";
+        cout<<endl;
+    }
+
+    pcl::PointCloud<pcl::PointXYZ> Final;
+    
+    icp.align(Final);
+
+    std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+    icp.getFitnessScore() << std::endl;
+    cout << icp.getEuclideanFitnessEpsilon()<<endl;
+
+    cout << icp.getFinalTransformation() << endl;  
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr results (new pcl::PointCloud<pcl::PointXYZ>);
+    *results = Final;
+
+    pcl::CorrespondencesPtr corresps(new pcl::Correspondences);
+    
+    pcl::registration::CorrespondenceEstimation<pcl::PointXYZ, pcl::PointXYZ> est;
+    // est = 
+    est.setInputSource (results); //
+    est.setInputTarget (cloud_camera);
+    est.determineCorrespondences (*corresps, 0.1);
+
+    cout<<"show ptcloud in {c}"<<endl;
+
+    for(auto what : *cloud_camera)
+    {
+        cout<<what.x<<", "<<what.y<<", "<<what.z<<", ";
+        cout<<endl;
+    }
+
+    cout<<"now show ptcloud in with T"<<endl;
+
+
+    for (auto& what : Final)
+    {
+        cout<<what.x<<", "<<what.y<<", "<<what.z<<", ";
+        cout<<endl;
+    }
+
+    for (auto& what : *corresps)
+    {
+        cout<<"hi?"<<endl;
+        cout<<what.index_match<<endl;               
+    }
+
+    Eigen::Matrix4f icp_pose =  icp.getFinalTransformation();
+
+    icp_pose.block<3,1>(0,3) = icp_pose.block<3,1>(0,3)/scale;
+
+    double t2 = ros::Time::now().toSec();
+
+    cout << endl << "Hz: " << 1 / (t2-t1) <<endl;    
+
+    return icp_pose;
+}
 
 
 #endif

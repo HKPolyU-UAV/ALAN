@@ -168,7 +168,6 @@ Eigen::Matrix4d alan_pose_estimation::LedNodelet::icp_pcl(pcl::PointCloud<pcl::P
     }
 
 
-    double t2 = ros::Time::now().toSec();
     pcl::IndicesPtr match_id = icp.getIndices();
 
 
@@ -176,9 +175,6 @@ Eigen::Matrix4d alan_pose_estimation::LedNodelet::icp_pcl(pcl::PointCloud<pcl::P
     // {
     //     cout<<what<<endl;;
     // }
-    cout << endl << "Hz: " << 1 / (t2-t1) <<endl;
-
-    
 
     Eigen::Matrix4d icp_pose =  icp.getFinalTransformation().cast<double>();
 
