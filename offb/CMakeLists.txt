@@ -29,6 +29,7 @@ find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Sophus REQUIRED)
+# find_package(PCL 1.2 REQUIRED)
 
 roslaunch_add_file_check(launch)
 

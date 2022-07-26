@@ -39,7 +39,7 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
     strcat(hz, fps);
     // cv::putText(frame, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));  
 
-    cout<<hz<<endl;
+    // cout<<hz<<endl;
 
     // cv::imshow("led first", frame);
     // cv::waitKey(1000/60);
@@ -61,25 +61,26 @@ void alan_pose_estimation::LedNodelet::pose_w_LED_pnp(cv::Mat& frame, cv::Mat de
 void alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 {
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
-    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
     
-    cout<<"before outlier rejection:"<<pts_3d_pcl_detect.size()<<endl;
-    reject_outlier(pts_3d_pcl_detect);
-    cout<<"after outlier rejection: "<<pts_3d_pcl_detect.size()<<endl;
+    // cout<<"before outlier rejection:"<<pts_3d_pcl_detect.size()<<endl;
+    // reject_outlier(pts_3d_pcl_detect);
+    // cout<<"after outlier rejection: "<<pts_3d_pcl_detect.size()<<endl;
 
 }
 
-vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
+pcl::PointCloud<pcl::PointXYZ>::Ptr alan_pose_estimation::LedNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
 {
     //get 9 pixels around the point of interest
 
     int no_pixels = 25;
     int POI_width = (sqrt(no_pixels) - 1 ) / 2;
 
-    vector<Eigen::Vector3d> pointclouds;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pointclouds;
 
     int x_pixel, y_pixel;
     Eigen::Vector3d temp;
+    pcl::PointXYZ temp_pcl;
 
     for(int i = 0; i < pts_2d_detected.size(); i++)
     {
@@ -116,16 +117,75 @@ vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::pointcloud_generate(ve
 
         temp = z_depth * cameraMat.inverse() * temp;
 
-        
-        pointclouds.push_back(temp);
+        temp_pcl.x = temp.x();
+        temp_pcl.y = temp.y();
+        temp_pcl.z = temp.z();
+
+        pointclouds->push_back(temp_pcl);
     }
 
     return pointclouds;
 }
 
-void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_pcl_detect)
+Eigen::Matrix4d alan_pose_estimation::LedNodelet::icp_pcl(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_body, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_camera)
 {
+    //get SE(3) from  body to camera, i.e., camera = T * body
+    //get T!
 
+    //cloud_in = cloud_body
+    //cloud_out = cloud_camera
+
+    double t1 = ros::Time::now().toSec();
+
+
+    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+    pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>::Ptr rej_ransac(new pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>);
+
+    icp.setInputSource(cloud_body);
+    icp.setInputTarget(cloud_camera);
+    icp.addCorrespondenceRejector(rej_ransac);
+    
+    pcl::PointCloud<pcl::PointXYZ> Final;
+    
+    icp.align(Final);
+
+    // std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+    // icp.getFitnessScore() << std::endl;
+    cout << icp.getFinalTransformation() << endl;  
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr results (new pcl::PointCloud<pcl::PointXYZ>);
+    *results = Final;
+
+    pcl::CorrespondencesPtr corresps(new pcl::Correspondences);
+    pcl::registration::CorrespondenceEstimation<pcl::PointXYZ, pcl::PointXYZ> est;
+    est.setInputSource (results); //
+    est.setInputTarget (cloud_camera);
+    est.determineCorrespondences (*corresps, 1.0);
+
+    for (auto& what : *corresps)
+    {
+        cout<<what.index_match<<endl;               
+    }
+
+
+    double t2 = ros::Time::now().toSec();
+    pcl::IndicesPtr match_id = icp.getIndices();
+
+
+    // for (auto& what : Final)
+    // {
+    //     cout<<what<<endl;;
+    // }
+    cout << endl << "Hz: " << 1 / (t2-t1) <<endl;
+
+    
+
+    Eigen::Matrix4d icp_pose =  icp.getFinalTransformation().cast<double>();
+
+    double t2 = ros::Time::now().toSec();
+    cout << endl << "Hz: " << 1 / (t2-t1) <<endl;    
+
+    return icp_pose;
 }
 
 vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
@@ -135,6 +195,12 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     // cv::resize(depth, depth, cv::Size(depth.cols * 2, depth.rows * 2), 0, 0, cv::INTER_LINEAR);
     // cout<<frame.size<<endl;
     // depth.resize(depth.rows * 2, depth.cols * 2, cv::INTER_LINEAR);
+    // cv::Mat hsv = frame.clone();
+    // cv::cvtColor(hsv, hsv, cv::COLOR_RGB2HSV);
+    // cv::imshow("hsv", hsv);
+    // cv::waitKey(20);
+
+
 
     cv::Mat depth_mask_src = depth.clone(), depth_mask_dst1, depth_mask_dst2;
 

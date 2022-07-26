@@ -22,6 +22,14 @@
 
 #include <pthread.h>
 
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/registration/icp.h>
+#include <pcl/registration/correspondence_estimation.h>
+#include <pcl/registration/correspondence_rejection_sample_consensus.h>
+
+
+
 
 
 
@@ -61,13 +69,13 @@ namespace alan_pose_estimation
 
             void LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
 
-            void reject_outlier(vector<Eigen::Vector3d>& pts_3d_pcl_detect);
+            Eigen::Matrix4d icp_pcl(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_i);
 
             void solveicp_for_initialize(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
                         
             void solveicp_svd(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
 
-            vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
             
             //Munkres
             void cost_generate(vector<cv::Point> detected, vector<cv::Point> previous);
@@ -104,28 +112,30 @@ namespace alan_pose_estimation
                 ros::NodeHandle& nh = getNodeHandle();
 
                 nh.getParam("/alan_pose/LANDING_DISTANCE", LANDING_DISTANCE);     
-                cout<<"hi"<<LANDING_DISTANCE<<endl;   
-
+                
                 //load camera intrinsics
-                Eigen::Vector4d intrinsics_value;
-                XmlRpc::XmlRpcValue intrinsics_list;
-                nh.getParam("/aruco/cam_intrinsics_455", intrinsics_list);                
+                // Eigen::Vector4d intrinsics_value;
+                // XmlRpc::XmlRpcValue intrinsics_list;
+                // nh.getParam("/aruco/cam_intrinsics_455", intrinsics_list);                
                                 
-                for(int i = 0; i < 4; i++)
-                {
-                    intrinsics_value[i] = intrinsics_list[i];
-                }
+                // for(int i = 0; i < 4; i++)
+                // {
+                //     intrinsics_value[i] = intrinsics_list[i];
+                // }
 
-                cameraMat <<    
-                    intrinsics_value[0], 0, intrinsics_value[2], 
-                    0, intrinsics_value[1], intrinsics_value[3],
-                    0, 0,  1;         
+                // cameraMat <<    
+                //     intrinsics_value[0], 0, intrinsics_value[2], 
+                //     0, intrinsics_value[1], intrinsics_value[3],
+                //     0, 0,  1;         
         
-                //subscribe
-                subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
-                subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
-                sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
-                sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));               
+                // //subscribe
+                // subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
+                // subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
+                // sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
+                // sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
+
+                
+                
             }
 
     };

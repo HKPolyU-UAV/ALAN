@@ -618,4 +618,6 @@ vector<Eigen::Vector3d> alan_pose_estimation::ArucoNodelet::pointcloud_generate(
     return pointclouds;
 }
 
+
+
 #endif

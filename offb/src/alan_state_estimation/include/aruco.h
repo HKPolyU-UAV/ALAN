@@ -85,6 +85,8 @@ namespace alan_pose_estimation
 
             Eigen::Vector3d get_CoM(vector<Eigen::Vector3d> pts_3d);
 
+            
+
 
             virtual void onInit() 
             {
