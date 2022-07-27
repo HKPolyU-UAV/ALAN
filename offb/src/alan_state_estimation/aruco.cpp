@@ -8,6 +8,7 @@
 void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 //void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr& rgbimage)
 {
+    // cout<<depth->data.at<uchar>(0,0)<<endl;
     cv_bridge::CvImageConstPtr depth_ptr;
     try
     {
@@ -695,7 +696,7 @@ Eigen::Matrix4f alan_pose_estimation::ArucoNodelet::icp_pcl(pcl::PointCloud<pcl:
 
     pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 
-    float scale = 100;
+    float scale = 1;
 
     for(auto& what : *cloud_body)
     {
@@ -711,42 +712,51 @@ Eigen::Matrix4f alan_pose_estimation::ArucoNodelet::icp_pcl(pcl::PointCloud<pcl:
         what.z = what.z * scale;
     }
 
+    pcl::console::setVerbosityLevel(pcl::console::L_VERBOSE);
+
     pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>::Ptr rej_ransac(new pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>);
 
     icp.convergence_criteria_->setTranslationThreshold(0.01);
+    // icp.convergence_criteria_->set
     icp.convergence_criteria_->setAbsoluteMSE(0.01);
     icp.setTransformationEpsilon(1e-12); 
     icp.setEuclideanFitnessEpsilon(1e-12); 
+    // icp.
 
     icp.setInputSource(cloud_body);
     icp.setInputTarget(cloud_camera);
+
+    pcl::PointCloud<pcl::PointXYZ> Final;
+    
+
+
+
+
+    icp.align(Final);
+
+
+
+    for(auto what : *icp.correspondence_estimation_->getIndices())
+    {
+        cout<<"gan: ";
+        cout<<what<<endl;
+    };
+
+
+
+    std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+    icp.getFitnessScore() << std::endl;
+
+    cout << icp.getFinalTransformation() << endl;  
+
+
+    cout<<"show ptcloud in {B}"<<endl;
 
     for(auto& what : *cloud_body)
     {
         cout<<what.x<<", "<<what.y<<", "<<what.z<<", ";
         cout<<endl;
     }
-
-    pcl::PointCloud<pcl::PointXYZ> Final;
-    
-    icp.align(Final);
-
-    std::cout << "has converged:" << icp.hasConverged() << " score: " <<
-    icp.getFitnessScore() << std::endl;
-    cout << icp.getEuclideanFitnessEpsilon()<<endl;
-
-    cout << icp.getFinalTransformation() << endl;  
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr results (new pcl::PointCloud<pcl::PointXYZ>);
-    *results = Final;
-
-    pcl::CorrespondencesPtr corresps(new pcl::Correspondences);
-    
-    pcl::registration::CorrespondenceEstimation<pcl::PointXYZ, pcl::PointXYZ> est;
-    // est = 
-    est.setInputSource (results); //
-    est.setInputTarget (cloud_camera);
-    est.determineCorrespondences (*corresps, 0.1);
 
     cout<<"show ptcloud in {c}"<<endl;
 
@@ -765,22 +775,20 @@ Eigen::Matrix4f alan_pose_estimation::ArucoNodelet::icp_pcl(pcl::PointCloud<pcl:
         cout<<endl;
     }
 
-    for (auto& what : *corresps)
-    {
-        cout<<"hi?"<<endl;
-        cout<<what.index_match<<endl;               
-    }
-
     Eigen::Matrix4f icp_pose =  icp.getFinalTransformation();
 
     icp_pose.block<3,1>(0,3) = icp_pose.block<3,1>(0,3)/scale;
 
     double t2 = ros::Time::now().toSec();
 
-    cout << endl << "Hz: " << 1 / (t2-t1) <<endl;    
+    cout << endl << "Hz: " << 1 / (t2-t1) <<endl<<endl;   
+
+    pcl::Indices a, b;
+
+    boost::shared_ptr< pcl::registration::TransformationEstimation< pcl::PointXYZ, pcl::PointXYZ > > estPtr;
+
 
     return icp_pose;
 }
-
 
 #endif

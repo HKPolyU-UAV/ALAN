@@ -243,8 +243,7 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
 
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     cv::threshold(frame, frame, 200, 255, cv::THRESH_BINARY);
-    cv::imshow("keypoints", frame );
-	cv::waitKey(20);
+    
 
     // Blob method
     vector<cv::KeyPoint> keypoints_rgb_d, keypoints_rgb;
@@ -268,6 +267,9 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
 
     //detect frame after filter out background
     cv::bitwise_and(depth_mask_src, frame, frame); //filter out with depth information
+
+    cv::imshow("keypoints", frame );
+	cv::waitKey(20);
     
     detector->detect(frame, keypoints_rgb_d);
 	cv::drawKeypoints( frame, keypoints_rgb_d, im_with_keypoints,CV_RGB(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
@@ -652,6 +654,84 @@ inline void alan_pose_estimation::LedNodelet::erase_primes()
         for (int c = 0; c < cost.cols(); c++)
             if (mask(r, c) == 2)
                 mask(r, c) = 0;
+}
+
+
+
+void alan_pose_estimation::LedNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+{
+    //here we assume known correspondences
+
+    //SVD Solution proposed in ->
+    //Arun, K. Somani, Thomas S. Huang, and Steven D. Blostein. 
+    //"Least-squares fitting of two 3-D point sets." 
+    //IEEE Transactions on pattern analysis and machine intelligence 5 (1987): 698-700.
+    
+    // cout<<"enter icp"<<endl;
+
+
+    Eigen::Vector3d CoM_camera = get_CoM(pts_3d_camera);
+    Eigen::Vector3d CoM_body   = get_CoM(pts_3d_body);
+
+    // cout<<"enter 0"<<endl;
+
+    int no_of_paired_points = pts_3d_body.size();
+
+    vector<Eigen::Vector3d> q(no_of_paired_points), q_(no_of_paired_points);
+
+    // cout<<"enter 1"<<endl;
+    
+    for(int i = 0; i < no_of_paired_points; i++)
+    {
+        q [i] = pts_3d_body[i]   - CoM_body;   //R3*1
+        q_[i] = pts_3d_camera[i] - CoM_camera; //R3*3
+    }
+    
+    // cout<<"icp half"<<endl;
+
+    Eigen::Matrix3d H = Eigen::Matrix3d::Zero();
+
+    for (int i = 0 ; i < no_of_paired_points; i++)
+    {
+        H += Eigen::Vector3d(q_[i].x(), q_[i].y(), q_[i].z()) 
+             * Eigen::Vector3d(q[i].x(), q[i].y(), q[i].z()).transpose();
+    }
+
+    //solve SVD
+    Eigen::JacobiSVD<Eigen::Matrix3d> svd(H, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::Matrix3d U = svd.matrixU();
+    Eigen::Matrix3d V = svd.matrixV();
+
+    Eigen::Matrix3d R_ = U * V.transpose();
+
+    if(R_.determinant() < 0)
+    {
+        // cout<<"R.det < 0" <<endl;
+        R_ = -R_;
+    }
+
+    R = R_;
+    t = CoM_camera  - R * CoM_body;
+}
+
+Eigen::Vector3d alan_pose_estimation::LedNodelet::get_CoM(vector<Eigen::Vector3d> pts_3d)
+{
+    double x = 0, y = 0, z = 0;
+    for(int i = 0; i < pts_3d.size(); i++)
+    {
+        x = x + pts_3d[i].x();
+        y = y + pts_3d[i].y();
+        z = z + pts_3d[i].z();
+    }
+
+    Eigen::Vector3d CoM = Eigen::Vector3d(
+        x / pts_3d.size(),
+        y / pts_3d.size(),
+        z / pts_3d.size());
+    
+    // cout<<"CoM: "<<CoM<<endl;
+
+    return CoM;
 }
 
 

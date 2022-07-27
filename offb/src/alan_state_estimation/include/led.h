@@ -27,6 +27,7 @@
 #include <pcl/registration/icp.h>
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
+#include <pcl/registration/transformation_estimation_svd.h>
 
 namespace alan_pose_estimation
 {
@@ -69,6 +70,8 @@ namespace alan_pose_estimation
             void solveicp_for_initialize(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
                         
             void solveicp_svd(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
+            
+            Eigen::Vector3d get_CoM(vector<Eigen::Vector3d> pts_3d);
 
             pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
             
@@ -109,144 +112,155 @@ namespace alan_pose_estimation
                 nh.getParam("/alan_pose/LANDING_DISTANCE", LANDING_DISTANCE);     
                 
                 //load camera intrinsics
-                // Eigen::Vector4d intrinsics_value;
-                // XmlRpc::XmlRpcValue intrinsics_list;
-                // nh.getParam("/aruco/cam_intrinsics_455", intrinsics_list);                
+                Eigen::Vector4d intrinsics_value;
+                XmlRpc::XmlRpcValue intrinsics_list;
+                nh.getParam("/aruco/cam_intrinsics_455", intrinsics_list);                
                                 
-                // for(int i = 0; i < 4; i++)
-                // {
-                //     intrinsics_value[i] = intrinsics_list[i];
-                // }
+                for(int i = 0; i < 4; i++)
+                {
+                    intrinsics_value[i] = intrinsics_list[i];
+                }
 
-                // cameraMat <<    
-                //     intrinsics_value[0], 0, intrinsics_value[2], 
-                //     0, intrinsics_value[1], intrinsics_value[3],
-                //     0, 0,  1;         
+                cameraMat <<    
+                    intrinsics_value[0], 0, intrinsics_value[2], 
+                    0, intrinsics_value[1], intrinsics_value[3],
+                    0, 0,  1;         
         
                 // //subscribe
-                // subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
-                // subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
-                // sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
-                // sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
+                subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
+                subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
+                sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
+                sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
 
 
+                // vector<Eigen::Vector3d> pts_3d_body;
+                // pts_3d_body = {
+                //     Eigen::Vector3d(0.055, -0.0225, -0.01),
+                //     Eigen::Vector3d(0.055, 0.0225, -0.01),
+                //     Eigen::Vector3d(0.055, 0.0225, -0.055),
+                //     Eigen::Vector3d(0.055, -0.0225, -0.055)
+                //                 };
 
+                // vector<Eigen::Vector3d> pts_3d_camera;
+                // pts_3d_camera = {
+                //     Eigen::Vector3d(-0.141276, 0.198773, 0.512),
+                //     Eigen::Vector3d(-0.142378, 0.157403, 0.525),
+                //     Eigen::Vector3d(-0.100869, 0.155597, 0.5245),
+                //     Eigen::Vector3d(-0.0981761, 0.195773, 0.5105),
+                // };
 
-                pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZ>(5,1));
-                pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out (new pcl::PointCloud<pcl::PointXYZ>);
+                // Eigen::Matrix3d R;
+                // Eigen::Vector3d t;
+                // solveicp_svd(pts_3d_camera, pts_3d_body, R, t);
 
-                double t1 = ros::Time::now().toSec();
-
-                // Fill in the CloudIn data
-                for (auto& point : *cloud_in)
-                {
-                    point.x = 1024 * rand() / (RAND_MAX + 1.0f);
-                    point.y = 1024 * rand() / (RAND_MAX + 1.0f);
-                    point.z = 1024 * rand() / (RAND_MAX + 1.0f);
-                }
-
-                int temp_i = cloud_in->size() - 1;
-
-                for (int i = temp_i; i >=0  ; i--)
-                {
-                    cout<<i<<endl;
-                    cloud_out->push_back(cloud_in->points.at(i));
-                    cout<<"lala"<<endl;
-                    cout<<i<<endl<<endl;
-                }                
-                // *cloud_out = *cloud_in;
-
-                // int i = 0;
-                // i--;
-                // cout<<i<<endl<<endl;;
-
-
-                pcl::PointXYZ lala;
-                lala.x = 0;
-                lala.y = 0;
-                lala.z = 0;
-
-                cloud_in->emplace_back(lala);
-
-                std::cout << "Saved " << cloud_in->size () << " data points to input:" << std::endl;
-                    
-                for (auto& point : *cloud_in)
-                    std::cout << point << std::endl;
-                    
-                cout<<endl;
-
-
-                //////////////////////////////////////////////////////////////////////////////////////
-
-
-                for (auto& point : *cloud_out)
-                    point.x += 10000;
-
-
-                std::cout << "Saved " << cloud_out->size () << " data points to output:" << std::endl;
-                    
-                for (auto& point : *cloud_out)
-                    std::cout << point << std::endl;
-
-                //////////////////////////////////////////////////////////////////////////////////////
-
-                pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>::Ptr rej_ransac(new pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>);
-
-                pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
-                icp.setInputSource(cloud_in);
-                icp.setInputTarget(cloud_out);
-                // icp.addCorrespondenceRejector(rej_ransac);
-
-                pcl::PointCloud<pcl::PointXYZ> Final;
-                // icp.settr
-
+                // // cout<<R<<endl;
+                // // cout<<t<<endl;
                 
-
-
-                icp.align(Final);
-
                 
+                // pcl::console::setVerbosityLevel(pcl::console::L_VERBOSE);
 
-                // std::cout << "has converged:" << icp.hasConverged() << " score: " <<
-                // icp.getFitnessScore() << std::endl;
+                // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZ>(4,1));
+                // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out (new pcl::PointCloud<pcl::PointXYZ>(4,1));
 
-                cout<<"below show results"<<endl;
-                for(auto what : Final)
-                {                    
-                    cout<<what.x<<", "<<what.y<<", "<<what.z<<", ";
-                    cout<<endl;
-                }
-                cout<<"above show results"<<endl;
+                // double t1 = ros::Time::now().toSec();
 
-                std::cout << icp.getFinalTransformation() << std::endl;  
-
-                cout<<"hi"<<endl;
-
-                pcl::PointCloud<pcl::PointXYZ>::Ptr results (new pcl::PointCloud<pcl::PointXYZ>);
-                *results = Final;
-                cout<<"hi"<<endl;
-
-                pcl::CorrespondencesPtr corresps(new pcl::Correspondences);
-                pcl::registration::CorrespondenceEstimation<pcl::PointXYZ, pcl::PointXYZ> est;
-                est.setInputSource (results);
-                est.setInputTarget (cloud_out);
-                est.determineCorrespondences (*corresps, 1.0);
-
-                for (auto& what : *corresps)
-                {
-                    cout<<what.index_match<<endl;               
-                }
-
-
-                double t2 = ros::Time::now().toSec();
-                pcl::IndicesPtr match_id = icp.getIndices();
-
-
-                // for (auto& what : Final)
+                // // Fill in the CloudIn data
+                // for (int i = 0; i < 4; i++)
                 // {
-                //     cout<<what<<endl;;
+                //     cloud_in->points[i].x = pts_3d_body[i].x();
+                //     cloud_in->points[i].y = pts_3d_body[i].y();
+                //     cloud_in->points[i].z = pts_3d_body[i].z();
                 // }
-                cout << endl << "Hz: " << 1 / (t2-t1) <<endl;
+
+                // vector<Eigen::Vector3d> pts_3d_body_transformed;
+
+                // Eigen::Matrix3d RR;
+                // RR <<  
+                // -0.0401792, -0.0452793,  -0.998166,
+                // -0.312381,  -0.948329,  0.0555929,
+                // -0.949107,   0.314042,  0.0239587;
+
+                // Eigen::Vector3d tt;
+                // tt <<
+                // -0.150905, 
+                // 0.195874,
+                // 0.57098;
+
+
+                // for(int i = 0; i < 4; i++)
+                // {
+                //     Eigen::Vector3d temp;
+                //     temp = RR * pts_3d_body[i] + tt;
+                //     pts_3d_body_transformed.push_back(temp);
+                // }
+
+                // for (int i = 0; i < 4; i++)
+                // {
+                //     cloud_out->points[i].x = pts_3d_body_transformed[i].x();
+                //     cloud_out->points[i].y = pts_3d_body_transformed[i].y();
+                //     cloud_out->points[i].z = pts_3d_body_transformed[i].z();
+                // }
+
+                // std::cout << "Saved " << cloud_in->size () << " data points to input:" << std::endl;
+                    
+                // for (auto& point : *cloud_in)
+                //     std::cout << point << std::endl;
+                    
+                // cout<<endl;
+
+
+                // std::cout << "Saved " << cloud_out->size () << " data points to output:" << std::endl;
+                    
+                // for (auto& point : *cloud_out)
+                //     std::cout << point << std::endl;
+
+                // //////////////////////////////////////////////////////////////////////////////////////
+
+                // pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>::Ptr rej_ransac(new pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>);
+
+                // pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+                // icp.setMaximumIterations(400);
+                // icp.setInputSource(cloud_in);
+                // icp.setInputTarget(cloud_out);
+                // // icp.addCorrespondenceRejector(rej_ransac);
+
+                // pcl::PointCloud<pcl::PointXYZ> Final;
+                // // icp.settr
+
+                
+
+
+                // icp.align(Final);
+
+                
+
+                // // std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+                // // icp.getFitnessScore() << std::endl;
+
+                // cout<<"below show results"<<endl;
+                // for(auto what : Final)
+                // {                    
+                //     cout<<what.x<<", "<<what.y<<", "<<what.z<<", ";
+                //     cout<<endl;
+                // }
+                // cout<<"above show results"<<endl;
+
+                // std::cout << icp.getFinalTransformation() << std::endl;  
+
+                // cout<<"????????????????????????????????????????????????????"<<endl;
+                // for(auto what : *icp.correspondence_estimation_->getIndices())
+                // {
+                //     cout<<"gan: ";
+                //     cout<<what<<endl;
+                // };
+                // double t2 = ros::Time::now().toSec();
+
+
+                // // for (auto& what : Final)
+                // // {
+                // //     cout<<what<<endl;;
+                // // }
+                // cout << endl << "Hz: " << 1 / (t2-t1) <<endl;
                 
             }
 
