@@ -197,7 +197,6 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     // cv::waitKey(20);
 
 
-
     cv::Mat depth_mask_src = depth.clone(), depth_mask_dst1, depth_mask_dst2;
 
     cv::threshold(depth_mask_src, depth_mask_dst1, LANDING_DISTANCE * 1000, 50000, cv::THRESH_BINARY_INV);
@@ -207,6 +206,37 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     cv::bitwise_and(depth_mask_dst1, depth_mask_dst2, depth_mask_src);
     
     depth_mask_src.convertTo(depth_mask_src, CV_8U);
+
+    
+    cv::Mat d_img = depth;
+    int size=d_img.cols*d_img.rows;
+    for(int i=0; i<size; i++)
+    {
+        if(isnan(d_img.at<ushort>(i)))
+        {
+            d_img.at<ushort>(i)=0;
+        }
+        if(d_img.at<ushort>(i)>10000||d_img.at<ushort>(i)<100)
+        {
+            d_img.at<ushort>(i)=0;
+        }
+    }
+    cv::Mat adjMap;
+    d_img.convertTo(adjMap,CV_8UC1, 255 / (10000.0), 0);
+    cv::applyColorMap(adjMap, adjMap, cv::COLORMAP_RAINBOW);
+    for(int i=0; i<size; i++)
+    {
+        if(d_img.at<ushort>(i)==0)
+        {
+            cv::Vec3b color = adjMap.at<cv::Vec3b>(i);
+            color[0]=255;
+            color[1]=255;
+            color[2]=255;
+            adjMap.at<cv::Vec3b>(i)=color;
+        }
+    }
+    cv::imshow("depppth", adjMap);
+    cv::waitKey(20);
 
     //contour method
 
@@ -268,6 +298,12 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     //detect frame after filter out background
     cv::bitwise_and(depth_mask_src, frame, frame); //filter out with depth information
 
+    double dilation_size = 2;
+    cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE,
+                       cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                       cv::Point( dilation_size, dilation_size ) );
+    cv::dilate(frame, frame,  element);// enlarge
+
     cv::imshow("keypoints", frame );
 	cv::waitKey(20);
     
@@ -291,372 +327,6 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
 
     return POI;
 }
-
-vector<alan_pose_estimation::Match> alan_pose_estimation::LedNodelet::solution(vector<cv::Point> measured, vector<cv::Point> previous )
-{
-    id_match.clear();
-    cv::Point temp;
-    vector<cv::Point> detected_pts, previous_pts;
-
-    for(auto o : measured)
-    {
-        temp = cv::Point (o.x, o.y);
-        detected_pts.push_back(temp);
-    }
-
-    for(auto o : previous)
-    {
-        temp = cv::Point (o.x, o.y);
-        previous_pts.push_back(temp);
-    }
-
-    cost_generate(detected_pts, previous_pts);
-    copy = cost;
-
-    bool done = false;
-    step = 1;
-
-    while (!done)
-    {
-        //cout << endl << step << endl << endl;
-        switch (step)
-        {
-            case 1:
-                stp1(step);
-                break;
-            case 2:
-                stp2(step);
-                break;
-            case 3:
-                stp3(step);
-                break;
-            case 4:
-                stp4(step);
-                break;
-            case 5:
-                stp5(step);
-                break;
-            case 6:
-                stp6(step);
-                break;
-            case 7:
-                stp7();
-                done = true;
-    //            cout<<"bye"<<endl;
-            break;
-        }
-    }
-
-    return id_match;
-}
-
-void alan_pose_estimation::LedNodelet::cost_generate(vector<cv::Point> detected, vector<cv::Point> previous)
-{
-    if(detected.size() == previous.size())
-    {
-        cost.setZero(detected.size(), previous.size());
-        mask.setZero(detected.size(), previous.size());
-        cover_row = vector<int>(detected.size(),0);
-        cover_col = vector<int>(detected.size(),0);
-        path.setZero(detected.size()*2,2);
-    }
-    else if (detected.size() < previous.size())
-    {
-        cost.setZero(previous.size(), previous.size());
-        mask.setZero(previous.size(), previous.size());
-        cover_row = vector<int>(previous.size(),0);
-        cover_col = vector<int>(previous.size(),0);
-        path.setZero(previous.size()*2,2);
-    }
-    else if (detected.size() > previous.size())
-    {
-        cost.setZero(detected.size(), detected.size());
-        mask.setZero(detected.size(), detected.size());
-        cover_row = vector<int>(detected.size(),0);
-        cover_col = vector<int>(detected.size(),0);
-        path.setZero(detected.size()*2,2);
-    }
-
-    for (int i=0;i<detected.size();i++)
-    {
-        for (int j=0;j<previous.size();j++)
-        {
-            cost (i,j) = cv::norm ( detected[i] - previous[j] );
-        }
-    }
-}
-
-inline void alan_pose_estimation::LedNodelet::stp1(int& step)
-{
-    double minval;
-    Eigen::MatrixXd minvals;
-
-    minvals = cost.rowwise().minCoeff();
-    for (int i = 0; i < cost.rows(); i++)
-    {
-        minval = minvals(i, 0);
-        for (int j = 0; j < cost.cols(); j++)
-        {
-            cost(i, j) = cost(i, j) - minval;
-        }
-    }
-    step = 2;
-}
-
-inline void alan_pose_estimation::LedNodelet::stp2(int &step)
-{
-    for (int r = 0; r < cost.rows(); r++)
-    {
-        for (int c = 0; c < cost.cols(); c++)
-        {
-            if (cost(r, c) == 0 && cover_row[r] == 0 && cover_col[c] == 0)
-            {
-                mask(r, c) = 1;
-                cover_row[r] = 1;
-                cover_col[c] = 1;
-            }
-        }
-    }
-    for (int r = 0; r < cost.rows(); r++)
-        cover_row[r] = 0;
-    for (int c = 0; c < cost.cols(); c++)
-        cover_col[c] = 0;
-    step = 3;
-}
-
-inline void alan_pose_estimation::LedNodelet::stp3(int &step)
-{
-    int count = 0;
-    for (int r = 0; r < cost.rows(); r++)
-        for (int c = 0; c < cost.cols(); c++)
-            if (mask(r, c) == 1)
-                cover_col[c] = 1;
-    for (int c = 0; c < cost.cols(); c++)
-        if (cover_col[c] == 1)
-            count += 1;
-    if (count == cost.cols() )
-        step = 7;
-    else
-        step = 4;
-}
-
-inline void alan_pose_estimation::LedNodelet::stp4(int &step)
-{
-    int row = -1;
-    int col = -1;
-    bool done;
-    done = false;
-
-    while (!done)
-    {
-        find_a_zero(row, col);
-        if (row == -1)
-        {
-            done = true;
-            step = 6;
-        }
-        else
-        {
-            mask(row, col) = 2;
-            if (star_in_row(row))
-            {
-                find_star_in_row(row, col);
-                cover_row[row] = 1;
-                cover_col[col] = 0;
-            }
-            else
-            {
-                done = true;
-                step = 5;
-                path_row_0 = row;
-                path_col_0 = col;
-            }
-        }
-    }
-}
-
-inline void alan_pose_estimation::LedNodelet::stp5(int &step)
-{
-    bool done;
-    int row = -1;
-    int col = -1;
-
-    path_count = 1;
-    path(path_count - 1, 0) = path_row_0;
-    path(path_count - 1, 1) = path_col_0;
-    done = false;
-    while (!done)
-    {
-        find_star_in_col(path(path_count - 1, 1), row);
-        if (row > -1)
-        {
-            path_count += 1;
-            path(path_count - 1, 0) = row;
-            path(path_count - 1, 1) = path(path_count - 2, 1);
-        }
-        else
-            done = true;
-        if (!done)
-        {
-            find_prime_in_row(path(path_count - 1, 0), col);
-            path_count += 1;
-            path(path_count - 1, 0) = path(path_count - 2, 0);
-            path(path_count - 1, 1) = col;
-        }
-    }
-    augment_path();
-    clear_covers();
-    erase_primes();
-    step = 3;
-}
-
-inline void alan_pose_estimation::LedNodelet::stp6(int &step)
-{
-    double minval = DBL_MAX;
-    find_min(minval);
-    for (int r = 0; r < cost.rows(); r++)
-        for (int c = 0; c < cost.cols(); c++)
-        {
-            if (cover_row[r] == 1)
-                cost(r, c) += minval;
-            if (cover_col[c] == 0)
-                cost(r, c) -= minval;
-        }
-    //cout<<minval<<endl;
-    step = 4;
-}
-
-inline void alan_pose_estimation::LedNodelet::stp7()
-{
-    for(int r = 0; r<cost.rows(); r++)
-    {
-        for (int c = 0; c<cost.cols();c++)
-        {
-            if(mask(r,c) == 1 && copy(r,c) <= 100 /*&& copy(r,c) != 0*/   )
-            {
-                Match temp = {c,false};
-                id_match.push_back(temp);
-            }
-            else if(mask(r,c) == 1 && copy(r,c) > 100 /*|| copy(r,c) == 0   )*/)
-            {
-                Match temp = {c,true};
-                id_match.push_back(temp);
-            }
-
-        }
-    }
-}
-
-inline void alan_pose_estimation::LedNodelet::find_a_zero(int &row, int &col)
-{
-    int r = 0;
-    int c;
-    bool done;
-    row = -1;
-    col = -1;
-    done = false;
-
-    while (!done)
-    {
-        c = 0;
-        while (true)
-        {
-            if (cost(r, c) == 0 && cover_row[r] == 0 && cover_col[c] == 0)
-            {
-                row = r;
-                col = c;
-                done = true;
-            }
-            c += 1;
-            if (c >= cost.cols() || done)
-                break;
-        }
-        r += 1;
-        if (r >= cost.rows())
-            done = true;
-    }
-}
-
-inline bool alan_pose_estimation::LedNodelet::star_in_row(int row)
-{
-    bool temp = false;
-    for (int c = 0; c < cost.cols(); c++)
-        if (mask(row, c) == 1)
-        {
-            temp = true;
-            break;
-        }
-    return temp;
-}
-
-inline void alan_pose_estimation::LedNodelet::find_star_in_row(int row, int &col)
-{
-    col = -1;
-    for (int c = 0; c < cost.cols(); c++)
-    {
-        if (mask(row, c) == 1)
-            col = c;
-    }
-}
-
-inline void alan_pose_estimation::LedNodelet::find_min(double &minval)
-{
-    for (int r = 0; r < cost.rows(); r++)
-        for (int c = 0; c < cost.cols(); c++)
-            if (cover_row[r] == 0 && cover_col[c] == 0)
-                if (minval > cost(r, c))
-                    minval = cost(r, c);
-}
-
-inline void alan_pose_estimation::LedNodelet::find_star_in_col(int col, int &row)
-{
-    row = -1;
-    for (int i = 0; i < cost.rows(); i++)
-        if (mask(i, col) == 1)
-            row = i;
-}
-
-inline void alan_pose_estimation::LedNodelet::find_prime_in_row(int row, int &col)
-{
-    for (int j = 0; j < cost.cols(); j++)
-        if (mask(row, j) == 2)
-            col = j;
-}
-
-inline void alan_pose_estimation::LedNodelet::augment_path()
-{
-    for (int p = 0; p < path_count; p++)
-    {
-        for (int p = 0; p < path_count; p++)
-        {
-            int i = path(p, 0);
-            int j = path(p, 1);
-            if (mask(i, j) == 1)
-                mask(i, j) = 0;
-            else
-                mask(i, j) = 1;
-        }
-
-    }
-}
-
-inline void alan_pose_estimation::LedNodelet::clear_covers()
-{
-    for (int r = 0; r < cost.rows(); r++)
-        cover_row[r] = 0;
-    for (int c = 0; c < cost.cols(); c++)
-        cover_col[c] = 0;
-}
-
-inline void alan_pose_estimation::LedNodelet::erase_primes()
-{
-    for (int r = 0; r < cost.rows(); r++)
-        for (int c = 0; c < cost.cols(); c++)
-            if (mask(r, c) == 2)
-                mask(r, c) = 0;
-}
-
-
 
 void alan_pose_estimation::LedNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
