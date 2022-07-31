@@ -5,7 +5,7 @@
 
 using namespace std;
 
-namespace my_mathtool_for_alan
+namespace correspondence
 {
     typedef struct MOT
     {
@@ -20,6 +20,11 @@ namespace my_mathtool_for_alan
         int id;
         bool toofar;
     }Match;
+
+    typedef struct matchid
+    {
+
+    }matchid;
 
     class munkres
     {
@@ -45,6 +50,8 @@ namespace my_mathtool_for_alan
         vector<int> cover_row;
         vector<int> cover_col;
         int path_row_0, path_col_0, path_count;
+
+        vector<int> matchid;
 
         void cost_generate(vector<cv::Point> detected, vector<cv::Point> previous);
 

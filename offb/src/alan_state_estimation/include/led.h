@@ -54,7 +54,7 @@ namespace alan_pose_estimation
             boost::shared_ptr<sync> sync_;
             
             vector<int> id_tracked;
-            my_mathtool_for_alan::Match ID;
+            
 
 
 
