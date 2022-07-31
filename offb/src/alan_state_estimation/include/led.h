@@ -28,6 +28,7 @@
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
 #include <pcl/registration/transformation_estimation_svd.h>
+
 #include "munkres.hpp"
 
 namespace alan_pose_estimation
@@ -53,6 +54,9 @@ namespace alan_pose_estimation
             boost::shared_ptr<sync> sync_;
             
             vector<int> id_tracked;
+            my_mathtool_for_alan::Match ID;
+
+
 
             void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth);
             
