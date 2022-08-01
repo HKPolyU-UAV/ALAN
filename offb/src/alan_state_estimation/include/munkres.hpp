@@ -7,11 +7,10 @@ using namespace std;
 
 namespace correspondence
 {
-    typedef struct matchid //create a vector of matchid 0 ~ led_no.
+    typedef struct matchid
     {
         int detected_indices; //
         bool detected_ornot = false;
-
     }matchid;
 
     class munkres
@@ -39,16 +38,17 @@ namespace correspondence
         vector<int> cover_col;
         int path_row_0, path_col_0, path_count;
 
-        vector<int> matchid;
 
         void cost_generate(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected);
 
     public:
         munkres();
         ~munkres();
-        vector<matchid> solution(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected);//return the corresponding ids
-        vector<matchid
-        > id_match;
+
+        // vector<match
+        vector<matchid> solution(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected);//return the corresponding ids;
+        
+        vector<matchid> id_match;
     };
 
     munkres::munkres()
@@ -61,7 +61,7 @@ namespace correspondence
 
     }
 
-    vector<Match> munkres::solution(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected)
+    vector<matchid> munkres::solution(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected)
     {
         
 
@@ -290,12 +290,12 @@ namespace correspondence
             {
                 if(mask(r,c) == 1 && copy(r,c) <= 100 /*&& copy(r,c) != 0*/   )
                 {
-                    Match temp = {c, false};
+                    matchid temp = {c, false};
                     id_match.push_back(temp);
                 }
                 else if(mask(r,c) == 1 && copy(r,c) > 100 /*|| copy(r,c) == 0   )*/)
                 {
-                    Match temp = {c,true};
+                    matchid temp = {c,true};
                     id_match.push_back(temp);
                 }
 

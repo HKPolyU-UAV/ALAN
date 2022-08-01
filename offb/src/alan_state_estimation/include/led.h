@@ -33,10 +33,15 @@
 
 namespace alan_pose_estimation
 {
+    typedef struct lala
+    {
+        int gan;
+    }lala;
+
     class LedNodelet : public nodelet::Nodelet
     {
+        public:
         private:
-
             cv::Mat frame;
             double LANDING_DISTANCE = 0;
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
@@ -74,10 +79,6 @@ namespace alan_pose_estimation
 
             pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
             
-            //Munkres
-            void munkres_cost_generate(vector<cv::Point> detected, vector<cv::Point> previous);
-            vector<Match> munkres_solution(vector<cv::Point> measured, vector<cv::Point> previous);//return the corresponding ids
-            vector<Match> munkres_id_match;
 
             int step = 1;
             Eigen::MatrixXd cost, mask, path, copy;
