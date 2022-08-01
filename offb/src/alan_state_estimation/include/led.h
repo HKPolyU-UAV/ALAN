@@ -124,15 +124,25 @@ namespace alan_pose_estimation
                 first.push_back(d);
 
                 vector<Eigen::Vector3d> second;
-                second.push_back(a);
-                second.push_back(b);
-                second.push_back(c);
-                second.push_back(d);
+                second.push_back(c_);
+                second.push_back(d_);
+                second.push_back(a_);
+                // second.push_back(b_);
 
-                LED_v_Detected;
-
-
+                correspondence::munkres lala;   
                 
+                double t1 = ros::Time::now().toSec();          
+
+                LED_v_Detected = lala.solution(first, second);
+                
+                for(auto what : lala.id_match)
+                {
+                    cout<<what.detected_indices<<endl;
+                }
+
+                double t2 = ros::Time::now().toSec();
+                cout<<1/(t2-t1)<<" fps"<<endl;
+
             }
 
     };

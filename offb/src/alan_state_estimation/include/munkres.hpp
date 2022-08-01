@@ -38,7 +38,6 @@ namespace correspondence
         vector<int> cover_col;
         int path_row_0, path_col_0, path_count;
 
-
         void cost_generate(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected);
 
     public:
@@ -112,30 +111,30 @@ namespace correspondence
         {
             cost.setZero(on_body_frame.size(), detected.size());
             mask.setZero(on_body_frame.size(), detected.size());
-            cover_row = vector<int>(on_body_frame.size(),0);
-            cover_col = vector<int>(on_body_frame.size(),0);
-            path.setZero(on_body_frame.size()*2,2);
+            cover_row = vector<int>(on_body_frame.size(), 0);
+            cover_col = vector<int>(on_body_frame.size(), 0);
+            path.setZero(on_body_frame.size()*2, 2);
         }
-        else if (on_body_frame.size()<detected.size())
+        else if (on_body_frame.size() < detected.size())
         {
             cost.setZero(detected.size(), detected.size());
             mask.setZero(detected.size(), detected.size());
-            cover_row = vector<int>(detected.size(),0);
-            cover_col = vector<int>(detected.size(),0);
-            path.setZero(detected.size()*2,2);
+            cover_row = vector<int>(detected.size(), 0);
+            cover_col = vector<int>(detected.size(), 0);
+            path.setZero(detected.size()*2, 2);
         }
-        else if (on_body_frame.size()>detected.size())
+        else if (on_body_frame.size() > detected.size())
         {
             cost.setZero(on_body_frame.size(), on_body_frame.size());
             mask.setZero(on_body_frame.size(), on_body_frame.size());
-            cover_row = vector<int>(on_body_frame.size(),0);
-            cover_col = vector<int>(on_body_frame.size(),0);
-            path.setZero(on_body_frame.size()*2,2);
+            cover_row = vector<int>(on_body_frame.size(), 0);
+            cover_col = vector<int>(on_body_frame.size(), 0);
+            path.setZero(on_body_frame.size() * 2, 2);
         }
 
-        for (int i=0;i<on_body_frame.size();i++)
+        for (int i=0; i < on_body_frame.size(); i++)
         {
-            for (int j=0;j<detected.size();j++)
+            for (int j=0; j < detected.size(); j++)
             {
                 cost (i,j) = (on_body_frame[i] - detected[j]).norm();
             }
@@ -159,7 +158,7 @@ namespace correspondence
         step = 2;
     }
 
-    void munkres::stp2(int &step)
+    void munkres::stp2(int& step)
     {
         for (int r = 0; r < cost.rows(); r++)
         {
@@ -180,7 +179,7 @@ namespace correspondence
         step = 3;
     }
 
-    void munkres::stp3(int &step)
+    void munkres::stp3(int& step)
     {
         int count = 0;
         for (int r = 0; r < cost.rows(); r++)
@@ -190,13 +189,13 @@ namespace correspondence
         for (int c = 0; c < cost.cols(); c++)
             if (cover_col[c] == 1)
                 count += 1;
-        if (count == cost.cols() )
+        if (count == cost.cols())
             step = 7;
         else
             step = 4;
     }
 
-    void munkres::stp4(int &step)
+    void munkres::stp4(int& step)
     {
         int row = -1;
         int col = -1;
@@ -231,7 +230,7 @@ namespace correspondence
         }
     }
 
-    void munkres::stp5(int &step)
+    void munkres::stp5(int& step)
     {
         bool done;
         int row = -1;
@@ -266,7 +265,7 @@ namespace correspondence
         step = 3;
     }
 
-    void munkres::stp6(int &step)
+    void munkres::stp6(int& step)
     {
         double minval = DBL_MAX;
         find_min(minval);
@@ -284,9 +283,9 @@ namespace correspondence
 
     void munkres::stp7()
     {
-        for(int r = 0; r<cost.rows(); r++)
+        for(int r = 0; r < cost.rows(); r++)
         {
-            for (int c = 0; c<cost.cols();c++)
+            for (int c = 0; c < cost.cols();c++)
             {
                 if(mask(r,c) == 1 && copy(r,c) <= 100 /*&& copy(r,c) != 0*/   )
                 {
@@ -303,7 +302,7 @@ namespace correspondence
         }
     }
 
-    void munkres::find_a_zero(int &row, int &col)
+    void munkres::find_a_zero(int& row, int& col)
     {
         int r = 0;
         int c;
@@ -345,7 +344,7 @@ namespace correspondence
         return temp;
     }
 
-    void munkres::find_star_in_row(int row, int &col)
+    void munkres::find_star_in_row(int row, int& col)
     {
         col = -1;
         for (int c = 0; c < cost.cols(); c++)
@@ -355,7 +354,7 @@ namespace correspondence
         }
     }
 
-    void munkres::find_min(double &minval)
+    void munkres::find_min(double& minval)
     {
         for (int r = 0; r < cost.rows(); r++)
             for (int c = 0; c < cost.cols(); c++)
@@ -364,7 +363,7 @@ namespace correspondence
                         minval = cost(r, c);
     }
 
-    void munkres::find_star_in_col(int col, int &row)
+    void munkres::find_star_in_col(int col, int& row)
     {
         row = -1;
         for (int i = 0; i < cost.rows(); i++)
@@ -372,7 +371,7 @@ namespace correspondence
                 row = i;
     }
 
-    void munkres::find_prime_in_row(int row, int &col)
+    void munkres::find_prime_in_row(int row, int& col)
     {
         for (int j = 0; j < cost.cols(); j++)
             if (mask(row, j) == 2)
