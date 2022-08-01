@@ -33,12 +33,6 @@
 
 namespace alan_pose_estimation
 {
-    typedef struct Match
-    {
-        int id;
-        bool toofar;
-    }Match;
-
     class LedNodelet : public nodelet::Nodelet
     {
         private:
@@ -53,7 +47,7 @@ namespace alan_pose_estimation
             typedef message_filters::Synchronizer<MySyncPolicy> sync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<sync> sync_;
             
-            vector<int> id_tracked;
+            vector<correspondence::matchid> LED_v_Detected;
             
 
 
@@ -114,10 +108,29 @@ namespace alan_pose_estimation
                     0, 0,  1;         
                     
                 // //subscribe
-                subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
-                subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
-                sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
-                sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
+                // subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
+                // subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
+                // sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
+                // sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
+
+                Eigen::Vector3d a(0, 1, 2), b(10, 8, 7), c(20, 21, 20), d(40, 38, 41);
+                Eigen::Vector3d a_(-1, 0.1, 2), b_(9, 9, 9), c_(19, 19, 20), d_(40, 37, 41);
+
+                vector<Eigen::Vector3d> first;
+                first.push_back(a);
+                first.push_back(b);
+                first.push_back(c);
+                first.push_back(d);
+
+                vector<Eigen::Vector3d> second;
+                second.push_back(a);
+                second.push_back(b);
+                second.push_back(c);
+                second.push_back(d);
+
+                LED_v_Detected;
+
+
                 
             }
 

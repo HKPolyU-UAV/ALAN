@@ -7,22 +7,10 @@ using namespace std;
 
 namespace correspondence
 {
-    typedef struct MOT
+    typedef struct matchid //create a vector of matchid 0 ~ led_no.
     {
-        cv::Mat state_of_1obj;
-        int id;
-        int tracked_i;
-        int missing;
-    }MOT;
-
-    typedef struct Match
-    {
-        int id;
-        bool toofar;
-    }Match;
-
-    typedef struct matchid
-    {
+        int detected_indices; //
+        bool detected_ornot = false;
 
     }matchid;
 
@@ -53,13 +41,14 @@ namespace correspondence
 
         vector<int> matchid;
 
-        void cost_generate(vector<cv::Point> detected, vector<cv::Point> previous);
+        void cost_generate(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected);
 
     public:
         munkres();
         ~munkres();
-        vector<Match> solution(vector<cv::Mat>measured, vector<MOT>previous);//return the corresponding ids
-        vector<Match> id_match;
+        vector<matchid> solution(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected);//return the corresponding ids
+        vector<matchid
+        > id_match;
     };
 
     munkres::munkres()
@@ -72,24 +61,11 @@ namespace correspondence
 
     }
 
-    vector<Match> munkres::solution(vector<cv::Mat> measured, vector<MOT> previous )
+    vector<Match> munkres::solution(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected)
     {
-        id_match.clear();
-        cv::Point temp;
-        vector<cv::Point> detected_pts, previous_pts;
+        
 
-        for(auto o:measured)
-        {
-            temp = cv::Point (o.at<float>(0), o.at<float>(1));
-            detected_pts.push_back(temp);
-        }
-        for(auto o:previous)
-        {
-            temp = cv::Point (o.state_of_1obj.at<float>(0), o.state_of_1obj.at<float>(1));
-            previous_pts.push_back(temp);
-        }
-
-        cost_generate(detected_pts,previous_pts);
+        cost_generate(on_body_frame, detected);
         copy = cost;
 
         bool done = false;
@@ -130,25 +106,17 @@ namespace correspondence
 
     }
 
-    void munkres::cost_generate(vector<cv::Point> detected, vector<cv::Point> previous)
+    void munkres::cost_generate(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected)
     {
-        if(detected.size()==previous.size())
+        if(on_body_frame.size()==detected.size())
         {
-            cost.setZero(detected.size(), previous.size());
-            mask.setZero(detected.size(), previous.size());
-            cover_row = vector<int>(detected.size(),0);
-            cover_col = vector<int>(detected.size(),0);
-            path.setZero(detected.size()*2,2);
+            cost.setZero(on_body_frame.size(), detected.size());
+            mask.setZero(on_body_frame.size(), detected.size());
+            cover_row = vector<int>(on_body_frame.size(),0);
+            cover_col = vector<int>(on_body_frame.size(),0);
+            path.setZero(on_body_frame.size()*2,2);
         }
-        else if (detected.size()<previous.size())
-        {
-            cost.setZero(previous.size(), previous.size());
-            mask.setZero(previous.size(), previous.size());
-            cover_row = vector<int>(previous.size(),0);
-            cover_col = vector<int>(previous.size(),0);
-            path.setZero(previous.size()*2,2);
-        }
-        else if (detected.size()>previous.size())
+        else if (on_body_frame.size()<detected.size())
         {
             cost.setZero(detected.size(), detected.size());
             mask.setZero(detected.size(), detected.size());
@@ -156,12 +124,20 @@ namespace correspondence
             cover_col = vector<int>(detected.size(),0);
             path.setZero(detected.size()*2,2);
         }
-
-        for (int i=0;i<detected.size();i++)
+        else if (on_body_frame.size()>detected.size())
         {
-            for (int j=0;j<previous.size();j++)
+            cost.setZero(on_body_frame.size(), on_body_frame.size());
+            mask.setZero(on_body_frame.size(), on_body_frame.size());
+            cover_row = vector<int>(on_body_frame.size(),0);
+            cover_col = vector<int>(on_body_frame.size(),0);
+            path.setZero(on_body_frame.size()*2,2);
+        }
+
+        for (int i=0;i<on_body_frame.size();i++)
+        {
+            for (int j=0;j<detected.size();j++)
             {
-                cost (i,j) = cv::norm ( detected[i] - previous[j] );
+                cost (i,j) = (on_body_frame[i] - detected[j]).norm();
             }
         }
     }
@@ -314,7 +290,7 @@ namespace correspondence
             {
                 if(mask(r,c) == 1 && copy(r,c) <= 100 /*&& copy(r,c) != 0*/   )
                 {
-                    Match temp = {c,false};
+                    Match temp = {c, false};
                     id_match.push_back(temp);
                 }
                 else if(mask(r,c) == 1 && copy(r,c) > 100 /*|| copy(r,c) == 0   )*/)

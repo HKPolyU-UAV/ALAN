@@ -6,12 +6,10 @@
                 "limitSymbolsToIncludedHeaders": false
             },
             "includePath": [
-                "/home/patrick/vio_ws/devel/include/**",
-                "/home/patrick/alan_ws/devel/include/**",
-                "/home/patrick/camera_ws/devel/include/**",
+                "../../devel/include/**",
+                "../../devel/include/**",
                 "/opt/ros/noetic/include/**",
-                "/home/patrick/alan_ws/src/alan/cv_bridge/include/**",
-                "/home/patrick/camera_ws/src/realsense-ros/realsense2_camera/include/**",
+                "./cv_bridge/include/**",
                 "/usr/include/**"
             ],
             "name": "ROS",
