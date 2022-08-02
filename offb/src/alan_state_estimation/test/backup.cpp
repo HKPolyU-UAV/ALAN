@@ -98,3 +98,50 @@ pcl::IndicesPtr match_id = icp.getIndices();
 //     cout<<what<<endl;;
 // }
 cout << endl << "Hz: " << 1 / (t2-t1) <<endl;
+
+
+
+                Eigen::Vector3d a(0, 1, 2), b(10, 8, 7), c(20, 21, 20), d(40, 38, 41);
+                Eigen::Vector3d a_(-1, 0.1, 2), b_(9, 9, 9), c_(19, 19, 20), d_(40, 37, 41);
+
+                vector<Eigen::Vector3d> first;
+                first.push_back(a);
+                first.push_back(b);
+                first.push_back(c);
+                first.push_back(d);
+
+                vector<Eigen::Vector3d> second;
+                second.push_back(c_);
+                second.push_back(d_);
+                second.push_back(a_);
+                second.push_back(b_);
+
+                correspondence::munkres lala;   
+                
+                double t1 = ros::Time::now().toSec();          
+
+                LED_v_Detected = lala.solution(first, second);
+                
+                for(auto what : lala.solution(first, second))
+                {
+                    cout<<what.detected_indices<<endl;
+                }
+                
+                ;
+
+                // for(auto what : normalization_2d(first, 1, 2))
+                // {
+                //     cout << what << endl << endl;
+                // }
+
+
+                vector<Eigen::Vector3d> test1 = normalization_2d(first, 1, 2), test2 = normalization_2d(second, 1, 2);
+
+                for(auto what : lala.solution(test1, test2))
+                {
+                    cout<<what.detected_indices<<endl;
+                }
+
+
+                double t2 = ros::Time::now().toSec();
+                cout<<1/(t2-t1)<<" fps"<<endl;

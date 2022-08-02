@@ -29,7 +29,7 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
 
     double t1 = ros::Time::now().toSec(); 
 
-    pose_w_LED_pnp(frame, depth);
+    pose_w_LED_icp(frame, depth);
     
     double t2 = ros::Time::now().toSec();
     
@@ -46,11 +46,25 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
 
 } 
 
-void alan_pose_estimation::LedNodelet::pose_w_LED_pnp(cv::Mat& frame, cv::Mat depth)
+void alan_pose_estimation::LedNodelet::pose_w_LED_icp(cv::Mat& frame, cv::Mat depth)
 {
     //vector<Eigen::Vector3d> pts_3d_LED_camera =    
     // cv::threshold(frame, frame, )
-    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+
+    if(!LED_tracker_initiated)
+    {
+        LED_tracking_initialize(frame, depth);
+        LED_tracker_initiated = true;
+    }
+    else
+    {
+        vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+        vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
+
+        // hungarian.solution(pts_on_body_frame_normalized, pts_3d_pcl_detect_normalized);
+
+    }
+    
 
     //reject outlier
 
@@ -61,26 +75,44 @@ void alan_pose_estimation::LedNodelet::pose_w_LED_pnp(cv::Mat& frame, cv::Mat de
 void alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 {
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
-    
-    // cout<<"before outlier rejection:"<<pts_3d_pcl_detect.size()<<endl;
-    // reject_outlier(pts_3d_pcl_detect);
-    // cout<<"after outlier rejection: "<<pts_3d_pcl_detect.size()<<endl;
+    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
+    //after above, I got:
+    //pointcloud in {c}
+
+    vector<Eigen::Vector3d> pts_3d_pcl_detect_normalized = normalization_2d(pts_3d_pcl_detect, 0, 1);
+    LED_v_Detected = hungarian.solution(pts_on_body_frame_normalized, pts_3d_pcl_detect_normalized);
+    pts_detected_in_corres_order = sort_the_points_in_corres_order(pts_3d_pcl_detect, hungarian.id_match);
+    //now I match it with the points in {b}
+
+    //now what?
+    //save to where?
+
 
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr alan_pose_estimation::LedNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
+vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::sort_the_points_in_corres_order(vector<Eigen::Vector3d> pts, vector<correspondence::matchid> corres)
+{
+    vector<Eigen::Vector3d> pts_return;
+    Eigen::Vector3d pt_temp;
+    for(auto what :  corres)
+    {
+        pt_temp = pts[what.detected_indices];
+
+    }
+
+}
+
+vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
 {
     //get 9 pixels around the point of interest
 
-    int no_pixels = 25;
-    int POI_width = (sqrt(no_pixels) - 1 ) / 2;
+    int no_pixels = 9;
+    int POI_width = (sqrt(9) - 1 ) / 2;
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pointclouds;
+    vector<Eigen::Vector3d> pointclouds;
 
     int x_pixel, y_pixel;
     Eigen::Vector3d temp;
-    pcl::PointXYZ temp_pcl;
 
     for(int i = 0; i < pts_2d_detected.size(); i++)
     {
@@ -117,11 +149,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr alan_pose_estimation::LedNodelet::pointcloud
 
         temp = z_depth * cameraMat.inverse() * temp;
 
-        temp_pcl.x = temp.x();
-        temp_pcl.y = temp.y();
-        temp_pcl.z = temp.z();
-
-        pointclouds->push_back(temp_pcl);
+        
+        pointclouds.push_back(temp);
     }
 
     return pointclouds;
@@ -328,7 +357,7 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     return POI;
 }
 
-void alan_pose_estimation::LedNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+void alan_pose_estimation::LedNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t, vector<correspondence::matchid> corres)
 {
     //here we assume known correspondences
 
@@ -403,6 +432,72 @@ Eigen::Vector3d alan_pose_estimation::LedNodelet::get_CoM(vector<Eigen::Vector3d
 
     return CoM;
 }
+
+vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::normalization_2d(vector<Eigen::Vector3d> v_pts, int i_x, int i_y)
+{
+    double x_min = INFINITY, y_min = INFINITY;    
+    int i_x_min_final, i_y_min_final;
+    
+    double x_max = -INFINITY, y_max = -INFINITY;    
+    int i_x_max_final, i_y_max_final;
+
+    for(int i = 0; i < v_pts.size(); i++)
+    {
+        if(v_pts[i](i_x) < x_min) //get x min
+        {
+            i_x_min_final = i;
+            x_min = v_pts[i](i_x);
+        }
+
+        if(v_pts[i](i_y) < y_min) //get y min
+        {
+            i_y_min_final = i;
+            y_min = v_pts[i](i_y);
+        }
+
+        if(v_pts[i](i_x) > x_max) //get x max
+        {
+            i_x_max_final = i;
+            x_max = v_pts[i](i_x);
+        }
+
+        if(v_pts[i](i_y) > y_max) //get y max
+        {
+            i_y_max_final = i;
+            y_max = v_pts[i](i_y);
+        }        
+
+    }
+
+    // cout << x_min << " " << i_x_min_final << endl;
+    // cout << y_min << " " << i_y_min_final << endl;
+    // cout << x_max << " " << i_x_max_final << endl;
+    // cout << y_max << " " << i_y_max_final << endl;
+
+    double delta_x, delta_y;
+
+    delta_x = x_max - x_min;
+    delta_y = y_max - y_min;
+
+    vector<Eigen::Vector3d> normalized_v_pts;
+    double x_temp, y_temp;
+    Eigen::Vector3d v_temp;
+
+    for(int i = 0; i < v_pts.size(); i++)
+    {
+        x_temp = (v_pts[i](i_x) - x_min) / delta_x;
+        y_temp = (v_pts[i](i_y) - y_min) / delta_y;
+        
+        v_temp.x() = x_temp;
+        v_temp.y() = y_temp;
+        v_temp.z() = 0;
+
+        normalized_v_pts.push_back(v_temp);
+    }
+    
+    return normalized_v_pts;
+}
+
 
 
 #endif

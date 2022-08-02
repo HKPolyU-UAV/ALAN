@@ -62,8 +62,8 @@ namespace correspondence
 
     vector<matchid> munkres::solution(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected)
     {
+        this->id_match.clear();
         
-
         cost_generate(on_body_frame, detected);
         copy = cost;
 
