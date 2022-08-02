@@ -32,6 +32,8 @@ namespace correspondence
         void clear_covers();
         void erase_primes();
 
+        void identify_redundant(vector<matchid>& id_results, vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected);
+
         int step = 1;
         Eigen::MatrixXd cost, mask, path, copy;
         vector<int> cover_row;
@@ -63,9 +65,13 @@ namespace correspondence
     vector<matchid> munkres::solution(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected)
     {
         this->id_match.clear();
-        
+
         cost_generate(on_body_frame, detected);
         copy = cost;
+
+        cout<<"sol:"<<endl;
+        cout<<cost<<endl;
+        cout<<"-----"<<endl;
 
         bool done = false;
         step = 1;
@@ -101,7 +107,23 @@ namespace correspondence
             }
         }
 
+        // if(on_body_frame.size() != detected.size())
+        //     identify_redundant(id_match, on_body_frame, detected);
+
         return id_match;
+
+    }
+
+    void munkres::identify_redundant(vector<matchid>& id_results, vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected)
+    {
+        for(auto& what : id_results)
+        {
+            if(what.detected_indices >= detected.size())        
+                what.detected_ornot = false;
+            // else if(what.)
+                          
+        }
+
 
     }
 
@@ -111,6 +133,7 @@ namespace correspondence
         {
             cost.setZero(on_body_frame.size(), detected.size());
             mask.setZero(on_body_frame.size(), detected.size());
+
             cover_row = vector<int>(on_body_frame.size(), 0);
             cover_col = vector<int>(on_body_frame.size(), 0);
             path.setZero(on_body_frame.size()*2, 2);
@@ -119,6 +142,7 @@ namespace correspondence
         {
             cost.setZero(detected.size(), detected.size());
             mask.setZero(detected.size(), detected.size());
+
             cover_row = vector<int>(detected.size(), 0);
             cover_col = vector<int>(detected.size(), 0);
             path.setZero(detected.size()*2, 2);
@@ -127,6 +151,7 @@ namespace correspondence
         {
             cost.setZero(on_body_frame.size(), on_body_frame.size());
             mask.setZero(on_body_frame.size(), on_body_frame.size());
+
             cover_row = vector<int>(on_body_frame.size(), 0);
             cover_col = vector<int>(on_body_frame.size(), 0);
             path.setZero(on_body_frame.size() * 2, 2);
@@ -259,9 +284,11 @@ namespace correspondence
                 path(path_count - 1, 1) = col;
             }
         }
+
         augment_path();
         clear_covers();
         erase_primes();
+
         step = 3;
     }
 
@@ -285,19 +312,16 @@ namespace correspondence
     {
         for(int r = 0; r < cost.rows(); r++)
         {
+            // cout<<"get mask: "<<endl << mask <<endl<<endl;
+            // cout<<"get copy: "<<endl << copy <<endl<<endl;
+
             for (int c = 0; c < cost.cols();c++)
             {
-                if(mask(r,c) == 1 && copy(r,c) <= 100 /*&& copy(r,c) != 0*/   )
+                if(mask(r,c) == 1)
                 {
-                    matchid temp = {c, false};
-                    id_match.push_back(temp);
-                }
-                else if(mask(r,c) == 1 && copy(r,c) > 100 /*|| copy(r,c) == 0   )*/)
-                {
-                    matchid temp = {c,true};
-                    id_match.push_back(temp);
-                }
-
+                    matchid temp = {c, true};
+                    id_match.push_back(temp);   
+                }                         
             }
         }
     }

@@ -105,7 +105,7 @@ namespace alan_pose_estimation
                 //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
-                nh.getParam("/aruco/cam_intrinsics_455", intrinsics_list);                
+                nh.getParam("/alan_pose/cam_intrinsics_455", intrinsics_list);                
                                 
                 for(int i = 0; i < 4; i++)
                 {

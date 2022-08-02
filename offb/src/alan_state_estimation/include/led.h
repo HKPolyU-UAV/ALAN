@@ -90,6 +90,11 @@ namespace alan_pose_estimation
 
             vector<Eigen::Vector3d> sort_the_points_in_corres_order(vector<Eigen::Vector3d> pts, vector<correspondence::matchid> corres);
 
+            void correspondence_search(vector<Eigen::Vector3d> pts_on_body_frame, vector<Eigen::Vector3d> pts_detected);    
+
+            void reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect);
+            
+
             virtual void onInit()
             {
                 ros::NodeHandle& nh = getNodeHandle();
@@ -99,7 +104,7 @@ namespace alan_pose_estimation
                 //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
-                nh.getParam("/aruco/cam_intrinsics_455", intrinsics_list);                
+                nh.getParam("/alan_pose/cam_intrinsics_455", intrinsics_list);                
                                 
                 for(int i = 0; i < 4; i++)
                 {
@@ -121,63 +126,67 @@ namespace alan_pose_estimation
                 }   
 
                 LED_no = pts_on_body_frame.size();
-
                 pts_on_body_frame_normalized = normalization_2d(pts_on_body_frame, 1, 2);
                                                 
                 // //subscribe
-                // subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
-                // subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
-                // sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
-                // sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
+                subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
+                subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
+                sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
+                sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
 
-                Eigen::Vector3d a(0, 1, 2), b(10, 8, 7), c(20, 21, 20), d(40, 38, 41);
-                Eigen::Vector3d a_(-1, 0.1, 2), b_(9, 9, 9), c_(19, 19, 20), d_(40, 37, 41);
+                // Eigen::Vector3d a(0, 1, 2), b(10, 8, 7), c(20, 21, 20), d(40, 38, 41);
+                // Eigen::Vector3d a_(-1, 0.1, 2), b_(100, 100, 105), c_(19, 19, 20), d_(40, 37, 41);
 
-                vector<Eigen::Vector3d> first;
-                first.push_back(a);
-                first.push_back(b);
-                first.push_back(c);
-                first.push_back(d);
+                // vector<Eigen::Vector3d> first;
+                // first.push_back(a);
+                // first.push_back(b);
+                // first.push_back(c);
+                // first.push_back(d);
 
-                vector<Eigen::Vector3d> second;
-                second.push_back(c_);
-                second.push_back(d_);
-                second.push_back(a_);
+                // vector<Eigen::Vector3d> second;
+                // second.push_back(c_);
+                // second.push_back(d_);
+                // second.push_back(a_);
                 // second.push_back(b_);
 
-                correspondence::munkres lala;   
+                // correspondence::munkres lala;   
                 
-                double t1 = ros::Time::now().toSec();          
+                // double t1 = ros::Time::now().toSec();          
 
-                LED_v_Detected = lala.solution(first, second);
+                // // LED_v_Detected = lala.solution(first, second);
+                // // cout<<LED_v_Detected.size()<<endl;
                 
-                for(auto what : lala.solution(first, second))
-                {
-                    cout<<what.detected_indices<<endl;
-                    cout<<what.detected_ornot<<endl;
-                    cout<<"next!"<<endl;
-                }
-                
-                ;
-
-                // for(auto what : normalization_2d(first, 1, 2))
+                // for(auto what : lala.solution(first, second))
                 // {
-                //     cout << what << endl << endl;
+                //     cout<<what.detected_indices<<endl;
+                //     cout<<what.detected_ornot<<endl;
+                //     cout<<"next!"<<endl;
+                // }
+                
+                // ;
+
+                // // for(auto what : normalization_2d(first, 1, 2))
+                // // {
+                // //     cout << what << endl << endl;
+                // // }
+                // cout<<endl<<"normalized....."<<endl<<endl;
+
+                // vector<Eigen::Vector3d> test1 = normalization_2d(first, 1, 2), test2 = normalization_2d(second, 1, 2);
+                
+                // // LED_v_Detected = lala.solution(first, second);
+                // // cout<<LED_v_Detected.size()<<endl;
+
+
+                // for(auto what : lala.solution(test1, test2))
+                // {
+                //     cout<<what.detected_indices<<endl;
+                //     cout<<what.detected_ornot<<endl;
+                //     cout<<"next!"<<endl;
                 // }
 
 
-                vector<Eigen::Vector3d> test1 = normalization_2d(first, 1, 2), test2 = normalization_2d(second, 1, 2);
-
-                for(auto what : lala.solution(test1, test2))
-                {
-                    cout<<what.detected_indices<<endl;
-                    cout<<what.detected_ornot<<endl;
-                    cout<<"next!"<<endl;
-                }
-
-
-                double t2 = ros::Time::now().toSec();
-                cout<<1/(t2-t1)<<" fps"<<endl;
+                // double t2 = ros::Time::now().toSec();
+                // cout<<1/(t2-t1)<<" fps"<<endl;
 
 
             }

@@ -51,26 +51,89 @@ void alan_pose_estimation::LedNodelet::pose_w_LED_icp(cv::Mat& frame, cv::Mat de
     //vector<Eigen::Vector3d> pts_3d_LED_camera =    
     // cv::threshold(frame, frame, )
 
-    if(!LED_tracker_initiated)
-    {
-        LED_tracking_initialize(frame, depth);
-        LED_tracker_initiated = true;
-    }
-    else
-    {
-        vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
-        vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
+    // if(!LED_tracker_initiated)
+    // {
+    //     LED_tracking_initialize(frame, depth);
+    //     LED_tracker_initiated = true;
+    // }
+    // else
+    // {
+    //     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+    //     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
 
-        // hungarian.solution(pts_on_body_frame_normalized, pts_3d_pcl_detect_normalized);
+    //     // hungarian.solution(pts_on_body_frame_normalized, pts_3d_pcl_detect_normalized);
 
-    }
+    // }
     
+    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
+
+    // for(auto what : pts_3d_pcl_detect)
+    // {
+    //     cout<<what<<endl<<endl;;
+    // }
+
+    reject_outlier(pts_3d_pcl_detect);
+    cout<<pts_3d_pcl_detect.size()<<endl;
 
     //reject outlier
 
     //
 
 }
+
+void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect)
+{
+    vector<double> norm_of_points;
+
+    for(auto what :  pts_3d_detect)
+    {
+        norm_of_points.push_back(what.norm());
+    }
+
+    cv::kmeans()
+
+    vector<int> v_index(norm_of_points.size());
+    
+    iota(v_index.begin(),v_index.end(),0); //Initializing
+    sort(v_index.begin(),v_index.end(), [&](int i,int j) {return norm_of_points[i]< norm_of_points[j];} );//this is lambda
+
+    vector<double> norm_of_points_sorted;
+
+
+    for(auto what : v_index)
+    {
+        cout<<norm_of_points[what]<<endl;
+        norm_of_points_sorted.push_back(norm_of_points[what]);
+        cout<<endl;
+    }
+    // sort(norm_of_points.begin(), norm_of_points.end());
+
+    // for(auto what : v_index)
+    
+    int index_0 = 0;
+    int index_100 = norm_of_points_sorted.size();
+
+    int index_50 = ((index_100 - index_0 + 1) + 1) / 2 - 1;
+    int index_25 = ((index_50 - index_0 + 1) + 1) / 2 - 1;
+    int index_75 = ((index_100 - index_50 + 1) + 1) / 2 - 1;
+
+    double IQR = norm_of_points_sorted[index_75] - norm_of_points_sorted[index_25];
+
+    double lower = norm_of_points_sorted[index_25] - 1.5 * IQR, 
+           upper = norm_of_points_sorted[index_75] + 1.5 * IQR;
+
+    cout<<"lower: "<<lower<<endl;
+    cout<<"upper: "<<upper<<endl;
+
+    for(auto what : v_index)
+    {
+        if(norm_of_points[what] < lower || norm_of_points[what] > upper)
+            pts_3d_detect.erase(pts_3d_detect.begin() + what);        
+    }
+}
+
+
 
 void alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 {
@@ -90,6 +153,12 @@ void alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
 
 }
 
+void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vector3d> pts_on_body_frame, vector<Eigen::Vector3d> pts_detected)
+{
+    // cv::kmeans()
+
+}
+
 vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::sort_the_points_in_corres_order(vector<Eigen::Vector3d> pts, vector<correspondence::matchid> corres)
 {
     vector<Eigen::Vector3d> pts_return;
@@ -97,7 +166,6 @@ vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::sort_the_points_in_cor
     for(auto what :  corres)
     {
         pt_temp = pts[what.detected_indices];
-
     }
 
 }
@@ -265,40 +333,7 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
         }
     }
     cv::imshow("depppth", adjMap);
-    cv::waitKey(20);
-
-    //contour method
-
-    // cv::Mat gray;
-    // cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-    // cv::blur(gray, gray, cv::Size(3,3));
-    
-    // cv::Mat canny;
-    // cv::Canny(gray, canny, 100, 200);
-    // vector<vector<cv::Point> > contours;
-    // vector<cv::Vec4i> hierarchy;
-    // cv::findContours(canny, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
-    // cv::Mat drawing = cv::Mat::zeros(canny.size(), CV_8UC3);
-        
-    // for( size_t i = 0; i< contours.size(); i++ )
-    // {
-    //     drawContours( drawing, contours, (int)i, CV_RGB(255, 255, 0), 0.5, cv::LINE_8, hierarchy, 0 );
-    // }
-    
-    // cv::cvtColor(drawing, drawing, cv::COLOR_RGB2GRAY);
-    // cv::threshold(drawing, drawing, 100, 255, cv::THRESH_BINARY);
-    
-    // cv::Mat final;// = drawing;
-
-    // cv::bitwise_and(depth_mask_src, drawing, final);
-
-    // cv::imshow("led first", frame);
-    // cv::waitKey(1000/60);
-
-    // cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
-    // cv::threshold(frame, frame, 240, 255, cv::THRESH_BINARY);
-    // cv::imshow("test", frame);
-    // cv::waitKey(20);
+    cv::waitKey(20);    
 
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     cv::threshold(frame, frame, 200, 255, cv::THRESH_BINARY);
@@ -341,8 +376,8 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     // cout<<keypoints_rgb_d.size()<<endl;
     
 
-    cv::String blob_size = to_string(keypoints_rgb_d.size());
-    cv::putText(im_with_keypoints, blob_size, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+    // cv::String blob_size = to_string(keypoints_rgb_d.size());
+    // cv::putText(im_with_keypoints, blob_size, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
 
 	// Show blobs
 	cv::imshow("keypoints2", im_with_keypoints );
@@ -488,8 +523,8 @@ vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::normalization_2d(vecto
         x_temp = (v_pts[i](i_x) - x_min) / delta_x;
         y_temp = (v_pts[i](i_y) - y_min) / delta_y;
         
-        v_temp.x() = x_temp;
-        v_temp.y() = y_temp;
+        v_temp.x() = x_temp * 100;
+        v_temp.y() = y_temp * 100;
         v_temp.z() = 0;
 
         normalized_v_pts.push_back(v_temp);
