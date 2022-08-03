@@ -52,8 +52,7 @@ void alan_pose_estimation::LedNodelet::pose_w_LED_icp(cv::Mat& frame, cv::Mat de
     // cv::threshold(frame, frame, )
 
     if(!LED_tracker_initiated)        
-        LED_tracker_initiated = LED_tracking_initialize(frame, depth);
-    
+        LED_tracker_initiated = LED_tracking_initialize(frame, depth);    
     else
     {
         vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
@@ -72,7 +71,7 @@ void alan_pose_estimation::LedNodelet::pose_w_LED_icp(cv::Mat& frame, cv::Mat de
         // hungarian.solution(pts_on_body_frame_normalized, pts_3d_pcl_detect_normalized);
 
         Sophus::SE3d pose;
-        pose = Sophus::SE3f(R,t);        
+        pose = Sophus::SE3d(R,t);        
 
         double e = 0;
         Eigen::Vector2d reproject, error; 
@@ -101,12 +100,6 @@ void alan_pose_estimation::LedNodelet::pose_w_LED_icp(cv::Mat& frame, cv::Mat de
         }
 
     }
-    
-
-
-
-
-
 
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);

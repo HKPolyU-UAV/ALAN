@@ -22,13 +22,6 @@
 
 #include <pthread.h>
 
-// #include <pcl/io/pcd_io.h>
-// #include <pcl/point_types.h>
-// #include <pcl/registration/icp.h>
-// #include <pcl/registration/correspondence_estimation.h>
-// #include <pcl/registration/correspondence_rejection_sample_consensus.h>
-// #include <pcl/registration/transformation_estimation_svd.h>
-
 #include "munkres.hpp"
 
 namespace alan_pose_estimation
@@ -59,44 +52,53 @@ namespace alan_pose_estimation
             boost::shared_ptr<sync> sync_;                    
             
             //solve pose & tools
-            void pose_w_LED_icp(cv::Mat& frame, cv::Mat depth);            
+            void pose_w_LED_icp(cv::Mat& frame, cv::Mat depth); 
+
             void solveicp_svd(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
             
             Eigen::Vector3d get_CoM(vector<Eigen::Vector3d> pts_3d);
+
             void use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, vector<Eigen::Vector3d> pts_3d_detect, Sophus::SE3d& pose);
+
             Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
             
             //pnp + BA
             void get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
+
             void optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected);//converge problem need to be solved //-> fuck you, your Jacobian was wrong
+
             void solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
 
 
             //LED extraction tool
             vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
+
             vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
             
             double LANDING_DISTANCE = 0;
 
-            //initiation & correspondence
+            //initiation & correspondence        
+            void correspondence_search(vector<Eigen::Vector3d> pts_on_body_frame, vector<Eigen::Vector3d> pts_detected);    
+
+            vector<Eigen::Vector3d> normalization_2d(vector<Eigen::Vector3d> v_pts, int i_x, int i_y);            
+
+            vector<Eigen::Vector3d> sort_the_points_in_corres_order(vector<Eigen::Vector3d> pts, vector<correspondence::matchid> corres);
+            
+            correspondence::munkres hungarian; 
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
             bool LED_tracker_initiated = false;
             int LED_no;
 
-            void correspondence_search(vector<Eigen::Vector3d> pts_on_body_frame, vector<Eigen::Vector3d> pts_detected);    
-            vector<Eigen::Vector3d> normalization_2d(vector<Eigen::Vector3d> v_pts, int i_x, int i_y);            
-            vector<Eigen::Vector3d> sort_the_points_in_corres_order(vector<Eigen::Vector3d> pts, vector<correspondence::matchid> corres);
-            
-            correspondence::munkres hungarian; 
-
             //track
             correspondence::matchid track(vector<Eigen::Vector3d> pts_3d_pcl_detect, vector<Eigen::Vector3d> pts_on_body_frame);
+
             vector<Eigen::Vector3d> filter_out_nondetected_body_points(vector<Eigen::Vector3d> pts_3d_pcl_detect, correspondence::matchid tracking_result);
 
             //outlier rejection
             void reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect);
+
             double calculate_MAD(vector<double> norm_of_points);
-            
+
             cv::Point3f point_wo_outlier_previous;
             double MAD_threshold = 0;
 

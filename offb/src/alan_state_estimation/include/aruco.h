@@ -24,13 +24,6 @@
 
 #include <pthread.h>
 
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
-#include <pcl/registration/correspondence_estimation.h>
-#include <pcl/registration/correspondence_rejection_sample_consensus.h>
-#include <pcl/registration/default_convergence_criteria.h>
-
 namespace alan_pose_estimation
 {
     class ArucoNodelet : public nodelet::Nodelet
@@ -92,10 +85,6 @@ namespace alan_pose_estimation
             vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
 
             Eigen::Vector3d get_CoM(vector<Eigen::Vector3d> pts_3d);
-
-            Eigen::Matrix4f icp_pcl(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_body, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_camera);
-
-            pcl::PointCloud<pcl::PointXYZ>::Ptr eigen_2_pcl(vector<Eigen::Vector3d> pts_3d);
 
 
             virtual void onInit() 
