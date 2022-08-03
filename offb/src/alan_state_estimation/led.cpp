@@ -74,7 +74,7 @@ void alan_pose_estimation::LedNodelet::pose_w_LED_icp(cv::Mat& frame, cv::Mat de
     // }
 
     reject_outlier(pts_3d_pcl_detect);
-    cout<<pts_3d_pcl_detect.size()<<endl;
+    // cout<<pts_3d_pcl_detect.size()<<endl;
 
     //reject outlier
 
@@ -84,53 +84,101 @@ void alan_pose_estimation::LedNodelet::pose_w_LED_icp(cv::Mat& frame, cv::Mat de
 
 void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect)
 {
+    int n = pts_3d_detect.size();
+    
     vector<double> norm_of_points;
-
     for(auto what :  pts_3d_detect)
     {
         norm_of_points.push_back(what.norm());
     }
 
-    cv::kmeans()
-
-    vector<int> v_index(norm_of_points.size());
-    
-    iota(v_index.begin(),v_index.end(),0); //Initializing
-    sort(v_index.begin(),v_index.end(), [&](int i,int j) {return norm_of_points[i]< norm_of_points[j];} );//this is lambda
-
-    vector<double> norm_of_points_sorted;
-
-
-    for(auto what : v_index)
+    double mean = 0, delta_sum = 0, MAD;
+    if(n != 0)
     {
-        cout<<norm_of_points[what]<<endl;
-        norm_of_points_sorted.push_back(norm_of_points[what]);
-        cout<<endl;
+        mean = accumulate(norm_of_points.begin(), norm_of_points.end(), 0.0) / n;
+        for(int i = 0; i < n; i++)
+            delta_sum = delta_sum + abs(norm_of_points[i] - mean);        
+        MAD = delta_sum / n;
+    }   
+
+    cout<<"MAD: "<<MAD<<endl;
+
+    if(MAD>0.1)
+    {
+        ind++;
+        cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/outliers/outlier" + to_string(ind) + ".png", frame);
     }
-    // sort(norm_of_points.begin(), norm_of_points.end());
+        
+    
+
+    
+
+
+
+    cv::Mat labels, centers;
+    vector<cv::Point3f> pts;
+    // cv::Mat normssss()
+
+    for(int i = 0; i < n; i++)
+    {
+        pts.push_back(cv::Point3f(pts_3d_detect[i].x(), pts_3d_detect[i].y(), pts_3d_detect[i].z()));
+    }
+
+    // cout<<pts.size()<<endl;
+
+    // cout<<normsssss<<endl;
+
+
+    cv::kmeans(pts, 2, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 6, cv::KMEANS_PP_CENTERS, centers);
+
+    for(int i = 0; i < n; i++)
+    {
+        // cout<<labels.at<int>(i)<<endl;
+
+        if(labels.at<int>(i) == 0)
+        {
+            // cout<<norm_of_points[i]<<endl;
+        }
+    }
+    // cout<<"out"<<endl;
+    // vector<int> v_index(norm_of_points.size());
+    
+    // iota(v_index.begin(),v_index.end(),0); //Initializing
+    // sort(v_index.begin(),v_index.end(), [&](int i,int j) {return norm_of_points[i]< norm_of_points[j];} );//this is lambda
+
+    // vector<double> norm_of_points_sorted;
+
 
     // for(auto what : v_index)
+    // {
+    //     cout<<norm_of_points[what]<<endl;
+    //     norm_of_points_sorted.push_back(norm_of_points[what]);
+    //     cout<<endl;
+    // }
+    // // sort(norm_of_points.begin(), norm_of_points.end());
+
+    // // for(auto what : v_index)
     
-    int index_0 = 0;
-    int index_100 = norm_of_points_sorted.size();
+    // int index_0 = 0;
+    // int index_100 = norm_of_points_sorted.size();
 
-    int index_50 = ((index_100 - index_0 + 1) + 1) / 2 - 1;
-    int index_25 = ((index_50 - index_0 + 1) + 1) / 2 - 1;
-    int index_75 = ((index_100 - index_50 + 1) + 1) / 2 - 1;
+    // int index_50 = ((index_100 - index_0 + 1) + 1) / 2 - 1;
+    // int index_25 = ((index_50 - index_0 + 1) + 1) / 2 - 1;
+    // int index_75 = ((index_100 - index_50 + 1) + 1) / 2 - 1;
 
-    double IQR = norm_of_points_sorted[index_75] - norm_of_points_sorted[index_25];
+    // double IQR = norm_of_points_sorted[index_75] - norm_of_points_sorted[index_25];
 
-    double lower = norm_of_points_sorted[index_25] - 1.5 * IQR, 
-           upper = norm_of_points_sorted[index_75] + 1.5 * IQR;
+    // double lower = norm_of_points_sorted[index_25] - 1.5 * IQR, 
+    //        upper = norm_of_points_sorted[index_75] + 1.5 * IQR;
 
-    cout<<"lower: "<<lower<<endl;
-    cout<<"upper: "<<upper<<endl;
+    // cout<<"lower: "<<lower<<endl;
+    // cout<<"upper: "<<upper<<endl;
 
-    for(auto what : v_index)
-    {
-        if(norm_of_points[what] < lower || norm_of_points[what] > upper)
-            pts_3d_detect.erase(pts_3d_detect.begin() + what);        
-    }
+    // for(auto what : v_index)
+    // {
+    //     if(norm_of_points[what] < lower || norm_of_points[what] > upper)
+    //         pts_3d_detect.erase(pts_3d_detect.begin() + what);        
+    // }
 }
 
 

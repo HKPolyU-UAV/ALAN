@@ -59,6 +59,7 @@ namespace alan_pose_estimation
 
             bool LED_tracker_initiated = false;
             int LED_no;
+            int ind = 0;
 
             correspondence::munkres hungarian;   
 
@@ -92,7 +93,7 @@ namespace alan_pose_estimation
 
             void correspondence_search(vector<Eigen::Vector3d> pts_on_body_frame, vector<Eigen::Vector3d> pts_detected);    
 
-            void reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect);
+            void reject_outlier(vector<Eigen::Vector3d>& pts_2d_detect);
             
 
             virtual void onInit()
