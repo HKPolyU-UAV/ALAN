@@ -28,3 +28,6 @@ classnamepath:
 
 LANDING_DISTANCE:
   1.6
+
+MAD_threshold:
+  0.1

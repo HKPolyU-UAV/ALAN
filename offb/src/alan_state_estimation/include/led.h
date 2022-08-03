@@ -22,12 +22,12 @@
 
 #include <pthread.h>
 
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
-#include <pcl/registration/correspondence_estimation.h>
-#include <pcl/registration/correspondence_rejection_sample_consensus.h>
-#include <pcl/registration/transformation_estimation_svd.h>
+// #include <pcl/io/pcd_io.h>
+// #include <pcl/point_types.h>
+// #include <pcl/registration/icp.h>
+// #include <pcl/registration/correspondence_estimation.h>
+// #include <pcl/registration/correspondence_rejection_sample_consensus.h>
+// #include <pcl/registration/transformation_estimation_svd.h>
 
 #include "munkres.hpp"
 
@@ -42,64 +42,70 @@ namespace alan_pose_estimation
     {
         public:
         private:
+            //general objects
             cv::Mat frame;
-            double LANDING_DISTANCE = 0;
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
+            vector<correspondence::matchid> LED_v_Detected;
+            vector<Eigen::Vector3d> pts_on_body_frame, pts_on_body_frame_normalized;
+            vector<Eigen::Vector3d> pts_detected_in_corres_order;
 
+            //subscribe            
+            void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth);
+            
             message_filters::Subscriber<sensor_msgs::CompressedImage> subimage;
             message_filters::Subscriber<sensor_msgs::Image> subdepth;
             typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> MySyncPolicy;
             typedef message_filters::Synchronizer<MySyncPolicy> sync;//(MySyncPolicy(10), subimage, subdepth);
-            boost::shared_ptr<sync> sync_;
+            boost::shared_ptr<sync> sync_;                    
             
-            vector<correspondence::matchid> LED_v_Detected;
-
-            vector<Eigen::Vector3d> pts_on_body_frame, pts_on_body_frame_normalized;
-            vector<Eigen::Vector3d> pts_detected_in_corres_order;
-
-            bool LED_tracker_initiated = false;
-            int LED_no;
-            int ind = 0;
-
-            correspondence::munkres hungarian;   
-
-
-
-            void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth);
-            
-            //solve pose
+            //solve pose & tools
             void pose_w_LED_icp(cv::Mat& frame, cv::Mat depth);            
-
-            //LED extraction
-            vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
-
-            void LED_tracking();
-
-            void LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
-
-            Eigen::Matrix4d icp_pcl(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_i);
-
-            void solveicp_for_initialize(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
-                        
-            void solveicp_svd(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t, vector<correspondence::matchid> corres);
+            void solveicp_svd(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
             
             Eigen::Vector3d get_CoM(vector<Eigen::Vector3d> pts_3d);
+            void use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, vector<Eigen::Vector3d> pts_3d_detect, Sophus::SE3d& pose);
+            Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
+            
+            //pnp + BA
+            void get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
+            void optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected);//converge problem need to be solved //-> fuck you, your Jacobian was wrong
+            void solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
 
+
+            //LED extraction tool
+            vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
             vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
             
-            vector<Eigen::Vector3d> normalization_2d(vector<Eigen::Vector3d> v_pts, int i_x, int i_y);
+            double LANDING_DISTANCE = 0;
 
-            vector<Eigen::Vector3d> sort_the_points_in_corres_order(vector<Eigen::Vector3d> pts, vector<correspondence::matchid> corres);
+            //initiation & correspondence
+            bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
+            bool LED_tracker_initiated = false;
+            int LED_no;
 
             void correspondence_search(vector<Eigen::Vector3d> pts_on_body_frame, vector<Eigen::Vector3d> pts_detected);    
-
-            void reject_outlier(vector<Eigen::Vector3d>& pts_2d_detect);
+            vector<Eigen::Vector3d> normalization_2d(vector<Eigen::Vector3d> v_pts, int i_x, int i_y);            
+            vector<Eigen::Vector3d> sort_the_points_in_corres_order(vector<Eigen::Vector3d> pts, vector<correspondence::matchid> corres);
             
+            correspondence::munkres hungarian; 
+
+            //track
+            correspondence::matchid track(vector<Eigen::Vector3d> pts_3d_pcl_detect, vector<Eigen::Vector3d> pts_on_body_frame);
+            vector<Eigen::Vector3d> filter_out_nondetected_body_points(vector<Eigen::Vector3d> pts_3d_pcl_detect, correspondence::matchid tracking_result);
+
+            //outlier rejection
+            void reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect);
+            double calculate_MAD(vector<double> norm_of_points);
+            
+            cv::Point3f point_wo_outlier_previous;
+            double MAD_threshold = 0;
+
 
             virtual void onInit()
             {
                 ros::NodeHandle& nh = getNodeHandle();
-
+                
+                //load landing config
                 nh.getParam("/alan_pose/LANDING_DISTANCE", LANDING_DISTANCE);     
                 
                 //load camera intrinsics
@@ -125,11 +131,15 @@ namespace alan_pose_estimation
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
                     pts_on_body_frame.push_back(temp);
                 }   
+                LED_no = pts_on_body_frame.size();
+
+                //load outlier rejection info
+                nh.getParam("/alan_pose/MAD_threshold", MAD_threshold);
 
                 LED_no = pts_on_body_frame.size();
                 pts_on_body_frame_normalized = normalization_2d(pts_on_body_frame, 1, 2);
                                                 
-                // //subscribe
+                //subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
                 subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
@@ -191,6 +201,9 @@ namespace alan_pose_estimation
 
 
             }
+
+            public:
+                static void* PubMainLoop(void* tmp);
 
     };
 
