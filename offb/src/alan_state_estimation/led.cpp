@@ -27,9 +27,18 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
 
+    if(i == 0)
+    {
+        i++;
+        temp = ros::WallTime::now().toSec();
+    }
+
+    ROS_INFO("ROS Timestamp: %d", ros::WallTime::now().toSec() - temp);
+    // cout<<ros::Time::now().toSec() - temp<<endl;;
+
     double t1 = ros::Time::now().toSec(); 
 
-    pose_w_LED_icp(frame, depth);
+    // pose_w_LED_icp(frame, depth);
     
     double t2 = ros::Time::now().toSec();
     

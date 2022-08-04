@@ -42,6 +42,10 @@ namespace alan_pose_estimation
             vector<Eigen::Vector3d> pts_on_body_frame, pts_on_body_frame_normalized;
             vector<Eigen::Vector3d> pts_detected_in_corres_order;
 
+            //temp objects
+            double temp = 0;
+            int i = 0;
+
             //subscribe            
             void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth);
             

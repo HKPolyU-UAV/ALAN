@@ -36,7 +36,6 @@ namespace alan_pose_estimation
             ros::Publisher pubpose;
             image_transport::Publisher pubimage;
             
-
             //subscriber
             message_filters::Subscriber<sensor_msgs::CompressedImage> subimage;
             message_filters::Subscriber<sensor_msgs::Image> subdepth;
