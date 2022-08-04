@@ -15,12 +15,12 @@ namespace correspondence
 
     class munkres
     {
-        void stp1(int &step);//reduce with the minima of row and column
-        void stp2(int &step);
-        void stp3(int &step);
-        void stp4(int &step);
-        void stp5(int &step);
-        void stp6(int &step);
+        void stp1(int& step);//reduce with the minima of row and column
+        void stp2(int& step);
+        void stp3(int& step);
+        void stp4(int& step);
+        void stp5(int& step);
+        void stp6(int& step);
         void stp7();
         void find_a_zero(int& row, int& col);
         bool star_in_row(int row);

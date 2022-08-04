@@ -90,11 +90,15 @@ namespace alan_pose_estimation
             
             correspondence::munkres hungarian; 
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
+
             bool LED_tracker_initiated = false;
             int LED_no;
 
+            //main process
+            Sophus::SE3d recursive_filtering(cv::Mat& frame, cv::Mat depth);
+
             //track
-            correspondence::matchid track(vector<Eigen::Vector3d> pts_3d_pcl_detect, vector<Eigen::Vector3d> pts_on_body_frame);
+            correspondence::matchid tracking(vector<Eigen::Vector3d> pts_3d_pcl_detect, vector<Eigen::Vector3d> pts_on_body_frame);
 
             vector<Eigen::Vector3d> filter_out_nondetected_body_points(vector<Eigen::Vector3d> pts_3d_pcl_detect, correspondence::matchid tracking_result);
 
@@ -105,6 +109,11 @@ namespace alan_pose_estimation
 
             cv::Point3f point_wo_outlier_previous;
             double MAD_threshold = 0;
+
+            //publish
+            void map_SE3_to_pose(Sophus::SE3d pose);
+
+            geometry_msgs::PoseStamped uav_pose_estimated;
 
 
             virtual void onInit()

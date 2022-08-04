@@ -38,7 +38,7 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
 
     double t1 = ros::Time::now().toSec(); 
 
-    // pose_w_LED_icp(frame, depth);
+    pose_w_LED_icp(frame, depth);
     
     double t2 = ros::Time::now().toSec();
     
@@ -57,73 +57,16 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
 
 void alan_pose_estimation::LedNodelet::pose_w_LED_icp(cv::Mat& frame, cv::Mat depth)
 {
-    //vector<Eigen::Vector3d> pts_3d_LED_camera =    
-    // cv::threshold(frame, frame, )
-
     if(!LED_tracker_initiated)        
         LED_tracker_initiated = LED_tracking_initialize(frame, depth);    
     else
     {
-        vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
-        vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
-        reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
-
-        //filter out the pts in body frame that was not detected this time
-        correspondence::matchid tracking_result = track(pts_3d_pcl_detect, pts_on_body_frame);
-        vector<Eigen::Vector3d> pts_on_body_frame_for_pose 
-            = filter_out_nondetected_body_points(pts_on_body_frame, tracking_result);
-        
-        Eigen::Matrix3d R = Eigen::Matrix3d::Zero();
-        Eigen::Vector3d t = Eigen::Vector3d::Zero();
-
-        solveicp_svd(pts_3d_pcl_detect, pts_on_body_frame_for_pose, R, t);
-        // hungarian.solution(pts_on_body_frame_normalized, pts_3d_pcl_detect_normalized);
-
-        Sophus::SE3d pose;
-        pose = Sophus::SE3d(R,t);        
-
-        double e = 0;
-        Eigen::Vector2d reproject, error; 
-
-        for(int i = 0 ; i < pts_on_body_frame_for_pose.size(); i++)
-        {
-            reproject = reproject_3D_2D(pts_on_body_frame_for_pose[i], pose);  
-            error = pts_2d_detect[i] - reproject;
-            e = e + error.norm();
-        }
-
-        cout<<"error: "<<e<<endl;
-
-        if(e > 20.0)
-        {
-            cout<<"use pnp instead"<<endl;
-            use_pnp_instead(frame, pts_2d_detect, pts_3d_pcl_detect, pose);
-        }
-
-        // optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
-
-        for(auto what : pts_on_body_frame_for_pose)
-        {
-            Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
-            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
-        }
-
+        Sophus::SE3d pose = recursive_filtering(frame, depth);
+        map_SE3_to_pose(pose);
     }
 
-    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
-    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
-
-    // for(auto what : pts_3d_pcl_detect)
-    // {
-    //     cout<<what<<endl<<endl;;
-    // }
-
-    // cout<<pts_3d_pcl_detect.size()<<endl;
-
-    //reject outlier
-
-    //
-
+    // vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+    // vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);    
 }
 
 void alan_pose_estimation::LedNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
@@ -606,6 +549,55 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
 
 }
 
+Sophus::SE3d alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
+{
+    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
+
+    reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
+
+    //filter out the pts in body frame that was not detected this time
+    correspondence::matchid tracking_result = tracking(pts_3d_pcl_detect, pts_on_body_frame);
+    vector<Eigen::Vector3d> pts_on_body_frame_for_pose 
+        = filter_out_nondetected_body_points(pts_on_body_frame, tracking_result);
+    
+    Eigen::Matrix3d R = Eigen::Matrix3d::Zero();
+    Eigen::Vector3d t = Eigen::Vector3d::Zero();
+
+    solveicp_svd(pts_3d_pcl_detect, pts_on_body_frame_for_pose, R, t);
+    // hungarian.solution(pts_on_body_frame_normalized, pts_3d_pcl_detect_normalized);
+
+    Sophus::SE3d pose;
+    pose = Sophus::SE3d(R,t);        
+
+    double e = 0;
+    Eigen::Vector2d reproject, error; 
+
+    for(int i = 0 ; i < pts_on_body_frame_for_pose.size(); i++)
+    {
+        reproject = reproject_3D_2D(pts_on_body_frame_for_pose[i], pose);  
+        error = pts_2d_detect[i] - reproject;
+        e = e + error.norm();
+    }
+
+    cout<<"error: "<<e<<endl;
+
+    if(e > 20.0)
+    {
+        cout<<"use pnp instead"<<endl;
+        use_pnp_instead(frame, pts_2d_detect, pts_3d_pcl_detect, pose);
+    }
+
+    // optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
+
+    for(auto what : pts_on_body_frame_for_pose)
+    {
+        Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
+        cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+    }
+                             
+}
+
 void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vector3d> pts_on_body_frame, vector<Eigen::Vector3d> pts_detected)
 {
     // cv::kmeans()
@@ -764,6 +756,20 @@ inline double alan_pose_estimation::LedNodelet::calculate_MAD(vector<double> nor
     return MAD;
 }
 
+void alan_pose_estimation::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+{
+    uav_pose_estimated.pose.position.x = pose.translation().x();
+    uav_pose_estimated.pose.position.y = pose.translation().y();
+    uav_pose_estimated.pose.position.z = pose.translation().z();
+
+    Eigen::Quaterniond q = Eigen::Quaterniond(pose.rotationMatrix());
+    uav_pose_estimated.pose.orientation.w = q.w();
+    uav_pose_estimated.pose.orientation.x = q.x();
+    uav_pose_estimated.pose.orientation.y = q.y();
+    uav_pose_estimated.pose.orientation.z = q.z();
+
+}
+
 void* alan_pose_estimation::LedNodelet::PubMainLoop(void* tmp)
 {
     LedNodelet* pub = (LedNodelet*) tmp;
@@ -772,7 +778,7 @@ void* alan_pose_estimation::LedNodelet::PubMainLoop(void* tmp)
     while (ros::ok()) 
     {
         // ROS_INFO("%d,publish!", num++);
-        // pub->pubpose.publish(pub->pose_estimated);
+        // pub->pubpose.publish(pub->uav_pose_estimated);
         ros::spinOnce();
         loop_rate.sleep();
     }
