@@ -48,7 +48,7 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
     strcat(hz, fps);
     // cv::putText(frame, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));  
 
-    // cout<<hz<<endl;
+    cout<<hz<<endl;
 
     // cv::imshow("led first", frame);
     // cv::waitKey(1000/60);
@@ -86,9 +86,9 @@ void alan_pose_estimation::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat 
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);  
 
-    cout<<pts_2d_detect.size()<<endl;
+    // cout<<pts_2d_detect.size()<<endl;
     reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
-    cout<<pts_2d_detect.size()<<endl;
+    // cout<<pts_2d_detect.size()<<endl;
 
     // cout << pts_3d_pcl_detect.size() << endl;  
 }
@@ -424,8 +424,8 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
             adjMap.at<cv::Vec3b>(i)=color;
         }
     }
-    cv::imshow("depppth", adjMap);
-    cv::waitKey(20);    
+    // cv::imshow("depppth", adjMap);
+    // cv::waitKey(20);    
 
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     cv::threshold(frame, frame, BINARY_THRES, 255, cv::THRESH_BINARY);
@@ -464,8 +464,8 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     //                    cv::Point( dilation_size, dilation_size ) );
     // cv::dilate(frame, frame,  element);// enlarge
 
-    cv::imshow("keypoints", frame );
-	cv::waitKey(20);
+    // cv::imshow("keypoints", frame );
+	// cv::waitKey(20);
     
     detector->detect(frame, keypoints_rgb_d);
 	cv::drawKeypoints( frame, keypoints_rgb_d, im_with_keypoints,CV_RGB(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
@@ -476,8 +476,8 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     // cv::putText(im_with_keypoints, blob_size, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
 
 	// Show blobs
-	cv::imshow("keypoints2", im_with_keypoints );
-	cv::waitKey(20);
+	// cv::imshow("keypoints2", im_with_keypoints );
+	// cv::waitKey(20);
 
     vector<Eigen::Vector2d> POI;
     for(auto what : keypoints_rgb_d)
@@ -772,22 +772,56 @@ void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& p
         // cout<<norm(centers[0])<<endl;
         // cout<<norm(centers[1])<<endl;
 
-        double d0 = cv::norm(point_wo_outlier_previous - centers[1]);
+        double d0 = cv::norm(point_wo_outlier_previous - centers[0]);
         double d1 = cv::norm(point_wo_outlier_previous - centers[1]);
         
-        cout<<"distance"<<endl;
-        cout<<d0<<endl;
-        cout<<d1<<endl;
+        // cout<<"distance"<<endl;
+        // cout<<d0<<endl;
+        // cout<<d1<<endl;
+        cout<<"label: "<<labels<<endl;
+        cout<<"before erasing: "<<pts_2d_detect.size()<<endl;
 
-        if(d0 < d1)
-        {
+        vector<Eigen::Vector2d> pts_2d_result;
+        vector<Eigen::Vector3d> pts_3d_result;
+
+        if(d0 < d1) //then get index with 0
+        {           
             cout<<"cluster 0 is the right one"<<endl;
+            for(int i = 0; i < labels.rows; i++)
+            {
+                cout<<labels.at<int>(0,i)<<endl;
+                if(labels.at<int>(0,i) == 0)
+                {
+                    pts_2d_result.push_back(pts_2d_detect[i]);
+                    pts_3d_result.push_back(pts_3d_detect[i]); 
+                }                    
+            }            
+            point_wo_outlier_previous = centers[0];
         }
         else
-            cout<<"cluster 1 is the right one"<<endl;   
+        {
+            cout<<"cluster 1 is the right one"<<endl;
+            for(int i = 0; i < labels.rows; i++)
+            {
+                cout<<labels.at<int>(0,i)<<endl;
 
-             
-        
+                if(labels.at<int>(0,i) == 1)
+                {                    
+                    pts_2d_result.push_back(pts_2d_detect[i]);
+                    pts_3d_result.push_back(pts_3d_detect[i]);                    
+                }
+            }
+            point_wo_outlier_previous = centers[1];
+        }
+            
+        pts_2d_detect.clear();
+        pts_2d_detect = pts_2d_result;
+
+        pts_3d_detect.clear();
+        pts_3d_detect = pts_3d_result;
+
+        cout<<"after erasing: "<<pts_2d_detect.size()<<endl;
+        cout<<"after erasing: "<<pts_3d_detect.size()<<endl;
     }
     else
     {
