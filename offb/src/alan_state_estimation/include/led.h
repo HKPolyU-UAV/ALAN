@@ -37,6 +37,9 @@ namespace alan_pose_estimation
             vector<correspondence::matchid> LED_v_Detected;
             vector<Eigen::Vector3d> pts_on_body_frame, pts_on_body_frame_normalized;
             vector<Eigen::Vector3d> pts_detected_in_corres_order;
+
+            Sophus::SE3d pose_global;
+            correspondence::matchid corres_global;
             
 
             //temp objects

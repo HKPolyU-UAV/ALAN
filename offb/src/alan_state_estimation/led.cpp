@@ -6,6 +6,7 @@
 void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbmsg, const sensor_msgs::ImageConstPtr & depthmsg)
 {
     cv_bridge::CvImageConstPtr depth_ptr;
+
     try
     {
         depth_ptr  = cv_bridge::toCvCopy(depthmsg, depthmsg->encoding);
@@ -60,28 +61,21 @@ void alan_pose_estimation::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat 
     Sophus::SE3d pose;
     vector<correspondence::matchid> corres;
 
-    // if(!LED_tracker_initiated)        
-    // {
-    //     LED_tracker_initiated = LED_tracking_initialize(frame, depth, pose, corres);
+    if(!LED_tracker_initiated)        
+    {
+        LED_tracker_initiated = LED_tracking_initialize(frame, depth, pose, corres);
 
-    //     if(LED_tracker_initiated)
-    //     {
-    //         cout<<"initialized!"<<endl;
-    //     }
+        if(LED_tracker_initiated)
+        {
+            cout<<"initialized!"<<endl;
+        }
 
-    // }
-    // else
-    // {
-    //     // recursive_filtering(frame, depth, pose, corres);
-    //     // map_SE3_to_pose(pose);
-    // }
-
-
-
-
-
-
-
+    }
+    else
+    {
+        recursive_filtering(frame, depth, pose, corres);
+        map_SE3_to_pose(pose);
+    }
 
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);  
@@ -645,6 +639,12 @@ void alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::M
     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
 
     reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
+
+    //munkres match
+
+    //solvepnp
+
+    
 
                              
 }
