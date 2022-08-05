@@ -33,12 +33,12 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
         temp = ros::WallTime::now().toSec();
     }
 
-    ROS_INFO("ROS Timestamp: %d", ros::WallTime::now().toSec() - temp);
+    // ROS_INFO("ROS Timestamp: %d", ros::WallTime::now().toSec() - temp);
     // cout<<ros::Time::now().toSec() - temp<<endl;;
 
     double t1 = ros::Time::now().toSec(); 
 
-    pose_w_LED_icp(frame, depth);
+    solve_pose_w_LED(frame, depth);
     
     double t2 = ros::Time::now().toSec();
     
@@ -55,18 +55,42 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
 
 } 
 
-void alan_pose_estimation::LedNodelet::pose_w_LED_icp(cv::Mat& frame, cv::Mat depth)
+void alan_pose_estimation::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
 {
-    if(!LED_tracker_initiated)        
-        LED_tracker_initiated = LED_tracking_initialize(frame, depth);    
-    else
-    {
-        Sophus::SE3d pose = recursive_filtering(frame, depth);
-        map_SE3_to_pose(pose);
-    }
+    Sophus::SE3d pose;
+    vector<correspondence::matchid> corres;
 
-    // vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
-    // vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);    
+    // if(!LED_tracker_initiated)        
+    // {
+    //     LED_tracker_initiated = LED_tracking_initialize(frame, depth, pose, corres);
+
+    //     if(LED_tracker_initiated)
+    //     {
+    //         cout<<"initialized!"<<endl;
+    //     }
+
+    // }
+    // else
+    // {
+    //     // recursive_filtering(frame, depth, pose, corres);
+    //     // map_SE3_to_pose(pose);
+    // }
+
+
+
+
+
+
+
+
+    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);  
+
+    cout<<pts_2d_detect.size()<<endl;
+    reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
+    cout<<pts_2d_detect.size()<<endl;
+    
+    // cout << pts_3d_pcl_detect.size() << endl;  
 }
 
 void alan_pose_estimation::LedNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
@@ -363,9 +387,9 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
 
     cv::Mat depth_mask_src = depth.clone(), depth_mask_dst1, depth_mask_dst2;
 
-    cv::threshold(depth_mask_src, depth_mask_dst1, LANDING_DISTANCE * 1000, 50000, cv::THRESH_BINARY_INV);
+    cv::threshold(depth_mask_src, depth_mask_dst1, LANDING_DISTANCE * 1000, 50000, cv::THRESH_BINARY_INV); //filter out far depths
 
-    cv::threshold(depth_mask_src, depth_mask_dst2, 0.5, 50000, cv::THRESH_BINARY);
+    cv::threshold(depth_mask_src, depth_mask_dst2, 0.5, 50000, cv::THRESH_BINARY); //filter out zeros
 
     cv::bitwise_and(depth_mask_dst1, depth_mask_dst2, depth_mask_src);
     
@@ -373,14 +397,15 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
 
     
     cv::Mat d_img = depth;
-    int size=d_img.cols*d_img.rows;
+    int size=d_img.cols * d_img.rows;
+
     for(int i=0; i<size; i++)
     {
         if(isnan(d_img.at<ushort>(i)))
         {
             d_img.at<ushort>(i)=0;
         }
-        if(d_img.at<ushort>(i)>10000||d_img.at<ushort>(i)<100)
+        if(d_img.at<ushort>(i) > 10000|| d_img.at<ushort>(i) < 100)
         {
             d_img.at<ushort>(i)=0;
         }
@@ -403,7 +428,7 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     cv::waitKey(20);    
 
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-    cv::threshold(frame, frame, 200, 255, cv::THRESH_BINARY);
+    cv::threshold(frame, frame, BINARY_THRES, 255, cv::THRESH_BINARY);
     
 
     // Blob method
@@ -429,11 +454,15 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     //detect frame after filter out background
     cv::bitwise_and(depth_mask_src, frame, frame); //filter out with depth information
 
-    double dilation_size = 2;
-    cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE,
-                       cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
-                       cv::Point( dilation_size, dilation_size ) );
-    cv::dilate(frame, frame,  element);// enlarge
+    vector<cv::Point> nonzeros;
+
+    // cv::findNonZero(frame, )
+
+    // double dilation_size = 1;
+    // cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE,
+    //                    cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+    //                    cv::Point( dilation_size, dilation_size ) );
+    // cv::dilate(frame, frame,  element);// enlarge
 
     cv::imshow("keypoints", frame );
 	cv::waitKey(20);
@@ -515,24 +544,85 @@ vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::pointcloud_generate(ve
 }
 
 
-bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
+bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth, Sophus::SE3d& pose, vector<correspondence::matchid>& corres)
 {
+    cout<<"try to initialize tracker..."<<endl;
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+
     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
+
     //after above, I got:
     //pointcloud in {c}
-    vector<double> norm_of_points;
+    vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
 
     for(auto what :  pts_3d_pcl_detect)
-        norm_of_points.push_back(what.norm());
-    
-    
-
-    if(pts_3d_pcl_detect.size() == LED_no && calculate_MAD(norm_of_points) < MAD_threshold)
     {
-        vector<Eigen::Vector3d> pts_3d_pcl_detect_normalized = normalization_2d(pts_3d_pcl_detect, 0, 1);
-        LED_v_Detected = hungarian.solution(pts_on_body_frame_normalized, pts_3d_pcl_detect_normalized);
-        pts_detected_in_corres_order = sort_the_points_in_corres_order(pts_3d_pcl_detect, hungarian.id_match);
+        norm_of_x_points.push_back(what.x());
+        norm_of_y_points.push_back(what.y());
+        norm_of_z_points.push_back(what.z());
+    }
+    
+    // cout<<LED_no<<endl;
+    // cout<<pts_3d_pcl_detect.size()<<endl;
+    // cout<<calculate_MAD(norm_of_x_points)<<endl;
+    // cout<<calculate_MAD(norm_of_y_points)<<endl;
+    // cout<<calculate_MAD(norm_of_z_points)<<endl;
+
+
+    if(pts_3d_pcl_detect.size() == LED_no  //we got LED_no
+        && calculate_MAD(norm_of_x_points) < MAD_x_threshold //no outlier
+        && calculate_MAD(norm_of_y_points) < MAD_y_threshold 
+        && calculate_MAD(norm_of_z_points) < MAD_z_threshold) 
+    {
+        cout<<"can initialize!"<<endl;
+        double t1 = ros::Time::now().toSec();
+        int i = 0;
+        
+        vector<int> corres(LED_no);
+        iota(corres.begin(), corres.end(), 0);        
+
+        double error_total = INFINITY;
+        
+        Eigen::Matrix3d R;
+        Eigen::Vector3d t;
+
+        vector<int> final_corres;
+
+        do 
+        {       
+            vector<Eigen::Vector2d> pts_2d_detect_temp;       
+
+            for(auto what : corres)
+            {
+                pts_2d_detect_temp.push_back(pts_2d_detect[what]);
+            }
+                                                    
+            get_initial_pose(pts_2d_detect_temp, pts_on_body_frame, R, t);
+            
+            pose = Sophus::SE3d(R, t);
+
+            Eigen::Vector2d reproject, error; 
+            double e = 0;
+
+            for(int i = 0 ; i < pts_on_body_frame.size(); i++)
+            {
+                reproject = reproject_3D_2D(pts_on_body_frame[i], pose);  
+                error = pts_2d_detect_temp[i] - reproject;
+                e = e + error.norm();
+            }
+
+            if(e < error_total)
+            {                    
+                error_total = e;
+                final_corres = corres;
+                if(error_total < 5)
+                    break;
+            }
+            
+        }
+        while(next_permutation(corres.begin(), corres.end())); //for all permutations
+
+
 
         return true;
     }
@@ -549,52 +639,13 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
 
 }
 
-Sophus::SE3d alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
+void alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth, Sophus::SE3d& pose, vector<correspondence::matchid>& corres)
 {
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
 
     reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
 
-    //filter out the pts in body frame that was not detected this time
-    correspondence::matchid tracking_result = tracking(pts_3d_pcl_detect, pts_on_body_frame);
-    vector<Eigen::Vector3d> pts_on_body_frame_for_pose 
-        = filter_out_nondetected_body_points(pts_on_body_frame, tracking_result);
-    
-    Eigen::Matrix3d R = Eigen::Matrix3d::Zero();
-    Eigen::Vector3d t = Eigen::Vector3d::Zero();
-
-    solveicp_svd(pts_3d_pcl_detect, pts_on_body_frame_for_pose, R, t);
-    // hungarian.solution(pts_on_body_frame_normalized, pts_3d_pcl_detect_normalized);
-
-    Sophus::SE3d pose;
-    pose = Sophus::SE3d(R,t);        
-
-    double e = 0;
-    Eigen::Vector2d reproject, error; 
-
-    for(int i = 0 ; i < pts_on_body_frame_for_pose.size(); i++)
-    {
-        reproject = reproject_3D_2D(pts_on_body_frame_for_pose[i], pose);  
-        error = pts_2d_detect[i] - reproject;
-        e = e + error.norm();
-    }
-
-    cout<<"error: "<<e<<endl;
-
-    if(e > 20.0)
-    {
-        cout<<"use pnp instead"<<endl;
-        use_pnp_instead(frame, pts_2d_detect, pts_3d_pcl_detect, pose);
-    }
-
-    // optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
-
-    for(auto what : pts_on_body_frame_for_pose)
-    {
-        Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
-        cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
-    }
                              
 }
 
@@ -687,10 +738,15 @@ void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& p
     int n = pts_3d_detect.size();
 
     vector<cv::Point3f> pts;
-    vector<double> norm_of_points;
+    vector<double> norm_of_x_points;
+    vector<double> norm_of_y_points;
+    vector<double> norm_of_z_points;
+
     for(auto what :  pts_3d_detect)
     {
-        norm_of_points.push_back(what.norm());
+        norm_of_x_points.push_back(what.x());
+        norm_of_y_points.push_back(what.y());
+        norm_of_z_points.push_back(what.z());
         pts.push_back(cv::Point3f(what.x(), what.y(), what.z()));
     }
     
@@ -701,7 +757,9 @@ void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& p
     std::vector<cv::Point3f> centers;
 
 
-    if(calculate_MAD(norm_of_points) > MAD_threshold)
+    if(calculate_MAD(norm_of_x_points) > MAD_x_threshold  
+        || calculate_MAD(norm_of_y_points) > MAD_y_threshold
+        || calculate_MAD(norm_of_z_points) > MAD_z_threshold)
     {
         // ind++;
         // cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/outliers/outlier" + to_string(ind) + ".png", frame);
