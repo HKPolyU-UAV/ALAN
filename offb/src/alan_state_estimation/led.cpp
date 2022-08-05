@@ -89,7 +89,7 @@ void alan_pose_estimation::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat 
     cout<<pts_2d_detect.size()<<endl;
     reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
     cout<<pts_2d_detect.size()<<endl;
-    
+
     // cout << pts_3d_pcl_detect.size() << endl;  
 }
 
@@ -784,7 +784,9 @@ void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& p
             cout<<"cluster 0 is the right one"<<endl;
         }
         else
-            cout<<"cluster 1 is the right one"<<endl;        
+            cout<<"cluster 1 is the right one"<<endl;   
+
+             
         
     }
     else
