@@ -602,6 +602,8 @@ void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vecto
     {
         for(auto what : hungarian.id_match) //search common indices of two vector: corres_global & current_detect
         {
+            //we need to do more to save the non-detected,
+            //save the pts_detected_previous in the same format as global_corres
             if(corres_global[i].detected_indices == what.detected_indices)
             {
                 corres_global[i].detected_indices = what.detected_indices;
