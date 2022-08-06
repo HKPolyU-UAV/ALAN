@@ -22,6 +22,7 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
     try
     {
         frame = cv::imdecode(cv::Mat(rgbmsg->data), 1);
+        display = frame.clone();
     }
     catch (cv_bridge::Exception& e)
     {
@@ -61,9 +62,10 @@ void alan_pose_estimation::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat 
     Sophus::SE3d pose;
     vector<correspondence::matchid> corres;
 
+
     if(!LED_tracker_initiated)        
     {
-        LED_tracker_initiated = LED_tracking_initialize(frame, depth, pose, corres);
+        LED_tracker_initiated = LED_tracking_initialize(frame, depth);
 
         if(LED_tracker_initiated)
         {
@@ -73,15 +75,15 @@ void alan_pose_estimation::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat 
     }
     else
     {
-        recursive_filtering(frame, depth, pose, corres);
-        map_SE3_to_pose(pose);
+        recursive_filtering(frame, depth);
+        // map_SE3_to_pose(pose);
     }
 
-    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
-    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);  
+    // vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+    // vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);  
 
     // cout<<pts_2d_detect.size()<<endl;
-    reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
+    // reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
     // cout<<pts_2d_detect.size()<<endl;
 
     // cout << pts_3d_pcl_detect.size() << endl;  
@@ -169,7 +171,7 @@ void alan_pose_estimation::LedNodelet::use_pnp_instead(cv::Mat frame, vector<Eig
     Eigen::Vector3d t;
     Eigen::Matrix3d R;
 
-    get_initial_pose(pts_2d_detect, pts_3d_detect, R, t);
+    solve_pnp_initial_pose(pts_2d_detect, pts_3d_detect, R, t);
     
     //generate noise to validate BA
     Sophus::SE3d pose_;
@@ -201,7 +203,7 @@ inline Eigen::Vector2d alan_pose_estimation::LedNodelet::reproject_3D_2D(Eigen::
 }
 
 
-void alan_pose_estimation::LedNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+void alan_pose_estimation::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
     cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
     cv::Vec3d rvec, tvec;
@@ -538,7 +540,7 @@ vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::pointcloud_generate(ve
 }
 
 
-bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth, Sophus::SE3d& pose, vector<correspondence::matchid>& corres)
+bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 {
     cout<<"try to initialize tracker..."<<endl;
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
@@ -568,6 +570,7 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
         && calculate_MAD(norm_of_y_points) < MAD_y_threshold 
         && calculate_MAD(norm_of_z_points) < MAD_z_threshold) 
     {
+        Sophus::SE3d pose;
         cout<<"can initialize!"<<endl;
         double t1 = ros::Time::now().toSec();
         int i = 0;
@@ -591,7 +594,7 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
                 pts_2d_detect_temp.push_back(pts_2d_detect[what]);
             }
                                                     
-            get_initial_pose(pts_2d_detect_temp, pts_on_body_frame, R, t);
+            solve_pnp_initial_pose(pts_2d_detect_temp, pts_on_body_frame, R, t);
             
             pose = Sophus::SE3d(R, t);
 
@@ -609,6 +612,7 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
             {                    
                 error_total = e;
                 final_corres = corres;
+                pose_global = pose;
                 if(error_total < 5)
                     break;
             }
@@ -616,6 +620,16 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
         }
         while(next_permutation(corres.begin(), corres.end())); //for all permutations
 
+        correspondence::matchid corres_temp;
+        for(auto what : final_corres)
+        {
+            corres_temp.detected_indices = what;
+            corres_temp.detected_ornot = true;
+            corres_global.push_back(corres_temp);
+        }
+
+        this->pts_detected_previous.clear();
+        this->pts_detected_previous = pts_3d_pcl_detect;
 
 
         return true;
@@ -633,104 +647,77 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
 
 }
 
-void alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth, Sophus::SE3d& pose, vector<correspondence::matchid>& corres)
+void alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 {
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
 
     reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
 
-    //munkres match
+    correspondence_search(this->pts_detected_previous, pts_3d_pcl_detect);
 
-    //solvepnp
+    vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
+    vector<Eigen::Vector2d> pts_detected_in_corres_order;
 
-    
+    for(int i = 0; i < corres_global.size(); i++)
+    {
+        int j = corres_global[i].detected_indices;
 
+        if(corres_global[i].detected_ornot)
+        {
+            pts_on_body_frame_in_corres_order.push_back(pts_on_body_frame[j]);
+            pts_detected_in_corres_order.push_back(pts_2d_detect[j]);
+        }        
+    }
+
+    Eigen::Matrix3d R;
+    Eigen::Vector3d t;
+
+    solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order, R, t);
+
+    pose_global = Sophus::SE3d(R, t);
+
+    if(pts_on_body_frame_in_corres_order.size() == pts_detected_in_corres_order.size())
+            optimize(pose_global, pts_on_body_frame_in_corres_order, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
+
+    for(auto what : pts_on_body_frame_in_corres_order)
+    {
+        cout<<"hi"<<endl;
+        Eigen::Vector2d reproject = reproject_3D_2D(what, pose_global);  
+        cout<<reproject<<endl;          
+        cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
+    }
+
+    cv::imshow("test", display);
+    cv::waitKey(20);
+
+    map_SE3_to_pose(pose_global);
                              
 }
 
-void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vector3d> pts_on_body_frame, vector<Eigen::Vector3d> pts_detected)
+void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vector3d> pts_previous, vector<Eigen::Vector3d> pts_detected)
 {
-    // cv::kmeans()
-
-}
-
-
-vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::normalization_2d(vector<Eigen::Vector3d> v_pts, int i_x, int i_y)
-{
-    double x_min = INFINITY, y_min = INFINITY;    
-    int i_x_min_final, i_y_min_final;
+    //
+    hungarian.solution(pts_previous, pts_detected);
     
-    double x_max = -INFINITY, y_max = -INFINITY;    
-    int i_x_max_final, i_y_max_final;
-
-    for(int i = 0; i < v_pts.size(); i++)
+    for(int i = 0; i < corres_global.size(); i++) // go through every indices in the {L} #0, 1, 2... that indicate the indices in {D}
     {
-        if(v_pts[i](i_x) < x_min) //get x min
+        for(auto what : hungarian.id_match) //search common indices of two vector: corres_global & current_detect
         {
-            i_x_min_final = i;
-            x_min = v_pts[i](i_x);
-        }
-
-        if(v_pts[i](i_y) < y_min) //get y min
-        {
-            i_y_min_final = i;
-            y_min = v_pts[i](i_y);
-        }
-
-        if(v_pts[i](i_x) > x_max) //get x max
-        {
-            i_x_max_final = i;
-            x_max = v_pts[i](i_x);
-        }
-
-        if(v_pts[i](i_y) > y_max) //get y max
-        {
-            i_y_max_final = i;
-            y_max = v_pts[i](i_y);
+            if(corres_global[i].detected_indices == what.detected_indices)
+            {
+                corres_global[i].detected_indices = what.detected_indices;
+                corres_global[i].detected_ornot = what.detected_ornot;
+                break;
+            }
         }        
-
     }
 
-    // cout << x_min << " " << i_x_min_final << endl;
-    // cout << y_min << " " << i_y_min_final << endl;
-    // cout << x_max << " " << i_x_max_final << endl;
-    // cout << y_max << " " << i_y_max_final << endl;
+    this->pts_detected_previous.clear();
+    this->pts_detected_previous = pts_detected;
 
-    double delta_x, delta_y;
-
-    delta_x = x_max - x_min;
-    delta_y = y_max - y_min;
-
-    vector<Eigen::Vector3d> normalized_v_pts;
-    double x_temp, y_temp;
-    Eigen::Vector3d v_temp;
-
-    for(int i = 0; i < v_pts.size(); i++)
-    {
-        x_temp = (v_pts[i](i_x) - x_min) / delta_x;
-        y_temp = (v_pts[i](i_y) - y_min) / delta_y;
-        
-        v_temp.x() = x_temp * 100;
-        v_temp.y() = y_temp * 100;
-        v_temp.z() = 0;
-
-        normalized_v_pts.push_back(v_temp);
-    }
-    
-    return normalized_v_pts;
 }
 
-vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::sort_the_points_in_corres_order(vector<Eigen::Vector3d> pts, vector<correspondence::matchid> corres)
-{
-    vector<Eigen::Vector3d> pts_return;
-    Eigen::Vector3d pt_temp;
-    for(auto what :  corres)
-    {
-        pt_temp = pts[what.detected_indices];
-    }
-
-}
 
 //outlier rejection
 void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect)
@@ -768,12 +755,12 @@ void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& p
 
         // cout<<"center size: "<<centers.size()<<endl;
 
-        // cout<<norm(point_wo_outlier_previous)<<endl;;
+        // cout<<norm(pcl_center_point_wo_outlier_previous)<<endl;;
         // cout<<norm(centers[0])<<endl;
         // cout<<norm(centers[1])<<endl;
 
-        double d0 = cv::norm(point_wo_outlier_previous - centers[0]);
-        double d1 = cv::norm(point_wo_outlier_previous - centers[1]);
+        double d0 = cv::norm(pcl_center_point_wo_outlier_previous - centers[0]);
+        double d1 = cv::norm(pcl_center_point_wo_outlier_previous - centers[1]);
         
         // cout<<"distance"<<endl;
         // cout<<d0<<endl;
@@ -796,7 +783,7 @@ void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& p
                     pts_3d_result.push_back(pts_3d_detect[i]); 
                 }                    
             }            
-            point_wo_outlier_previous = centers[0];
+            pcl_center_point_wo_outlier_previous = centers[0];
         }
         else
         {
@@ -811,7 +798,7 @@ void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& p
                     pts_3d_result.push_back(pts_3d_detect[i]);                    
                 }
             }
-            point_wo_outlier_previous = centers[1];
+            pcl_center_point_wo_outlier_previous = centers[1];
         }
             
         pts_2d_detect.clear();
@@ -828,7 +815,7 @@ void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& p
         cv::Mat temp;
         
         cv::reduce(pts, temp, 01, CV_REDUCE_AVG);
-        point_wo_outlier_previous = cv::Point3f(temp.at<float>(0,0), temp.at<float>(0,1), temp.at<float>(0,2));
+        pcl_center_point_wo_outlier_previous = cv::Point3f(temp.at<float>(0,0), temp.at<float>(0,1), temp.at<float>(0,2));
 
         // cout<<temp(1)<<endl;
         // cout<<temp(2)<<endl;
@@ -872,10 +859,15 @@ void* alan_pose_estimation::LedNodelet::PubMainLoop(void* tmp)
     while (ros::ok()) 
     {
         // ROS_INFO("%d,publish!", num++);
-        // pub->pubpose.publish(pub->uav_pose_estimated);
+        pub->pubpose.publish(pub->uav_pose_estimated);
+
         ros::spinOnce();
         loop_rate.sleep();
     }
+
+    void* result;
+
+    return result;
 }
 
 #endif

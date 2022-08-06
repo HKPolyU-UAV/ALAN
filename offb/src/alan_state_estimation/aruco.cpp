@@ -53,7 +53,7 @@ void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::Comp
     double t1 = ros::Time::now().toSec();  
 
     pose_w_aruco_icp(frame, image_dep);
-    // pose_w_aruco_pnp(test);//, image_dep);
+    pose_w_aruco_pnp(test);//, image_dep);
 
     double t2 = ros::Time::now().toSec();
    

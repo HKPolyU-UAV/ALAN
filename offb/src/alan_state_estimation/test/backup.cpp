@@ -113,7 +113,7 @@
 
                 // vector<Eigen::Vector3d> second;
                 // second.push_back(c_);
-                // second.push_back(d_);
+                // // second.push_back(d_);
                 // second.push_back(a_);
                 // second.push_back(b_);
 
@@ -125,7 +125,8 @@
                 
                 // for(auto what : lala.solution(first, second))
                 // {
-                //     cout<<what.detected_indices<<endl;
+                //     cout<<what.detected_indices<<"   ";
+                //     cout<<what.detected_ornot<<endl;
                 // }
                 
                 // ;
@@ -136,12 +137,6 @@
                 // // }
 
 
-                // vector<Eigen::Vector3d> test1 = normalization_2d(first, 1, 2), test2 = normalization_2d(second, 1, 2);
-
-                // for(auto what : lala.solution(test1, test2))
-                // {
-                //     cout<<what.detected_indices<<endl;
-                // }
 
 
                 // double t2 = ros::Time::now().toSec();
@@ -229,3 +224,129 @@
     //     if(norm_of_points[what] < lower || norm_of_points[what] > upper)
     //         pts_3d_detect.erase(pts_3d_detect.begin() + what);        
     // }          
+
+
+
+    
+                // // x = [-0.36926538, -0.35783651, -0.30663395, -0.37761885, -0.28259838, -0.32332534]
+                // // y = [-0.17193949, -0.17355335,  -0.17994796,  -0.1793365, -0.19169508,  -0.20557153]
+                // // z = [0.71600002, 0.71799999, 0.72549999, 0.68800002,0.70550001, 0.727]
+            
+                // //test initialization
+                // vector<Eigen::Vector2d> pts_2d_detect;
+                // vector<Eigen::Vector3d> pts_3d_detect;
+
+                // XmlRpc::XmlRpcValue pts_2d_list, pts_3d_list;
+                
+                // nh.getParam("/alan_pose/pts_2d_list", pts_2d_list); 
+                // nh.getParam("/alan_pose/pts_3d_list", pts_3d_list); 
+                // cout<<"hi"<<endl;
+
+                // cout<<pts_2d_list.size()<<endl;
+                // cout<<pts_3d_list.size()<<endl;
+
+
+                // for(int i = 0; i < pts_2d_list.size(); i++)
+                // {
+                //     Eigen::Vector2d temp1(pts_2d_list[i]["x"], pts_2d_list[i]["y"]);                
+                //     Eigen::Vector3d temp2(pts_3d_list[i]["x"], pts_3d_list[i]["y"], pts_3d_list[i]["z"]);
+
+                //     pts_2d_detect.push_back(temp1);
+                //     pts_3d_detect.push_back(temp2);
+
+                // }   
+
+                // //now I have pts_2d_detect pts_3d_detect and pts_on_body_frame;        
+                
+
+                // double t1 = ros::Time::now().toSec();
+                // int i = 0;
+                
+                // vector<int> test;
+                
+                // for(int i = 0; i < 6; i++)
+                // {
+                //     test.push_back(i);
+                // }
+
+                // double error_total = INFINITY;
+                
+                // Eigen::Matrix3d R;
+                // Eigen::Vector3d t;
+                // vector<int> final_permutation;
+
+                // do 
+                // {       
+                //     vector<Eigen::Vector2d> pts_2d_detect_temp;       
+                //     vector<Eigen::Vector3d> pts_3d_detect_temp;     
+
+                //     for(auto what : test)
+                //     {
+                //         pts_2d_detect_temp.push_back(pts_2d_detect[what]);
+                //         pts_3d_detect_temp.push_back(pts_3d_detect[what]);
+                //     }
+                                                            
+                //     get_initial_pose(pts_2d_detect_temp, pts_on_body_frame, R, t);
+                //     // solveicp_svd(pts_3d_detect_temp, pts_on_body_frame, R, t);
+                    
+                //     Sophus::SE3d pose(R, t);
+
+                //     Eigen::Vector2d reproject, error; 
+                //     double e = 0;
+
+                //     for(int i = 0 ; i < pts_on_body_frame.size(); i++)
+                //     {
+                //         reproject = reproject_3D_2D(pts_on_body_frame[i], pose);  
+                //         error = pts_2d_detect_temp[i] - reproject;
+                //         e = e + error.norm();
+                //     }
+
+                //     if(e < error_total)
+                //     {                    
+                //         error_total = e;
+                //         final_permutation = test;
+                //         if(error_total < 5)
+                //             break;
+                //     }
+                    
+                // }
+                // while(next_permutation(test.begin(), test.end()));
+
+                // // vector<Eigen::Vector3d> pts_3d_detect_temp;
+                // // pts_3d_detect_temp.push_back(pts_3d_detect[4]);
+                // // pts_3d_detect_temp.push_back(pts_3d_detect[2]);
+                // // pts_3d_detect_temp.push_back(pts_3d_detect[1]);
+                // // pts_3d_detect_temp.push_back(pts_3d_detect[5]);
+                // // pts_3d_detect_temp.push_back(pts_3d_detect[0]);
+                // // pts_3d_detect_temp.push_back(pts_3d_detect[3]);
+
+                // // vector<Eigen::Vector2d> pts_2d_detect_temp;
+                // // pts_2d_detect_temp.push_back(pts_2d_detect[0]);
+                // // pts_2d_detect_temp.push_back(pts_2d_detect[1]);
+                // // pts_2d_detect_temp.push_back(pts_2d_detect[2]);
+                // // pts_2d_detect_temp.push_back(pts_2d_detect[3]);
+                // // pts_2d_detect_temp.push_back(pts_2d_detect[4]);
+                // // pts_2d_detect_temp.push_back(pts_2d_detect[5]);
+
+                // // solveicp_svd(pts_3d_detect_temp, pts_on_body_frame, R, t);
+
+                // // Sophus::SE3d pose(R, t);
+
+                // // Eigen::Vector2d reproject, error; 
+                // // double e = 0;
+
+                // // for(int i = 0 ; i < pts_on_body_frame.size(); i++)
+                // // {
+                // //     reproject = reproject_3D_2D(pts_on_body_frame[i], pose);  
+                // //     error = pts_2d_detect[final_permutation[i]] - reproject;
+                // //     e = e + error.norm();
+                // // }
+                // // cout<<e<<endl;
+
+                // cout<<"final: "<<error_total<<endl;
+                // for(auto what : final_permutation)
+                //     cout<<what;
+                // cout<<endl;
+                // double t2 = ros::Time::now().toSec();
+
+                // cout<<"Hz: "<< 1 / (t2-t1) <<endl;

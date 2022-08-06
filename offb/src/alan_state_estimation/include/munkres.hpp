@@ -69,9 +69,9 @@ namespace correspondence
         cost_generate(on_body_frame, detected);
         copy = cost;
 
-        cout<<"sol:"<<endl;
-        cout<<cost<<endl;
-        cout<<"-----"<<endl;
+        // cout<<"sol:"<<endl;
+        // cout<<cost<<endl;
+        // cout<<"-----"<<endl;
 
         bool done = false;
         step = 1;
@@ -107,8 +107,8 @@ namespace correspondence
             }
         }
 
-        // if(on_body_frame.size() != detected.size())
-        //     identify_redundant(id_match, on_body_frame, detected);
+        if(on_body_frame.size() != detected.size())
+            identify_redundant(id_match, on_body_frame, detected);
 
         return id_match;
 
@@ -155,7 +155,7 @@ namespace correspondence
             cover_row = vector<int>(on_body_frame.size(), 0);
             cover_col = vector<int>(on_body_frame.size(), 0);
             path.setZero(on_body_frame.size() * 2, 2);
-        }
+        }        
 
         for (int i=0; i < on_body_frame.size(); i++)
         {
@@ -163,7 +163,7 @@ namespace correspondence
             {
                 cost (i,j) = (on_body_frame[i] - detected[j]).norm();
             }
-        }
+        }        
     }
 
     void munkres::stp1(int& step)
