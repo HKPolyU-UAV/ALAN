@@ -64,12 +64,7 @@ namespace alan_pose_estimation
             //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth); 
 
-            void solveicp_svd(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
             
-            Eigen::Vector3d get_CoM(vector<Eigen::Vector3d> pts_3d);
-
-            void use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, vector<Eigen::Vector3d> pts_3d_detect, Sophus::SE3d& pose);
-
             Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
 
             //pnp + BA
@@ -119,12 +114,19 @@ namespace alan_pose_estimation
 
 
 
-
             //publish
             void map_SE3_to_pose(Sophus::SE3d pose);
 
             geometry_msgs::PoseStamped uav_pose_estimated;
             
+
+            //others
+            void solveicp_svd(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
+            
+            Eigen::Vector3d get_CoM(vector<Eigen::Vector3d> pts_3d);
+
+            void use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, vector<Eigen::Vector3d> pts_3d_detect, Sophus::SE3d& pose);
+
 
 
 
