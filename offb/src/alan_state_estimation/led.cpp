@@ -591,7 +591,6 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::pts_2d_normlization(ve
 
     // cout<<"delta: " << x_avg - x_avg_pts_config_<<endl;
     
-
     // x_avg = x_avg - (x_avg - x_avg_pts_config_);
     // y_avg = y_avg - (y_avg - y_avg_pts_config_);
 
@@ -688,6 +687,17 @@ void alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::M
 void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected)
 {
     //
+    //use uzh method!!!!
+
+
+
+
+
+
+
+
+
+    
     vector<Eigen::Vector2d> pts_previous;
 
     for(auto what : this->corres_global)
