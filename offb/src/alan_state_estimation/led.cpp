@@ -629,7 +629,7 @@ void alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::M
 
         if(pts_2d_detect.size() >= 4)
         {
-            correspondence_search(pts_3d_pcl_detect, pts_2d_detect);
+            correspondence_search_test(pts_3d_pcl_detect, pts_2d_detect);
 
             vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
             vector<Eigen::Vector2d> pts_detected_in_corres_order;            
@@ -776,9 +776,76 @@ void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vecto
         for(auto what : pts_2d_detected_normalized)
             cout<<what<<endl;
 
-        ros::shutdown();
+        // ros::shutdown();
     }
         
+
+}
+
+void alan_pose_estimation::LedNodelet::correspondence_search_test(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected)
+{
+    vector<Eigen::Vector2d> pts_reproject;
+
+    Eigen::Vector2d reproject_temp;
+    
+    for(auto what : pts_on_body_frame)
+    {
+        cout<<"hi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+        reproject_temp = reproject_3D_2D(what, pose_global);
+        pts_reproject.push_back(reproject_temp);
+    }
+
+    hungarian.solution(pts_reproject, pts_2d_detected);
+    
+    bool stop = false;
+    double xcoord;
+    xcoord = -INFINITY;
+
+    for(int i = 0; i < corres_global.size(); i++)
+    {
+        if(hungarian.id_match[i].detected_ornot)
+        {
+             // cout<<xcoord<<endl;
+            // cout<<"ture!"<<endl;
+            corres_global[i].detected_ornot = hungarian.id_match[i].detected_ornot;
+            corres_global[i].detected_indices = hungarian.id_match[i].detected_indices;
+            corres_global[i].pts_3d_correspond = pts_3d_detected[hungarian.id_match[i].detected_indices];
+            corres_global[i].pts_2d_correspond = pts_2d_detected[hungarian.id_match[i].detected_indices];
+            // cout<<corres_global[i].pts_2d_correspond<<endl;
+            // cout<<"end"<<endl;
+
+            if(corres_global[i].pts_2d_correspond.x() < xcoord)
+            {
+                // cout<<corres_global[i].pts_2d_correspond.x()<<endl;
+                // cout<<xcoord<<endl;
+                stop = true;
+            }
+            xcoord = corres_global[i].pts_2d_correspond.x();
+
+        }
+        else
+        {
+            corres_global[i].detected_ornot = hungarian.id_match[i].detected_ornot;
+        }
+
+    }
+
+    if(stop)
+    {
+        cout<<"wrong correspondencesss!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+        // cout<<pts_previous_normalized.size()<<endl;
+        // cout<<pts_2d_detected_normalized.size()<<endl;
+        // cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/" + to_string(i) + ".png", frame);
+        i++;
+        // for(auto what : pts_previous_normalized)
+        //     cout<<what<<endl;
+        // for(auto what : pts_2d_detected_normalized)
+        //     cout<<what<<endl;
+
+        ros::shutdown();
+    }
+
+
 
 }
 
