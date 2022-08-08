@@ -38,15 +38,18 @@ namespace alan_pose_estimation
             vector<Eigen::Vector3d> pts_on_body_frame, pts_on_body_frame_normalized;
             
             vector<Eigen::Vector2d> pts_obj_configuration;
+            double x_avg_pts_config_ = 0;
+            double y_avg_pts_config_ = 0;
 
             Sophus::SE3d pose_global;
             vector<correspondence::matchid> corres_global;
             
 
             //temp objects
-            double temp = 0;
+            // double temp = 0;
             int i = 0;
             int detect_no = 0;
+            double BA_error = 0;
 
             //subscribe            
             void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth);
