@@ -787,11 +787,14 @@ void alan_pose_estimation::LedNodelet::correspondence_search_test(vector<Eigen::
     vector<Eigen::Vector2d> pts_reproject;
 
     Eigen::Vector2d reproject_temp;
+
+    cout<<"fix size: "<<pts_on_body_frame.size()<<endl;
     
     for(auto what : pts_on_body_frame)
     {
-        cout<<"hi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
         reproject_temp = reproject_3D_2D(what, pose_global);
+        cv::circle(display, cv::Point(reproject_temp(0), reproject_temp(1)), 2.5, CV_RGB(0,255,0),-1);
+
         pts_reproject.push_back(reproject_temp);
     }
 
@@ -835,7 +838,7 @@ void alan_pose_estimation::LedNodelet::correspondence_search_test(vector<Eigen::
         cout<<"wrong correspondencesss!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
         // cout<<pts_previous_normalized.size()<<endl;
         // cout<<pts_2d_detected_normalized.size()<<endl;
-        // cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/" + to_string(i) + ".png", frame);
+        cv::imwrite("/home/patrick/alan_ws/" + to_string(i) + ".png", display);
         i++;
         // for(auto what : pts_previous_normalized)
         //     cout<<what<<endl;
