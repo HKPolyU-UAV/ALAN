@@ -36,7 +36,9 @@ namespace alan_pose_estimation
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             vector<correspondence::matchid> LED_v_Detected;
             vector<Eigen::Vector3d> pts_on_body_frame, pts_on_body_frame_normalized;
-            vector<Eigen::Vector3d> pts_detected_previous;
+            
+            vector<Eigen::Vector2d> pts_obj_configuration;
+
 
             Sophus::SE3d pose_global;
             vector<correspondence::matchid> corres_global;
@@ -89,11 +91,13 @@ namespace alan_pose_estimation
 
 
             //initiation & correspondence        
-            void correspondence_search(vector<Eigen::Vector3d> pts_on_body_frame, vector<Eigen::Vector3d> pts_detected);    
+            void correspondence_search(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected);    
             
-            correspondence::munkres hungarian; 
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
 
+            vector<Eigen::Vector2d> pts_2d_normlization(vector<Eigen::Vector2d> pts_2d);
+
+            correspondence::munkres hungarian; 
             bool LED_tracker_initiated = false;
             int LED_no;
 
@@ -170,16 +174,112 @@ namespace alan_pose_estimation
                 nh.getParam("/alan_pose/MAD_z_threshold", MAD_z_threshold);
 
                 LED_no = pts_on_body_frame.size();
-                
-                // pts_on_body_frame_normalized = normalization_2d(pts_on_body_frame, 1, 2);
-                                                
+                                                                
                 // //subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
                 subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
 
- 
+                //test algo here:
+
+                 // x = [-0.36926538, -0.35783651, -0.30663395, -0.37761885, -0.28259838, -0.32332534]
+                // y = [-0.17193949, -0.17355335,  -0.17994796,  -0.1793365, -0.19169508,  -0.20557153]
+                // z = [0.71600002, 0.71799999, 0.72549999, 0.68800002,0.70550001, 0.727]
+            
+                //test initialization
+                // vector<Eigen::Vector2d> pts_2d_detect;
+                // vector<Eigen::Vector3d> pts_3d_detect;
+                // vector<Eigen::Vector2d> pts_2d_detect_previous;
+
+                // XmlRpc::XmlRpcValue pts_2d_list, pts_3d_list, pts_2d_list_previous;
+                
+                // nh.getParam("/alan_pose/pts_2d_list", pts_2d_list); 
+                // nh.getParam("/alan_pose/pts_3d_list", pts_3d_list); 
+                // nh.getParam("/alan_pose/pts_2d_list_previous", pts_2d_list_previous);            
+
+
+                // for(int i = 0; i < pts_2d_list.size(); i++)
+                // {
+                //     Eigen::Vector2d temp1(pts_2d_list[i]["x"], pts_2d_list[i]["y"]);                                                        
+                //     pts_2d_detect.push_back(temp1);                    
+                // }   
+
+                // for(int i = 0; i < pts_3d_list.size(); i++)
+                // {
+                //     Eigen::Vector3d temp2(pts_3d_list[i]["x"], pts_3d_list[i]["y"], pts_3d_list[i]["z"]);
+                //     pts_3d_detect.push_back(temp2);
+                // }
+
+                // for(int i = 0; i < pts_2d_list_previous.size(); i++)
+                // {
+                //     Eigen::Vector2d temp3(pts_2d_list_previous[i]["x"], 
+                //                             pts_2d_list_previous[i]["y"]);
+                //     pts_2d_detect_previous.push_back(temp3);
+                // }
+
+
+                // for(auto what : pts_2d_detect_previous)
+                // {
+                //     correspondence::matchid temp;
+                //     cout<<what<<endl;
+                //     temp.pts_2d_correspond = what;
+                //     corres_global.push_back(temp);                
+                // }
+
+                // cout<<corres_global.size()<<endl;
+
+                // correspondence_search(pts_3d_detect, pts_2d_detect);
+                
+                // cout<<"hiiiiiiiiiiiii"<<endl;
+
+                // for(auto what : corres_global)
+                // {
+                //     cout<<what.detected_indices<<" ";
+                //     cout<<what.detected_ornot<<endl;
+                //     // cout<<what.pts_3d_correspond<<endl;
+                //     // cout<<what.pts_2d_correspond<<endl;
+                //     cout<<"end..................."<<endl;
+                // }
+
+                //now I have pts_2d_detect pts_3d_detect and pts_on_body_frame;        
+                
+                // x = [ 202 221 231 265 272 285]
+                // y = [ 248 260 262 246 268 262]
+
+                // x = [ 121 200 154 194 143 211]
+                // y = [ 227 256 245 194 242 250]
+
+                // vector<Eigen::Vector2d> test1;
+                // vector<Eigen::Vector2d> test2;
+
+                // test1.push_back(Eigen::Vector2d(202, 248));
+                // test1.push_back(Eigen::Vector2d(221, 260));
+                // test1.push_back(Eigen::Vector2d(231, 262));
+                // test1.push_back(Eigen::Vector2d(265, 246));
+                // test1.push_back(Eigen::Vector2d(272, 268));
+                // test1.push_back(Eigen::Vector2d(285, 262));
+
+                // test2.push_back(Eigen::Vector2d(121, 227));
+                // test2.push_back(Eigen::Vector2d(143, 242));
+                // test2.push_back(Eigen::Vector2d(154, 245));
+                // test2.push_back(Eigen::Vector2d(194, 194));
+                // test2.push_back(Eigen::Vector2d(200, 256));
+                // test2.push_back(Eigen::Vector2d(221, 250));
+
+                // vector<Eigen::Vector2d> final1;
+                // vector<Eigen::Vector2d> final2;
+
+                // final1 = pts_2d_normlization(test1);
+                // final2 = pts_2d_normlization(test2);
+
+
+                // hungarian.solution(final1, final2);
+
+                // for(auto what : hungarian.id_match)
+                // {
+                //     cout<<what.detected_indices<<endl;
+                // }
 
             }
 

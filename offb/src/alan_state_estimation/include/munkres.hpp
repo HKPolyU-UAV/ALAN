@@ -11,6 +11,8 @@ namespace correspondence
     {
         int detected_indices; //
         bool detected_ornot = false;
+        Eigen::Vector3d pts_3d_correspond;
+        Eigen::Vector2d pts_2d_correspond;
     }matchid;
 
     class munkres
@@ -32,7 +34,7 @@ namespace correspondence
         void clear_covers();
         void erase_primes();
 
-        void identify_redundant(vector<matchid>& id_results, vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected);
+        void identify_redundant(vector<matchid>& id_results, vector<Eigen::Vector2d> pts_previous, vector<Eigen::Vector2d> pts_detected);
 
         int step = 1;
         Eigen::MatrixXd cost, mask, path, copy;
@@ -40,14 +42,16 @@ namespace correspondence
         vector<int> cover_col;
         int path_row_0, path_col_0, path_count;
 
-        void cost_generate(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected);
+        
+
+        void cost_generate(vector<Eigen::Vector2d> pts_previous, vector<Eigen::Vector2d> pts_detected);
 
     public:
         munkres();
         ~munkres();
 
         // vector<match
-        vector<matchid> solution(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected);//return the corresponding ids;
+        vector<matchid> solution(vector<Eigen::Vector2d> pts_previous, vector<Eigen::Vector2d> pts_detected);//return the corresponding ids;
         
         vector<matchid> id_match;
     };
@@ -62,16 +66,16 @@ namespace correspondence
 
     }
 
-    vector<matchid> munkres::solution(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected)
+    vector<matchid> munkres::solution(vector<Eigen::Vector2d> pts_previous, vector<Eigen::Vector2d> pts_detected)
     {
         this->id_match.clear();
 
-        cost_generate(on_body_frame, detected);
+        cost_generate(pts_previous, pts_detected);
         copy = cost;
 
         // cout<<"sol:"<<endl;
         // cout<<cost<<endl;
-        // cout<<"-----"<<endl;
+        // cout<<"-----"<<endl; 
 
         bool done = false;
         step = 1;
@@ -107,18 +111,22 @@ namespace correspondence
             }
         }
 
-        if(on_body_frame.size() != detected.size())
-            identify_redundant(id_match, on_body_frame, detected);
+        // cout<<pts_previous.size()<<pts_detected.size()<<endl;
+
+
+
+        if(pts_previous.size() != pts_detected.size())
+            identify_redundant(id_match, pts_previous, pts_detected);
 
         return id_match;
 
     }
 
-    void munkres::identify_redundant(vector<matchid>& id_results, vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected)
+    void munkres::identify_redundant(vector<matchid>& id_results, vector<Eigen::Vector2d> pts_previous, vector<Eigen::Vector2d> pts_detected)
     {
         for(auto& what : id_results)
         {
-            if(what.detected_indices >= detected.size())        
+            if(what.detected_indices >= pts_detected.size())        
                 what.detected_ornot = false;
             // else if(what.)
                           
@@ -127,41 +135,41 @@ namespace correspondence
 
     }
 
-    void munkres::cost_generate(vector<Eigen::Vector3d> on_body_frame, vector<Eigen::Vector3d> detected)
+    void munkres::cost_generate(vector<Eigen::Vector2d> pts_previous, vector<Eigen::Vector2d> pts_detected)
     {
-        if(on_body_frame.size()==detected.size())
+        if(pts_previous.size()==pts_detected.size())
         {
-            cost.setZero(on_body_frame.size(), detected.size());
-            mask.setZero(on_body_frame.size(), detected.size());
+            cost.setZero(pts_previous.size(), pts_detected.size());
+            mask.setZero(pts_previous.size(), pts_detected.size());
 
-            cover_row = vector<int>(on_body_frame.size(), 0);
-            cover_col = vector<int>(on_body_frame.size(), 0);
-            path.setZero(on_body_frame.size()*2, 2);
+            cover_row = vector<int>(pts_previous.size(), 0);
+            cover_col = vector<int>(pts_previous.size(), 0);
+            path.setZero(pts_previous.size() * 2, 2);
         }
-        else if (on_body_frame.size() < detected.size())
+        else if (pts_previous.size() < pts_detected.size())
         {
-            cost.setZero(detected.size(), detected.size());
-            mask.setZero(detected.size(), detected.size());
+            cost.setZero(pts_detected.size(), pts_detected.size());
+            mask.setZero(pts_detected.size(), pts_detected.size());
 
-            cover_row = vector<int>(detected.size(), 0);
-            cover_col = vector<int>(detected.size(), 0);
-            path.setZero(detected.size()*2, 2);
+            cover_row = vector<int>(pts_detected.size(), 0);
+            cover_col = vector<int>(pts_detected.size(), 0);
+            path.setZero(pts_detected.size() * 2, 2);
         }
-        else if (on_body_frame.size() > detected.size())
+        else if (pts_previous.size() > pts_detected.size())
         {
-            cost.setZero(on_body_frame.size(), on_body_frame.size());
-            mask.setZero(on_body_frame.size(), on_body_frame.size());
+            cost.setZero(pts_previous.size(), pts_previous.size());
+            mask.setZero(pts_previous.size(), pts_previous.size());
 
-            cover_row = vector<int>(on_body_frame.size(), 0);
-            cover_col = vector<int>(on_body_frame.size(), 0);
-            path.setZero(on_body_frame.size() * 2, 2);
+            cover_row = vector<int>(pts_previous.size(), 0);
+            cover_col = vector<int>(pts_previous.size(), 0);
+            path.setZero(pts_previous.size() * 2, 2);
         }        
 
-        for (int i=0; i < on_body_frame.size(); i++)
+        for (int i=0; i < pts_previous.size(); i++)
         {
-            for (int j=0; j < detected.size(); j++)
+            for (int j=0; j < pts_detected.size(); j++)
             {
-                cost (i,j) = (on_body_frame[i] - detected[j]).norm();
+                cost (i,j) = (pts_previous[i] - pts_detected[j]).norm();
             }
         }        
     }

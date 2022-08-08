@@ -142,7 +142,7 @@ void alan_pose_estimation::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vect
     camMat.at<double>(1,1) = cameraMat(1,1);
     camMat.at<double>(1,2) = cameraMat(1,2);
 
-    cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);
+    cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_P3P);
     
     //return values
     cv::Mat rmat = cv::Mat::eye(3,3,CV_64F);
@@ -482,7 +482,7 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
         int i = 0;
         
         vector<int> corres(LED_no);
-        iota(corres.begin(), corres.end(), 0);        
+        iota(corres.begin(), corres.end(), 0); //initiate corresponding
 
         double error_total = INFINITY;
         
@@ -527,21 +527,64 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
         while(next_permutation(corres.begin(), corres.end())); //for all permutations
 
         correspondence::matchid corres_temp;
+        
+        vector<Eigen::Vector2d> pts_2d_detect_correct_order;
+        
         for(auto what : final_corres)
         {
             corres_temp.detected_indices = what;
             corres_temp.detected_ornot = true;
+            corres_temp.pts_3d_correspond = pts_3d_pcl_detect[what];            
+            corres_temp.pts_2d_correspond = pts_2d_detect[what];
+
+            pts_2d_detect_correct_order.push_back(pts_2d_detect[what]);
+            cout<<corres_temp.pts_2d_correspond<<endl;
+            cout<<"i :"<< what<<endl;            
+
+            
+
             corres_global.push_back(corres_temp);
         }
 
-        this->pts_detected_previous.clear();
-        this->pts_detected_previous = pts_3d_pcl_detect;
+        vector<Eigen::Vector2d> config_temp = pts_2d_normlization(pts_2d_detect_correct_order);
 
+        for(auto what : config_temp)
+        {
+            pts_obj_configuration.push_back(what);
+        }
 
         return true;
     }
     else
         return false;
+
+}
+
+vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::pts_2d_normlization(vector<Eigen::Vector2d> pts_2d)
+{
+    int n = pts_2d.size();
+
+
+    vector<double> pts_xs;
+    vector<double> pts_ys;
+
+    for(int i = 0; i < n; i++)
+    {
+        pts_xs.push_back(pts_2d[i].x());
+        pts_ys.push_back(pts_2d[i].y());
+    }
+
+    double x_avg = accumulate(pts_xs.begin(), pts_xs.end(), 0.0) / pts_xs.size();
+    double y_avg = accumulate(pts_ys.begin(), pts_ys.end(), 0.0) / pts_ys.size();
+
+    vector<Eigen::Vector2d> pts_2d_results;
+
+    for(int i = 0; i < n; i++)    
+    {
+        pts_2d_results.push_back(Eigen::Vector2d(pts_2d[i].x() - x_avg, pts_2d[i].y() - y_avg));
+    }
+
+    return pts_2d_results;
 
 }
 
@@ -552,69 +595,115 @@ void alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::M
 
     reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
 
-    correspondence_search(this->pts_detected_previous, pts_3d_pcl_detect);
-
-    vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
-    vector<Eigen::Vector2d> pts_detected_in_corres_order;
-
-    for(int i = 0; i < corres_global.size(); i++)
+    if(pts_2d_detect.size() >= 4)
     {
-        int j = corres_global[i].detected_indices;
 
-        if(corres_global[i].detected_ornot)
+        correspondence_search(pts_3d_pcl_detect, pts_2d_detect);
+
+        vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
+        vector<Eigen::Vector2d> pts_detected_in_corres_order;
+
+        // cout<<"preparing for pnp..."<<endl;
+
+        for(int i = 0; i < corres_global.size(); i++)
+        {            
+            if(corres_global[i].detected_ornot)
+            {                
+                pts_on_body_frame_in_corres_order.push_back(pts_on_body_frame[i]);
+                // cout<<pts_on_body_frame[i]<<endl;
+                pts_detected_in_corres_order.push_back(corres_global[i].pts_2d_correspond);
+                // cout<<corres_global[i].pts_2d_correspond<<endl;
+                // cout<<endl;
+            }        
+        }
+
+        cout<<"processed "<<pts_on_body_frame_in_corres_order.size()<<" points this time for pnp"<<endl;
+
+        Eigen::Matrix3d R;
+        Eigen::Vector3d t;        
+
+        solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order, R, t);        
+
+        pose_global = Sophus::SE3d(R, t);
+
+        if(pts_on_body_frame_in_corres_order.size() == pts_detected_in_corres_order.size())
+                optimize(pose_global, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);//pose, body_frame_pts, pts_2d_detect
+
+        for(auto what : pts_on_body_frame_in_corres_order)
         {
-            pts_on_body_frame_in_corres_order.push_back(pts_on_body_frame[j]);
-            pts_detected_in_corres_order.push_back(pts_2d_detect[j]);
-        }        
-    }
+            // cout<<"hi"<<endl;
+            Eigen::Vector2d reproject = reproject_3D_2D(what, pose_global);  
+            // cout<<reproject<<endl;          
+            cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
+        }
 
-    Eigen::Matrix3d R;
-    Eigen::Vector3d t;
+        cv::imshow("test", display);
+        cv::waitKey(20);
 
-    solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order, R, t);
+        map_SE3_to_pose(pose_global);
 
-    pose_global = Sophus::SE3d(R, t);
+        // pause();
 
-    if(pts_on_body_frame_in_corres_order.size() == pts_detected_in_corres_order.size())
-            optimize(pose_global, pts_on_body_frame_in_corres_order, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
-
-    for(auto what : pts_on_body_frame_in_corres_order)
-    {
-        cout<<"hi"<<endl;
-        Eigen::Vector2d reproject = reproject_3D_2D(what, pose_global);  
-        cout<<reproject<<endl;          
-        cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
-    }
-
-    cv::imshow("test", display);
-    cv::waitKey(20);
-
-    map_SE3_to_pose(pose_global);
+    }    
                              
 }
 
-void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vector3d> pts_previous, vector<Eigen::Vector3d> pts_detected)
+void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected)
 {
     //
-    hungarian.solution(pts_previous, pts_detected);
-    
-    for(int i = 0; i < corres_global.size(); i++) // go through every indices in the {L} #0, 1, 2... that indicate the indices in {D}
+    vector<Eigen::Vector2d> pts_previous;
+
+    for(auto what : this->corres_global)
     {
-        for(auto what : hungarian.id_match) //search common indices of two vector: corres_global & current_detect
-        {
-            //we need to do more to save the non-detected,
-            //save the pts_detected_previous in the same format as global_corres
-            if(corres_global[i].detected_indices == what.detected_indices)
-            {
-                corres_global[i].detected_indices = what.detected_indices;
-                corres_global[i].detected_ornot = what.detected_ornot;
-                break;
-            }
-        }        
+        pts_previous.push_back(what.pts_2d_correspond);
     }
 
-    this->pts_detected_previous.clear();
-    this->pts_detected_previous = pts_detected;
+    vector<Eigen::Vector2d> pts_previous_normalized, pts_2d_detected_normalized;
+
+    pts_previous_normalized = pts_2d_normlization(pts_obj_configuration);
+    pts_2d_detected_normalized = pts_2d_normlization(pts_2d_detected);
+
+    hungarian.solution(pts_previous_normalized, pts_2d_detected_normalized);
+
+    for(auto what :  hungarian.id_match)
+        // cout<<what.detected_indices<<"  " <<what.detected_ornot<<"     ";
+    
+    cout<<endl<<endl;
+
+    double temp = -INFINITY;
+    bool stop = false;
+
+    
+    for(int i = 0; i < corres_global.size(); i++) // go through every indices in the {L} #0, 1, 2... that indicate the indices in {D}
+    {        
+        if(hungarian.id_match[i].detected_ornot)
+        {
+            // cout<<"ture!"<<endl;
+            corres_global[i].detected_ornot = hungarian.id_match[i].detected_ornot;
+            corres_global[i].detected_indices = hungarian.id_match[i].detected_indices;
+            corres_global[i].pts_3d_correspond = pts_3d_detected[hungarian.id_match[i].detected_indices];
+            corres_global[i].pts_2d_correspond = pts_2d_detected[hungarian.id_match[i].detected_indices];
+            // cout<<corres_global[i].pts_2d_correspond<<endl;
+
+            if(corres_global[i].pts_2d_correspond.x() < temp)
+                stop = true;
+            temp = corres_global[i].pts_2d_correspond.x();
+            
+        }
+        else
+        {
+            // cout<<"false!"<<endl;
+            corres_global[i].detected_ornot = hungarian.id_match[i].detected_ornot;
+        }
+            
+
+        //we need to do more to save the non-detected,
+        //save the pts_detected_previous in the same format as global_corres            
+            
+    }
+
+    if(stop)
+        cout<<"wrong correspondencesss!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
 
 }
 
