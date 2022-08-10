@@ -68,8 +68,8 @@ def main():
     cv2.imshow("BGR",image_src)
 
     #CREATE THE HSV FROM THE BGR IMAGE
-    image_hsv = cv2.cvtColor(image_src,cv2.COLOR_RGB2HSV)
-    cv2.imshow("HSV",image_hsv)
+    image_hsv = cv2.cvtColor(image_src,cv2.COLOR_BGR2HSV)
+    cv2RGBshow("HSV",image_hsv)
 
     #CALLBACK FUNCTION
     cv2.setMouseCallback("HSV", pick_color)

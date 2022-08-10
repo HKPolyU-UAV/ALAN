@@ -50,6 +50,7 @@ namespace alan_pose_estimation
             int i = 0;
             int detect_no = 0;
             double BA_error = 0;
+            vector<cv::KeyPoint> blobs_for_initialize;
 
             //subscribe            
             void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth);

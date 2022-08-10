@@ -484,3 +484,43 @@
                 // {
                 //     cout << what << endl << endl;
                 // }
+// iota(corres.begin(), corres.end(), 0); //initiate corresponding
+
+        
+        
+
+
+        // do 
+        // {       
+        //     vector<Eigen::Vector2d> pts_2d_detect_temp;       
+
+        //     for(auto what : corres)
+        //     {
+        //         pts_2d_detect_temp.push_back(pts_2d_detect[what]);
+        //     }
+                                                    
+        //     solve_pnp_initial_pose(pts_2d_detect_temp, pts_on_body_frame, R, t);
+            
+        //     pose = Sophus::SE3d(R, t);
+
+        //     Eigen::Vector2d reproject, error; 
+        //     double e = 0;
+
+        //     for(int i = 0 ; i < pts_on_body_frame.size(); i++)
+        //     {
+        //         reproject = reproject_3D_2D(pts_on_body_frame[i], pose);  
+        //         error = pts_2d_detect_temp[i] - reproject;
+        //         e = e + error.norm();
+        //     }
+
+        //     if(e < error_total)
+        //     {                    
+        //         error_total = e;
+        //         final_corres = corres;
+        //         pose_global = pose;
+        //         if(error_total < 5)
+        //             break;
+        //     }
+            
+        // }
+        // while(next_permutation(corres.begin(), corres.end())); //for all permutations

@@ -376,6 +376,7 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
     
     detector->detect(frame, keypoints_rgb_d);
 	cv::drawKeypoints( frame, keypoints_rgb_d, im_with_keypoints,CV_RGB(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+    
     // cout<<keypoints_rgb_d.size()<<endl;
     
     detect_no = keypoints_rgb_d.size();
@@ -385,6 +386,10 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
 	// Show blobs
 	// cv::imshow("keypoints2", im_with_keypoints );
 	// cv::waitKey(20);
+
+    // cout<<"blob size here: "<<keypoints_rgb_d[0].size<<endl;
+    // if(!LED_tracker_initiated)
+    blobs_for_initialize = keypoints_rgb_d;
 
     vector<Eigen::Vector2d> POI;
     for(auto what : keypoints_rgb_d)
@@ -454,8 +459,14 @@ vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::pointcloud_generate(ve
 bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 {
     cout<<"try to initialize tracker..."<<endl;
-    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
 
+    cv::Mat hsv = frame.clone();
+    // cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/normal.png", hsv);
+    cout<<"?????"<<endl;
+
+    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth); 
+    cout<<"?????"<<endl;
+      
     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
 
     //after above, I got:
@@ -485,51 +496,133 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
         cout<<"can initialize!"<<endl;
         double t1 = ros::Time::now().toSec();
         int i = 0;
-        
-        vector<int> corres(LED_no);
-        iota(corres.begin(), corres.end(), 0); //initiate corresponding
 
+        //hsv detect feature
+        cv::cvtColor(hsv, hsv, CV_RGB2HSV);
+        vector<bool> g_or_r; //g = true
+
+        vector<int> corres_g;
+        vector<int> corres_r;
+
+        cout<<blobs_for_initialize.size()<<endl;
+
+        for(int i = 0 ; i < blobs_for_initialize.size(); i++)
+        {
+            cv::Point hsv_vertice1 = cv::Point(pts_2d_detect[i].x() - 2 * blobs_for_initialize[i].size,
+                                               pts_2d_detect[i].y() - 2 * blobs_for_initialize[i].size);
+            cv::Point hsv_vertice2 = cv::Point(pts_2d_detect[i].x() + 2 * blobs_for_initialize[i].size,
+                                               pts_2d_detect[i].y() + 2 * blobs_for_initialize[i].size);
+
+            
+            cv::Rect letsgethsv(hsv_vertice1, hsv_vertice2);
+
+
+            cv::Mat ROI(hsv, letsgethsv);
+
+
+            int size = ROI.cols * ROI.rows;
+            cout<<"size: "<<size<<endl;
+            
+            double accu = 0;
+
+            cv::Vec3b hsv_value;
+
+            for(int i = 0; i < ROI.rows; i++)
+            {
+                for(int j = 0; j < ROI.cols; j++)
+                {
+                    hsv_value = ROI.at<cv::Vec3b>(i, j);
+                    // cout<<hsv_value<<endl;
+                    if(hsv_value[0] == 0)                    
+                        size = size - 1;                
+                    else
+                        accu = accu + hsv_value[0];
+                }
+            }
+
+            cout<<"size: "<<size<<endl;
+            cout<<"hue: "<<accu/size<<endl;     
+
+            if(accu/size < 100)
+                corres_g.push_back(i);
+            else   
+                corres_r.push_back(i);
+        }
+
+        vector<int> corres(LED_no);
+
+        cout<<corres_g.size()<<endl;
+        cout<<corres_r.size()<<endl;
+        cout<<"`````````````"<<endl;
+
+        if(corres_g.size() != 3 || corres_r.size() != 3)
+        {
+            cout<<"hue not found continue!"<<endl;
+            return false;
+        }
+
+        //
+        vector<int> final_corres;
         double error_total = INFINITY;
-        
         Eigen::Matrix3d R;
         Eigen::Vector3d t;
 
-        vector<int> final_corres;
 
-        do 
-        {       
-            vector<Eigen::Vector2d> pts_2d_detect_temp;       
-
-            for(auto what : corres)
+        do
+        {
+            do
             {
-                pts_2d_detect_temp.push_back(pts_2d_detect[what]);
-            }
-                                                    
-            solve_pnp_initial_pose(pts_2d_detect_temp, pts_on_body_frame, R, t);
+                corres.clear();
+                for(auto what : corres_g)
+                    corres.push_back(what);
+                for(auto what : corres_r)
+                    corres.push_back(what);
+                cout<<"next"<<endl;
+
+                for(auto what : corres)
+                    cout<<what<<" ";
+
+                vector<Eigen::Vector2d> pts_2d_detect_temp;   
+
+                cout<<endl<<corres.size()<<endl;    
+
+                for(auto what : corres)
+                {
+                    pts_2d_detect_temp.push_back(pts_2d_detect[what]);
+                }
+                                                        
+                solve_pnp_initial_pose(pts_2d_detect_temp, pts_on_body_frame, R, t);
+                
+                pose = Sophus::SE3d(R, t);
+
+                Eigen::Vector2d reproject, error; 
+                double e = 0;
+
+                for(int i = 0 ; i < pts_on_body_frame.size(); i++)
+                {
+                    reproject = reproject_3D_2D(pts_on_body_frame[i], pose);  
+                    error = pts_2d_detect_temp[i] - reproject;
+                    e = e + error.norm();
+                }
+
+                if(e < error_total)
+                {                    
+                    error_total = e;
+                    final_corres = corres;
+                    pose_global = pose;
+                    if(error_total < 5)
+                        break;
+                }                        
+            } while (next_permutation(corres_r.begin(), corres_r.end()));
+            // cout<<endl;
             
-            pose = Sophus::SE3d(R, t);
+        } while(next_permutation(corres_g.begin(), corres_g.end()));
 
-            Eigen::Vector2d reproject, error; 
-            double e = 0;
+        double t2 = ros::Time::now().toSec();
+        cout<<"fps: "<< 1 / (t2-t1)<<endl;
 
-            for(int i = 0 ; i < pts_on_body_frame.size(); i++)
-            {
-                reproject = reproject_3D_2D(pts_on_body_frame[i], pose);  
-                error = pts_2d_detect_temp[i] - reproject;
-                e = e + error.norm();
-            }
+        cout<<"final error :" <<error_total<<endl;
 
-            if(e < error_total)
-            {                    
-                error_total = e;
-                final_corres = corres;
-                pose_global = pose;
-                if(error_total < 5)
-                    break;
-            }
-            
-        }
-        while(next_permutation(corres.begin(), corres.end())); //for all permutations
 
         correspondence::matchid corres_temp;
         
@@ -557,6 +650,8 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
         {
             pts_obj_configuration.push_back(what);
         }
+
+        // ros::shutdown();
 
         return true;
     }
@@ -836,16 +931,32 @@ void alan_pose_estimation::LedNodelet::correspondence_search_test(vector<Eigen::
     if(stop)
     {
         cout<<"wrong correspondencesss!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
-        // cout<<pts_previous_normalized.size()<<endl;
-        // cout<<pts_2d_detected_normalized.size()<<endl;
-        cv::imwrite("/home/patrick/alan_ws/" + to_string(i) + ".png", display);
-        i++;
-        // for(auto what : pts_previous_normalized)
-        //     cout<<what<<endl;
-        // for(auto what : pts_2d_detected_normalized)
-        //     cout<<what<<endl;
+        //use hue again!
+        //also consider points less than 6 points
 
-        ros::shutdown();
+
+
+
+
+
+        
+        cout<<pts_reproject.size()<<endl;
+        cout<<pts_2d_detected.size()<<endl;
+        cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/wrongframes/" + to_string(i) + ".png", display);
+        i++;
+        for(auto what : pts_reproject)
+        {
+            cout<<what<<endl;
+        }
+        cout<<"here!--------------------"<<endl;
+            
+        for(auto what : pts_2d_detected)
+        {
+            cout<<what<<endl;            
+        }
+
+        cout<<"shutdown"<<endl;            
+        // ros::shutdown();
     }
 
 
