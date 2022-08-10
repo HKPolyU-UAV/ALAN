@@ -65,15 +65,14 @@ catkin_package(
 
 set(Sophus_LIBRARIES libSophus.so)
 
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/lib/mosek9_3)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/include)
+link_directories(/home/patty/alan_ws/src/alan/offb/src/alan_landing_planning/third_party/mosek/mosek9_3/lib)
+include_directories(/home/patty/alan_ws/src/alan/offb/src/alan_landing_planning/third_party/mosek/mosek9_3/include)
 
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${Sophus_INCLUDE_DIRS}
-  third_party
   # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
 
