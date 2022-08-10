@@ -65,11 +65,15 @@ catkin_package(
 
 set(Sophus_LIBRARIES libSophus.so)
 
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/lib/mosek9_3)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/include)
+
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${Sophus_INCLUDE_DIRS}
+  third_party
   # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
 
@@ -86,28 +90,14 @@ target_link_libraries(
   ${Sophus_INCLUDE_DIRS}
 )
 
+add_executable(lala
+   src/alan_landing_planning/lala.cpp)
+target_link_libraries(lala
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  mosek64)
 
-
-
-# #1
-# add_executable(yolo
-#     src/yolo.cpp)
-# target_link_libraries(yolo
-#    ${OpenCV_LIBRARIES}
-#    ${catkin_LIBRARIES})
-
-
-
-# #2
-# add_executable(aruco
-#     src/aruco.cpp)
-# target_link_libraries(aruco
-#    ${OpenCV_LIBRARIES}
-#    ${catkin_LIBRARIES}
-#    ${PCL_LIBRARIES}
-#    ${Sophus_LIBRARIES})
-
-#3
 add_executable(kf
    src/alan_state_estimation/kf.cpp)
 target_link_libraries(kf
@@ -115,7 +105,7 @@ target_link_libraries(kf
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES})
 
-#4
+
 add_executable(imu
    src/alan_state_estimation/imu.cpp)
 target_link_libraries(imu
@@ -123,19 +113,7 @@ target_link_libraries(imu
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES})
 
-# #5
-# add_executable(pnp
-#    src/pnp.cpp)
-# target_link_libraries(pnp
-#   ${OpenCV_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   ${PCL_LIBRARIES})
 
-# add_executable(vis
-#     src/vis.cpp)
-# target_link_libraries(vis
-#     ${OpenCV_LIBRARIES}
-#     ${catkin_LIBRARIES})
 
 # add_executable(ncnn_yolo
 #    src/ncnn_yolo.cpp)
