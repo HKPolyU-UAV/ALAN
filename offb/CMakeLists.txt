@@ -65,8 +65,8 @@ catkin_package(
 
 set(Sophus_LIBRARIES libSophus.so)
 
-link_directories(/home/patty/alan_ws/src/alan/offb/src/alan_landing_planning/third_party/mosek/mosek9_3/lib)
-include_directories(/home/patty/alan_ws/src/alan/offb/src/alan_landing_planning/third_party/mosek/mosek9_3/include)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/lib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/include)
 
 include_directories(
 # include
