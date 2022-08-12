@@ -13,43 +13,36 @@ using namespace std;
 Mat src_gray;
 int thresh = 100;
 RNG rng(12345);
-void thresh_callback(int, void* );
+
+
 int main( int argc, char** argv )
 {
     ros::init(argc, argv, "kf");
     ros::NodeHandle nh;
-    CommandLineParser parser( argc, argv, "{@input | /home/patty/alan_ws/src/alan/offb/src/test/images/44.png | input image}" );
-    Mat src = imread( samples::findFile( parser.get<String>( "@input" ) ) );
-    if( src.empty() )
-    {
-      cout << "Could not open or find the image!\n" << endl;
-      cout << "Usage: " << argv[0] << " <Input image>" << endl;
-      return -1;
-    }
-    cvtColor( src, src_gray, COLOR_BGR2GRAY );
-    blur( src_gray, src_gray, Size(3,3) );
-    const char* source_window = "Source";
-    namedWindow( source_window );
-    imshow( source_window, src );
-    const int max_thresh = 255;
-    createTrackbar( "Canny thresh:", source_window, &thresh, max_thresh, thresh_callback );
-    thresh_callback( 0, 0 );
-    waitKey();
+
+    double t1 = ros::Time::now().toSec();
+    MSKrescodee r, trmcode;
+
+    MSKenv_t env = NULL;
+    MSKtask_t task = NULL;
+    
+    double xx = 0.0;
+    MSK_makeenv(&env, NULL); // Create environment
+    MSK_maketask(env, 0, 1, &task); // Create task
+    MSK_appendvars(task, 1); // 1 variable x
+    MSK_putcj(task, 0, 1.0); // c_0 = 1.0
+    MSK_putvarbound(task, 0, MSK_BK_RA, 2.0, 3.0); // 2.0 <= x <= 3.0
+    MSK_putobjsense(task, MSK_OBJECTIVE_SENSE_MINIMIZE); // Minimize
+    MSK_optimizetrm(task, &trmcode); // Optimize
+    MSK_getxx(task, MSK_SOL_ITR, &xx); // Get solution
+    printf("Solution x = %f\n", xx); // Print solution
+    MSK_deletetask(&task); // Clean up task
+    MSK_deleteenv(&env); // Clean up environment
+
+    double t2 = ros::Time::now().toSec();
+
+    cout<<1/(t2-t1)<<endl;
+
+
     return 0;
-}
-void thresh_callback(int, void* )
-{
-    Mat canny_output;
-    Canny( src_gray, canny_output, thresh, thresh*2 );
-    vector<vector<Point> > contours;
-    vector<Vec4i> hierarchy;
-    findContours( canny_output, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE );
-    Mat drawing = Mat::zeros( canny_output.size(), CV_8UC3 );
-    for( size_t i = 0; i< contours.size(); i++ )
-    {
-        Scalar color = Scalar( rng.uniform(0, 256), rng.uniform(0,256), rng.uniform(0,256) );
-        drawContours( drawing, contours, (int)i, color, 0.5, LINE_8, hierarchy, 0 );
-    }
-    imshow( "Contours", drawing );
-    imwrite("/home/patty/alan_ws/src/alan/offb/src/test/images/drawing.png", drawing);
 }
