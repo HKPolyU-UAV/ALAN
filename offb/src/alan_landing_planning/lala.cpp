@@ -25,8 +25,9 @@ int main( int argc, char** argv )
 
     MSKenv_t env = NULL;
     MSKtask_t task = NULL;
-    
+
     double xx = 0.0;
+    
     MSK_makeenv(&env, NULL); // Create environment
     MSK_maketask(env, 0, 1, &task); // Create task
     MSK_appendvars(task, 1); // 1 variable x
