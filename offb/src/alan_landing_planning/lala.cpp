@@ -5,7 +5,16 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/aruco.hpp>
 #include <opencv2/calib3d.hpp>
-#include "third_party/mosek/include/mosek.h"
+// #include "third_party/mosek/include/mosek.h"
+
+#include <ifopt/variable_set.h>
+#include <ifopt/constraint_set.h>
+#include <ifopt/cost_term.h>
+
+// #include <IpIpoptApplication.hpp>
+#include <ifopt/problem.h>
+#include <ifopt/ipopt_solver.h>
+#include <ifopt/test_vars_constr_cost.h>
 
 
 using namespace cv;
@@ -20,29 +29,27 @@ int main( int argc, char** argv )
     ros::init(argc, argv, "kf");
     ros::NodeHandle nh;
 
-    double t1 = ros::Time::now().toSec();
-    MSKrescodee r, trmcode;
-
-    MSKenv_t env = NULL;
-    MSKtask_t task = NULL;
-
-    double xx = 0.0;
     
-    MSK_makeenv(&env, NULL); // Create environment
-    MSK_maketask(env, 0, 1, &task); // Create task
-    MSK_appendvars(task, 1); // 1 variable x
-    MSK_putcj(task, 0, 1.0); // c_0 = 1.0
-    MSK_putvarbound(task, 0, MSK_BK_RA, 2.0, 3.0); // 2.0 <= x <= 3.0
-    MSK_putobjsense(task, MSK_OBJECTIVE_SENSE_MINIMIZE); // Minimize
-    MSK_optimizetrm(task, &trmcode); // Optimize
-    MSK_getxx(task, MSK_SOL_ITR, &xx); // Get solution
-    printf("Solution x = %f\n", xx); // Print solution
-    MSK_deletetask(&task); // Clean up task
-    MSK_deleteenv(&env); // Clean up environment
+
+    double t1 = ros::Time::now().toSec();
+    
 
     double t2 = ros::Time::now().toSec();
 
     cout<<1/(t2-t1)<<endl;
+
+    try {
+    int age = 15;
+        if (age >= 18) {
+            cout << "Access granted - you are old enough.";
+        } else {
+            throw 505;
+        }
+    }
+    catch (...) {
+    cout << "Access denied - You must be at least 18 years old.\n";
+    }
+    cout<<"hihi"<<endl;
 
 
     return 0;

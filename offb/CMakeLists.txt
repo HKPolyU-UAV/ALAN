@@ -6,7 +6,7 @@ project(alan)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
+find_package(catkin COMPONENTS
   nodelet
   roscpp
   std_msgs
@@ -21,14 +21,20 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   pcl_conversions
   pcl_ros 
+  ifopt
 
 )
+
+# find_package(catkin COMPONENTS ) 
+
 
 find_package(OpenCV 4 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Sophus REQUIRED)
+
+
 # find_package(PCL 1.2 REQUIRED)
 
 roslaunch_add_file_check(launch)
@@ -73,6 +79,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${Sophus_INCLUDE_DIRS}
+  ${IPOPT_LIBRARIES}
+
   # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
 
@@ -95,7 +103,9 @@ target_link_libraries(lala
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
-  mosek64)
+  ${IPOPT_LIBRARIES}
+  mosek64
+  )
 
 add_executable(kf
    src/alan_state_estimation/kf.cpp)

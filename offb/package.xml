@@ -46,6 +46,9 @@
   <exec_depend>roslaunch</exec_depend>
   <exec_depend>libpcl-all</exec_depend>
 
+  <depend>ifopt</depend>
+
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <nodelet plugin="${prefix}/plugins/nodelets.xml"/>

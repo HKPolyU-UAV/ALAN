@@ -83,5 +83,6 @@
         "/home/patty/alan_ws/devel/lib/python3/dist-packages",
         "/home/patty/camera_ws/devel/lib/python3/dist-packages",
         "/opt/ros/noetic/lib/python3/dist-packages"
-    ]
+    ],
+    "cmake.sourceDirectory": "${workspaceFolder}/cv_bridge"
 }
