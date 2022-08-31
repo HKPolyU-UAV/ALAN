@@ -19,6 +19,59 @@ typedef struct bezier_info
     vector<double> s; 
 }bezier_info;
 
+/*!
+ * @struct      corridor
+ * @abstract    corridor input -> as a cube.
+
+ * @field       x_max            
+ * @field       x_min           
+ * @field       y_max
+ * @field       y_min
+ * @field       z_max
+ * @field       z_min
+*/
+typedef struct corridor 
+{
+    double x_max;
+    double x_min;
+
+    double y_max;
+    double y_min;
+
+    double z_max;
+    double z_min;
+
+}corridor;
+
+/*!
+ * @struct      bezier_constraints
+ * @abstract    bezier_constraints input.
+
+ * @field       
+ * @field       
+ * @field       
+*/
+typedef struct bezier_constraints 
+{
+    double p_start;
+    double v_start;
+    double a_start;
+
+    double p_end;
+    double v_end;
+    double a_end;
+        
+    //double
+    vector<corridor> cube_list;
+    
+    double v_max;
+    double v_min;
+
+    double a_max;
+    double a_min;
+     
+}bezier_constraints;
+
 
 
 class bernstein

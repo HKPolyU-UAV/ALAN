@@ -52,7 +52,6 @@ namespace ifopt
             }
 
         private:
-            // double x0_, x1_;
             Eigen::VectorXd c_crtlpts;        
     };
 
@@ -60,18 +59,26 @@ namespace ifopt
     class ExConstraint : public ConstraintSet 
     {
         public:
-            ExConstraint(std::string name, int ) : ExConstraint(name) {}
+            ExConstraint(bezier_info b_info, bezier_constraints b_constraints) 
+            : ExConstraint("constraints", b_info, b_constraints) {}
 
             // This constraint set just contains 1 constraint, however generally
             // each set can contain multiple related constraints.
-            ExConstraint(const std::string& name) : ConstraintSet(2, name) {}
+            ExConstraint(
+                const std::string& name, 
+                bezier_info b_info, 
+                bezier_constraints b_constraints) 
+            : ConstraintSet(2, name) 
+            {
+
+            }
 
             VectorXd GetValues() const override
             {
                 VectorXd g(GetRows());
-                cout<<"lalalala"<<g.size()<<endl;
-                Eigen::Vector2d x = GetVariables()->GetComponent("var_set1")->GetValues();
-                g(0) = std::pow(x(0),2) + x(1);
+                Eigen::VectorXd c = GetVariables()->GetComponent("crtl_pts")->GetValues();
+                g = A * c;                
+
                 return g;
             };
 
@@ -104,7 +111,16 @@ namespace ifopt
                     jac_block.coeffRef(0, 1) = 1.0;      // derivative of first constraint w.r.t x1
                 }
             }
-        private:    
+        private:  
+            Eigen::MatrixXd A;
+            //Ac=b function
+            //function details here  
+            void getA()
+            {
+
+            }
+            
+
     };
 
 

@@ -46,7 +46,7 @@ int main( int argc, char** argv )
 
     ifopt::Problem nlp;
     nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>(b_info));
-    // nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>("test", 9));
+    nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>(b_info));
     // nlp.AddCostSet      (std::make_shared<ifopt::ExCost>());
     nlp.PrintCurrent();
     cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~start"<<endl;
