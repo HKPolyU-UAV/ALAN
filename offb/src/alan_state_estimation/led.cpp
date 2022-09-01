@@ -1,6 +1,3 @@
-#ifndef LED_H
-#define LED_H
-
 #include "include/led.h"
 
 void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbmsg, const sensor_msgs::ImageConstPtr & depthmsg)
@@ -1209,5 +1206,3 @@ void alan_pose_estimation::LedNodelet::use_pnp_instead(cv::Mat frame, vector<Eig
     pose = pose_;
 
 }
-
-#endif

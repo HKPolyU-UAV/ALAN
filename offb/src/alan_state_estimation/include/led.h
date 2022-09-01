@@ -1,3 +1,6 @@
+#ifndef LED_H
+#define LED_H
+
 #include "essential.h"
 
 #include <geometry_msgs/Point.h>
@@ -207,3 +210,5 @@ namespace alan_pose_estimation
 
     PLUGINLIB_EXPORT_CLASS(alan_pose_estimation::LedNodelet, nodelet::Nodelet)
 }
+
+#endif

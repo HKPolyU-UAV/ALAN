@@ -1,3 +1,5 @@
+#ifndef ESSENTIAL_H
+#define ESSENTIAL_H
 #include <ros/ros.h>
 
 #include <iostream>
@@ -24,3 +26,4 @@
 using namespace std;
 
 
+#endif

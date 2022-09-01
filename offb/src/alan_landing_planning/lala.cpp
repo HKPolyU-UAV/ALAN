@@ -15,7 +15,9 @@
 #include <ifopt/problem.h>
 #include <ifopt/ipopt_solver.h>
 // #include <ifopt/test_vars_constr_cost.h>
-#include "include/lala.h"
+// #include "include/qpsolver.h"
+// #include "include/test.hpp"
+#include "include/traj_gen.hpp"
 
 using namespace cv;
 using namespace std;
@@ -31,23 +33,30 @@ int main( int argc, char** argv )
 
     double t1 = ros::Time::now().toSec();
     
-    bezier_info b_info;
+    // bezier_info b_info;
 
-    b_info.n_order = 7;
-    b_info.m = 5;
-    b_info.d_order = 4;
-    for(int i = 0; i < 5; i++)
-    {
-        b_info.s.push_back(1.0);
-    }
+    // b_info.n_order = 7;
+    // b_info.m = 5;
+    // b_info.d_order = 4;
+    // for(int i = 0; i < 5; i++)
+    // {
+    //     b_info.s.push_back(1.0);
+    // }
 
-    
+    // bezier_constraints b_constraints;
 
+
+    // ifopt::Problem nlp;
+    // nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>(b_info));
+    // nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>(b_info, b_constraints));
+    // nlp.AddCostSet      (std::make_shared<ifopt::ExCost>());
 
     ifopt::Problem nlp;
-    nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>(b_info));
-    nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>(b_info));
-    // nlp.AddCostSet      (std::make_shared<ifopt::ExCost>());
+    nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>());
+    nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>());
+    nlp.AddCostSet      (std::make_shared<ifopt::ExCost>());
+
+
     nlp.PrintCurrent();
     cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~start"<<endl;
     double i = -0.6;
@@ -69,15 +78,15 @@ int main( int argc, char** argv )
     
 
     // // 2. choose solver and options
-    // ifopt::IpoptSolver ipopt;
-    // // ipopt.
-    // ipopt.SetOption("linear_solver", "mumps");
-    // ipopt.SetOption("jacobian_approximation", "exact");
+    ifopt::IpoptSolver ipopt;
+    // ipopt.
+    ipopt.SetOption("linear_solver", "mumps");
+    ipopt.SetOption("jacobian_approximation", "exact");
 
     // // 3 . solve
-    // ipopt.Solve(nlp);
-    // Eigen::VectorXd x = nlp.GetOptVariables()->GetValues();
-    // std::cout << x.transpose() << std::endl;
+    ipopt.Solve(nlp);
+    Eigen::VectorXd x = nlp.GetOptVariables()->GetValues();
+    std::cout << x.transpose() << std::endl;
 
     // // 4. test if solution correct
     // double eps = 1e-5; //double precision

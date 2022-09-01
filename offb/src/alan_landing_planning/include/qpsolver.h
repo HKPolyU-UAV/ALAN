@@ -1,8 +1,11 @@
+#ifndef QPSOLVER_H
+#define QPSOLVER_H
+
 #include <ifopt/variable_set.h>
 #include <ifopt/constraint_set.h>
 #include <ifopt/cost_term.h>
 #include <iostream>
-#include "bernstein.hpp"
+
 namespace ifopt 
 {
     // using Eigen::Vector2d;
@@ -11,21 +14,29 @@ namespace ifopt
     class ExVariables : public VariableSet 
     {
         public:
-            ExVariables(bezier_info b_info) : ExVariables("crtl_pts", b_info)
+
+            //pass in the variable info
+            ExVariables(int n_dim) : ExVariables("crtl_pts", n_dim)
             {
+                
 
             };
 
-            ExVariables(const std::string& name, bezier_info b_info)
-            : VariableSet( (b_info.n_order + 1) * b_info.m, name)
+            ExVariables(const std::string& name, int n_dim)
+            : VariableSet( n_dim, name)
             {
                 // the initial values where the NLP starts iterating from
-                int n_dim = (b_info.n_order + 1) * b_info.m;
-                // cout<<"dim: "<< n_dim <<endl;            
+                // int n_dim = (b_info.n_order + 1) * b_info.m;
                 c_crtlpts.resize(n_dim);
                 c_crtlpts.setZero();
-                // cout<<"initial value: "<<endl<<c_crtlpts<<endl;
             }
+
+            //set target variables here
+            //transform from our representation to solver Eigen::Vector
+            VectorXd GetValues() const override
+            {            
+                return c_crtlpts;
+            };
 
             //get our own representation
             void SetVariables(const VectorXd& x) override
@@ -34,11 +45,7 @@ namespace ifopt
                 c_crtlpts = x;            
             };
 
-            //transform from our representation to solver Eigen::Vector
-            VectorXd GetValues() const override
-            {            
-                return c_crtlpts;
-            };
+            
 
             // U&L bound of variables here
             VecBound GetBounds() const override
@@ -59,25 +66,31 @@ namespace ifopt
     class ExConstraint : public ConstraintSet 
     {
         public:
-            ExConstraint(bezier_info b_info, bezier_constraints b_constraints) 
-            : ExConstraint("constraints", b_info, b_constraints) {}
+            ExConstraint(Eigen::MatrixXd A, Eigen::VectorXd ub, Eigen::VectorXd lb) 
+            : ExConstraint("constraints", A, ub, lb) {}
 
             // This constraint set just contains 1 constraint, however generally
             // each set can contain multiple related constraints.
             ExConstraint(
                 const std::string& name, 
-                bezier_info b_info, 
-                bezier_constraints b_constraints) 
-            : ConstraintSet(2, name) 
+                Eigen::MatrixXd A, 
+                Eigen::VectorXd ub, 
+                Eigen::VectorXd lb
+                ) 
+            : ConstraintSet(1, name) 
             {
-
+                //set all needed constraints here
+                //A c b all here 
+                _A = A;
+                _ub = ub;
+                _lb = lb;
             }
 
             VectorXd GetValues() const override
             {
                 VectorXd g(GetRows());
-                Eigen::VectorXd c = GetVariables()->GetComponent("crtl_pts")->GetValues();
-                g = A * c;                
+                Eigen::VectorXd _c = GetVariables()->GetComponent("crtl_pts")->GetValues();
+                g = _A * _c;                
 
                 return g;
             };
@@ -88,10 +101,17 @@ namespace ifopt
             VecBound GetBounds() const override
             {
                 VecBound b(GetRows());
-                b.at(0) = Bounds(1.0, 1.0);
+
+                for(int i = 0; i < GetRows(); i++)
+                {
+                    b.at(i) = Bounds(_lb(i),_ub(i));
+                }
                 return b;
             }
 
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~            
             // This function provides the first derivative of the constraints.
             // In case this is too difficult to write, you can also tell the solvers to
             // approximate the derivatives by finite differences and not overwrite this
@@ -100,53 +120,68 @@ namespace ifopt
             void FillJacobianBlock (std::string var_set, Jacobian& jac_block) const override
             {
                 // must fill only that submatrix of the overall Jacobian that relates
-                // to this constraint and "var_set1". even if more constraints or variables
+                // to this constraint and "crtl_pts". even if more constraints or variables
                 // classes are added, this submatrix will always start at row 0 and column 0,
                 // thereby being independent from the overall problem.
-                if (var_set == "var_set1") 
+                if (var_set == "crtl_pts") 
                 {
-                    Eigen::Vector2d x = GetVariables()->GetComponent("var_set1")->GetValues();
+                    Eigen::Vector2d x = GetVariables()->GetComponent("crtl_pts")->GetValues();
 
                     jac_block.coeffRef(0, 0) = 2.0*x(0); // derivative of first constraint w.r.t x0
                     jac_block.coeffRef(0, 1) = 1.0;      // derivative of first constraint w.r.t x1
                 }
             }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
         private:  
-            Eigen::MatrixXd A;
-            //Ac=b function
-            //function details here  
-            void getA()
-            {
-
-            }
+            Eigen::MatrixXd _A;
+            Eigen::VectorXd _ub, _lb;
             
-
     };
 
 
     class ExCost: public CostTerm 
     {
-    public:
-        ExCost() : ExCost("cost_term1") {}
-        ExCost(const std::string& name) : CostTerm(name) {}
+        public:
+            ExCost(Eigen::MatrixXd MQM) : ExCost("jerkorsnap", MQM) {}
+            ExCost(const std::string& name, Eigen::MatrixXd MQM) 
+            : CostTerm(name) 
+            {
+                _MQM = MQM;
+            }
 
             double GetCost() const override
             {
-                Eigen::Vector2d x = GetVariables()->GetComponent("var_set1")->GetValues();
-                return -std::pow(x(1)-2,2);
+                Eigen::Vector2d _c = GetVariables()->GetComponent("crtl_pts")->GetValues();
+                return _c.transpose() * _MQM * _c;
             };
 
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             void FillJacobianBlock (std::string var_set, Jacobian& jac) const override
             {
-                if (var_set == "var_set1") 
+                if (var_set == "crtl_pts") 
                 {
-                    Eigen::Vector2d x = GetVariables()->GetComponent("var_set1")->GetValues();
+                    Eigen::Vector2d x = GetVariables()->GetComponent("crtl_pts")->GetValues();
 
                     jac.coeffRef(0, 0) = 0.0;             // derivative of cost w.r.t x0
                     jac.coeffRef(0, 1) = -2.0*(x(1)-2.0); // derivative of cost w.r.t x1
                     std::cout<<"show jacobian here...: "<<jac<<std::endl;
                 }
             }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+        private:
+            Eigen::MatrixXd _MQM;
+
     };
 
 } // namespace opt
+
+#endif

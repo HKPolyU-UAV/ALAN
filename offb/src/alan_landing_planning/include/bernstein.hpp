@@ -43,6 +43,24 @@ typedef struct corridor
 
 }corridor;
 
+typedef struct endpt_cond 
+{
+    double p_;
+    double v_;
+    double a_;
+
+}endpt_cond;
+
+typedef struct dynamic_constraints 
+{
+    double v_max;
+    double v_min;
+
+    double a_max;
+    double a_min;
+
+}dynamic_constraints;
+
 /*!
  * @struct      bezier_constraints
  * @abstract    bezier_constraints input.
@@ -53,22 +71,14 @@ typedef struct corridor
 */
 typedef struct bezier_constraints 
 {
-    double p_start;
-    double v_start;
-    double a_start;
-
-    double p_end;
-    double v_end;
-    double a_end;
+    //equality constraints
+    endpt_cond start;
+    endpt_cond end;
         
     //double
     vector<corridor> cube_list;
     
-    double v_max;
-    double v_min;
-
-    double a_max;
-    double a_min;
+    dynamic_constraints d_constraints;
      
 }bezier_constraints;
 
@@ -77,68 +87,154 @@ typedef struct bezier_constraints
 class bernstein
 {
 private:
-    Eigen::MatrixXd Q, Q_temp, M, M_temp, MQM, MQM_spd;
-    Eigen::MatrixXd getQ()
-    {
-        return Q;
-    }
+    Eigen::MatrixXd Q, Q_temp, M, M_temp, MQM, MQM_spd; 
     
-    Eigen::MatrixXd getM()
-    {
-        return M;
-    }
+    Eigen::MatrixXd A_eq, A_ieq, A; 
 
-    Eigen::MatrixXd getMQM_spd()
-    {
-        return MQM_spd;
-    }
+    Eigen::VectorXd ub_eq, ub_ieq, ub;
+    Eigen::VectorXd lb_eq, lb_ieq, lb;
+
+    Eigen::MatrixXd getQ(){return Q;}   
+    Eigen::MatrixXd getM(){return M;}
+    Eigen::MatrixXd getMQM_spd(){return MQM_spd;}
 
     void setM(int n_order);
     void setQM(int n_order, int m, int d_order, vector<double> s);
 
+    void setAeq(int n_order, int m, int d_order, vector<double> s);
+    void setAieq(int n_order, int m, int d_order, vector<double> s);
+    void setA()
+    {
+        //combine A_eq && A_ieq
+
+    }
+
+    void setUBeq(endpt_cond start, endpt_cond end);
+    void setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints);
+    void setUB()
+    {
+        //combine ub_eq && ub_ieq
+
+    }
+
+    void setLBeq(endpt_cond start, endpt_cond end);
+    void setLBieq(vector<corridor> cube_list, dynamic_constraints d_constraints);
+    void setLB()
+    {
+        //combine lb_eq && lb_ieq
+
+    };
+
     Eigen::MatrixXd getSPD(Eigen::MatrixXd Q);
 
     
+
+    void setMQM(int n_order, int m, int d_order, vector<double> s);
+    
+
+    
 public:
-    bernstein(/* args */);
+    bernstein(
+        int n_order, int m, int d_order, vector<double> s,
+        endpt_cond start, endpt_cond end,
+        vector<corridor> cube_list, dynamic_constraints d_constraints
+        )
+    {        
+        setAeq(n_order, m, d_order, s);
+        setAieq(n_order, m, d_order, s);
+        setA();
+
+        setUBeq(start, end);//remember continuotiy
+        setUBieq(cube_list, d_constraints);
+        setUB();
+        
+        setLBeq(start, end);//remember continuotiy
+        setLBieq(cube_list, d_constraints);
+        setLB();
+
+        setMQM(n_order, m, d_order, s);
+
+    };
     ~bernstein();
 
+    Eigen::MatrixXd getMQM(){return MQM;}
+    Eigen::MatrixXd getA(){return A;}
+    Eigen::MatrixXd getUB(){return ub;}
+    Eigen::MatrixXd getLB(){return lb;}
 
 
-    void setMQM(int n_order, int m, int d_order, vector<double> s)
-    {
-        setQM(n_order, m, d_order, s);
-        if(M.size() != Q.size())
-        {
-            cout<<"Q & M dimension not corresponding"<<endl;
-            return;
-        }
-        
-        MQM.resize(Q.rows(), Q.cols());
-        MQM = M.transpose() * Q * M;
-
-        cout<<MQM<<endl;
-        // MQM_spd = getSPD(MQM);
-
-    }
-
-    
-    Eigen::MatrixXd getMQM()
-    {
-        return MQM;
-    }
-
-
-    
 
 };
 
-bernstein::bernstein(/* args */)
-{
-}
 
 bernstein::~bernstein()
 {
+}
+
+
+void bernstein::setMQM(int n_order, int m, int d_order, vector<double> s)
+{
+    setQM(n_order, m, d_order, s);
+    if(M.size() != Q.size())
+    {
+        cout<<"Q & M dimension not corresponding"<<endl;
+        return;
+    }
+    
+    MQM.resize(Q.rows(), Q.cols());
+    MQM = M.transpose() * Q * M;
+
+    cout<<MQM<<endl;
+    // MQM_spd = getSPD(MQM);
+
+}
+
+
+void bernstein::setQM(int n_order, int m, int d_order, vector<double> s)
+{
+    if(s.size() != m)
+    {
+        cout<<"size does not correspond!"<<endl;
+        return;
+    }
+    int n_dim = (n_order + 1) * m;
+
+    Q.resize(n_dim, n_dim);
+    Q.setZero();
+    M.resize(n_dim, n_dim);
+    M.setZero();
+    // cout<<Q.rows()<<endl;
+    // cout<<Q.cols()<<endl;
+
+    Q_temp.resize(n_order + 1, n_order + 1);
+    Q_temp.setZero();
+    M_temp.resize(n_order + 1, n_order + 1);
+    M_temp.setZero();
+    int starto = 0;
+    
+    for(int t = 0; t < m; t++)
+    {        
+        for(int i = 0; i < Q_temp.rows(); i++)
+        {
+            for(int j = 0; j < Q_temp.cols(); j++)
+            {
+                if(i < 4 || j < 4)
+                    Q_temp(i, j) = 0;
+                else
+                    Q_temp(i, j) = i * (i-1) * (i-2) * (i-3)
+                                * j * (j-1) * (j-2) * (j-3)
+                                * pow(s[t], (-2 * d_order + 3))  
+                                / (i+j-7);
+            }
+        }
+
+        setM(n_order);
+        M.block(starto, starto, n_order + 1, n_order + 1) = M_temp;
+
+        Q.block(starto, starto, n_order + 1, n_order + 1) = Q_temp;
+        starto = t * (n_order + 1);
+    }
+
 }
 
 void bernstein::setM(int order)
@@ -295,55 +391,6 @@ void bernstein::setM(int order)
         break;
     }
     }
-
-
-}
-
-void bernstein::setQM(int n_order, int m, int d_order, vector<double> s)
-{
-    if(s.size() != m)
-    {
-        cout<<"size does not correspond!"<<endl;
-        return;
-    }
-    int n_dim = (n_order + 1) * m;
-
-    Q.resize(n_dim, n_dim);
-    Q.setZero();
-    M.resize(n_dim, n_dim);
-    M.setZero();
-    // cout<<Q.rows()<<endl;
-    // cout<<Q.cols()<<endl;
-
-    Q_temp.resize(n_order + 1, n_order + 1);
-    Q_temp.setZero();
-    M_temp.resize(n_order + 1, n_order + 1);
-    M_temp.setZero();
-    int starto = 0;
-    
-    for(int t = 0; t < m; t++)
-    {        
-        for(int i = 0; i < Q_temp.rows(); i++)
-        {
-            for(int j = 0; j < Q_temp.cols(); j++)
-            {
-                if(i < 4 || j < 4)
-                    Q_temp(i, j) = 0;
-                else
-                    Q_temp(i, j) = i * (i-1) * (i-2) * (i-3)
-                                * j * (j-1) * (j-2) * (j-3)
-                                * pow(s[t], (-2 * d_order + 3))  
-                                / (i+j-7);
-            }
-        }
-
-        setM(n_order);
-        M.block(starto, starto, n_order + 1, n_order + 1) = M_temp;
-
-        Q.block(starto, starto, n_order + 1, n_order + 1) = Q_temp;
-        starto = t * (n_order + 1);
-    }
-
 }
 
 #endif
