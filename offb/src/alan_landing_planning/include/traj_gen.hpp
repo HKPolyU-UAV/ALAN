@@ -8,6 +8,8 @@
 #include <ifopt/problem.h>
 #include <ifopt/ipopt_solver.h>
 
+
+
 class traj_gen
 {
 private:
@@ -24,7 +26,6 @@ private:
     vector<corridor> _cube_list;
     dynamic_constraints _d_constraints;
 
-
     //Cost term
     Eigen::MatrixXd _MQM;
     int _n_order, _m, _d_order;
@@ -33,7 +34,6 @@ private:
     ifopt::Problem nlp;
     ifopt::IpoptSolver ipopt;    
     
-
 public:
 
     traj_gen(bezier_info b_info, bezier_constraints b_constraints);
@@ -80,18 +80,19 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     this->nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>(_A, _ub, _lb));
     this->nlp.AddCostSet      (std::make_shared<ifopt::ExCost>(_MQM));
 
+    //now set optimization methods
+    this->nlp.PrintCurrent();
+    this->ipopt.SetOption("linear_solver", "mumps");
+    this->ipopt.SetOption("jacobian_approximation", "exact");
+
 };
 
 void traj_gen::solveqp()
 {
     double t0 = ros::Time::now().toSec();
 
-    this->nlp.PrintCurrent();
-    this->ipopt.SetOption("linear_solver", "mumps");
-    this->ipopt.SetOption("jacobian_approximation", "exact");
-
     ipopt.Solve(nlp);
-    PolyCoeff.push_back(nlp.GetOptVariables()->GetValues()); //temp
+    PolyCoeff.push_back(nlp.GetOptVariables()->GetValues()); //temp should be 3D
 
     double t1 = ros::Time::now().toSec();
     

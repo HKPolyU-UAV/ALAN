@@ -94,12 +94,9 @@ private:
     Eigen::VectorXd ub_eq, ub_ieq, ub;
     Eigen::VectorXd lb_eq, lb_ieq, lb;
 
-    Eigen::MatrixXd getQ(){return Q;}   
-    Eigen::MatrixXd getM(){return M;}
     Eigen::MatrixXd getMQM_spd(){return MQM_spd;}
 
-    void setM(int n_order);
-    void setQM(int n_order, int m, int d_order, vector<double> s);
+    
 
     void setAeq(int n_order, int m, int d_order, vector<double> s);
     void setAieq(int n_order, int m, int d_order, vector<double> s);
@@ -125,13 +122,20 @@ private:
 
     };
 
+    void setM(int n_order);
+    void setQM(int n_order, int m, int d_order, vector<double> s);
+
     Eigen::MatrixXd getSPD(Eigen::MatrixXd Q);
 
     
 
     void setMQM(int n_order, int m, int d_order, vector<double> s);
     
-
+    //tools
+    double permutation(int p, int q);
+    double factorial(int r);
+    vector<double> pascal_triangle(int level);
+    
     
 public:
     bernstein(
@@ -170,6 +174,84 @@ public:
 bernstein::~bernstein()
 {
 }
+
+void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
+{    
+    int n_cond = 0;
+    int _dim = (n_order + 1) * m; //how many control points
+    vector<double> pascal;
+
+    //Aeq_start
+    Eigen::MatrixXd Aeq_start;
+    n_cond =  d_order;//p v a s -> 0 1 2 3
+    Aeq_start.resize(n_cond, _dim);
+    Aeq_start.setZero();
+
+    for(int i = 0 ; i < n_cond; i++)
+    {
+        pascal.clear();
+        pascal = pascal_triangle(i + 1);
+        
+        double p = permutation(n_order, n_order - i);
+
+        for(int j = 0; j <  i + 1; j++)
+        {
+            Aeq_start(i, j) = p * pascal[j];
+        }
+    }
+
+    //Aeq_end
+    Eigen::MatrixXd Aeq_end;
+    n_cond = d_order;
+    Aeq_end.resize(n_cond, _dim);
+    Aeq_end.setZero();
+
+    for(int i = 0 ; i < n_cond; i++)
+    {
+        pascal.clear();
+        pascal = pascal_triangle(i + 1);
+
+        double p = permutation(n_order, n_order - i);
+
+        for(int j = 0; j <  i + 1; j++)
+        {
+            Aeq_end(i, _dim-1 - j) = p * pascal[j];
+        }
+    }
+
+    
+
+
+
+}
+
+void bernstein::setAieq(int n_order, int m, int d_order, vector<double> s)
+{
+
+}
+
+void bernstein::setUBeq(endpt_cond start, endpt_cond end)
+{
+
+}
+
+void bernstein::setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints)
+{
+
+}
+
+void bernstein::setLBeq(endpt_cond start, endpt_cond end)
+{
+
+}
+
+void bernstein::setLBieq(vector<corridor> cube_list, dynamic_constraints d_constraints)
+{
+
+}
+
+
+
 
 
 void bernstein::setMQM(int n_order, int m, int d_order, vector<double> s)
@@ -392,5 +474,80 @@ void bernstein::setM(int order)
     }
     }
 }
+
+inline double bernstein::permutation(int p, int q)
+{
+    return factorial(p) / factorial(q);
+}
+
+inline double bernstein::factorial(int r)
+{
+    double _r = 1;
+    for(int i = 0 ; i < r; i++)
+        _r = _r * i;
+    
+    return _r;
+}
+
+vector<double> bernstein::pascal_triangle(int level)
+{
+    vector<double> _array;
+    switch(level)
+    {
+    case 1: 
+    {
+        _array.push_back(1);
+        break;
+
+    }
+    case 2: 
+    {
+        _array.push_back(1);
+        _array.push_back(1);
+        break;
+
+    }
+    case 3:
+    {
+        _array.push_back(1);
+        _array.push_back(2);
+        _array.push_back(1);
+        break;
+
+    }
+    case 4:
+    {
+        _array.push_back(1);
+        _array.push_back(3);
+        _array.push_back(3);
+        _array.push_back(1);
+        break;
+
+    }
+    case 5:
+    {
+        _array.push_back(1);
+        _array.push_back(4);
+        _array.push_back(6);
+        _array.push_back(4);
+        _array.push_back(1);
+        break;
+
+    }
+    case 7:
+    {
+        _array.push_back(1);
+        _array.push_back(5);
+        _array.push_back(10);
+        _array.push_back(10);
+        _array.push_back(5);
+        _array.push_back(1);
+        break;
+
+    }
+    }
+
+}
+
 
 #endif

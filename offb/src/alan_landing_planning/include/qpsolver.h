@@ -111,7 +111,9 @@ namespace ifopt
 
 
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~            
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+            //not yet complete...
+
             // This function provides the first derivative of the constraints.
             // In case this is too difficult to write, you can also tell the solvers to
             // approximate the derivatives by finite differences and not overwrite this
@@ -162,6 +164,7 @@ namespace ifopt
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            //not yet complete...
             void FillJacobianBlock (std::string var_set, Jacobian& jac) const override
             {
                 if (var_set == "crtl_pts") 

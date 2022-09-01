@@ -22,6 +22,7 @@ find_package(catkin COMPONENTS
   pcl_conversions
   pcl_ros 
   ifopt
+  nlopt
 
 )
 

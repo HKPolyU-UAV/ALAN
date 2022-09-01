@@ -19,6 +19,8 @@
 // #include "include/test.hpp"
 #include "include/traj_gen.hpp"
 
+// #include <nlopt.hpp>
+
 using namespace cv;
 using namespace std;
 Mat src_gray;
@@ -32,6 +34,25 @@ int main( int argc, char** argv )
     ros::NodeHandle nh;
 
     double t1 = ros::Time::now().toSec();
+
+    bezier_info b_info;
+    bezier_constraints bezier_constraints;
+
+    Eigen::MatrixXd l;
+    Eigen::Matrix4d k;
+    Eigen::Matrix3d o;
+    k.setZero();
+    o.setZero();
+
+    l=k;
+    l=o;
+
+
+    // traj_gen b_traj(b_info, bezier_constraints);
+    // b_traj.solveqp();
+    // vector<Eigen::VectorXd> polycoeff_opt = b_traj.getPolyCoeff();
+
+    
     
     // bezier_info b_info;
 
@@ -51,13 +72,13 @@ int main( int argc, char** argv )
     // nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>(b_info, b_constraints));
     // nlp.AddCostSet      (std::make_shared<ifopt::ExCost>());
 
-    ifopt::Problem nlp;
-    nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>());
-    nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>());
-    nlp.AddCostSet      (std::make_shared<ifopt::ExCost>());
+    // ifopt::Problem nlp;
+    // nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>());
+    // nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>());
+    // nlp.AddCostSet      (std::make_shared<ifopt::ExCost>());
 
 
-    nlp.PrintCurrent();
+    // nlp.PrintCurrent();
     cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~start"<<endl;
     double i = -0.6;
     double j = 5;
@@ -84,9 +105,9 @@ int main( int argc, char** argv )
     ipopt.SetOption("jacobian_approximation", "exact");
 
     // // 3 . solve
-    ipopt.Solve(nlp);
-    Eigen::VectorXd x = nlp.GetOptVariables()->GetValues();
-    std::cout << x.transpose() << std::endl;
+    // ipopt.Solve(nlp);
+    // Eigen::VectorXd x = nlp.GetOptVariables()->GetValues();
+    // std::cout << x.transpose() << std::endl;
 
     // // 4. test if solution correct
     // double eps = 1e-5; //double precision
