@@ -43,6 +43,8 @@ int main( int argc, char** argv )
     Eigen::Matrix3d o;
     k.setZero();
     o.setZero();
+    
+    
 
     l=k;
     l=o;

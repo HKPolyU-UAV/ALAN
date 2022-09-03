@@ -219,6 +219,19 @@ void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
         }
     }
 
+    //Aeq_continuity
+    Eigen::MatrixXd Aeq_cont;
+    n_cond = (m - 1) * d_order;
+    Aeq_cont.resize(n_cond, _dim);
+    Aeq_cont.setZero();
+
+    for(int i = 0; i < n_cond; i++)
+    {
+
+    }
+
+
+
     
 
 

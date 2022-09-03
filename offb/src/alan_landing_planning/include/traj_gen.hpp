@@ -9,7 +9,6 @@
 #include <ifopt/ipopt_solver.h>
 
 
-
 class traj_gen
 {
 private:
@@ -21,6 +20,7 @@ private:
     //constraints set
     Eigen::MatrixXd _A;
     Eigen::VectorXd _ub, _lb;
+
     
     endpt_cond _start, _end;
     vector<corridor> _cube_list;
@@ -33,6 +33,7 @@ private:
 
     ifopt::Problem nlp;
     ifopt::IpoptSolver ipopt;    
+    
     
 public:
 
@@ -95,7 +96,7 @@ void traj_gen::solveqp()
     PolyCoeff.push_back(nlp.GetOptVariables()->GetValues()); //temp should be 3D
 
     double t1 = ros::Time::now().toSec();
-    
+
     cout <<"Optimization Time: " << 1000 / (t1 - t0) <<" ms" <<endl;
 }
 
