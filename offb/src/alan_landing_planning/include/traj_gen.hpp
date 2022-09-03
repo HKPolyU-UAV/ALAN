@@ -44,6 +44,8 @@ public:
     vector<Eigen::VectorXd> getPolyCoeff(){return PolyCoeff;}
 
     
+
+    
 };
 
 traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)

@@ -96,7 +96,6 @@ private:
 
     Eigen::MatrixXd getMQM_spd(){return MQM_spd;}
 
-    
 
     void setAeq(int n_order, int m, int d_order, vector<double> s);
     void setAieq(int n_order, int m, int d_order, vector<double> s);
