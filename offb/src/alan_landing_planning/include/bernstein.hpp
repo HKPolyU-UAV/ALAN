@@ -102,22 +102,32 @@ private:
     void setA()
     {
         //combine A_eq && A_ieq
+        A.resize(A_eq.rows() + A_ieq.rows(), A_eq.cols());
+
+        A << A_eq,
+             A_ieq;
 
     }
 
-    void setUBeq(endpt_cond start, endpt_cond end);
-    void setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints);
+    void setUBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
+    void setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
     void setUB()
     {
         //combine ub_eq && ub_ieq
+        ub.resize(ub_eq.size() + ub_ieq.size());
+        ub << ub_eq,
+              ub_ieq;
 
     }
 
-    void setLBeq(endpt_cond start, endpt_cond end);
-    void setLBieq(vector<corridor> cube_list, dynamic_constraints d_constraints);
+    void setLBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
+    void setLBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
     void setLB()
     {
         //combine lb_eq && lb_ieq
+        lb.resize(lb_eq.size() + lb_ieq.size());
+        lb << lb_eq,
+              lb_ieq;
 
     };
 
@@ -127,7 +137,6 @@ private:
     Eigen::MatrixXd getSPD(Eigen::MatrixXd Q);
 
     
-
     void setMQM(int n_order, int m, int d_order, vector<double> s);
     
     //tools
@@ -147,12 +156,12 @@ public:
         setAieq(n_order, m, d_order, s);
         setA();
 
-        setUBeq(start, end);//remember continuotiy
-        setUBieq(cube_list, d_constraints);
+        setUBeq(start, end, n_order, m, d_order);//remember continuotiy
+        setUBieq(cube_list, d_constraints, n_order, m, d_order);
         setUB();
         
-        setLBeq(start, end);//remember continuotiy
-        setLBieq(cube_list, d_constraints);
+        setLBeq(start, end, n_order, m, d_order);//remember continuotiy
+        setLBieq(cube_list, d_constraints, n_order, m, d_order);
         setLB();
 
         setMQM(n_order, m, d_order, s);
@@ -242,22 +251,77 @@ void bernstein::setAieq(int n_order, int m, int d_order, vector<double> s)
 
 }
 
-void bernstein::setUBeq(endpt_cond start, endpt_cond end)
+void bernstein::setUBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
 {
+    //set BUeq_start
+    Eigen::VectorXd BUeq_start;
+    BUeq_start.resize(3);
+    
+    BUeq_start(0) = start.p_;
+    BUeq_start(1) = start.v_;
+    BUeq_start(2) = start.a_;
+
+    //set BUeq_end
+    Eigen::VectorXd BUeq_end;
+    BUeq_end.resize(3);
+
+    BUeq_end(0) = end.p_;
+    BUeq_end(1) = end.v_;
+    BUeq_end(2) = end.a_;
+
+    //set BUeq_cont
+    Eigen::VectorXd BUeq_cont;
+    BUeq_cont.resize((m - 1) * d_order);
+
+    BUeq_cont.setZero();
+
+    //combine BUeq_start, BU_end, BU_cont
+    ub_eq.resize(BUeq_start.size() + BUeq_end.size() + BUeq_cont.size());
+    ub_eq << BUeq_start,
+             BUeq_end,
+             BUeq_cont;
 
 }
 
-void bernstein::setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints)
+void bernstein::setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
 {
+    
 
 }
 
-void bernstein::setLBeq(endpt_cond start, endpt_cond end)
+void bernstein::setLBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
 {
+    //set BLeq_start
+    Eigen::VectorXd BLeq_start;
+    BLeq_start.resize(3);
+    
+    BLeq_start(0) = start.p_;
+    BLeq_start(1) = start.v_;
+    BLeq_start(2) = start.a_;
 
+    //set BLeq_end
+    Eigen::VectorXd BLeq_end;
+    BLeq_end.resize(3);
+
+    BLeq_end(0) = end.p_;
+    BLeq_end(1) = end.v_;
+    BLeq_end(2) = end.a_;
+
+    //set BLeq_cont
+    Eigen::VectorXd BLeq_cont;
+
+    BLeq_cont.resize((m - 1) * d_order);
+    BLeq_cont.setZero();
+
+    //combine BLeq_start, BLeq_end, BLeq_cont
+    lb_eq.resize(BLeq_start.size() + BLeq_end.size() + BLeq_cont.size());
+    lb_eq << BLeq_start,
+             BLeq_end,
+             BLeq_cont;
+             
 }
 
-void bernstein::setLBieq(vector<corridor> cube_list, dynamic_constraints d_constraints)
+void bernstein::setLBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
 {
 
 }

@@ -75,7 +75,7 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     _ub = bezier_base.getUB();
     _lb = bezier_base.getLB();
     
-    //3. bezier_base.
+    //3. cost set
     _MQM = bezier_base.getMQM();
 
     //now set nlp variable, constraints, and cost
