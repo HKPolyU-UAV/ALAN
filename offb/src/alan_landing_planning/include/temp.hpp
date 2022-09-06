@@ -54,6 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ifopt/variable_set.h>
 #include <ifopt/constraint_set.h>
 #include <ifopt/cost_term.h>
+#include "essential.h"
 
 namespace ifopt {
 using Eigen::Vector2d;
@@ -67,8 +68,9 @@ public:
   ExVariables(const std::string& name) : VariableSet(2, name)
   {
     // the initial values where the NLP starts iterating from
-    x0_ = 3.5;
-    x1_ = 1.5;
+    cout<< x0_ << " " << x1_<<endl;
+    // x0_ = 10;
+    // x1_ = 10;
   }
 
   

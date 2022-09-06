@@ -8,7 +8,7 @@
 #include <ifopt/problem.h>
 #include <ifopt/ipopt_solver.h>
 
-
+//test gan
 class traj_gen
 {
 private:
@@ -42,9 +42,6 @@ public:
 
     void solveqp();
     vector<Eigen::VectorXd> getPolyCoeff(){return PolyCoeff;}
-
-    
-
     
 };
 
