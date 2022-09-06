@@ -65,7 +65,7 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
         );//pass everything in one pass
     
     //1. variable set
-    //n_dim = (b_info.n_order + 1) + b_info.m
+    // _n_dim = (b_info.n_order + 1) + b_info.m
 
     //2. constraints set
     _A = bezier_base.getA();

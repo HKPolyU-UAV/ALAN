@@ -59,6 +59,9 @@ typedef struct dynamic_constraints
     double a_max;
     double a_min;
 
+    double j_max;
+    double j_min;
+
 }dynamic_constraints;
 
 /*!
@@ -174,13 +177,12 @@ public:
     Eigen::MatrixXd getUB(){return ub;}
     Eigen::MatrixXd getLB(){return lb;}
 
-
-
 };
 
 
 bernstein::~bernstein()
 {
+
 }
 
 void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
@@ -204,7 +206,7 @@ void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
 
         for(int j = 0; j <  i + 1; j++)
         {
-            Aeq_start(i, j) = p * pascal[j];
+            Aeq_start(i, j) = p * pascal[j] * pow(s[0], 1-j);
         }
     }
 
@@ -223,7 +225,7 @@ void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
 
         for(int j = 0; j <  i + 1; j++)
         {
-            Aeq_end(i, _dim-1 - j) = p * pascal[j];
+            Aeq_end(i, _dim-1 - j) = p * pascal[j] * pow(s[s.size()-1], 1-j);
         }
     }
 
@@ -233,17 +235,66 @@ void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
     Aeq_cont.resize(n_cond, _dim);
     Aeq_cont.setZero();
 
-    for(int i = 0; i < n_cond; i++)
-    {
+    int i_m = (m - 1) - 1; //how many continuity should there be? A: m - 1 points, indicator m-1 -1 
+    int starto_hori = 0, starto_vert = 0;
 
+    for(int i = 0; i < i_m; i++) //each intersection point condition
+    {
+        starto_hori = (n_order + 1) * (i + 1) - 1;
+        for(int j = 0; j < d_order; j++) // p v a continuity
+        {
+            starto_vert = i * d_order + j;
+            pascal = pascal_triangle(j + 1);
+            double p = permutation(n_order, n_order - j);
+
+            switch (j)
+            {
+            case 0://p 
+                Aeq_cont(starto_hori + 0, starto_vert) = p * pascal[0] * pow(s[i+0], 1-j);
+
+                Aeq_cont(starto_hori + 1, starto_vert) = p * pascal[0] * pow(s[i+1], 1-j) * (-1);
+                break;
+            
+            case 1://v
+                Aeq_cont(starto_hori - 1, starto_vert) = p * pascal[0] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_hori - 0, starto_vert) = p * pascal[1] * pow(s[i+0], 1-j);
+
+                Aeq_cont(starto_hori + 1, starto_vert) = p * pascal[1] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_hori + 2, starto_vert) = p * pascal[0] * pow(s[i+1], 1-j);
+                break;
+            
+            case 2://a
+                Aeq_cont(starto_hori - 2, starto_vert) = p * pascal[0] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_hori - 1, starto_vert) = p * pascal[1] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_hori - 0, starto_vert) = p * pascal[2] * pow(s[i+0], 1-j);
+
+                Aeq_cont(starto_hori + 1, starto_vert) = p * pascal[2] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_hori + 2, starto_vert) = p * pascal[1] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_hori + 3, starto_vert) = p * pascal[0] * pow(s[i+1], 1-j);
+
+            case 3://j
+                Aeq_cont(starto_hori - 3, starto_vert) = p * pascal[0] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_hori - 2, starto_vert) = p * pascal[1] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_hori - 1, starto_vert) = p * pascal[2] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_hori - 0, starto_vert) = p * pascal[3] * pow(s[i+0], 1-j);
+
+                Aeq_cont(starto_hori + 1, starto_vert) = p * pascal[3] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_hori + 2, starto_vert) = p * pascal[2] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_hori + 3, starto_vert) = p * pascal[1] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_hori - 4, starto_vert) = p * pascal[0] * pow(s[i+1], 1-j);
+            
+            default:
+                ROS_ERROR("Please Re-select Minimization Order: with Max. Order Snap(4)!");
+                break;
+            }
+
+        }
     }
 
-
-
-    
-
-
-
+    A_eq.resize(Aeq_start.rows() + Aeq_end.rows() + Aeq_cont.rows(), _dim);
+    A_eq << Aeq_start,
+            Aeq_end,
+            Aeq_cont;
 }
 
 void bernstein::setAieq(int n_order, int m, int d_order, vector<double> s)
@@ -285,8 +336,74 @@ void bernstein::setUBeq(endpt_cond start, endpt_cond end, int n_order, int m, in
 
 void bernstein::setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
 {
-    
+    Eigen::VectorXd UBieq_p;
+    int _dim_p = (m * n_order) + 1;
+    UBieq_p.resize(_dim_p);
 
+    int starto = 0;
+    for(int i = 0; i < cube_list.size(); i++)//cube_list.size() = size of corridor = m
+    {
+        for(int j = 0; j < n_order + 1; j++) //each control point, n_order + 1 = size of ctrl_pts per segment
+        {
+            int _i = starto + j;
+            UBieq_p(_i) = cube_list[i].x_max;
+        }
+        
+        starto = starto + (n_order + 1);
+    }
+        
+    
+    Eigen::VectorXd UBieq_v;
+    int _dim_v = (m * n_order) + 1 - 1;
+    UBieq_v.resize(_dim_v);
+
+    for(int i = 0; i < _dim_v; i++)
+        UBieq_v(i) = d_constraints.v_max;
+
+
+    Eigen::VectorXd UBieq_a;
+    int _dim_a = (m * n_order) + 1 - 2;
+    UBieq_a.resize(_dim_a);
+
+    for(int i = 0; i < _dim_a; i++)
+        UBieq_a(i) = d_constraints.a_max;
+
+    
+    Eigen::VectorXd UBieq_j;
+    int _dim_j = (m * n_order) + 1 - 3;
+    UBieq_j.resize(_dim_j);
+    
+    for(int i = 0; i < _dim_j; i++)
+        UBieq_j(i) = d_constraints.j_max;
+
+    
+    switch (d_order)
+    {
+    case 2:
+        ub_ieq.resize(UBieq_p.size() + UBieq_v.size());
+        ub_ieq << UBieq_p,
+                  UBieq_v;
+        break;
+    
+    case 3:
+        ub_ieq.resize(UBieq_p.size() + UBieq_v.size() + UBieq_a.size());
+        ub_ieq << UBieq_p,
+                  UBieq_v,
+                  UBieq_a;
+        break;
+    
+    case 4:
+        ub_ieq.resize(UBieq_p.size() + UBieq_v.size() + UBieq_a.size() + UBieq_j.size());
+        ub_ieq << UBieq_p,
+                  UBieq_v,
+                  UBieq_a,
+                  UBieq_j;
+        break;
+    
+    default:
+        ROS_ERROR("Re-Select d_order:\n\t2 for min. accl,\n\t 3 for min. jerk,\n\t 4 for min. snap\n");
+        break;
+    }
 }
 
 void bernstein::setLBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
@@ -323,12 +440,77 @@ void bernstein::setLBeq(endpt_cond start, endpt_cond end, int n_order, int m, in
 
 void bernstein::setLBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
 {
+    Eigen::VectorXd LBieq_p;
+    int _dim_p = (m * n_order) + 1;
+    LBieq_p.resize(_dim_p);
+
+    int starto = 0;
+    for(int i = 0; i < cube_list.size(); i++)//cube_list.size() = size of corridor = m
+    {
+        for(int j = 0; j < n_order + 1; j++) //each control point, n_order + 1 = size of ctrl_pts per segment
+        {
+            int _i = starto + j;
+            LBieq_p(_i) = cube_list[i].x_min;
+        }
+        
+        starto = starto + (n_order + 1);
+    }
+        
+    
+    Eigen::VectorXd LBieq_v;
+    int _dim_v = (m * n_order) + 1 - 1;
+    LBieq_v.resize(_dim_v);
+
+    for(int i = 0; i < _dim_v; i++)
+        LBieq_v(i) = d_constraints.v_min;
+
+
+    Eigen::VectorXd LBieq_a;
+    int _dim_a = (m * n_order) + 1 - 2;
+    LBieq_a.resize(_dim_a);
+
+    for(int i = 0; i < _dim_a; i++)
+        LBieq_a(i) = d_constraints.a_min;
+
+    
+    Eigen::VectorXd LBieq_j;
+    int _dim_j = (m * n_order) + 1 - 3;
+    LBieq_j.resize(_dim_j);
+    
+    for(int i = 0; i < _dim_j; i++)
+        LBieq_j(i) = d_constraints.j_min;
+
+    
+    switch (d_order)
+    {
+    case 2:
+        ub_ieq.resize(LBieq_p.size() + LBieq_v.size());
+        ub_ieq << LBieq_p,
+                  LBieq_v;
+        break;
+    
+    case 3:
+        ub_ieq.resize(LBieq_p.size() + LBieq_v.size() + LBieq_a.size());
+        ub_ieq << LBieq_p,
+                  LBieq_v,
+                  LBieq_a;
+        break;
+    
+    case 4:
+        ub_ieq.resize(LBieq_p.size() + LBieq_v.size() + LBieq_a.size() + LBieq_j.size());
+        ub_ieq << LBieq_p,
+                  LBieq_v,
+                  LBieq_a,
+                  LBieq_j;
+        break;
+    
+    default:
+        ROS_ERROR("Re-Select d_order:\n\t2 for min. accl,\n\t 3 for min. jerk,\n\t 4 for min. snap\n");
+        break;
+    }
+
 
 }
-
-
-
-
 
 void bernstein::setMQM(int n_order, int m, int d_order, vector<double> s)
 {
@@ -578,7 +760,7 @@ vector<double> bernstein::pascal_triangle(int level)
     }
     case 2: 
     {
-        _array.push_back(1);
+        _array.push_back(1 * (-1));
         _array.push_back(1);
         break;
 
@@ -586,16 +768,16 @@ vector<double> bernstein::pascal_triangle(int level)
     case 3:
     {
         _array.push_back(1);
-        _array.push_back(2);
+        _array.push_back(2 * (-1));
         _array.push_back(1);
         break;
 
     }
     case 4:
     {
-        _array.push_back(1);
+        _array.push_back(1 * (-1));
         _array.push_back(3);
-        _array.push_back(3);
+        _array.push_back(3 * (-1));
         _array.push_back(1);
         break;
 
@@ -603,20 +785,20 @@ vector<double> bernstein::pascal_triangle(int level)
     case 5:
     {
         _array.push_back(1);
-        _array.push_back(4);
+        _array.push_back(4 * (-1));
         _array.push_back(6);
-        _array.push_back(4);
+        _array.push_back(4 * (-1));
         _array.push_back(1);
         break;
 
     }
     case 7:
     {
-        _array.push_back(1);
+        _array.push_back(1 * (-1));
         _array.push_back(5);
+        _array.push_back(10* (-1));
         _array.push_back(10);
-        _array.push_back(10);
-        _array.push_back(5);
+        _array.push_back(5 * (-1));
         _array.push_back(1);
         break;
 

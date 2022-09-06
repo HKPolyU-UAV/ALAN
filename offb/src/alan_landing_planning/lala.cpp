@@ -16,8 +16,8 @@
 #include <ifopt/ipopt_solver.h>
 // #include <ifopt/test_vars_constr_cost.h>
 // #include "include/qpsolver.h"
-#include "include/temp.hpp"
-// #include "include/traj_gen.hpp"
+// #include "include/temp.hpp"
+#include "include/traj_gen.hpp"
 
 // #include <nlopt.hpp>
 
@@ -36,9 +36,9 @@ int main( int argc, char** argv )
     double t1 = ros::Time::now().toSec();
 
     ifopt::Problem nlp;
-    nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>());
-    nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>());
-    nlp.AddCostSet      (std::make_shared<ifopt::ExCost>());
+    // nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>());
+    // nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>());
+    // nlp.AddCostSet      (std::make_shared<ifopt::ExCost>());
     
     // ifopt::Problem nlp;
     // nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>());
