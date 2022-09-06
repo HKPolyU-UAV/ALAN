@@ -21,17 +21,17 @@
 
 // #include <nlopt.hpp>
 
-using namespace cv;
 using namespace std;
-Mat src_gray;
-int thresh = 100;
-RNG rng(12345);
 
 
 int main( int argc, char** argv )
 {
     ros::init(argc, argv, "kf");
     ros::NodeHandle nh;
+
+    // Eigen::MatrixXd A;
+    // A.resize(40,40);
+    // A.setI
 
     double t1 = ros::Time::now().toSec();
 
