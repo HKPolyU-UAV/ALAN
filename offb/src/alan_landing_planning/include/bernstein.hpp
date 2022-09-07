@@ -19,6 +19,14 @@ typedef struct bezier_info
     vector<double> s; 
 }bezier_info;
 
+typedef struct info_3d
+{
+    double x;
+    double y;
+    double z;
+
+}info_3d;
+
 /*!
  * @struct      corridor
  * @abstract    corridor input -> as a cube.
@@ -45,9 +53,11 @@ typedef struct corridor
 
 typedef struct endpt_cond 
 {
+
     double p_;
     double v_;
     double a_;
+    double j_;
 
 }endpt_cond;
 
@@ -109,6 +119,8 @@ private:
         A << A_eq,
              A_ieq;
 
+        // cout<<"A!:\n"<<A<<endl;
+
     }
 
     void setUB()
@@ -118,6 +130,9 @@ private:
         ub << ub_eq,
               ub_ieq;
 
+        // cout<<"ub!:\n"<<ub<<endl;
+
+
     }
 
     void setLB()
@@ -126,6 +141,8 @@ private:
         lb.resize(lb_eq.size() + lb_ieq.size());
         lb << lb_eq,
               lb_ieq;
+
+        // cout<<"lb!:\n"<<lb<<endl;
 
     };
 
@@ -158,20 +175,47 @@ public:
             //1. stack everything together,
             //2. calculate each individual
         //see which one is faster
-        setAeq(n_order, m, d_order, s);
-        setAieq(n_order, m, d_order, s);
-        setA();
+        if(m == cube_list.size() && m == s.size())
+        {
+            setAeq(n_order, m, d_order, s);
+            printf("A pass\n");
 
-        setUBeq(start, end, n_order, m, d_order);//remember continuotiy
-        setUBieq(cube_list, d_constraints, n_order, m, d_order);
-        setUB();
+            setUBeq(start, end, n_order, m, d_order);//remember continuotiy
+            setLBeq(start, end, n_order, m, d_order);//remember continuotiy
+
+            printf("eq pass\n");
+
+            setAieq(n_order, m, d_order, s);     
+            printf("Aieq pass\n");
+
+            setUBieq(cube_list, d_constraints, n_order, m, d_order);        
+            setLBieq(cube_list, d_constraints, n_order, m, d_order);
+
+            printf("ieq pass\n");
+
+            setA();
+            setUB();
+            setLB();
+
+            cout<<"\nhere!"<<endl;
+
+            cout<<A.rows()<<endl;
+            cout<<A.cols()<<endl;
+            cout<<ub.size()<<endl;
+            cout<<lb.size()<<endl;
+
+
+            // printf("pass 3\n");
+            setMQM(n_order, m, d_order, s);
+            // printf("pass 4\n");
+
+        }
+        else
+        {
+            ROS_ERROR("Please check input. Size does not correspond!\n");
+
+        }
         
-        setLBeq(start, end, n_order, m, d_order);//remember continuotiy
-        setLBieq(cube_list, d_constraints, n_order, m, d_order);
-        setLB();
-
-        setMQM(n_order, m, d_order, s);
-
     };
 
     ~bernstein();
@@ -239,53 +283,67 @@ void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
     Aeq_cont.resize(n_cond, _dim);
     Aeq_cont.setZero();
 
-    int i_m = (m - 1) - 1; //how many continuity should there be? A: m - 1 points, indicator m-1 -1 
-    int starto_hori = 0, starto_vert = 0;
+    int i_m = (m - 1) ; //how many continuity should there be? A: m - 1 points, indicator m-1 -1 
+    int starto_col = 0, starto_row = 0;
+
+    // cout<<Aeq_cont<<endl;
+    // cout<<Aeq_cont.rows()<<endl;
+    // cout<<Aeq_cont.cols()<<endl;
+    // cout<<"below show matrix"<<endl<<endl;
 
     for(int i = 0; i < i_m; i++) //each intersection point condition
     {
-        starto_hori = (n_order + 1) * (i + 1) - 1;
+        starto_col = (n_order + 1) * (i + 1) - 1;
         for(int j = 0; j < d_order; j++) // p v a continuity
         {
-            starto_vert = i * d_order + j;
+            starto_row = i * d_order + j;
             pascal = pascal_triangle(j + 1);
+
             double p = permutation(n_order, n_order - j);
+
+            // cout<<starto_col<<endl;
+            // cout<<starto_row<<endl;
+
+            // cout<<"p"<<endl;
+            // cout<<p<<endl;
 
             switch (j)
             {
             case 0://p 
-                Aeq_cont(starto_hori + 0, starto_vert) = p * pascal[0] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_row, starto_col + 0) = p * pascal[0] * pow(s[i+0], 1-j);
 
-                Aeq_cont(starto_hori + 1, starto_vert) = p * pascal[0] * pow(s[i+1], 1-j) * (-1);
+                Aeq_cont(starto_row, starto_col + 1) = p * pascal[0] * pow(s[i+1], 1-j);
                 break;
             
             case 1://v
-                Aeq_cont(starto_hori - 1, starto_vert) = p * pascal[0] * pow(s[i+0], 1-j);
-                Aeq_cont(starto_hori - 0, starto_vert) = p * pascal[1] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_row, starto_col - 1) = p * pascal[0] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_row, starto_col - 0) = p * pascal[1] * pow(s[i+0], 1-j);
 
-                Aeq_cont(starto_hori + 1, starto_vert) = p * pascal[1] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_hori + 2, starto_vert) = p * pascal[0] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 1) = p * pascal[1] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 2) = p * pascal[0] * pow(s[i+1], 1-j);
                 break;
             
             case 2://a
-                Aeq_cont(starto_hori - 2, starto_vert) = p * pascal[0] * pow(s[i+0], 1-j);
-                Aeq_cont(starto_hori - 1, starto_vert) = p * pascal[1] * pow(s[i+0], 1-j);
-                Aeq_cont(starto_hori - 0, starto_vert) = p * pascal[2] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_row, starto_col - 2) = p * pascal[0] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_row, starto_col - 1) = p * pascal[1] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_row, starto_col - 0) = p * pascal[2] * pow(s[i+0], 1-j);
 
-                Aeq_cont(starto_hori + 1, starto_vert) = p * pascal[2] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_hori + 2, starto_vert) = p * pascal[1] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_hori + 3, starto_vert) = p * pascal[0] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 1) = p * pascal[2] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 2) = p * pascal[1] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 3) = p * pascal[0] * pow(s[i+1], 1-j);
+                break;
 
             case 3://j
-                Aeq_cont(starto_hori - 3, starto_vert) = p * pascal[0] * pow(s[i+0], 1-j);
-                Aeq_cont(starto_hori - 2, starto_vert) = p * pascal[1] * pow(s[i+0], 1-j);
-                Aeq_cont(starto_hori - 1, starto_vert) = p * pascal[2] * pow(s[i+0], 1-j);
-                Aeq_cont(starto_hori - 0, starto_vert) = p * pascal[3] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_row, starto_col - 3) = p * pascal[0] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_row, starto_col - 2) = p * pascal[1] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_row, starto_col - 1) = p * pascal[2] * pow(s[i+0], 1-j);
+                Aeq_cont(starto_row, starto_col - 0) = p * pascal[3] * pow(s[i+0], 1-j);
 
-                Aeq_cont(starto_hori + 1, starto_vert) = p * pascal[3] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_hori + 2, starto_vert) = p * pascal[2] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_hori + 3, starto_vert) = p * pascal[1] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_hori - 4, starto_vert) = p * pascal[0] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 1) = p * pascal[3] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 2) = p * pascal[2] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 3) = p * pascal[1] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 4) = p * pascal[0] * pow(s[i+1], 1-j);
+                break;
             
             default:
                 ROS_ERROR("Something wrong with Aeq.\nPlease re-select minimization Order: with Max. Order Snap(4)!");
@@ -293,31 +351,75 @@ void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
             }
 
         }
+        
     }
 
+
     A_eq.resize(Aeq_start.rows() + Aeq_end.rows() + Aeq_cont.rows(), _dim);
+    
     A_eq << Aeq_start,
             Aeq_end,
             Aeq_cont;
+
+    // cout<<"Aeq!:\n"<<A_eq<<endl;
 }
 
 void bernstein::setUBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
 {
-    //set BUeq_start
+    cout<<"setUBeq"<<endl;
+    //set BUeq_start/end
     Eigen::VectorXd BUeq_start;
-    BUeq_start.resize(3);
-    
-    BUeq_start(0) = start.p_;
-    BUeq_start(1) = start.v_;
-    BUeq_start(2) = start.a_;
-
-    //set BUeq_end
     Eigen::VectorXd BUeq_end;
-    BUeq_end.resize(3);
+    
+    switch (d_order)
+    {
+    case 2:
+        BUeq_start.resize(2);
+        
+        BUeq_start(0) = start.p_;
+        BUeq_start(1) = start.v_;
+        
+        BUeq_end.resize(2);
 
-    BUeq_end(0) = end.p_;
-    BUeq_end(1) = end.v_;
-    BUeq_end(2) = end.a_;
+        BUeq_end(0) = end.p_;
+        BUeq_end(1) = end.v_;
+
+        break;
+    case 3:
+        BUeq_start.resize(3);
+        
+        BUeq_start(0) = start.p_;
+        BUeq_start(1) = start.v_;
+        BUeq_start(2) = start.a_;
+        
+        BUeq_end.resize(3);
+
+        BUeq_end(0) = end.p_;
+        BUeq_end(1) = end.v_;
+        BUeq_end(2) = end.a_;
+
+        break;
+
+    case 4:
+        BUeq_start.resize(4);
+        
+        BUeq_start(0) = start.p_;
+        BUeq_start(1) = start.v_;
+        BUeq_start(2) = start.a_;
+        BUeq_start(3) = start.j_;
+        
+        BUeq_end.resize(4);
+
+        BUeq_end(0) = end.p_;
+        BUeq_end(1) = end.v_;
+        BUeq_end(2) = end.a_;
+        BUeq_end(3) = end.j_;
+        break;
+    
+    default:
+        break;
+    }
+    
 
     //set BUeq_cont
     Eigen::VectorXd BUeq_cont;
@@ -330,26 +432,67 @@ void bernstein::setUBeq(endpt_cond start, endpt_cond end, int n_order, int m, in
     ub_eq << BUeq_start,
              BUeq_end,
              BUeq_cont;
+    
+    // cout<<"ub_eq!\n"<<ub_eq<<endl;;
 
 }
 
 void bernstein::setLBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
 {
-    //set BLeq_start
+    cout<<"setLBeq"<<endl;
+
+    //set BLeq_start/end
     Eigen::VectorXd BLeq_start;
-    BLeq_start.resize(3);
-    
-    BLeq_start(0) = start.p_;
-    BLeq_start(1) = start.v_;
-    BLeq_start(2) = start.a_;
-
-    //set BLeq_end
     Eigen::VectorXd BLeq_end;
-    BLeq_end.resize(3);
+    
+    switch (d_order)
+    {
+    case 2:
+        BLeq_start.resize(2);
+        
+        BLeq_start(0) = start.p_;
+        BLeq_start(1) = start.v_;
+        
+        BLeq_end.resize(2);
 
-    BLeq_end(0) = end.p_;
-    BLeq_end(1) = end.v_;
-    BLeq_end(2) = end.a_;
+        BLeq_end(0) = end.p_;
+        BLeq_end(1) = end.v_;
+
+        break;
+    case 3:
+        BLeq_start.resize(3);
+        
+        BLeq_start(0) = start.p_;
+        BLeq_start(1) = start.v_;
+        BLeq_start(2) = start.a_;
+        
+        BLeq_end.resize(3);
+
+        BLeq_end(0) = end.p_;
+        BLeq_end(1) = end.v_;
+        BLeq_end(2) = end.a_;
+
+        break;
+
+    case 4:
+        BLeq_start.resize(4);
+        
+        BLeq_start(0) = start.p_;
+        BLeq_start(1) = start.v_;
+        BLeq_start(2) = start.a_;
+        BLeq_start(3) = start.j_;
+        
+        BLeq_end.resize(4);
+
+        BLeq_end(0) = end.p_;
+        BLeq_end(1) = end.v_;
+        BLeq_end(2) = end.a_;
+        BLeq_end(3) = end.j_;
+        break;
+    
+    default:
+        break;
+    }
 
     //set BLeq_cont
     Eigen::VectorXd BLeq_cont;
@@ -362,7 +505,8 @@ void bernstein::setLBeq(endpt_cond start, endpt_cond end, int n_order, int m, in
     lb_eq << BLeq_start,
              BLeq_end,
              BLeq_cont;
-             
+
+    // cout<<"ub_eq!\n"<<lb_eq<<endl;;
 }
 
 void bernstein::setAieq(int n_order, int m, int d_order, vector<double> s)
@@ -378,77 +522,103 @@ void bernstein::setAieq(int n_order, int m, int d_order, vector<double> s)
     Aieq_p.resize(_dim_p, _dim_crtl_pts);
     Aieq_p.setIdentity();
 
+    // cout<<1<<endl;
+
     //Aieq_v
     Eigen::MatrixXd Aieq_v;
     Aieq_v.resize(_dim_v, _dim_crtl_pts);
+    Aieq_v.setZero();
+
+    // cout<<Aieq_v<<endl;
+    // cout<<Aieq_v.rows()<<endl;
+    // cout<<Aieq_v.cols()<<endl<<endl;;
     
-    int i_m = m - 1;
+    int i_m = m;//each segment velocity
+    int i_v_seg = n_order + 1 - 1;
+
     vector<double> pascal = pascal_triangle(2);
     double p = permutation(n_order, n_order - 1);
-    int starto_hori = 0, starto_vert = 0;
+    int starto_col = 0, starto_row = 0;
 
     for(int i = 0; i < i_m; i++)
     {
-        starto_hori = starto_hori + (n_order + 1 - 0) * i;
-        starto_vert = starto_vert + (n_order + 1 - 1) * i;
+        starto_col = (n_order + 1 - 0) * i;
+        starto_row = (n_order + 1 - 1) * i;
 
-        for(int j = 0; j < _dim_v; j++)
+        for(int j = 0; j < i_v_seg; j++)
         {
-            Aieq_v(starto_hori + j + 0, starto_vert + j) = p * pascal[0] * pow(s[i], 0);
-            Aieq_v(starto_hori + j + 1, starto_vert + j) = p * pascal[1] * pow(s[i], 0);
+            Aieq_v(starto_row + j, starto_col + j + 0) = p * pascal[0] * pow(s[i], 0);
+            Aieq_v(starto_row + j, starto_col + j + 1) = p * pascal[1] * pow(s[i], 0);
         }
     }
     pascal.clear();
 
+    // cout<<Aieq_v<<endl;
+
+    // cout<<"that's Aieq_v"<<endl;
+
     //Aieq_a
     Eigen::MatrixXd Aieq_a;
     Aieq_a.resize(_dim_a, _dim_crtl_pts);
+    Aieq_a.setZero();
 
-    i_m = m - 1;
+    i_m = m;
+    int i_a_seg = n_order + 1 - 2;
+
     pascal = pascal_triangle(3);
     p = permutation(n_order, n_order - 2);
-    starto_hori = 0;
-    starto_vert = 0;
+    starto_col = 0;
+    starto_row = 0;
 
     for (int i = 0; i < i_m; i++)
     {
-        starto_hori = starto_hori + (n_order + 1 - 0) * i;
-        starto_vert = starto_vert + (n_order + 1 - 2) * i;
+        starto_col = (n_order + 1 - 0) * i;
+        starto_row = (n_order + 1 - 2) * i;
 
-        for(int j = 0; j < _dim_a; j++)
+        for(int j = 0; j < i_a_seg; j++)
         {
-            Aieq_a(starto_hori + j + 0, starto_vert + j) = p * pascal[0] * pow(s[i], -1);
-            Aieq_a(starto_hori + j + 1, starto_vert + j) = p * pascal[1] * pow(s[i], -1);
-            Aieq_a(starto_hori + j + 2, starto_vert + j) = p * pascal[2] * pow(s[i], -1);
+            Aieq_a(starto_row + j, starto_col + j + 0) = p * pascal[0] * pow(s[i], -1);
+            Aieq_a(starto_row + j, starto_col + j + 1) = p * pascal[1] * pow(s[i], -1);
+            Aieq_a(starto_row + j, starto_col + j + 2) = p * pascal[2] * pow(s[i], -1);
         }
         
     }
+    // cout<<Aieq_a<<endl;
+
+    // cout<<"that's Aieq_a"<<endl;
 
     //Aieq_j
     Eigen::MatrixXd Aieq_j;
     Aieq_j.resize(_dim_j, _dim_crtl_pts);
+    Aieq_j.setZero();
 
-    i_m = m-1;
+
+    i_m = m;
+    int i_j_seg = n_order + 1 - 3;
+
     pascal = pascal_triangle(4);
     p = permutation(n_order, n_order - 3);
-    starto_hori = 0;
-    starto_vert = 0;
+    starto_col = 0;
+    starto_row = 0;
 
     for(int i = 0; i < i_m; i++)
     {
-        starto_hori = starto_hori + (n_order + 1 - 0) * i;
-        starto_vert = starto_vert + (n_order + 1 - 2) * i;
+        starto_col = (n_order + 1 - 0) * i;
+        starto_row = (n_order + 1 - 3) * i;
 
-        for(int j = 0; j < _dim_j; j++)
+        for(int j = 0; j < i_j_seg; j++)
         {
-            Aieq_j(starto_hori + j + 0, starto_vert + j) = p * pascal[0] * pow(s[i], -2);
-            Aieq_j(starto_hori + j + 1, starto_vert + j) = p * pascal[1] * pow(s[i], -2);
-            Aieq_j(starto_hori + j + 2, starto_vert + j) = p * pascal[2] * pow(s[i], -2);
-            Aieq_j(starto_hori + j + 3, starto_vert + j) = p * pascal[3] * pow(s[i], -2);
+            Aieq_j(starto_row + j, starto_col + j + 0) = p * pascal[0] * pow(s[i], -2);
+            Aieq_j(starto_row + j, starto_col + j + 1) = p * pascal[1] * pow(s[i], -2);
+            Aieq_j(starto_row + j, starto_col + j + 2) = p * pascal[2] * pow(s[i], -2);
+            Aieq_j(starto_row + j, starto_col + j + 3) = p * pascal[3] * pow(s[i], -2);
 
         }
 
     }
+    // cout<<Aieq_j<<endl;
+
+    // cout<<"that's Aieq_j"<<endl;
 
     //combine
     switch (d_order)
@@ -483,9 +653,11 @@ void bernstein::setAieq(int n_order, int m, int d_order, vector<double> s)
 
 void bernstein::setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
 {
+    //UBieq_p
     Eigen::VectorXd UBieq_p;
     int _dim_p = m * (n_order + 1 - 0);
     UBieq_p.resize(_dim_p);
+    
 
     int starto = 0;
     for(int i = 0; i < cube_list.size(); i++)//cube_list.size() = size of corridor = m
@@ -498,8 +670,9 @@ void bernstein::setUBieq(vector<corridor> cube_list, dynamic_constraints d_const
         
         starto = starto + (n_order + 1);
     }
-        
 
+
+    //UBieq_v
     Eigen::VectorXd UBieq_v;
     int _dim_v = m * (n_order + 1 - 1);
     UBieq_v.resize(_dim_v);
@@ -508,6 +681,7 @@ void bernstein::setUBieq(vector<corridor> cube_list, dynamic_constraints d_const
         UBieq_v(i) = d_constraints.v_max;
 
 
+    //UBiep_a
     Eigen::VectorXd UBieq_a;
     int _dim_a = m * (n_order + 1 - 2);
     UBieq_a.resize(_dim_a);
@@ -515,7 +689,7 @@ void bernstein::setUBieq(vector<corridor> cube_list, dynamic_constraints d_const
     for(int i = 0; i < _dim_a; i++)
         UBieq_a(i) = d_constraints.a_max;
 
-    
+    //UBieq_j
     Eigen::VectorXd UBieq_j;
     int _dim_j = m * (n_order + 1 - 3);
     UBieq_j.resize(_dim_j);
@@ -599,21 +773,21 @@ void bernstein::setLBieq(vector<corridor> cube_list, dynamic_constraints d_const
     switch (d_order)
     {
     case 2:
-        ub_ieq.resize(LBieq_p.size() + LBieq_v.size());
-        ub_ieq << LBieq_p,
+        lb_ieq.resize(LBieq_p.size() + LBieq_v.size());
+        lb_ieq << LBieq_p,
                   LBieq_v;
         break;
     
     case 3:
-        ub_ieq.resize(LBieq_p.size() + LBieq_v.size() + LBieq_a.size());
-        ub_ieq << LBieq_p,
+        lb_ieq.resize(LBieq_p.size() + LBieq_v.size() + LBieq_a.size());
+        lb_ieq << LBieq_p,
                   LBieq_v,
                   LBieq_a;
         break;
     
     case 4:
-        ub_ieq.resize(LBieq_p.size() + LBieq_v.size() + LBieq_a.size() + LBieq_j.size());
-        ub_ieq << LBieq_p,
+        lb_ieq.resize(LBieq_p.size() + LBieq_v.size() + LBieq_a.size() + LBieq_j.size());
+        lb_ieq << LBieq_p,
                   LBieq_v,
                   LBieq_a,
                   LBieq_j;
@@ -630,16 +804,19 @@ void bernstein::setLBieq(vector<corridor> cube_list, dynamic_constraints d_const
 void bernstein::setMQM(int n_order, int m, int d_order, vector<double> s)
 {
     setQM(n_order, m, d_order, s);
-    if(M.size() != Q.size())
-    {
-        cout<<"Q & M dimension not corresponding"<<endl;
-        return;
-    }
     
     MQM.resize(Q.rows(), Q.cols());
     MQM = M.transpose() * Q * M;
 
-    cout<<MQM<<endl;
+    // cout<<Q.rows()<<endl;
+    // cout<<Q.cols()<<endl;
+
+    // cout<<M.rows()<<endl;
+    // cout<<M.cols()<<endl;
+    
+    // cout<<Q<<endl;
+    // cout<<M<<endl;
+    // cout<<MQM<<endl;
     // MQM_spd = getSPD(MQM);
 
 }
@@ -647,11 +824,6 @@ void bernstein::setMQM(int n_order, int m, int d_order, vector<double> s)
 
 void bernstein::setQM(int n_order, int m, int d_order, vector<double> s)
 {
-    if(s.size() != m)
-    {
-        cout<<"size does not correspond!"<<endl;
-        return;
-    }
     int n_dim = (n_order + 1) * m;
 
     Q.resize(n_dim, n_dim);
@@ -669,6 +841,7 @@ void bernstein::setQM(int n_order, int m, int d_order, vector<double> s)
     
     for(int t = 0; t < m; t++)
     {        
+        starto = t * (n_order + 1);
         for(int i = 0; i < Q_temp.rows(); i++)
         {
             for(int j = 0; j < Q_temp.cols(); j++)
@@ -687,7 +860,9 @@ void bernstein::setQM(int n_order, int m, int d_order, vector<double> s)
         M.block(starto, starto, n_order + 1, n_order + 1) = M_temp;
 
         Q.block(starto, starto, n_order + 1, n_order + 1) = Q_temp;
-        starto = t * (n_order + 1);
+        
+        // cout<<"that's one"<<endl;
+        // cout<<Q<<endl;
     }
 
 }
@@ -856,7 +1031,7 @@ inline double bernstein::permutation(int p, int q)
 inline double bernstein::factorial(int r)
 {
     double _r = 1;
-    for(int i = 0 ; i < r; i++)
+    for(int i = 1 ; i <= r; i++)
         _r = _r * i;
     
     return _r;
