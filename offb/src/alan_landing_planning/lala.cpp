@@ -139,8 +139,5 @@ int main( int argc, char** argv )
 
     cout<<"fps: "<<1/(t2-t1)<<endl;
 
-    
-
-
     return 0;
 }

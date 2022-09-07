@@ -111,47 +111,15 @@ private:
     void setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
     void setLBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
     
-    void setA()
-    {
-        //combine A_eq && A_ieq
-        A.resize(A_eq.rows() + A_ieq.rows(), A_eq.cols());
-
-        A << A_eq,
-             A_ieq;
-
-        // cout<<"A!:\n"<<A<<endl;
-
-    }
-
-    void setUB()
-    {
-        //combine ub_eq && ub_ieq
-        ub.resize(ub_eq.size() + ub_ieq.size());
-        ub << ub_eq,
-              ub_ieq;
-
-        // cout<<"ub!:\n"<<ub<<endl;
-
-
-    }
-
-    void setLB()
-    {
-        //combine lb_eq && lb_ieq
-        lb.resize(lb_eq.size() + lb_ieq.size());
-        lb << lb_eq,
-              lb_ieq;
-
-        // cout<<"lb!:\n"<<lb<<endl;
-
-    };
+    void setA();
+    void setUB();
+    void setLB();
 
     void setM(int n_order);
     void setQM(int n_order, int m, int d_order, vector<double> s);
 
     Eigen::MatrixXd getSPD(Eigen::MatrixXd Q);
 
-    
     void setMQM(int n_order, int m, int d_order, vector<double> s);
     
     //tools
@@ -165,60 +133,9 @@ public:
         int n_order, int m, int d_order, vector<double> s,
         endpt_cond start, endpt_cond end,
         vector<corridor> cube_list, dynamic_constraints d_constraints
-        )
-    {     
-        //first check each matrix
-            //1. especially starto position
-            //2. unify all expression
+        );
 
-        //remember all three dimension, 
-            //1. stack everything together,
-            //2. calculate each individual
-        //see which one is faster
-        if(m == cube_list.size() && m == s.size())
-        {
-            setAeq(n_order, m, d_order, s);
-            printf("A pass\n");
-
-            setUBeq(start, end, n_order, m, d_order);//remember continuotiy
-            setLBeq(start, end, n_order, m, d_order);//remember continuotiy
-
-            printf("eq pass\n");
-
-            setAieq(n_order, m, d_order, s);     
-            printf("Aieq pass\n");
-
-            setUBieq(cube_list, d_constraints, n_order, m, d_order);        
-            setLBieq(cube_list, d_constraints, n_order, m, d_order);
-
-            printf("ieq pass\n");
-
-            setA();
-            setUB();
-            setLB();
-
-            cout<<"\nhere!"<<endl;
-
-            cout<<A.rows()<<endl;
-            cout<<A.cols()<<endl;
-            cout<<ub.size()<<endl;
-            cout<<lb.size()<<endl;
-
-
-            // printf("pass 3\n");
-            setMQM(n_order, m, d_order, s);
-            // printf("pass 4\n");
-
-        }
-        else
-        {
-            ROS_ERROR("Please check input. Size does not correspond!\n");
-
-        }
-        
-    };
-
-    ~bernstein();
+    ~bernstein(){};
 
     Eigen::MatrixXd getMQM(){return MQM;}
     Eigen::MatrixXd getA(){return A;}
@@ -227,9 +144,59 @@ public:
 
 };
 
-
-bernstein::~bernstein()
+bernstein::bernstein(
+int n_order, int m, int d_order, vector<double> s,
+endpt_cond start, endpt_cond end,
+vector<corridor> cube_list, dynamic_constraints d_constraints
+)
 {
+    //first check each matrix
+        //1. especially starto position
+        //2. unify all expression
+
+    //remember all three dimension, 
+        //1. stack everything together,
+        //2. calculate each individual
+    //see which one is faster
+
+    if(m == cube_list.size() && m == s.size())
+    {
+        setAeq(n_order, m, d_order, s);
+        printf("A pass\n");
+
+        setUBeq(start, end, n_order, m, d_order);//remember continuotiy
+        setLBeq(start, end, n_order, m, d_order);//remember continuotiy
+
+        printf("eq pass\n");
+
+        setAieq(n_order, m, d_order, s);     
+        printf("Aieq pass\n");
+
+        setUBieq(cube_list, d_constraints, n_order, m, d_order);        
+        setLBieq(cube_list, d_constraints, n_order, m, d_order);
+
+        printf("ieq pass\n");
+
+        setA();
+        setUB();
+        setLB();
+
+        cout<<"\nhere!"<<endl;
+
+        cout<<A.rows()<<endl;
+        cout<<A.cols()<<endl;
+        cout<<ub.size()<<endl;
+        cout<<lb.size()<<endl;
+
+        // printf("pass 3\n");
+        setMQM(n_order, m, d_order, s);
+        // printf("pass 4\n");
+
+    }
+    else
+    {
+        ROS_ERROR("Please check input. Size does not correspond!\n");
+    }
 
 }
 
@@ -821,7 +788,6 @@ void bernstein::setMQM(int n_order, int m, int d_order, vector<double> s)
 
 }
 
-
 void bernstein::setQM(int n_order, int m, int d_order, vector<double> s)
 {
     int n_dim = (n_order + 1) * m;
@@ -866,6 +832,40 @@ void bernstein::setQM(int n_order, int m, int d_order, vector<double> s)
     }
 
 }
+
+void bernstein::setA()
+{
+    //combine A_eq && A_ieq
+    A.resize(A_eq.rows() + A_ieq.rows(), A_eq.cols());
+
+    A << A_eq,
+            A_ieq;
+
+    // cout<<"A!:\n"<<A<<endl;
+
+}
+
+void bernstein::setUB()
+{
+    //combine ub_eq && ub_ieq
+    ub.resize(ub_eq.size() + ub_ieq.size());
+    ub << ub_eq,
+            ub_ieq;
+
+    // cout<<"ub!:\n"<<ub<<endl;
+
+}
+
+void bernstein::setLB()
+{
+    //combine lb_eq && lb_ieq
+    lb.resize(lb_eq.size() + lb_ieq.size());
+    lb << lb_eq,
+            lb_ieq;
+
+    // cout<<"lb!:\n"<<lb<<endl;
+
+};
 
 void bernstein::setM(int order)
 {
@@ -1098,6 +1098,5 @@ vector<double> bernstein::pascal_triangle(int level)
     return _array;
 
 }
-
 
 #endif
