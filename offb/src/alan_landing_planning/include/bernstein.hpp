@@ -126,6 +126,8 @@ private:
     double permutation(int p, int q);
     double factorial(int r);
     vector<double> pascal_triangle(int level);
+
+    Eigen::MatrixXd CholeskyDecomp(Eigen::MatrixXd Q);
     
     
 public:
@@ -162,15 +164,13 @@ vector<corridor> cube_list, dynamic_constraints d_constraints
     if(m == cube_list.size() && m == s.size())
     {
         setAeq(n_order, m, d_order, s);
-        printf("A pass\n");
-
+        
         setUBeq(start, end, n_order, m, d_order);//remember continuotiy
         setLBeq(start, end, n_order, m, d_order);//remember continuotiy
 
         printf("eq pass\n");
 
         setAieq(n_order, m, d_order, s);     
-        printf("Aieq pass\n");
 
         setUBieq(cube_list, d_constraints, n_order, m, d_order);        
         setLBieq(cube_list, d_constraints, n_order, m, d_order);
@@ -768,12 +768,29 @@ void bernstein::setLBieq(vector<corridor> cube_list, dynamic_constraints d_const
 
 }
 
+Eigen::MatrixXd bernstein::CholeskyDecomp(Eigen::MatrixXd Q) // return square root F of Q; Q = F' * F
+{
+	Eigen::MatrixXd F, Ft;
+	Eigen::LDLT< Eigen::MatrixXd > ldlt(Q);
+    F = ldlt.matrixL();
+    F = ldlt.transpositionsP().transpose() * F;
+    F *= ldlt.vectorD().array().sqrt().matrix().asDiagonal();
+	Ft = F.transpose();
+
+	return Ft;
+}
+
 void bernstein::setMQM(int n_order, int m, int d_order, vector<double> s)
 {
     setQM(n_order, m, d_order, s);
     
     MQM.resize(Q.rows(), Q.cols());
+    
+    // Q = CholeskyDecomp(Q);
+    // MQM =  Q * M;
+
     MQM = M.transpose() * Q * M;
+
 
     // cout<<Q.rows()<<endl;
     // cout<<Q.cols()<<endl;

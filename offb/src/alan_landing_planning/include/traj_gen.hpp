@@ -4,9 +4,10 @@
 #include "essential.h"
 #include "bernstein.hpp"
 
-#include "qpsolver.h"
+#include "qpsolver.hpp"
 #include <ifopt/problem.h>
 #include <ifopt/ipopt_solver.h>
+
 
 //test gan
 class traj_gen
@@ -29,11 +30,8 @@ private:
     //Cost term
     Eigen::MatrixXd _MQM;
     int _n_order, _m, _d_order;
-    vector<double> _s;
+    vector<double> _s;  
 
-    ifopt::Problem nlp;
-    ifopt::IpoptSolver ipopt;    
-    
     
 public:
 
@@ -47,7 +45,7 @@ public:
 
 traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     //for variable set
-    : _n_dim((b_info.n_order + 1) + b_info.m),
+    : _n_dim((b_info.n_order + 1) * b_info.m),
 
     //for constraints set
     _start(b_constraints.start), _end(b_constraints.end), 
@@ -66,37 +64,45 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     
     //1. variable set
     // _n_dim = (b_info.n_order + 1) + b_info.m
+    printf("1. variable set:\n");
+    cout<<_n_dim<<endl;
 
     //2. constraints set
     _A = bezier_base.getA();
     _ub = bezier_base.getUB();
     _lb = bezier_base.getLB();
+
+    printf("2. constraints set:\n");
+    // cout<<_A<<endl;
+    // cout<<_lb<<endl;
+    // cout<<_ub<<endl;
+    // cout<<_A.rows()<<endl;
+    // cout<<_A.cols()<<endl;
+    // cout<<_ub.size()<<endl;
+    // cout<<_lb.size()<<endl;
     
     //3. cost set
+    printf("3. cost term\n");
     _MQM = bezier_base.getMQM();
+    cout<<_MQM.rows()<<endl;
+    cout<<_MQM.cols()<<endl;
 
-    //now set nlp variable, constraints, and cost
-    this->nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>(_n_dim));
-    this->nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>(_A, _ub, _lb));
-    this->nlp.AddCostSet      (std::make_shared<ifopt::ExCost>(_MQM));
 
-    //now set optimization methods
-    this->nlp.PrintCurrent();
-    this->ipopt.SetOption("linear_solver", "mumps");
-    this->ipopt.SetOption("jacobian_approximation", "exact");
+
+
+
+    
 
 };
 
 void traj_gen::solveqp()
 {
-    double t0 = ros::Time::now().toSec();
+    qpsolver qpsolve(_n_dim, _A.rows());
 
-    ipopt.Solve(nlp);
-    PolyCoeff.push_back(nlp.GetOptVariables()->GetValues()); //temp should be 3D
+    qpsolve.qpsetup(_MQM, _A, _ub, _lb);
+    qpsolve.solve();
 
-    double t1 = ros::Time::now().toSec();
-
-    cout <<"Optimization Time: " << 1000 / (t1 - t0) <<" ms" <<endl;
+    
 }
 
 

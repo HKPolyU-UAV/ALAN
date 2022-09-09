@@ -23,6 +23,7 @@ find_package(catkin COMPONENTS
   pcl_ros 
   ifopt
   nlopt
+  qpOASES
 
 )
 
@@ -106,6 +107,7 @@ target_link_libraries(lala
   ${PCL_LIBRARIES}
   ${IPOPT_LIBRARIES}
   mosek64
+  qpOASES
   )
 
 add_executable(kf
