@@ -3,6 +3,10 @@
 
 #include <qpOASES.hpp>
 #include "essential.h"
+#include "ifopt_solver.hpp"
+
+#include <ifopt/problem.h>
+#include <ifopt/ipopt_solver.h>
 
 class qpsolver
 {
@@ -32,6 +36,12 @@ public:
     void solve();
 
     void solve_trial();
+
+    void ifopt_test(
+    Eigen::MatrixXd _MQM, 
+    Eigen::MatrixXd _A, 
+    Eigen::MatrixXd _ub, 
+    Eigen::MatrixXd _lb);
 
     ~qpsolver();
 };
@@ -74,9 +84,17 @@ void qpsolver::qpsetup(
 
 
     qpOASES::Options options;
+    // options.printLevel = qpOASES::PL_LOW;
+    options.terminationTolerance = 1e-10;
+    options.enableRamping=qpOASES::BT_FALSE;
+
+    // options
     options.setToReliable();
 
     qpserver.setOptions(options);
+
+
+    //////////////////////
 
 
     
@@ -135,6 +153,13 @@ void qpsolver::solve_trial()
 
     
     qpOASES::Options options;
+    // options.printLevel = qpOASES::PL_LOW;
+    options.terminationTolerance = 1e-10;
+    options.enableRamping=qpOASES::BT_FALSE;
+
+    // options
+    options.setToReliable();
+
 
     qptest.setOptions(options);
 
@@ -165,6 +190,35 @@ void qpsolver::solve_trial()
 
     // }
     cout<<"final value: "<<qptest.getObjVal()<<endl;
+
+}
+
+void qpsolver::ifopt_test(
+    Eigen::MatrixXd _MQM, 
+    Eigen::MatrixXd _A, 
+    Eigen::MatrixXd _ub, 
+    Eigen::MatrixXd _lb
+)
+{
+    ifopt::Problem nlp;
+  nlp.AddVariableSet  (std::make_shared<ifopt::ExVariables>(_nV));
+  nlp.AddConstraintSet(std::make_shared<ifopt::ExConstraint>(_A, _ub, _lb));
+  nlp.AddCostSet      (std::make_shared<ifopt::ExCost>(_MQM));
+
+//   cout<<"start"<<endl;
+  nlp.PrintCurrent();
+
+//   // 2. choose solver and options
+  ifopt::IpoptSolver ipopt;
+  ipopt.SetOption("linear_solver", "mumps");
+  ipopt.SetOption("jacobian_approximation", "exact");
+
+//   nlp.
+
+//   // 3 . solve
+  ipopt.Solve(nlp);
+//   Eigen::VectorXd x = nlp.GetOptVariables()->GetValues();
+//   std::cout << x.transpose() << std::endl;
 
 }
 
