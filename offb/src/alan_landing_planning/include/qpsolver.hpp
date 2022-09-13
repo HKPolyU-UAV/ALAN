@@ -31,12 +31,15 @@ public:
     
     void solve();
 
+    void solve_trial();
+
     ~qpsolver();
 };
 
 qpsolver::qpsolver(int nV, int nC) : _nV(nV), _nC(nC)
 {
-    this->qpserver = qpOASES::QProblem(_nV, _nC, qpOASES::HST_SEMIDEF);
+    this->qpserver = qpOASES::QProblem(_nV, _nC);//, qpOASES::HST_SEMIDEF);
+    
 }
 
 qpsolver::~qpsolver()
@@ -51,7 +54,7 @@ void qpsolver::qpsetup(
 {
     // _MQM.setIdentity();
     // cout<<_MQM<<endl;
-    // _MQM = CholeskyDecomp(_MQM);
+    _MQM = CholeskyDecomp(_MQM);
     // cout<<"~~~~~~~~~~~~~~~~~"<<endl;
     // cout<<_MQM<<endl;
     qpH = _MQM.data();
@@ -65,11 +68,15 @@ void qpsolver::qpsetup(
     qpubA = _ub.data();
     qplbA = _lb.data();
 
-    qpoptions.printLevel = qpOASES::PL_HIGH;
+    qpoptions.printLevel = qpOASES::PL_DEBUG_ITER;
     qpoptions.terminationTolerance = 1e-5;
-    qpoptions.setToReliable();
+    // qpoptions.setToReliable();
 
-    qpserver.setOptions(qpoptions);
+
+    qpOASES::Options options;
+    options.setToReliable();
+
+    qpserver.setOptions(options);
 
 
     
@@ -81,9 +88,11 @@ void qpsolver::solve()
 {
     qpOASES::int_t nWSR = 4000;
 
-    qpserver.init(qpH, qpg, qpA, NULL, NULL, qplbA, qpubA, nWSR);
+    qpOASES::returnValue res = qpserver.init(qpH, qpg, qpA, NULL, NULL, qplbA, qpubA, nWSR);
 
-    cout<<qpserver.isInfeasible()<<endl;;
+
+    // cout<<qpserver.isInfeasible()<<endl;;
+    cout<<"solve result: "<< res <<endl;
 
     if(qpserver.isInfeasible())
     {
@@ -97,17 +106,69 @@ void qpsolver::solve()
 
 }
 
-Eigen::MatrixXd qpsolver::CholeskyDecomp(Eigen::MatrixXd Q) // return square root F of Q; Q = F' * F
+Eigen::MatrixXd qpsolver::CholeskyDecomp(Eigen::MatrixXd MQM) // return square root F of Q; Q = F' * F
 {
-	Eigen::MatrixXd F, Ft;
-	Eigen::LDLT< Eigen::MatrixXd > ldlt(Q);
-    F = ldlt.matrixL();
-    F = ldlt.transpositionsP().transpose() * F;
-    F *= ldlt.vectorD().array().sqrt().matrix().asDiagonal();
-	Ft = F.transpose();
+    // make the Hessian to a 
+    // symmetric positive semidefinite matrix
+	Eigen::MatrixXd spd;
+    Eigen::MatrixXd B = (MQM + MQM.transpose()) / 2;
+    
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(B, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::MatrixXd U = svd.matrixU();
+    Eigen::MatrixXd V = svd.matrixV();
 
-	return Ft;
+    Eigen::MatrixXd H = V * svd.singularValues().asDiagonal() * V.transpose();
+    spd = (B + H) / 2;
+
+    return spd;
+    // spd = 
 }
+
+void qpsolver::solve_trial()
+{
+    qpoptions.printLevel = qpOASES::PL_DEBUG_ITER;
+    // qpoptions.terminationTolerance = 1e-5;
+    // qpoptions.setToReliable();
+
+    qpOASES::int_t nWSR = 10^8;
+    qpOASES::QProblemB qptest(_nV, qpOASES::HST_SEMIDEF);
+
+    
+    qpOASES::Options options;
+
+    qptest.setOptions(options);
+
+    qptest.init(qpH, qpg, NULL, NULL, nWSR);
+
+    if(qpserver.isInfeasible())
+    {
+        ROS_ERROR("cannot solve...");
+    }
+    else
+    {
+        cout<<"hi"<<endl;
+        ROS_DEBUG_STREAM("Solved...");
+    }
+
+    qpOASES::real_t xOpt[_nV];
+    // for(int i = 0; i < _nV; i++)
+    // {
+    //     cout<<xOpt[i]<<endl;
+
+    // }
+    cout<<"lala"<<endl;
+	qptest.getPrimalSolution( xOpt );
+    
+    // for(int i = 0; i < _nV; i++)
+    // {
+    //     cout<<xOpt[i]<<endl;
+
+    // }
+    cout<<"final value: "<<qptest.getObjVal()<<endl;
+
+}
+
+
 
 
 #endif

@@ -65,7 +65,7 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     //1. variable set
     // _n_dim = (b_info.n_order + 1) + b_info.m
     printf("1. variable set:\n");
-    cout<<_n_dim<<endl;
+    // cout<<_n_dim<<endl;
 
     //2. constraints set
     _A = bezier_base.getA();
@@ -73,7 +73,7 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     _lb = bezier_base.getLB();
 
     printf("2. constraints set:\n");
-    // cout<<_A<<endl;
+    cout<<_A<<endl;
     // cout<<_lb<<endl;
     // cout<<_ub<<endl;
     // cout<<_A.rows()<<endl;
@@ -84,8 +84,8 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     //3. cost set
     printf("3. cost term\n");
     _MQM = bezier_base.getMQM();
-    cout<<_MQM.rows()<<endl;
-    cout<<_MQM.cols()<<endl;
+    // cout<<_MQM.rows()<<endl;
+    // cout<<_MQM.cols()<<endl;
 
 
 
@@ -101,6 +101,7 @@ void traj_gen::solveqp()
 
     qpsolve.qpsetup(_MQM, _A, _ub, _lb);
     qpsolve.solve();
+    // qpsolve.solve_trial();
 
     
 }
