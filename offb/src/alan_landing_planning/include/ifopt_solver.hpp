@@ -144,7 +144,6 @@ namespace ifopt
                         for(int j = 0; j < _A.cols(); j++)
                         {
                             jac_block.coeffRef(i,j) = 0.0;
-
                         }
                     }
 

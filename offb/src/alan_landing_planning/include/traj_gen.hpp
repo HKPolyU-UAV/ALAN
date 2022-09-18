@@ -73,9 +73,12 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     _lb = bezier_base.getLB();
 
     printf("2. constraints set:\n");
-    // cout<<_A<<endl;
-    // cout<<_lb<<endl;
-    // cout<<_ub<<endl;
+    cout<<"_A:"<<endl;
+    cout<<_A<<endl;
+    cout<<"_lb:"<<endl;
+    cout<<_lb<<endl;
+    cout<<"_ub:"<<endl;
+    cout<<_ub<<endl;
     // cout<<_A.rows()<<endl;
     // cout<<_A.cols()<<endl;
     // cout<<_ub.size()<<endl;
@@ -88,21 +91,21 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     // cout<<_MQM.cols()<<endl;
 
 
-    Eigen::SparseMatrix<double, Eigen::RowMajor> temp;
-    temp = _A.sparseView();
-    // cout<<"here ==:"<<temp<<endl;
-    // inf
+    // Eigen::SparseMatrix<double, Eigen::RowMajor> temp;
+    // temp = _A.sparseView();
+    // // cout<<"here ==:"<<temp<<endl;
+    // // inf
 
-    temp.resize(_A.rows(), _A.cols());
+    // temp.resize(_A.rows(), _A.cols());
 
-    for(int i = 0; i < _A.rows(); i++)
-    {
-        for(int j = 0; j < _A.cols(); j++)
-        {
-            temp.coeffRef(i,j) = _A(i,j);
+    // for(int i = 0; i < _A.rows(); i++)
+    // {
+    //     for(int j = 0; j < _A.cols(); j++)
+    //     {
+    //         temp.coeffRef(i,j) = _A(i,j);
 
-        }
-    }
+    //     }
+    // }
 
     cout<<"optimi"<<endl;
 

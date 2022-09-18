@@ -64,9 +64,20 @@ void qpsolver::qpsetup(
 {
     // _MQM.setIdentity();
     // cout<<_MQM<<endl;
+    
     _MQM = CholeskyDecomp(_MQM);
     // cout<<"~~~~~~~~~~~~~~~~~"<<endl;
-    // cout<<_MQM<<endl;
+    cout<<_MQM<<endl;
+
+    Eigen::LLT<Eigen::MatrixXd> llt_check(_MQM);
+    //try to do cholesky decomposition
+    //as if A has A=LL^T
+    //A is Hermitian & Positive (semi-)Definite
+    if(llt_check.info() == Eigen::NumericalIssue)//
+    {
+        cout<<"Possibly non semi-positive definitie matrix!"<<endl;;
+    }    
+
     qpH = _MQM.data();
     qpA = _A.data();
 
@@ -85,8 +96,8 @@ void qpsolver::qpsetup(
 
     qpOASES::Options options;
     // options.printLevel = qpOASES::PL_LOW;
-    options.terminationTolerance = 1e-10;
-    options.enableRamping=qpOASES::BT_FALSE;
+    // options.terminationTolerance = 1e-10;
+    // options.enableRamping=qpOASES::BT_FALSE;
 
     // options
     options.setToReliable();
@@ -137,6 +148,7 @@ Eigen::MatrixXd qpsolver::CholeskyDecomp(Eigen::MatrixXd MQM) // return square r
 
     Eigen::MatrixXd H = V * svd.singularValues().asDiagonal() * V.transpose();
     spd = (B + H) / 2;
+    spd = (spd + spd.transpose()) / 2;
 
     return spd;
     // spd = 
