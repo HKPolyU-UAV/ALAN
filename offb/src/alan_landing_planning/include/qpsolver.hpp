@@ -130,8 +130,12 @@ void qpsolver::solve()
     else
     {
         cout<<"hi"<<endl;
-        ROS_DEBUG_STREAM("Solved...");
+        ROS_INFO("solved...");
     }
+    cout<<"end"<<endl;
+    double aaa = 10;
+    // double eps = std::numeric_limits<double>::ewefwef 
+    // cout<<aaa.precision()<endl;
 
 }
 

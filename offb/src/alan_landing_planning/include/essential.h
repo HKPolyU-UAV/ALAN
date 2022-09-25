@@ -1,6 +1,7 @@
 #ifndef ESSENTIAL_H
 #define ESSENTIAL_H
 #include <ros/ros.h>
+#include <ros/console.h>
 
 #include <iostream>
 #include <fstream>
