@@ -880,6 +880,7 @@ void bernstein::setLB()
     lb.resize(lb_eq.size() + lb_ieq.size());
     lb << lb_eq,
           lb_ieq;
+          //
 
     // cout<<"lb!:\n"<<lb<<endl;
 
