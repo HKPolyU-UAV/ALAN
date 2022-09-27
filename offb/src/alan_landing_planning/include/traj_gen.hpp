@@ -79,10 +79,14 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     // cout<<_lb<<endl;
     // cout<<"_ub:"<<endl;
     // cout<<_ub<<endl;
-    // cout<<_A.rows()<<endl;
-    // cout<<_A.cols()<<endl;
-    // cout<<_ub.size()<<endl;
-    // cout<<_lb.size()<<endl;
+
+    
+    cout<<_A.rows()<<endl;
+    cout<<_A.cols()<<endl;
+    cout<<_ub.size()<<endl;
+    cout<<_lb.size()<<endl;
+
+
     
     //3. cost set
     printf("3. cost term\n");

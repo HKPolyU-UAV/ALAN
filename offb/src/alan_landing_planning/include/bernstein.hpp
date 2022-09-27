@@ -853,11 +853,11 @@ void bernstein::setQM(int n_order, int m, int d_order, vector<double> s)
 void bernstein::setA()
 {
     //combine A_eq && A_ieq
-    A.resize(A_eq.rows() , A_eq.cols());
+    A.resize(A_eq.rows() + A_ieq.rows(), A_eq.cols());
     //+ A_ieq.rows()
 
-    A << A_eq;//,
-            // A_ieq;
+    A << A_eq,
+         A_ieq;
 
     // cout<<"A!:\n"<<A<<endl;
 
@@ -866,9 +866,9 @@ void bernstein::setA()
 void bernstein::setUB()
 {
     //combine ub_eq && ub_ieq
-    ub.resize(ub_eq.size() );//+ ub_ieq.size());
-    ub << ub_eq;//,
-            // ub_ieq;
+    ub.resize(ub_eq.size() + ub_ieq.size());
+    ub << ub_eq,
+          ub_ieq;
 
     // cout<<"ub!:\n"<<ub<<endl;
 
@@ -877,9 +877,9 @@ void bernstein::setUB()
 void bernstein::setLB()
 {
     //combine lb_eq && lb_ieq
-    lb.resize(lb_eq.size());// + lb_ieq.size());
-    lb << lb_eq;//,
-            // lb_ieq;
+    lb.resize(lb_eq.size() + lb_ieq.size());
+    lb << lb_eq,
+          lb_ieq;
 
     // cout<<"lb!:\n"<<lb<<endl;
 
