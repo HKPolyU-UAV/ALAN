@@ -62,23 +62,52 @@ void qpsolver::qpsetup(
     Eigen::MatrixXd _ub, 
     Eigen::MatrixXd _lb)
 {
-    // _MQM.setIdentity();
-    // cout<<_MQM<<endl;
-    
-    _MQM = CholeskyDecomp(_MQM);
-    // cout<<"~~~~~~~~~~~~~~~~~"<<endl;
-    cout<<_MQM<<endl;
+    Eigen::MatrixXd _MQM_qp;
+    _MQM_qp = CholeskyDecomp(_MQM);
 
-    Eigen::LLT<Eigen::MatrixXd> llt_check(_MQM);
+    Eigen::LLT<Eigen::MatrixXd> llt_check(_MQM_qp);
+
+
+    if(llt_check.info() == Eigen::NumericalIssue)//
     //try to do cholesky decomposition
     //as if A has A=LL^T
     //A is Hermitian & Positive (semi-)Definite
-    if(llt_check.info() == Eigen::NumericalIssue)//
     {
-        cout<<"Possibly non semi-positive definitie matrix!"<<endl;;
-    }    
+        cout<<"!!!!!!Possibly non semi-positive definitie matrix!"<<endl;;
+    }   
+    else
+    {
+        // psd_or_not = true;
+        cout<<"!!!!!!!we got it semi-positive definte!"<<endl;
+        // continue;
+    }
 
-    qpH = _MQM.data();
+    // double mineig = INFINITY;
+
+    // for(int i = 0; i < _MQM_qp.eigenvalues().real().size(); i++)
+    // {
+    //     // cout<<"here's one:"<<endl;
+    //     // cout<<mineig<<endl;
+    //     // cout<<spd_eigen_vector(i)<<endl<<endl;;;
+
+    //     if(_MQM_qp.eigenvalues().real()(i) < mineig)
+    //         mineig = _MQM_qp.eigenvalues().real()(i);
+    // }
+
+    // cout<<mineig<<endl;
+
+
+    // cout<<_MQM_qp.eigenvalues().real()<<endl;
+
+
+
+
+    // cout<<"~~~~~~~~~~~~~~~~~"<<endl;
+    // cout<<_MQM_qp<<endl;
+
+    
+
+    qpH = _MQM_qp.data();
     qpA = _A.data();
 
     Eigen::VectorXd _g;
@@ -88,12 +117,46 @@ void qpsolver::qpsetup(
 
     qpubA = _ub.data();
     qplbA = _lb.data();
+    //////////////////////
+    qpOASES::Options options;
 
-    qpoptions.printLevel = qpOASES::PL_DEBUG_ITER;
-    qpoptions.terminationTolerance = 1e-5;
-    // qpoptions.setToReliable();
+    // options.setToReliable();
+
+    qpserver.setOptions(options);
+
+    qpOASES::int_t nWSR = 4000;
+
+    qpOASES::returnValue res = qpserver.init(qpH, qpg, qpA, NULL, NULL, qplbA, qpubA, nWSR);
+    
+    // cout<<qpserver.isInfeasible()<<endl;;
+    cout<<"solve result: "<< res <<endl;
+
+    if(qpserver.isInfeasible())
+    {
+        ROS_ERROR("cannot solve...");
+    }
+    else
+    {
+        cout<<"hi"<<endl;
+        ROS_INFO("solved...");
+    }
+    cout<<"end"<<endl;
+
+    qpOASES::real_t* xOpt = new qpOASES::real_t[_nV];
+    qpserver.getPrimalSolution(xOpt);
+    cout<<endl;
+    for(int i = 0; i < _nV ;i++)
+    {
+        cout<<"hi"<<endl;
+        cout<<xOpt[i]<<endl<<endl;;
+    }
+    
 
 
+}
+
+void qpsolver::solve()
+{
     qpOASES::Options options;
     // options.printLevel = qpOASES::PL_LOW;
     // options.terminationTolerance = 1e-10;
@@ -104,17 +167,6 @@ void qpsolver::qpsetup(
 
     qpserver.setOptions(options);
 
-
-    //////////////////////
-
-
-    
-
-
-}
-
-void qpsolver::solve()
-{
     qpOASES::int_t nWSR = 4000;
 
     qpOASES::returnValue res = qpserver.init(qpH, qpg, qpA, NULL, NULL, qplbA, qpubA, nWSR);
@@ -153,6 +205,73 @@ Eigen::MatrixXd qpsolver::CholeskyDecomp(Eigen::MatrixXd MQM) // return square r
     Eigen::MatrixXd H = V * svd.singularValues().asDiagonal() * V.transpose();
     spd = (B + H) / 2;
     spd = (spd + spd.transpose()) / 2;
+
+
+    bool psd_or_not = false;
+    double k = 0;
+
+    // cout<<"spd:"<<endl<<spd<<endl;
+
+    while(!psd_or_not && k < 10)
+    {
+        cout<<k<<endl;
+        Eigen::LLT<Eigen::MatrixXd> llt_check(spd);
+        if(llt_check.info() == Eigen::NumericalIssue)//
+        //try to do cholesky decomposition
+        //as if A has A=LL^T
+        //A is Hermitian & Positive (semi-)Definite
+        {
+            cout<<"Possibly non semi-positive definitie matrix!"<<endl;;
+        }   
+        else
+        {
+            psd_or_not = true;
+            cout<<"we got it semi-positive definte!"<<endl;
+            continue;
+        }
+
+        k = k + 1;
+
+        Eigen::VectorXd spd_eigen_vector = spd.eigenvalues().real();
+
+
+        double mineig = INFINITY;
+
+        for(int i = 0; i < spd_eigen_vector.size(); i++)
+        {
+            // cout<<"here's one:"<<endl;
+            // cout<<mineig<<endl;
+            // cout<<spd_eigen_vector(i)<<endl<<endl;;;
+
+            if(spd_eigen_vector(i) < mineig)
+                mineig = spd_eigen_vector(i);
+        }
+
+        Eigen::MatrixXd tweak;
+        tweak.setIdentity(spd.rows(), spd.cols());
+
+        double epsd = std::numeric_limits<double>::epsilon();
+
+        double eps_mineig = std::nextafter(mineig, epsd) - mineig;
+
+        tweak = tweak * (-mineig * pow(k,2) + eps_mineig);
+        
+
+        spd = spd + tweak;
+
+
+
+        // tweak.e
+        
+    }
+
+    // cout<<"spd:"<<endl<<spd<<endl;
+
+    
+
+    // cout<<"final mineig: "<<mineig<<endl;
+
+
 
     return spd;
     // spd = 

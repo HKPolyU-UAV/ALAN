@@ -73,12 +73,12 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     _lb = bezier_base.getLB();
 
     printf("2. constraints set:\n");
-    cout<<"_A:"<<endl;
-    cout<<_A<<endl;
-    cout<<"_lb:"<<endl;
-    cout<<_lb<<endl;
-    cout<<"_ub:"<<endl;
-    cout<<_ub<<endl;
+    // cout<<"_A:"<<endl;
+    // cout<<_A<<endl;
+    // cout<<"_lb:"<<endl;
+    // cout<<_lb<<endl;
+    // cout<<"_ub:"<<endl;
+    // cout<<_ub<<endl;
     // cout<<_A.rows()<<endl;
     // cout<<_A.cols()<<endl;
     // cout<<_ub.size()<<endl;
@@ -123,7 +123,7 @@ void traj_gen::solveqp()
     qpsolver qpsolve(_n_dim, _A.rows());
 
     qpsolve.qpsetup(_MQM, _A, _ub, _lb);
-    qpsolve.solve();
+    // qpsolve.solve();
     // qpsolve.ifopt_test(_MQM, _A, _ub, _lb);
     // qpsolve.solve_trial();
 

@@ -127,9 +127,15 @@ int main(int argc, char** argv)
     b_constraints.cube_list = cube_list;
     b_constraints.d_constraints = d_constraints;
 
+    double t0 = ros::Time::now().toSec();
+
 	traj_gen traj(b_info, b_constraints);
 
 	traj.solveqp();
+
+    double t1 = ros::Time::now().toSec();
+
+    cout<<"fps: "<<1/(t1-t0)<<endl;
 
 
 
