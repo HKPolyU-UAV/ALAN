@@ -98,7 +98,7 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     //3. cost set
     printf("3. cost term\n");
     _MQM = bezier_base.getMQM();
-    _MQM = get_nearest_SPD(_MQM);
+    // _MQM = get_nearest_SPD(_MQM);
 
 };
 

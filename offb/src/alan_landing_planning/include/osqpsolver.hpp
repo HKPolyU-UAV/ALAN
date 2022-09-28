@@ -67,6 +67,8 @@ void osqpsolver::test(
 
     qpsolver.data()->setNumberOfVariables(nV);
     qpsolver.data()->setNumberOfConstraints(nC);
+
+    // qpsolver.p
     
     if(!qpsolver.data()->setHessianMatrix(Hessian))
         cout<<"Hessian not set!"<<endl;
