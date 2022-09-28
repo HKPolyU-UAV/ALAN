@@ -4,7 +4,8 @@
 #include "essential.h"
 #include "bernstein.hpp"
 
-#include "qpsolver.hpp"
+// #include "qpsolver.hpp"
+#include "osqpsolver.hpp"
 #include <ifopt/problem.h>
 #include <ifopt/ipopt_solver.h>
 
@@ -32,13 +33,16 @@ private:
     int _n_order, _m, _d_order;
     vector<double> _s;  
 
+    //math tool
+    Eigen::MatrixXd get_nearest_SPD(Eigen::MatrixXd Q);
+
     
 public:
 
     traj_gen(bezier_info b_info, bezier_constraints b_constraints);
     ~traj_gen(){};
 
-    void solveqp();
+    void solve_opt();
     vector<Eigen::VectorXd> getPolyCoeff(){return PolyCoeff;}
     
 };
@@ -73,65 +77,126 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     _lb = bezier_base.getLB();
 
     printf("2. constraints set:\n");
-    // cout<<"_A:"<<endl;
-    // cout<<_A<<endl;
+    cout<<"_A:"<<endl;
+    cout<<_A<<endl;
     // cout<<"_lb:"<<endl;
     // cout<<_lb<<endl;
     // cout<<"_ub:"<<endl;
     // cout<<_ub<<endl;
 
-    
-    cout<<_A.rows()<<endl;
-    cout<<_A.cols()<<endl;
-    cout<<_ub.size()<<endl;
-    cout<<_lb.size()<<endl;
+    // cout<<"\nsummary:\n";
+    // cout<<"A size:\n";
+    // cout<<_A.rows()<<endl;
+    // cout<<_A.cols()<<endl;
+    // cout<<"upper bound size:\n";
+    // cout<<_ub.size()<<endl;
+    // cout<<"lower bound size:\n";
+    // cout<<_lb.size()<<endl;
 
 
     
     //3. cost set
     printf("3. cost term\n");
     _MQM = bezier_base.getMQM();
-    // cout<<_MQM.rows()<<endl;
-    // cout<<_MQM.cols()<<endl;
-
-
-    // Eigen::SparseMatrix<double, Eigen::RowMajor> temp;
-    // temp = _A.sparseView();
-    // // cout<<"here ==:"<<temp<<endl;
-    // // inf
-
-    // temp.resize(_A.rows(), _A.cols());
-
-    // for(int i = 0; i < _A.rows(); i++)
-    // {
-    //     for(int j = 0; j < _A.cols(); j++)
-    //     {
-    //         temp.coeffRef(i,j) = _A(i,j);
-
-    //     }
-    // }
-
-    cout<<"optimi"<<endl;
-
-
-
-
-
-
-    
+    _MQM = get_nearest_SPD(_MQM);
 
 };
 
-void traj_gen::solveqp()
+void traj_gen::solve_opt()
 {
-    qpsolver qpsolve(_n_dim, _A.rows());
+    // qpsolver qpsolve(_n_dim, _A.rows());
 
-    qpsolve.qpsetup(_MQM, _A, _ub, _lb);
+    // qpsolve.solve_qp(_MQM, _A, _ub, _lb);
+
+    osqpsolver temp;
+
+    temp.test(_MQM, _A, _ub, _lb);
     // qpsolve.solve();
     // qpsolve.ifopt_test(_MQM, _A, _ub, _lb);
     // qpsolve.solve_trial();
 
     
+}
+
+
+Eigen::MatrixXd traj_gen::get_nearest_SPD(Eigen::MatrixXd MQM) 
+{
+    // make the Hessian to a 
+    // symmetric positive semidefinite matrix
+    
+    // From Higham: "The nearest symmetric positive semidefinite matrix in the
+    // Frobenius norm to an arbitrary real matrix A is shown to be (B + H)/2,
+    // where H is the symmetric polar factor of B=(A + A')/2."
+
+
+	Eigen::MatrixXd spd;
+    Eigen::MatrixXd B = (MQM + MQM.transpose()) / 2;
+    
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(B, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::MatrixXd U = svd.matrixU();
+    Eigen::MatrixXd V = svd.matrixV();
+
+    Eigen::MatrixXd H = V * svd.singularValues().asDiagonal() * V.transpose();
+    spd = (B + H) / 2;
+    spd = (spd + spd.transpose()) / 2;
+
+
+    bool psd_or_not = false;
+    double k = 0;
+
+    // cout<<"spd:"<<endl<<spd<<endl;
+
+    while(!psd_or_not && k < 10)
+    {
+        cout<<k<<endl;
+        Eigen::LLT<Eigen::MatrixXd> llt_check(spd);
+        if(llt_check.info() == Eigen::NumericalIssue)//
+        //try to do cholesky decomposition
+        //as if A has A=LL^T
+        //A is Hermitian & Positive (semi-)Definite
+        {
+            // cout<<"Possibly non semi-positive definitie matrix!"<<endl;;
+        }   
+        else
+        {
+            psd_or_not = true;
+            // cout<<"we got it semi-positive definte!"<<endl;
+            continue;
+        }
+
+        k = k + 1;
+
+        Eigen::VectorXd spd_eigen_vector = spd.eigenvalues().real();
+
+
+        double mineig = INFINITY;
+
+        for(int i = 0; i < spd_eigen_vector.size(); i++)
+        {
+            // cout<<"here's one:"<<endl;
+            // cout<<mineig<<endl;
+            // cout<<spd_eigen_vector(i)<<endl<<endl;;;
+
+            if(spd_eigen_vector(i) < mineig)
+                mineig = spd_eigen_vector(i);
+        }
+
+        Eigen::MatrixXd tweak;
+        tweak.setIdentity(spd.rows(), spd.cols());
+
+        double epsd = std::numeric_limits<double>::epsilon();
+
+        double eps_mineig = std::nextafter(mineig, epsd) - mineig;
+
+        tweak = tweak * (-mineig * pow(k,2) + eps_mineig);
+        
+
+        spd = spd + tweak;
+
+        
+    }
+
+    return spd;
 }
 
 

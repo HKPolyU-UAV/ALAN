@@ -126,8 +126,6 @@ private:
     double permutation(int p, int q);
     double factorial(int r);
     vector<double> pascal_triangle(int level);
-
-    Eigen::MatrixXd CholeskyDecomp(Eigen::MatrixXd Q);
     
     
 public:
@@ -181,12 +179,12 @@ vector<corridor> cube_list, dynamic_constraints d_constraints
         setUB();
         setLB();
 
-        cout<<"\nhere!"<<endl;
+        // cout<<"\nhere!"<<endl;
 
-        cout<<A.rows()<<endl;
-        cout<<A.cols()<<endl;
-        cout<<ub.size()<<endl;
-        cout<<lb.size()<<endl;
+        // cout<<A.rows()<<endl;
+        // cout<<A.cols()<<endl;
+        // cout<<ub.size()<<endl;
+        // cout<<lb.size()<<endl;
 
         // printf("pass 3\n");
         setMQM(n_order, m, d_order, s);
@@ -279,15 +277,15 @@ void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
             case 0://p 
                 Aeq_cont(starto_row, starto_col + 0) = p * pascal[0] * pow(s[i+0], 1-j);
 
-                Aeq_cont(starto_row, starto_col + 1) = p * pascal[0] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 1) = -p * pascal[0] * pow(s[i+1], 1-j);
                 break;
             
             case 1://v
                 Aeq_cont(starto_row, starto_col - 1) = p * pascal[0] * pow(s[i+0], 1-j);
                 Aeq_cont(starto_row, starto_col - 0) = p * pascal[1] * pow(s[i+0], 1-j);
 
-                Aeq_cont(starto_row, starto_col + 1) = p * pascal[1] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_row, starto_col + 2) = p * pascal[0] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 1) = -p * pascal[0] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 2) = -p * pascal[1] * pow(s[i+1], 1-j);
                 break;
             
             case 2://a
@@ -295,9 +293,9 @@ void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
                 Aeq_cont(starto_row, starto_col - 1) = p * pascal[1] * pow(s[i+0], 1-j);
                 Aeq_cont(starto_row, starto_col - 0) = p * pascal[2] * pow(s[i+0], 1-j);
 
-                Aeq_cont(starto_row, starto_col + 1) = p * pascal[2] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_row, starto_col + 2) = p * pascal[1] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_row, starto_col + 3) = p * pascal[0] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 1) = -p * pascal[0] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 2) = -p * pascal[1] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 3) = -p * pascal[2] * pow(s[i+1], 1-j);
                 break;
 
             case 3://j
@@ -306,10 +304,10 @@ void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
                 Aeq_cont(starto_row, starto_col - 1) = p * pascal[2] * pow(s[i+0], 1-j);
                 Aeq_cont(starto_row, starto_col - 0) = p * pascal[3] * pow(s[i+0], 1-j);
 
-                Aeq_cont(starto_row, starto_col + 1) = p * pascal[3] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_row, starto_col + 2) = p * pascal[2] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_row, starto_col + 3) = p * pascal[1] * pow(s[i+1], 1-j);
-                Aeq_cont(starto_row, starto_col + 4) = p * pascal[0] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 1) = -p * pascal[0] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 2) = -p * pascal[1] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 3) = -p * pascal[2] * pow(s[i+1], 1-j);
+                Aeq_cont(starto_row, starto_col + 4) = -p * pascal[3] * pow(s[i+1], 1-j);
                 break;
             
             default:
@@ -768,25 +766,12 @@ void bernstein::setLBieq(vector<corridor> cube_list, dynamic_constraints d_const
 
 }
 
-Eigen::MatrixXd bernstein::CholeskyDecomp(Eigen::MatrixXd Q) // return square root F of Q; Q = F' * F
-{
-	Eigen::MatrixXd F, Ft;
-	Eigen::LDLT< Eigen::MatrixXd > ldlt(Q);
-    F = ldlt.matrixL();
-    F = ldlt.transpositionsP().transpose() * F;
-    F *= ldlt.vectorD().array().sqrt().matrix().asDiagonal();
-	Ft = F.transpose();
-
-	return Ft;
-}
-
 void bernstein::setMQM(int n_order, int m, int d_order, vector<double> s)
 {
     setQM(n_order, m, d_order, s);
     
     MQM.resize(Q.rows(), Q.cols());
     
-    // Q = CholeskyDecomp(Q);
     // MQM =  Q * M;
 
     MQM = M.transpose() * Q * M;
@@ -853,11 +838,13 @@ void bernstein::setQM(int n_order, int m, int d_order, vector<double> s)
 void bernstein::setA()
 {
     //combine A_eq && A_ieq
-    A.resize(A_eq.rows() + A_ieq.rows(), A_eq.cols());
+    A.resize(A_eq.rows() + A_ieq.rows() , A_eq.cols());
     //+ A_ieq.rows()
+    //A_eq.rows() + 
 
     A << A_eq,
-         A_ieq;
+         A_ieq;//,
+        //  A_ieq;
 
     // cout<<"A!:\n"<<A<<endl;
 
@@ -866,9 +853,11 @@ void bernstein::setA()
 void bernstein::setUB()
 {
     //combine ub_eq && ub_ieq
-    ub.resize(ub_eq.size() + ub_ieq.size());
+    ub.resize( ub_eq.size()  + ub_ieq.size());
+    //ub_eq.size() +
     ub << ub_eq,
-          ub_ieq;
+          ub_ieq;//,
+        //   ub_ieq;
 
     // cout<<"ub!:\n"<<ub<<endl;
 
@@ -877,9 +866,11 @@ void bernstein::setUB()
 void bernstein::setLB()
 {
     //combine lb_eq && lb_ieq
-    lb.resize(lb_eq.size() + lb_ieq.size());
-    lb << lb_eq,
-          lb_ieq;
+    lb.resize( lb_eq.size() + lb_ieq.size());
+    //lb_eq.size() +
+    lb << lb_eq, 
+          lb_ieq;//,
+        //   lb_ieq;
           //
 
     // cout<<"lb!:\n"<<lb<<endl;

@@ -10,7 +10,8 @@
                 "../../devel/include/**",
                 "/opt/ros/noetic/include/**",
                 "./cv_bridge/include/**",
-                "/usr/include/**"
+                "/usr/include/**",
+                "/usr/local/include/osqp"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",

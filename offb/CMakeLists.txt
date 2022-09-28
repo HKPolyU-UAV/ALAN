@@ -24,6 +24,7 @@ find_package(catkin COMPONENTS
   ifopt
   nlopt
   qpOASES
+  # OsqpEigen
 
 )
 
@@ -35,6 +36,8 @@ find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Sophus REQUIRED)
+find_package(osqp REQUIRED)
+find_package(OsqpEigen REQUIRED)
 
 
 # find_package(PCL 1.2 REQUIRED)
@@ -106,8 +109,11 @@ target_link_libraries(lala
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
   ${IPOPT_LIBRARIES}
+  ${OSQP_LIBRARIES}
   mosek64
   qpOASES
+  osqp::osqp
+  OsqpEigen#::OsqpEigen
   )
 
 add_executable(kf

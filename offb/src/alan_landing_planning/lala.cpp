@@ -87,32 +87,33 @@ int main(int argc, char** argv)
     corridor cube;
 
     cube.x_max = 100;
-    cube.x_min = 0;
+    cube.x_min = -OsqpEigen::INFTY;//0;
+    //
     cube_list.push_back(cube);
 
     cube.x_max = 150;
-    cube.x_min = 50;
+    cube.x_min = 50;//-OsqpEigen::INFTY;//50;
     cube_list.push_back(cube);
 
     cube.x_max = 230;
-    cube.x_min = 130;
+    cube.x_min = 130;//-OsqpEigen::INFTY;//130;
     cube_list.push_back(cube);
     
     cube.x_max = 300;
-    cube.x_min = 200;
+    cube.x_min = 200;//-OsqpEigen::INFTY;//200;
     cube_list.push_back(cube);
     
     cube.x_max = 330;
-    cube.x_min = 230;
+    cube.x_min = 230;//-OsqpEigen::INFTY;//230;
     cube_list.push_back(cube);
 
     dynamic_constraints d_constraints;
     d_constraints.v_max =  150;
-    d_constraints.v_min = -150;
+    d_constraints.v_min = -150;//OsqpEigen::INFTY;//-150;
     d_constraints.a_max =  200;
-    d_constraints.a_min = -200;
+    d_constraints.a_min = -200;//OsqpEigen::INFTY;//-200;
     d_constraints.j_max =  400;
-    d_constraints.j_min = -400;
+    d_constraints.j_min = -400;//OsqpEigen::INFTY;//-400;
 
     bezier_info b_info;
     bezier_constraints b_constraints;
@@ -131,7 +132,7 @@ int main(int argc, char** argv)
 
 	traj_gen traj(b_info, b_constraints);
 
-	traj.solveqp();
+	traj.solve_opt();
 
     double t1 = ros::Time::now().toSec();
 
