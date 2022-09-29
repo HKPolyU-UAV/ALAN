@@ -11,7 +11,7 @@ private:
     /* data */
 public:
     osqpsolver(/* args */);
-    void test(
+    void qp_opt(
         Eigen::MatrixXd _MQM, 
         Eigen::MatrixXd _A, 
         Eigen::MatrixXd _ub, 
@@ -27,7 +27,7 @@ osqpsolver::~osqpsolver()
 {
 }
 
-void osqpsolver::test(
+void osqpsolver::qp_opt(
         Eigen::MatrixXd _MQM, 
         Eigen::MatrixXd _A, 
         Eigen::MatrixXd _ub, 

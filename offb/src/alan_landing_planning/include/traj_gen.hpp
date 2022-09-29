@@ -110,7 +110,7 @@ void traj_gen::solve_opt()
 
     osqpsolver temp;
 
-    temp.test(_MQM, _A, _ub, _lb);
+    temp.qp_opt(_MQM, _A, _ub, _lb);
     // qpsolve.solve();
     // qpsolve.ifopt_test(_MQM, _A, _ub, _lb);
     // qpsolve.solve_trial();
@@ -123,6 +123,7 @@ Eigen::MatrixXd traj_gen::get_nearest_SPD(Eigen::MatrixXd MQM)
 {
     // make the Hessian to a 
     // symmetric positive semidefinite matrix
+    // depends on the solver, whether require this step or not
     
     // From Higham: "The nearest symmetric positive semidefinite matrix in the
     // Frobenius norm to an arbitrary real matrix A is shown to be (B + H)/2,
