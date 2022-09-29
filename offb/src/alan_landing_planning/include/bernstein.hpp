@@ -166,14 +166,14 @@ vector<corridor> cube_list, dynamic_constraints d_constraints
         setUBeq(start, end, n_order, m, d_order);//remember continuotiy
         setLBeq(start, end, n_order, m, d_order);//remember continuotiy
 
-        printf("eq pass\n");
+        printf("eq matrices: pass\n");
 
         setAieq(n_order, m, d_order, s);     
 
         setUBieq(cube_list, d_constraints, n_order, m, d_order);        
         setLBieq(cube_list, d_constraints, n_order, m, d_order);
 
-        printf("ieq pass\n");
+        printf("ieq matriaces: pass\n");
 
         setA();
         setUB();
@@ -331,7 +331,7 @@ void bernstein::setAeq(int n_order, int m, int d_order, vector<double> s)
 
 void bernstein::setUBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
 {
-    cout<<"setUBeq"<<endl;
+    // cout<<"setUBeq"<<endl;
     //set BUeq_start/end
     Eigen::VectorXd BUeq_start;
     Eigen::VectorXd BUeq_end;
@@ -404,7 +404,7 @@ void bernstein::setUBeq(endpt_cond start, endpt_cond end, int n_order, int m, in
 
 void bernstein::setLBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
 {
-    cout<<"setLBeq"<<endl;
+    // cout<<"setLBeq"<<endl;
 
     //set BLeq_start/end
     Eigen::VectorXd BLeq_start;

@@ -4,10 +4,8 @@
 #include "essential.h"
 #include "bernstein.hpp"
 
-// #include "qpsolver.hpp"
 #include "osqpsolver.hpp"
-#include <ifopt/problem.h>
-#include <ifopt/ipopt_solver.h>
+
 
 
 //test gan
@@ -36,6 +34,9 @@ private:
     //math tool
     Eigen::MatrixXd get_nearest_SPD(Eigen::MatrixXd Q);
 
+    //other tool
+    void msg_printer(char *s);
+
     
 public:
 
@@ -60,6 +61,16 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     _n_order(b_info.n_order), _m(b_info.m), _d_order(b_info.d_order), _s(b_info.s)    
 {
     ROS_WARN("entering traj generator!");
+    
+
+    // msg_printer("-----------------------------------------------------------------");
+    // msg_printer("             ALan v0.1 - Autonomous Landing for UAV");
+    // msg_printer("                 (c) Li-yu LO,  Ching-wei Chang");
+    // msg_printer("              The Hong Kong Polytechnic University");
+    // msg_printer("-----------------------------------------------------------------");
+
+
+
     bernstein bezier_base(
         _n_order, _m, _d_order, _s,
         _start, _end,
@@ -68,17 +79,17 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
     
     //1. variable set
     // _n_dim = (b_info.n_order + 1) + b_info.m
-    printf("1. variable set:\n");
-    // cout<<_n_dim<<endl;
+    printf("1. variable set: ");
+    cout<<_n_dim<<endl;
 
     //2. constraints set
     _A = bezier_base.getA();
     _ub = bezier_base.getUB();
     _lb = bezier_base.getLB();
 
-    printf("2. constraints set:\n");
-    cout<<"_A:"<<endl;
-    cout<<_A<<endl;
+    printf("2. constraints set: ");
+    // cout<<"_A:"<<endl;
+    cout<<_A.rows()<<endl;
     // cout<<"_lb:"<<endl;
     // cout<<_lb<<endl;
     // cout<<"_ub:"<<endl;
@@ -96,7 +107,7 @@ traj_gen::traj_gen(bezier_info b_info, bezier_constraints b_constraints)
 
     
     //3. cost set
-    printf("3. cost term\n");
+    printf("3. cost term: x'M'QMx\n");
     _MQM = bezier_base.getMQM();
     // _MQM = get_nearest_SPD(_MQM);
 
@@ -200,5 +211,9 @@ Eigen::MatrixXd traj_gen::get_nearest_SPD(Eigen::MatrixXd MQM)
     return spd;
 }
 
+void traj_gen::msg_printer(char *s)
+{
+    // printf("%*s%*s\n",10+strlen(s)/2,s,10-strlen(s)/2," ");
+}
 
 #endif
