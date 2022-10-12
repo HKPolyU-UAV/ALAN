@@ -3,7 +3,7 @@
 if no license, cannot run program...
 ```
 git clone https://github.com/robotology/osqp-eigen.git
-git clone https://github.com/osqp/osqp.git
+git clone --recursive https://github.com/osqp/osqp
 ```
 ```
 @article{stellato2020osqp,
