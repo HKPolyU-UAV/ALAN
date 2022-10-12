@@ -27,7 +27,7 @@
 
 #include "munkres.hpp"
 
-namespace alan_pose_estimation
+namespace alan
 {
 
     class LedNodelet : public nodelet::Nodelet
@@ -148,6 +148,8 @@ namespace alan_pose_estimation
             virtual void onInit()
             {
                 ros::NodeHandle& nh = getNodeHandle();
+
+                cout<<"sup, we are now at led"<<endl;
                 
                 //load POT_extract config
                 nh.getParam("/alan_pose/LANDING_DISTANCE", LANDING_DISTANCE);     
@@ -208,7 +210,7 @@ namespace alan_pose_estimation
 
     };
 
-    PLUGINLIB_EXPORT_CLASS(alan_pose_estimation::LedNodelet, nodelet::Nodelet)
+    PLUGINLIB_EXPORT_CLASS(alan::LedNodelet, nodelet::Nodelet)
 }
 
 #endif

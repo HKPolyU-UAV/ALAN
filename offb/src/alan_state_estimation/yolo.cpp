@@ -3,7 +3,7 @@
 
 #include "include/yolo.h"
 
-void alan_pose_estimation::CnnNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
+void alan::CnnNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
     if(intiated)
     {
@@ -72,7 +72,7 @@ void alan_pose_estimation::CnnNodelet::camera_callback(const sensor_msgs::Compre
     // cout<<frame.size<<endl;
 }
 
-inline void alan_pose_estimation::CnnNodelet::CnnNodeletInitiate(const cv::String cfgfile, const cv::String weightfile, const cv::String objfile, const float confidence)
+inline void alan::CnnNodelet::CnnNodeletInitiate(const cv::String cfgfile, const cv::String weightfile, const cv::String objfile, const float confidence)
 {
     cout<<"start initiation"<<endl;
     this->mydnn = cv::dnn::readNetFromDarknet(cfgfile, weightfile);
@@ -90,7 +90,7 @@ inline void alan_pose_estimation::CnnNodelet::CnnNodeletInitiate(const cv::Strin
 
 }
 
-void alan_pose_estimation::CnnNodelet::rundarknet(cv::Mat &frame)
+void alan::CnnNodelet::rundarknet(cv::Mat &frame)
 {
     this->obj_vector.clear();
     this->total_start = std::chrono::steady_clock::now();
@@ -100,18 +100,18 @@ void alan_pose_estimation::CnnNodelet::rundarknet(cv::Mat &frame)
     this->appro_fps = total_fps;
 }
 
-void alan_pose_estimation::CnnNodelet::display(cv::Mat frame)
+void alan::CnnNodelet::display(cv::Mat frame)
 {
     cv::imshow("Yolo-ed", frame);
     cv::waitKey(20);
 }
 
-void alan_pose_estimation::CnnNodelet::getdepthdata(cv::Mat depthdata)
+void alan::CnnNodelet::getdepthdata(cv::Mat depthdata)
 {
     this->depthdata = depthdata;
 }
 
-void alan_pose_estimation::CnnNodelet::findboundingboxes(cv::Mat &frame)
+void alan::CnnNodelet::findboundingboxes(cv::Mat &frame)
 {
     cv::Mat blob;
     blob = cv::dnn::blobFromImage(frame, 0.00392, cv::Size(608, 608), cv::Scalar(), true, false);
@@ -142,7 +142,7 @@ void alan_pose_estimation::CnnNodelet::findboundingboxes(cv::Mat &frame)
     findwhichboundingboxrocks(netOutput, frame);
 }
 
-void alan_pose_estimation::CnnNodelet::findwhichboundingboxrocks(vector<cv::Mat> &netOutput, cv::Mat &frame)
+void alan::CnnNodelet::findwhichboundingboxrocks(vector<cv::Mat> &netOutput, cv::Mat &frame)
 {
     vector<float> confidenceperbbox;
     vector<int> indices;
@@ -262,7 +262,7 @@ void alan_pose_estimation::CnnNodelet::findwhichboundingboxrocks(vector<cv::Mat>
 
 }
 
-void alan_pose_estimation::CnnNodelet::getclassname(vector<std::string> &classnames)
+void alan::CnnNodelet::getclassname(vector<std::string> &classnames)
 {
     ifstream class_file(classnamepath);
     if (!class_file)

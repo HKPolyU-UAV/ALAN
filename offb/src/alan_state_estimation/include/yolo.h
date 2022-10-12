@@ -20,7 +20,7 @@
 
 #include <pthread.h>
 
-namespace alan_pose_estimation{
+namespace alan{
 
     typedef struct objectinfo
     {
@@ -102,6 +102,6 @@ namespace alan_pose_estimation{
 
     };
 
-   PLUGINLIB_EXPORT_CLASS(alan_pose_estimation::CnnNodelet, nodelet::Nodelet)
+   PLUGINLIB_EXPORT_CLASS(alan::CnnNodelet, nodelet::Nodelet)
 
 }

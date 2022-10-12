@@ -1,6 +1,6 @@
 #include "include/led.h"
 
-void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbmsg, const sensor_msgs::ImageConstPtr & depthmsg)
+void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbmsg, const sensor_msgs::ImageConstPtr & depthmsg)
 {
     cv_bridge::CvImageConstPtr depth_ptr;
 
@@ -58,7 +58,7 @@ void alan_pose_estimation::LedNodelet::camera_callback(const sensor_msgs::Compre
     this->pubimage.publish(for_visual.toImageMsg());
 } 
 
-void alan_pose_estimation::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
+void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
 {
     Sophus::SE3d pose;
     vector<correspondence::matchid> corres;
@@ -90,7 +90,7 @@ void alan_pose_estimation::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat 
     // cout << pts_3d_pcl_detect.size() << endl;  
 }
 
-inline Eigen::Vector2d alan_pose_estimation::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
+inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
 {
     Eigen::Vector3d result;
 
@@ -110,7 +110,7 @@ inline Eigen::Vector2d alan_pose_estimation::LedNodelet::reproject_3D_2D(Eigen::
 }
 
 
-void alan_pose_estimation::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
     cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
     cv::Vec3d rvec, tvec;
@@ -166,7 +166,7 @@ void alan_pose_estimation::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vect
 
 }
 
-void alan_pose_estimation::LedNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected)
+void alan::LedNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected)
 //converge problem need to be solved //-> fuck you, your Jacobian was wrong
 {
     //execute Gaussian-Newton Method
@@ -240,7 +240,7 @@ void alan_pose_estimation::LedNodelet::optimize(Sophus::SE3d& pose, vector<Eigen
 
 }
 
-void alan_pose_estimation::LedNodelet::solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d)
+void alan::LedNodelet::solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d)
 {
     Eigen::Matrix3d R = pose.rotationMatrix();
     Eigen::Vector3d t = pose.translation();
@@ -276,7 +276,7 @@ void alan_pose_estimation::LedNodelet::solveJacobian(Eigen::Matrix<double, 2, 6>
 }
 
 
-vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
+vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
 {
     // frame.resize(frame.rows * 2, frame.cols * 2, cv::INTER_LINEAR);
     // cv::resize(frame, frame, cv::Size(frame.cols * 2, frame.rows * 2), 0, 0, cv::INTER_LINEAR);
@@ -398,7 +398,7 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::LED_extract_POI(cv::Ma
 }
 
 
-vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
+vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
 {
     //get 9 pixels around the point of interest
 
@@ -453,7 +453,7 @@ vector<Eigen::Vector3d> alan_pose_estimation::LedNodelet::pointcloud_generate(ve
 }
 
 
-bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
+bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 {
     cout<<"try to initialize tracker..."<<endl;
 
@@ -657,7 +657,7 @@ bool alan_pose_estimation::LedNodelet::LED_tracking_initialize(cv::Mat& frame, c
 
 }
 
-vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::pts_2d_normlization(vector<Eigen::Vector2d> pts_2d)
+vector<Eigen::Vector2d> alan::LedNodelet::pts_2d_normlization(vector<Eigen::Vector2d> pts_2d)
 {
     int n = pts_2d.size();
 
@@ -698,7 +698,7 @@ vector<Eigen::Vector2d> alan_pose_estimation::LedNodelet::pts_2d_normlization(ve
 
 }
 
-void alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
+void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 {
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
@@ -776,7 +776,7 @@ void alan_pose_estimation::LedNodelet::recursive_filtering(cv::Mat& frame, cv::M
                              
 }
 
-void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected)
+void alan::LedNodelet::correspondence_search(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected)
 {
     //
     //use uzh method!!!!
@@ -874,7 +874,7 @@ void alan_pose_estimation::LedNodelet::correspondence_search(vector<Eigen::Vecto
 
 }
 
-void alan_pose_estimation::LedNodelet::correspondence_search_test(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected)
+void alan::LedNodelet::correspondence_search_test(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected)
 {
     vector<Eigen::Vector2d> pts_reproject;
 
@@ -962,7 +962,7 @@ void alan_pose_estimation::LedNodelet::correspondence_search_test(vector<Eigen::
 
 
 //outlier rejection
-void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect)
+void alan::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect)
 {
     int n = pts_3d_detect.size();
 
@@ -1064,7 +1064,7 @@ void alan_pose_estimation::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& p
     }
 }
 
-inline double alan_pose_estimation::LedNodelet::calculate_MAD(vector<double> norm_of_points)
+inline double alan::LedNodelet::calculate_MAD(vector<double> norm_of_points)
 {
     int n = norm_of_points.size();
     double mean = 0, delta_sum = 0, MAD;
@@ -1079,7 +1079,7 @@ inline double alan_pose_estimation::LedNodelet::calculate_MAD(vector<double> nor
     return MAD;
 }
 
-void alan_pose_estimation::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 {
     uav_pose_estimated.pose.position.x = pose.translation().x();
     uav_pose_estimated.pose.position.y = pose.translation().y();
@@ -1093,7 +1093,7 @@ void alan_pose_estimation::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 
 }
 
-void* alan_pose_estimation::LedNodelet::PubMainLoop(void* tmp)
+void* alan::LedNodelet::PubMainLoop(void* tmp)
 {
     LedNodelet* pub = (LedNodelet*) tmp;
 
@@ -1113,7 +1113,7 @@ void* alan_pose_estimation::LedNodelet::PubMainLoop(void* tmp)
 }
 
 
-void alan_pose_estimation::LedNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+void alan::LedNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
     //here we assume known correspondences
 
@@ -1170,7 +1170,7 @@ void alan_pose_estimation::LedNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_
 }
 
 
-Eigen::Vector3d alan_pose_estimation::LedNodelet::get_CoM(vector<Eigen::Vector3d> pts_3d)
+Eigen::Vector3d alan::LedNodelet::get_CoM(vector<Eigen::Vector3d> pts_3d)
 {
     double x = 0, y = 0, z = 0;
     for(int i = 0; i < pts_3d.size(); i++)
@@ -1190,7 +1190,7 @@ Eigen::Vector3d alan_pose_estimation::LedNodelet::get_CoM(vector<Eigen::Vector3d
     return CoM;
 }
 
-void alan_pose_estimation::LedNodelet::use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, vector<Eigen::Vector3d> pts_3d_detect, Sophus::SE3d& pose)
+void alan::LedNodelet::use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, vector<Eigen::Vector3d> pts_3d_detect, Sophus::SE3d& pose)
 {
     Eigen::Vector3d t;
     Eigen::Matrix3d R;

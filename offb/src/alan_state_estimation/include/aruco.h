@@ -24,7 +24,7 @@
 
 #include <pthread.h>
 
-namespace alan_pose_estimation
+namespace alan
 {
     class ArucoNodelet : public nodelet::Nodelet
     {
@@ -142,5 +142,5 @@ namespace alan_pose_estimation
 
     };
     
-    PLUGINLIB_EXPORT_CLASS(alan_pose_estimation::ArucoNodelet, nodelet::Nodelet)
+    PLUGINLIB_EXPORT_CLASS(alan::ArucoNodelet, nodelet::Nodelet)
 }

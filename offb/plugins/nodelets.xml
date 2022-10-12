@@ -1,23 +1,30 @@
-<library path="lib/libalan_pose_estimation">
-    <class name ="alan_pose_estimation/ArucoNodelet" 
-        type="alan_pose_estimation::ArucoNodelet"
+<library path="lib/libalan">
+    <class name ="alan/ArucoNodelet" 
+        type="alan::ArucoNodelet"
         base_class_type="nodelet::Nodelet">
         <description>
             Launch nodelet here. Aruco it is.
         </description>
     </class>
-    <class name ="alan_pose_estimation/CnnNodelet" 
-        type="alan_pose_estimation::CnnNodelet"
+    <class name ="alan/CnnNodelet" 
+        type="alan::CnnNodelet"
         base_class_type="nodelet::Nodelet">
         <description>
             Launch nodelet here. CNN it is.
         </description>
     </class>
-    <class name ="alan_pose_estimation/LedNodelet" 
-        type="alan_pose_estimation::LedNodelet"
+    <class name ="alan/LedNodelet" 
+        type="alan::LedNodelet"
         base_class_type="nodelet::Nodelet">
         <description>
-            Launch nodelet here. CNN it is.
+            Launch nodelet here. LED it is.
+        </description>
+    </class>
+    <class name ="alan/PlannerNodelet" 
+        type="alan::PlannerNodelet"
+        base_class_type="nodelet::Nodelet">
+        <description>
+            Launch nodelet here. Planner it is.
         </description>
     </class>
 </library> 

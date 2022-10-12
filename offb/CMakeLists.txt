@@ -21,15 +21,12 @@ find_package(catkin COMPONENTS
   visualization_msgs
   pcl_conversions
   pcl_ros 
-  ifopt
-  nlopt
-  qpOASES
+  # ifopt
+  # nlopt
+  # qpOASES
   # OsqpEigen
 
 )
-
-# find_package(catkin COMPONENTS ) 
-
 
 find_package(OpenCV 4 REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -76,8 +73,8 @@ catkin_package(
 
 set(Sophus_LIBRARIES libSophus.so)
 
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/lib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/include)
+# link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/lib)
+# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/include)
 
 include_directories(
 # include
@@ -89,18 +86,20 @@ include_directories(
   # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
 
-add_library(alan_pose_estimation
+add_library(alan
     src/alan_state_estimation/aruco.cpp
     src/alan_state_estimation/yolo.cpp
-    src/alan_state_estimation/led.cpp)
+    src/alan_state_estimation/led.cpp
+    src/alan_landing_planning/plan.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
-  alan_pose_estimation
+  alan
   ${catkin_LIBRARIES}
   ${OpenCV_INCLUDE_DIRS}
   ${Sophus_INCLUDE_DIRS}
 )
+
 
 add_executable(lala
    src/alan_landing_planning/lala.cpp)
@@ -110,8 +109,8 @@ target_link_libraries(lala
   ${PCL_LIBRARIES}
   ${IPOPT_LIBRARIES}
   ${OSQP_LIBRARIES}
-  mosek64
-  qpOASES
+  # mosek64
+  # qpOASES
   osqp::osqp
   OsqpEigen#::OsqpEigen
   )

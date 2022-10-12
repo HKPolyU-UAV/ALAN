@@ -5,8 +5,8 @@
 #define ARUCO_H
 #include "include/aruco.h"
 
-void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
-//void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr& rgbimage)
+void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
+//void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr& rgbimage)
 {
     // cout<<depth->data.at<uchar>(0,0)<<endl;
     cv_bridge::CvImageConstPtr depth_ptr;
@@ -82,7 +82,7 @@ void alan_pose_estimation::ArucoNodelet::camera_callback(const sensor_msgs::Comp
 
 
 //pnp + BA implementation
-void alan_pose_estimation::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
+void alan::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
 {
 
     vector<Eigen::Vector2d> pts_2d_detect;
@@ -123,7 +123,7 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
 
 }
 
-inline Sophus::SE3d alan_pose_estimation::ArucoNodelet::pose_add_noise(Eigen::Vector3d t, Eigen::Matrix3d R)
+inline Sophus::SE3d alan::ArucoNodelet::pose_add_noise(Eigen::Vector3d t, Eigen::Matrix3d R)
 {
     //generate noise to validate BA
     double noise;
@@ -151,7 +151,7 @@ inline Sophus::SE3d alan_pose_estimation::ArucoNodelet::pose_add_noise(Eigen::Ve
     return pose_with_noise;
 }
 
-inline Eigen::Vector2d alan_pose_estimation::ArucoNodelet::reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
+inline Eigen::Vector2d alan::ArucoNodelet::reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
 {
     Eigen::Vector3d result;
 
@@ -170,7 +170,7 @@ inline Eigen::Vector2d alan_pose_estimation::ArucoNodelet::reproject_3D_2D(Eigen
     return result2d;
 }
 
-inline Eigen::Vector2d alan_pose_estimation::ArucoNodelet::reproject_3D_2D_temp(Eigen::Vector3d P, Sophus::SE3f pose)
+inline Eigen::Vector2d alan::ArucoNodelet::reproject_3D_2D_temp(Eigen::Vector3d P, Sophus::SE3f pose)
 {
     Eigen::Vector3d result;
 
@@ -189,7 +189,7 @@ inline Eigen::Vector2d alan_pose_estimation::ArucoNodelet::reproject_3D_2D_temp(
     return result2d;
 }
 
-void alan_pose_estimation::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+void alan::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
     cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
     cv::Vec3d rvec, tvec;
@@ -245,7 +245,7 @@ void alan_pose_estimation::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d
 
 }
 
-bool alan_pose_estimation::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& pts_2d)
+bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& pts_2d)
 {
     vector<int> markerids;
     vector<vector<cv::Point2f>> markercorners, rejected;
@@ -284,7 +284,7 @@ bool alan_pose_estimation::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eig
         return false;
 }
 
-void alan_pose_estimation::ArucoNodelet::solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d)
+void alan::ArucoNodelet::solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d)
 {
     Eigen::Matrix3d R = pose.rotationMatrix();
     Eigen::Vector3d t = pose.translation();
@@ -319,7 +319,7 @@ void alan_pose_estimation::ArucoNodelet::solveJacobian(Eigen::Matrix<double, 2, 
     // cout<<"Jacob here: "<<Jacob<<endl;        
 }
 
-void alan_pose_estimation::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected)
+void alan::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected)
 //converge problem need to be solved //-> fuck you, your Jacobian was wrong
 {
     //execute Gaussian-Newton Method
@@ -392,7 +392,7 @@ void alan_pose_estimation::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eig
 
 }
 
-void alan_pose_estimation::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+void alan::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 {
     pose_estimated.pose.position.x = pose.translation().x();
     pose_estimated.pose.position.y = pose.translation().y();
@@ -406,7 +406,7 @@ void alan_pose_estimation::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 
 }
 
-void* alan_pose_estimation::ArucoNodelet::PubMainLoop(void* tmp)
+void* alan::ArucoNodelet::PubMainLoop(void* tmp)
 {
     ArucoNodelet* pub = (ArucoNodelet*) tmp;
 
@@ -421,7 +421,7 @@ void* alan_pose_estimation::ArucoNodelet::PubMainLoop(void* tmp)
 }
 
 //ICP
-void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv::Mat& depthframe)
+void alan::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv::Mat& depthframe)
 {
     vector<Eigen::Vector2d> pts_2d_detect;
 
@@ -511,7 +511,7 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv:
 
 }
 
-// pcl::PointCloud<pcl::PointXYZ>::Ptr alan_pose_estimation::ArucoNodelet::eigen_2_pcl(vector<Eigen::Vector3d> pts_3d)
+// pcl::PointCloud<pcl::PointXYZ>::Ptr alan::ArucoNodelet::eigen_2_pcl(vector<Eigen::Vector3d> pts_3d)
 // {
 //     int N = pts_3d.size();
     
@@ -530,7 +530,7 @@ void alan_pose_estimation::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv:
 
 // }
 
-void alan_pose_estimation::ArucoNodelet::use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, Sophus::SE3d& pose)
+void alan::ArucoNodelet::use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, Sophus::SE3d& pose)
 {
     Eigen::Vector3d t;
     Eigen::Matrix3d R;
@@ -551,7 +551,7 @@ void alan_pose_estimation::ArucoNodelet::use_pnp_instead(cv::Mat frame, vector<E
 
 }
 
-void alan_pose_estimation::ArucoNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+void alan::ArucoNodelet::solveicp_svd(vector<Eigen::Vector3d> pts_3d_camera, vector<Eigen::Vector3d> pts_3d_body, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
     //here we assume known correspondences
 
@@ -607,7 +607,7 @@ void alan_pose_estimation::ArucoNodelet::solveicp_svd(vector<Eigen::Vector3d> pt
     t = CoM_camera  - R * CoM_body;
 }
 
-Eigen::Vector3d alan_pose_estimation::ArucoNodelet::get_CoM(vector<Eigen::Vector3d> pts_3d)
+Eigen::Vector3d alan::ArucoNodelet::get_CoM(vector<Eigen::Vector3d> pts_3d)
 {
     double x = 0, y = 0, z = 0;
     for(int i = 0; i < pts_3d.size(); i++)
@@ -627,7 +627,7 @@ Eigen::Vector3d alan_pose_estimation::ArucoNodelet::get_CoM(vector<Eigen::Vector
     return CoM;
 }
 
-vector<Eigen::Vector3d> alan_pose_estimation::ArucoNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
+vector<Eigen::Vector3d> alan::ArucoNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
 {
     //get 9 pixels around the point of interest
 
@@ -682,7 +682,7 @@ vector<Eigen::Vector3d> alan_pose_estimation::ArucoNodelet::pointcloud_generate(
 }
 
 
-// Eigen::Matrix4f alan_pose_estimation::ArucoNodelet::icp_pcl(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_body, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_camera)
+// Eigen::Matrix4f alan::ArucoNodelet::icp_pcl(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_body, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_camera)
 // {
 //     //get SE(3) from  body to camera, i.e., camera = T * body
 //     //get T!

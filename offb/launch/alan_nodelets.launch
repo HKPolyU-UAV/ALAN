@@ -4,20 +4,20 @@
     <!-- <include file="$(find flvis)/launch/flvis_d455_depth.launch"/> -->
 
     <!-- ROS Nodelet manager -->
-    <node pkg="nodelet" type="nodelet" name="alan_pose" args="manager" output="screen">
+    <node pkg="nodelet" type="nodelet" name="alan_master" args="manager" output="screen">
             <rosparam command="load" file="$(find alan)/launch/configs/alan_pose_estimation.yaml" />
     </node> 
 
 
     <!-- ArucoNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="aruco" args="load alan_pose_estimation/ArucoNodelet alan_pose" output="screen">
+    <!-- <node pkg="nodelet" type="nodelet" name="aruco" args="load alan/ArucoNodelet alan_master" output="screen">
         <rosparam command="load" file="$(find alan)/launch/configs/alan_pose_estimation.yaml" />
         <remap from="/alan_pose/pose"  to="/mavros/vision_pose/pose"/>
     </node> -->
     <!-- <nodec -->
 
     <!-- CnnNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="cnn" args="standalone alan_pose_estimation/CnnNodelet alan_pose" output="screen">
+    <!-- <node pkg="nodelet" type="nodelet" name="cnn" args="standalone alan/CnnNodelet alan_master" output="screen">
         <rosparam command="load" file="$(find alan)/launch/configs/alan_pose_estimation.yaml" />
         <param name="/weightpath"    type="string" value="$(find alan)/launch/configs/yolo/uav_new.weights"/>
         <param name="/cfgpath"       type="string" value="$(find alan)/launch/configs/yolo/uav_new.cfg    "/>
@@ -25,7 +25,11 @@
     </node> -->
 
     <!-- LedNodelet -->
-    <node pkg="nodelet" type="nodelet" name="led" args="standalone alan_pose_estimation/LedNodelet alan_pose" output="screen">
+    <node pkg="nodelet" type="nodelet" name="led" args="standalone alan/LedNodelet alan_master" output="screen">
+    </node> 
+
+    <!-- PlannerNodelet -->
+    <node pkg="nodelet" type="nodelet" name="planner" args="standalone alan/PlannerNodelet alan_master" output="screen">
     </node> 
 
 </launch>
