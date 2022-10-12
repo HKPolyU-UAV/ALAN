@@ -3,21 +3,13 @@
 
 #include "essential.h"
 
+#include "traj_gen.hpp"
+
 #include <geometry_msgs/Point.h>
 #include <std_msgs/Bool.h>
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <sensor_msgs/Image.h>
-
-#include <opencv2/aruco.hpp>
-#include <opencv2/calib3d.hpp>
 #include <sophus/se3.hpp>
 
 #include <pluginlib/class_list_macros.h>
@@ -33,13 +25,21 @@ namespace alan
     {
         public:
         private:
+
+            //publisher
+            ros::Publisher pub_traj_pos, pub_traj_vel;
+
+            geometry_msgs::PoseStamped uav_traj_pose;
             
             virtual void onInit()
             {
                 ros::NodeHandle& nh = getNodeHandle();
                 
                 //load POT_extract config  
-                cout<<"sup, we now at planner"<<endl;              
+                cout<<"sup, we now at planner"<<endl;  
+
+                pub_traj_pos = nh.advertise<geometry_msgs::PoseStamped>("/desire_position", 1);
+
                 
 
             }

@@ -7,7 +7,6 @@
 #include "osqpsolver.hpp"
 
 
-
 //test gan
 class traj_gen
 {
