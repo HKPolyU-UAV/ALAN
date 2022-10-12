@@ -98,6 +98,9 @@ target_link_libraries(
   ${catkin_LIBRARIES}
   ${OpenCV_INCLUDE_DIRS}
   ${Sophus_INCLUDE_DIRS}
+  osqp::osqp
+  OsqpEigen#::OsqpEigen
+
 )
 
 
@@ -107,7 +110,6 @@ target_link_libraries(lala
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
-  ${IPOPT_LIBRARIES}
   ${OSQP_LIBRARIES}
   # mosek64
   # qpOASES

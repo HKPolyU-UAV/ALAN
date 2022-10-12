@@ -152,14 +152,14 @@ namespace alan
                 cout<<"sup, we are now at led"<<endl;
                 
                 //load POT_extract config
-                nh.getParam("/alan_pose/LANDING_DISTANCE", LANDING_DISTANCE);     
-                nh.getParam("/alan_pose/BINARY_threshold", BINARY_THRES);     
+                nh.getParam("/alan_master/LANDING_DISTANCE", LANDING_DISTANCE);     
+                nh.getParam("/alan_master/BINARY_threshold", BINARY_THRES);     
 
                 
                 //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
-                nh.getParam("/alan_pose/cam_intrinsics_455", intrinsics_list);                
+                nh.getParam("/alan_master/cam_intrinsics_455", intrinsics_list);                
                                 
                 for(int i = 0; i < 4; i++)
                 {
@@ -171,9 +171,10 @@ namespace alan
                     0, intrinsics_value[1], intrinsics_value[3],
                     0, 0,  1;      
 
+
                 //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
-                nh.getParam("/alan_pose/LED_positions", LED_list); 
+                nh.getParam("/alan_master/LED_positions", LED_list); 
                 for(int i = 0; i < LED_list.size(); i++)
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
@@ -182,9 +183,9 @@ namespace alan
                 LED_no = pts_on_body_frame.size();
 
                 //load outlier rejection info
-                nh.getParam("/alan_pose/MAD_x_threshold", MAD_x_threshold);
-                nh.getParam("/alan_pose/MAD_y_threshold", MAD_y_threshold);
-                nh.getParam("/alan_pose/MAD_z_threshold", MAD_z_threshold);
+                nh.getParam("/alan_master/MAD_x_threshold", MAD_x_threshold);
+                nh.getParam("/alan_master/MAD_y_threshold", MAD_y_threshold);
+                nh.getParam("/alan_master/MAD_z_threshold", MAD_z_threshold);
 
                 LED_no = pts_on_body_frame.size();
                                                                 
@@ -197,7 +198,6 @@ namespace alan
                 //publish
                 image_transport::ImageTransport image_transport_(nh);
                 pubimage = image_transport_.advertise("/processed_image",1);
-
 
                 //test algo here:
                 
