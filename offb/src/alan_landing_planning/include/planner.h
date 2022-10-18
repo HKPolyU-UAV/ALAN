@@ -17,12 +17,17 @@
 
 #include <pthread.h>
 
+#include "alan/planner.h"
+#include "alan/obj.h"
+
+
 
 namespace alan
 {
     enum fsm
     {
         IDLE,
+        READY,
         TAKEOFF,
         RENDEZVOUS,
         FOLLOW,
@@ -48,16 +53,25 @@ namespace alan
             geometry_msgs::PoseStamped uav_traj_desi;
 
             //subscriber
-            void uavOdometryCallback(const nav_msgs::Odometry& msg);
-            
             void uavStateCallback(const mavros_msgs::State::ConstPtr& msg);
+
+            void uavOdometryCallback(const nav_msgs::Odometry::ConstPtr& msg);            
 
             void uavImuCallback(const sensor_msgs::Imu::ConstPtr& msg);
 
-            nav_msgs::Odometry uav_odom;
-            ros::Subscriber sub_uav_odom;
             ros::Subscriber sub_uav_state;
+            ros::Subscriber sub_uav_odom;
             ros::Subscriber sub_uav_imu;
+
+            Eigen::Isometry3d uavOdomPose;
+            Eigen::Vector3d uavAcc;
+
+            mavros_msgs::State uav_current_state;
+            nav_msgs::Odometry uav_odom;
+            sensor_msgs::Imu uav_imu;
+
+            bool uavOdomInitiated = false, uavAccInitiated = false;
+                    
 
             //client
             ros::ServiceClient arming_client;
@@ -66,15 +80,16 @@ namespace alan
             mavros_msgs::SetMode offb_set_mode;
             mavros_msgs::CommandBool arm_cmd;
 
-            mavros_msgs::State current_state;
 
             
             //fsms
-            void fsm_manager(fsm state);
+            void fsm_manager(fsm& state);
 
-            void arm_uav();
+            void arm_uav(fsm& state);
 
-            void takeoff();
+            void ready_uav(fsm& state);
+
+            void takeoff_uav(fsm& state);
 
 
             double last_request;
@@ -100,16 +115,19 @@ namespace alan
             virtual void onInit()
             {
                 ros::NodeHandle& nh = getNodeHandle();
-
-
-                sub_uav_odom = nh.subscribe
-                        ("/mavros/local_position/odom", 1, &PlannerNodelet::uavOdometryCallback, this);
-                
+            
                 sub_uav_state = nh.subscribe<mavros_msgs::State>
                         ("/mavros/state", 1, &PlannerNodelet::uavStateCallback, this);
                 
+                sub_uav_odom = nh.subscribe<nav_msgs::Odometry>
+                        ("/mavros/local_position/odom", 1, &PlannerNodelet::uavOdometryCallback, this);
+                
+                sub_uav_imu = nh.subscribe<sensor_msgs::Imu>
+                        ("/mavros/imu/data", 1, &PlannerNodelet::uavImuCallback, this);
+                
                 set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
                                          ("/mavros/set_mode");
+
 
                 arming_client = nh.serviceClient<mavros_msgs::CommandBool>
                                        ("mavros/cmd/arming");

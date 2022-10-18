@@ -45,6 +45,7 @@ roslaunch_add_file_check(launch)
 add_message_files(
  FILES
  obj.msg
+ planner.msg 
 )
 
 
@@ -90,7 +91,7 @@ add_library(alan
     src/alan_state_estimation/aruco.cpp
     src/alan_state_estimation/yolo.cpp
     src/alan_state_estimation/led.cpp
-    src/alan_landing_planning/plan.cpp)
+    src/alan_landing_planning/planner.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
@@ -104,9 +105,9 @@ target_link_libraries(
 )
 
 
-add_executable(lala
-   src/alan_landing_planning/lala.cpp)
-target_link_libraries(lala
+add_executable(planner_server
+   src/alan_landing_planning/planner_server.cpp)
+target_link_libraries(planner_server
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
