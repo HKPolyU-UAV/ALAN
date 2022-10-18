@@ -5,6 +5,7 @@
 // #include <osqp.h>
 #include "essential.h"
 
+
 class osqpsolver
 {
 private:
