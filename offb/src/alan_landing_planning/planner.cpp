@@ -7,8 +7,6 @@ void* alan::PlannerNodelet::PubMainLoop(void* tmp)
     PlannerNodelet* pub = (PlannerNodelet*) tmp;
 
     ros::Rate loop_rate(50);
-    pub->offb_set_mode.request.custom_mode = "OFFBOARD";
-    pub->arm_cmd.request.value = true;
 
     while (ros::ok()) 
     {
@@ -33,42 +31,14 @@ void* alan::PlannerNodelet::PubMainLoop(void* tmp)
 
 void alan::PlannerNodelet::uavStateCallback(const mavros_msgs::State::ConstPtr& msg)
 {
-    uav_current_state = *msg;
+    uav_current_state = *msg;    
+}
 
-    std::cout<<"mode: "<<uav_current_state.mode<<std::endl;
+void alan::PlannerNodelet::uavStateMachineCallback(const alan::StateMachine::ConstPtr& msg)
+{
+    uav_fsm = *msg;
 
-    if(uavOdomInitiated && uavAccInitiated && uav_current_state.connected)
-    {
-        if( uav_current_state.mode != "OFFBOARD" &&
-            (ros::Time::now().toSec() - last_request > ros::Duration(5.0).toSec()))
-        {
-            if( set_mode_client.call(offb_set_mode) &&
-                offb_set_mode.response.mode_sent)
-                {
-                    ROS_INFO("Offboard enabled");
-                }   
-            last_request = ros::Time::now().toSec();
-        } 
-        else 
-        {
-            if( !uav_current_state.armed &&
-                (ros::Time::now().toSec() - last_request > ros::Duration(5.0).toSec()))
-            {
-                if( arming_client.call(arm_cmd) &&
-                    arm_cmd.response.success){
-                    ROS_INFO("Vehicle armed");
-                }
-                last_request = ros::Time::now().toSec();
-            }
-        }
-
-    }
-
-
-
-
-
-    
+    cout<<uav_fsm.finite_state_machine<<endl;
 }
 
 void alan::PlannerNodelet::uavOdometryCallback(const nav_msgs::Odometry::ConstPtr & msg)

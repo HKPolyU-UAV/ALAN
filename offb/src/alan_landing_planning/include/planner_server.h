@@ -1,5 +1,17 @@
 #include "essential.h"
 
+#include "alan/AlanPlanner.h"
+#include "alan/StateMachine.h"
+
+#define IDLE "IDLE"
+#define READY "READY"
+#define TAKEOFF "TAKEOFF"
+#define RENDEZVOUS "RENDEZVOUS"
+#define FOLLOW "FOLLOW"
+#define LAND "LAND"
+#define SHUTDOWN "SHUTDOWN"
+// #define REPLAN "IDLE"
+
 class planner_server
 {
 private:
@@ -10,6 +22,7 @@ private:
 
     //publisher
     ros::Publisher local_pos_pub;
+    ros::Publisher pub_fsm;
 
     //service
     ros::ServiceClient uav_arming_client;
@@ -26,8 +39,7 @@ private:
     mavros_msgs::State uav_current_state;
 
     geometry_msgs::PoseStamped pose;
-
-
+    alan::StateMachine alan_fsm_object;
 
     double last_request;
     

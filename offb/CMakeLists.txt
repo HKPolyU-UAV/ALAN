@@ -45,7 +45,8 @@ roslaunch_add_file_check(launch)
 add_message_files(
  FILES
  obj.msg
- planner.msg 
+ AlanPlanner.msg 
+ StateMachine.msg
 )
 
 
@@ -119,20 +120,20 @@ target_link_libraries(planner_node
   OsqpEigen#::OsqpEigen
   )
 
-add_executable(kf
-   src/alan_state_estimation/kf.cpp)
-target_link_libraries(kf
-  ${OpenCV_LIBRARIES}
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES})
+# add_executable(kf
+#    src/alan_state_estimation/kf.cpp)
+# target_link_libraries(kf
+#   ${OpenCV_LIBRARIES}
+#   ${catkin_LIBRARIES}
+#   ${PCL_LIBRARIES})
 
 
-add_executable(imu
-   src/alan_state_estimation/imu.cpp)
-target_link_libraries(imu
-  ${OpenCV_LIBRARIES}
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES})
+# add_executable(imu
+#    src/alan_state_estimation/imu.cpp)
+# target_link_libraries(imu
+#   ${OpenCV_LIBRARIES}
+#   ${catkin_LIBRARIES}
+#   ${PCL_LIBRARIES})
 
 
 

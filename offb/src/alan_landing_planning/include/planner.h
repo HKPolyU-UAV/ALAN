@@ -15,7 +15,9 @@
 
 #include <pthread.h>
 
-#include "alan/planner.h"
+#include "alan/AlanPlanner.h"
+#include "alan/StateMachine.h"
+
 
 
 
@@ -56,6 +58,8 @@ namespace alan
 
             void uavImuCallback(const sensor_msgs::Imu::ConstPtr& msg);
 
+            void uavStateMachineCallback(const alan::StateMachine::ConstPtr& msg);
+
             ros::Subscriber sub_uav_state;
             ros::Subscriber sub_uav_odom;
             ros::Subscriber sub_uav_imu;
@@ -66,6 +70,7 @@ namespace alan
             mavros_msgs::State uav_current_state;
             nav_msgs::Odometry uav_odom;
             sensor_msgs::Imu uav_imu;
+            alan::StateMachine uav_fsm;
 
             bool uavOdomInitiated = false, uavAccInitiated = false;
                     
@@ -125,19 +130,19 @@ namespace alan
                 set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
                                          ("/mavros/set_mode");
 
-
                 arming_client = nh.serviceClient<mavros_msgs::CommandBool>
                                        ("mavros/cmd/arming");
+
                 //load POT_extract config  
                 cout<<"sup, we now at planner"<<endl;  
 
                 pub_traj_pos = nh.advertise<geometry_msgs::PoseStamped>
-                        ("mavros/setpoint_position/local", 1);
+                        ("/mavros/setpoint_position/local", 1);
 
                 last_request = ros::Time::now().toSec();
 
                 //create thread for publisher
-                // pthread_create(&tid, NULL, PlannerNodelet::PubMainLoop, (void*)this);
+                pthread_create(&tid, NULL, PlannerNodelet::PubMainLoop, (void*)this);
 
 
             }

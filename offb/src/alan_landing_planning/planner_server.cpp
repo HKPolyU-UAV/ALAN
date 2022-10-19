@@ -13,9 +13,22 @@ planner_server::planner_server(ros::NodeHandle& _nh)
 
     uav_set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
             ("/mavros/set_mode");
+
+    local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>
+            ("/mavros/setpoint_position/local", 1);
+            //   /mavros/setpoint_position/local
+
+    pub_fsm = nh.advertise<alan::StateMachine>
+            ("/alan_fsm", 1);
     
     uav_set_mode.request.custom_mode = "OFFBOARD";
     arm_cmd.request.value = true;
+
+    alan_fsm_object.finite_state_machine = IDLE;
+
+    pose.pose.position.x = 0;
+    pose.pose.position.y = 0;
+    pose.pose.position.z = 1.2;
 
     
 
@@ -37,37 +50,43 @@ void planner_server::mainserver()
 
     while(ros::ok())
     {
-    
+        // std::cout<<"mode: "<<uav_current_state.mode<<std::endl;
+
         if( uav_current_state.mode != "OFFBOARD" &&
-            (ros::Time::now().toSec() - last_request > ros::Duration(5.0).toSec()))
+            (ros::Time::now().toSec() - last_request > ros::Duration(2.0).toSec()))
         {
             if( uav_set_mode_client.call(uav_set_mode) &&
                 uav_set_mode.response.mode_sent)
-                {
-                    ROS_INFO("Offboard enabled");
-                }   
+            {
+                ROS_INFO("Offboard enabled");
+                alan_fsm_object.finite_state_machine = READY;
+            }   
             last_request = ros::Time::now().toSec();
         } 
         else 
         {
             if( !uav_current_state.armed &&
-                (ros::Time::now().toSec() - last_request > ros::Duration(5.0).toSec()))
+                (ros::Time::now().toSec() - last_request > ros::Duration(2.0).toSec()))
             {
                 if( uav_arming_client.call(arm_cmd) &&
-                    arm_cmd.response.success){
+                    arm_cmd.response.success)
+                {
                     ROS_INFO("Vehicle armed");
+                    alan_fsm_object.finite_state_machine = TAKEOFF;
                 }
                 last_request = ros::Time::now().toSec();
             }
         }
+        // cout<<"?"<<endl;
         local_pos_pub.publish(pose);
+
+        // alan_fsm_object.finite_state_machine = IDLE;
+        pub_fsm.publish(alan_fsm_object);
 
         ros::spinOnce();
         rate.sleep();
 
     }
-
-    
 
 }
 

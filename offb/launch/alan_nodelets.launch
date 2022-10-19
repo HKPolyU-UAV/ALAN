@@ -32,7 +32,7 @@
     <node pkg="nodelet" type="nodelet" name="planner" args="standalone alan/PlannerNodelet alan_master" output="screen">
     </node> 
 
-    <!-- <node name="planner_server" pkg="alan" type="planner_server" output="screen">
+    <!-- <node name="planner_node" pkg="alan" type="planner_node" output="screen">
     </node> -->
 
 </launch>
