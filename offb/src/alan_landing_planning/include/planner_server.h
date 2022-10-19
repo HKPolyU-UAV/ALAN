@@ -2,6 +2,7 @@
 
 #include "alan/AlanPlanner.h"
 #include "alan/StateMachine.h"
+#include "alan/AlanPlannerMsg.h"
 
 #define IDLE "IDLE"
 #define READY "READY"

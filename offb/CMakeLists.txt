@@ -44,9 +44,14 @@ roslaunch_add_file_check(launch)
 
 add_message_files(
  FILES
- obj.msg
- AlanPlanner.msg 
+ Object.msg
+ AlanPlannerMsg.msg 
  StateMachine.msg
+ Target.msg
+ AlanPos.msg
+ AlanVel.msg
+ AlanAcc.msg
+ Atti.msg
 )
 
 
