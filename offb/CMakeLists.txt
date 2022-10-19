@@ -105,9 +105,10 @@ target_link_libraries(
 )
 
 
-add_executable(planner_server
+add_executable(planner_node
+   src/alan_landing_planning/planner_node.cpp
    src/alan_landing_planning/planner_server.cpp)
-target_link_libraries(planner_server
+target_link_libraries(planner_node
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}

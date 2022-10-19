@@ -29,10 +29,10 @@
     </node> 
 
     <!-- PlannerNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="planner" args="standalone alan/PlannerNodelet alan_master" output="screen">
-    </node>  -->
+    <node pkg="nodelet" type="nodelet" name="planner" args="standalone alan/PlannerNodelet alan_master" output="screen">
+    </node> 
 
-    <node name="planner_server" pkg="alan" type="planner_server" output="screen">
-    </node>
+    <!-- <node name="planner_server" pkg="alan" type="planner_server" output="screen">
+    </node> -->
 
 </launch>

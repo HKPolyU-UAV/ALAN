@@ -1,5 +1,4 @@
-#ifndef PLAN_H
-#define PLAN_H
+
 
 #include "essential.h"
 
@@ -7,8 +6,7 @@
 
 #include <geometry_msgs/Point.h>
 #include <std_msgs/Bool.h>
-#include <geometry_msgs/PointStamped.h>
-#include <geometry_msgs/PoseStamped.h>
+
 
 #include <sophus/se3.hpp>
 
@@ -134,12 +132,12 @@ namespace alan
                 cout<<"sup, we now at planner"<<endl;  
 
                 pub_traj_pos = nh.advertise<geometry_msgs::PoseStamped>
-                        ("/desire_position", 1);
+                        ("mavros/setpoint_position/local", 1);
 
                 last_request = ros::Time::now().toSec();
 
                 //create thread for publisher
-                pthread_create(&tid, NULL, PlannerNodelet::PubMainLoop, (void*)this);
+                // pthread_create(&tid, NULL, PlannerNodelet::PubMainLoop, (void*)this);
 
 
             }
@@ -151,5 +149,3 @@ namespace alan
 
     PLUGINLIB_EXPORT_CLASS(alan::PlannerNodelet, nodelet::Nodelet)
 }
-
-#endif

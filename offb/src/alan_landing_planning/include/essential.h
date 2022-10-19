@@ -27,6 +27,8 @@
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
+#include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 
@@ -50,7 +52,7 @@ namespace pc
     ENDCOLOR
   };
 
-  std::ostream& operator<<(std::ostream& os, PRINT_COLOR c)
+  inline std::ostream& operator<<(std::ostream& os, PRINT_COLOR c)
   {
     switch(c)
     {
@@ -85,4 +87,5 @@ namespace pc
 #define ROS_MAGENTA_STREAM_COND(c, x) ROS_INFO_STREAM_COND(c, pc::MAGENTA << x << pc::ENDCOLOR)
 #define ROS_CYAN_STREAM_COND(c, x)    ROS_INFO_STREAM_COND(c, pc::CYAN    << x << pc::ENDCOLOR)
 
+#else
 #endif
