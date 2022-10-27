@@ -97,6 +97,8 @@ add_library(alan
     src/alan_state_estimation/aruco.cpp
     src/alan_state_estimation/yolo.cpp
     src/alan_state_estimation/led.cpp
+    src/alan_state_estimation/msgsync.cpp
+    
     src/alan_landing_planning/planner.cpp)
 
 ## Specify libraries to link a library or executable target against

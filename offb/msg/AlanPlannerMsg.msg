@@ -1,4 +1,5 @@
 string fsm
+string frame
 bool good2fly
 AlanPos position
 AlanVel velocity

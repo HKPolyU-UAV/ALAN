@@ -27,4 +27,11 @@
             Launch nodelet here. Planner it is.
         </description>
     </class>
+    <class name ="alan/MsgSyncNodelet" 
+        type="alan::MsgSyncNodelet"
+        base_class_type="nodelet::Nodelet">
+        <description>
+            Launch nodelet here. MsgSync it is.
+        </description>
+    </class>
 </library> 

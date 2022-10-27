@@ -56,7 +56,7 @@ void alan::PlannerNodelet::uavOdometryCallback(const nav_msgs::Odometry::ConstPt
     uavOdomPose = t_ * q_;
 
     uavOdomInitiated = true;
-    uav_traj_desi.pose.position.x = 1;
+    // uav_traj_desi.pose.position.x = 1;
     // pub_traj_pos.publish(uav_traj_desi);
 
 
