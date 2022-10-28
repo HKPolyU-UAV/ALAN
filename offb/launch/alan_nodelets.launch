@@ -28,9 +28,6 @@
     <node pkg="nodelet" type="nodelet" name="led" args="standalone alan/LedNodelet alan_master" output="screen">
     </node> 
 
-    <!-- PlannerNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="planner" args="standalone alan/PlannerNodelet alan_master" output="screen">
-    </node>  -->
 
     <!-- MsgSyncNodelet -->
     <node pkg="nodelet" type="nodelet" name="msgsync" args="standalone alan/MsgSyncNodelet alan_master" output="screen">

@@ -1,32 +1,14 @@
 #ifndef QPSOLVER_H
 #define QPSOLVER_H
 
-#include <OsqpEigen/OsqpEigen.h>
+// #include <OsqpEigen/OsqpEigen.h>
 // #include <osqp.h>
-#include "essential.h"
+// #include "../tools/essential.h"
+
+#include "include/bezier_lib/osqpsolver.h"
 
 
-class osqpsolver
-{
-private:
-    /* data */
-public:
-    osqpsolver(/* args */);
-    void qp_opt(
-        Eigen::MatrixXd _MQM, 
-        Eigen::MatrixXd _A, 
-        Eigen::MatrixXd _ub, 
-        Eigen::MatrixXd _lb);
-    ~osqpsolver();
-};
 
-osqpsolver::osqpsolver(/* args */)
-{
-}
-
-osqpsolver::~osqpsolver()
-{
-}
 
 void osqpsolver::qp_opt(
         Eigen::MatrixXd _MQM, 

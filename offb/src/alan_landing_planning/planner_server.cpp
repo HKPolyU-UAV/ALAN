@@ -30,8 +30,6 @@ planner_server::planner_server(ros::NodeHandle& _nh)
     pose.pose.position.y = 0;
     pose.pose.position.z = 1.2;
 
-    
-
 }
 
 planner_server::~planner_server()

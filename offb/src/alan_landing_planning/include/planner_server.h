@@ -1,8 +1,10 @@
-#include "essential.h"
+#include "tools/essential.h"
+#include "bezier_lib/traj_gen.h"
 
 #include "alan/AlanPlanner.h"
 #include "alan/StateMachine.h"
 #include "alan/AlanPlannerMsg.h"
+
 
 #define IDLE "IDLE"
 #define READY "READY"
@@ -11,6 +13,8 @@
 #define FOLLOW "FOLLOW"
 #define LAND "LAND"
 #define SHUTDOWN "SHUTDOWN"
+
+
 // #define REPLAN "IDLE"
 
 class planner_server
@@ -31,6 +35,8 @@ private:
 
     //callback functions
     void uavStateCallback(const mavros_msgs::State::ConstPtr& msg);
+
+    void uavAlanMsgCallback(const alan::AlanPlannerMsg::ConstPtr& msg);
 
     //server
 
