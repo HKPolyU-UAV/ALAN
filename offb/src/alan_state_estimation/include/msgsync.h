@@ -1,4 +1,6 @@
 //sync all message including position, velocity, accleration
+//of both uav and ugv
+
 #include "tools/essential.h"
 
 #include <pluginlib/class_list_macros.h>
@@ -27,7 +29,8 @@ namespace alan
             
 
             //subscribe
-            void msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
+            void uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
+            void ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
             
             message_filters::Subscriber<nav_msgs::Odometry> sub_odom;
             message_filters::Subscriber<sensor_msgs::Imu> sub_imu;
@@ -38,7 +41,10 @@ namespace alan
 
             //private variables 
             nav_msgs::Odometry uav_odom;
-            sensor_msgs::Imu uav_imu;   
+            sensor_msgs::Imu uav_imu;  
+
+            nav_msgs::Odometry ugv_odom;
+            sensor_msgs::Imu ugv_imu; 
 
             alan::AlanPlannerMsg uav_alan_msg;
 
@@ -60,7 +66,7 @@ namespace alan
                 sub_odom.subscribe(nh, "/mavros/local_position/odom", 1);
                 sub_imu.subscribe(nh, "/mavros/imu/data", 1);
                 sync_.reset(new sync( MySyncPolicy(10), sub_odom, sub_imu));            
-                sync_->registerCallback(boost::bind(&MsgSyncNodelet::msg_callback, this, _1, _2));
+                sync_->registerCallback(boost::bind(&MsgSyncNodelet::uav_msg_callback, this, _1, _2));
 
 
 

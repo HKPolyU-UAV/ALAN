@@ -8,7 +8,7 @@
 
 #define IDLE "IDLE"
 #define READY "READY"
-#define TAKEOFF "TAKEOFF"
+#define TOOKOFF "TOOKOFF"
 #define RENDEZVOUS "RENDEZVOUS"
 #define FOLLOW "FOLLOW"
 #define LAND "LAND"
@@ -19,11 +19,19 @@
 
 class planner_server
 {
+    typedef struct waypts
+    {
+        double x;
+        double y;
+        double z;
+    }waypts;
+
 private:
     ros::NodeHandle nh;
 
     //subscriber
     ros::Subscriber uav_state_sub;
+    ros::Subscriber uav_AlanPlannerMsg_sub;
 
     //publisher
     ros::Publisher local_pos_pub;
@@ -38,14 +46,35 @@ private:
 
     void uavAlanMsgCallback(const alan::AlanPlannerMsg::ConstPtr& msg);
 
+    //fsm
+    void fsm_manager();
+
+
+    bool get_ready();
+
+    bool taking_off();
+
+
+    //other functions
+    void planner_pub();
+
+    // void 
+
     //server
 
+
     //private variables
+
+    string fsm_state = IDLE;
+    waypts takeoff_hover_pt = {0,0,1.2};
     mavros_msgs::SetMode uav_set_mode;
     mavros_msgs::CommandBool arm_cmd;
     mavros_msgs::State uav_current_state;
 
+    alan::AlanPlannerMsg uav_current_AlanPlannerMsg;
+
     geometry_msgs::PoseStamped pose;
+    geometry_msgs::PoseStamped uav_traj_desired;
     alan::StateMachine alan_fsm_object;
 
     double last_request;
