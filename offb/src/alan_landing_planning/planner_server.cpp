@@ -11,7 +11,7 @@ planner_server::planner_server(ros::NodeHandle& _nh)
             ("/mavros/state", 1, &planner_server::uavStateCallback, this);
     
     uav_AlanPlannerMsg_sub = nh.subscribe<alan::AlanPlannerMsg>
-            ("/AlanPlannerMsg/data", 1, &planner_server::uavAlanMsgCallback, this);
+            ("/AlanPlannerMsg/uav/data", 1, &planner_server::uavAlanMsgCallback, this);
 
     //publish
     pub_fsm = nh.advertise<alan::StateMachine>
@@ -52,6 +52,26 @@ void planner_server::uavStateCallback(const mavros_msgs::State::ConstPtr& msg)
 void planner_server::uavAlanMsgCallback(const alan::AlanPlannerMsg::ConstPtr& msg)
 {
     uav_current_AlanPlannerMsg = *msg;
+    uav_current_AlanPlannerMsg.position.x;
+
+    Eigen::Translation3d t_(
+        uav_current_AlanPlannerMsg.position.x,
+        uav_current_AlanPlannerMsg.position.y,
+        uav_current_AlanPlannerMsg.position.z
+        );
+
+    Eigen::Quaterniond q_(
+        uav_current_AlanPlannerMsg.orientation.ow,
+        uav_current_AlanPlannerMsg.orientation.ox,
+        uav_current_AlanPlannerMsg.orientation.oy,
+        uav_current_AlanPlannerMsg.orientation.oz
+        );
+    
+    uavOdomPose = t_ * q_;
+
+    // cout<<uavOdomPose.matrix()<<endl;
+
+    // cout<<uav_current_AlanPlannerMsg.frame<<endl;
 
     // cout<<"im here"<<uav_current_AlanPlannerMsg.position.x<<endl;
 }
@@ -77,19 +97,53 @@ void planner_server::fsm_manager()
 {
     if(fsm_state == IDLE)
     {
-        cout<<"IDLE"<<endl;
+        if(print_or_not)
+        {
+            ROS_YELLOW_STREAM(IDLE);
+            print_or_not = false;
+        }
         if(get_ready())
-            fsm_state = READY;
+        {
+            fsm_state = ARMED;
+            print_or_not = true;
+        }
     }
-    else if(fsm_state == READY)
+    else if(fsm_state == ARMED)
     {
-        cout<<"Ready"<<endl;
-        taking_off();
+        if(print_or_not)
+        {
+            ROS_GREEN_STREAM(ARMED);
+            print_or_not = false;
+        }
+        if(taking_off())
+        {
+            fsm_state = TOOKOFF;
+            print_or_not = true;
+            last_request = ros::Time::now().toSec();
+        }
+
+    }
+    else if(fsm_state == TOOKOFF)
+    {
+        if(print_or_not)
+        {
+            ROS_GREEN_STREAM(TOOKOFF);
+            print_or_not = false;
+        }
+        if(ros::Time::now().toSec() - last_request > ros::Duration(4.0).toSec())
+        {
+            fsm_state = RENDEZVOUS;
+            print_or_not = true;
+        }
 
     }
     else if(fsm_state == RENDEZVOUS)
     {
-
+        if(print_or_not)
+        {
+            ROS_GREEN_STREAM(RENDEZVOUS);
+            print_or_not = false;
+        }
 
     }
     else
@@ -109,7 +163,7 @@ bool planner_server::get_ready()
                 uav_set_mode.response.mode_sent)
             {
                 ROS_INFO("Offboard enabled");
-                alan_fsm_object.finite_state_machine = READY;
+                alan_fsm_object.finite_state_machine = ARMED;
             }   
             last_request = ros::Time::now().toSec();
         } 
@@ -122,7 +176,7 @@ bool planner_server::get_ready()
                 arm_cmd.response.success)
             {
                 ROS_INFO("Vehicle armed");
-                alan_fsm_object.finite_state_machine = TAKEOFF;
+                alan_fsm_object.finite_state_machine = TOOKOFF;
                 return_state = true;
             }
             last_request = ros::Time::now().toSec();
@@ -154,13 +208,19 @@ bool planner_server::taking_off()
     
     dis = sqrt(dis);
     // cout<<dis<<endl;
-    if(dis < 0.08)
+    if(dis < 0.15)
         return true;
     else    
         return false;
 }
 
-// bool
+bool planner_server::go_to_rendezvous_pt()
+{
+
+
+}
+
+
 
 void planner_server::planner_pub()
 {

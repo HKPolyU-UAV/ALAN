@@ -115,6 +115,7 @@ target_link_libraries(
 add_executable(planner_node
    src/alan_landing_planning/planner_node.cpp
    src/alan_landing_planning/planner_server.cpp)
+
 target_link_libraries(planner_node
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
@@ -126,33 +127,22 @@ target_link_libraries(planner_node
   OsqpEigen#::OsqpEigen
   )
 
-# add_executable(kf
-#    src/alan_state_estimation/kf.cpp)
-# target_link_libraries(kf
-#   ${OpenCV_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   ${PCL_LIBRARIES})
-
-
-# add_executable(imu
-#    src/alan_state_estimation/imu.cpp)
-# target_link_libraries(imu
-#   ${OpenCV_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   ${PCL_LIBRARIES})
-
-
-
-# add_executable(ncnn_yolo
-#    src/ncnn_yolo.cpp)
-# target_link_libraries(ncnn_yolo
-#   ${OpenCV_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   ${PCL_LIBRARIES}
-#   ncnn
-#   ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn/lib/libncnn.a
-#   )
-
+add_executable(lala
+   src/alan_landing_planning/lala.cpp
+   src/alan_landing_planning/bernstein.cpp
+   src/alan_landing_planning/osqpsolver.cpp
+   src/alan_landing_planning/traj_gen.cpp)
+   
+target_link_libraries(lala
+  # ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${OSQP_LIBRARIES}
+  # mosek64
+  # qpOASES
+  osqp::osqp
+  OsqpEigen#::OsqpEigen
+  )
 ###################################################
 
 

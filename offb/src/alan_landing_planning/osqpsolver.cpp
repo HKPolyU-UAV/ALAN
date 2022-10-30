@@ -7,8 +7,15 @@
 
 #include "include/bezier_lib/osqpsolver.h"
 
+osqpsolver::osqpsolver()
+{
 
+}
 
+osqpsolver::~osqpsolver()
+{
+
+}
 
 void osqpsolver::qp_opt(
         Eigen::MatrixXd _MQM, 

@@ -7,7 +7,7 @@
 
 
 #define IDLE "IDLE"
-#define READY "READY"
+#define ARMED "ARMED"
 #define TOOKOFF "TOOKOFF"
 #define RENDEZVOUS "RENDEZVOUS"
 #define FOLLOW "FOLLOW"
@@ -54,6 +54,8 @@ private:
 
     bool taking_off();
 
+    bool go_to_rendezvous_pt();
+
 
     //other functions
     void planner_pub();
@@ -67,6 +69,9 @@ private:
 
     string fsm_state = IDLE;
     waypts takeoff_hover_pt = {0,0,1.2};
+    
+    Eigen::Isometry3d uavOdomPose;
+
     mavros_msgs::SetMode uav_set_mode;
     mavros_msgs::CommandBool arm_cmd;
     mavros_msgs::State uav_current_state;
@@ -78,6 +83,8 @@ private:
     alan::StateMachine alan_fsm_object;
 
     double last_request;
+
+    bool print_or_not = true;
     
 
 public:
