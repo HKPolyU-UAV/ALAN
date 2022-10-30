@@ -6,6 +6,7 @@ project(alan)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+
 find_package(catkin COMPONENTS
   nodelet
   roscpp
@@ -35,6 +36,17 @@ find_package(Eigen3 REQUIRED)
 find_package(Sophus REQUIRED)
 find_package(osqp REQUIRED)
 find_package(OsqpEigen REQUIRED)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(gtk3 REQUIRED IMPORTED_TARGET gtk+-3.0)
+pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
+pkg_search_module(gstreamer-sdp REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
+pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
+pkg_search_module(gstreamer-video REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
+
+
+# pkg_get_variable(GST_VERSION gstreamer-1.0 version)
+# message(STATUS "Gstreamer version:${GST_VERSION}")
 
 
 # find_package(PCL 1.2 REQUIRED)
@@ -125,6 +137,8 @@ target_link_libraries(planner_node
   # qpOASES
   osqp::osqp
   OsqpEigen#::OsqpEigen
+  
+  
   )
 
 add_executable(lala
@@ -142,6 +156,11 @@ target_link_libraries(lala
   # qpOASES
   osqp::osqp
   OsqpEigen#::OsqpEigen
+  PkgConfig::gtk3
+    PkgConfig::gstreamer
+    PkgConfig::gstreamer-sdp
+    PkgConfig::gstreamer-app
+    PkgConfig::gstreamer-video
   )
 ###################################################
 

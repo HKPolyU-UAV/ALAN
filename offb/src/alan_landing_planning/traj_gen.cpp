@@ -36,8 +36,10 @@ namespace alan_traj
         bernstein bezier_base(
             _n_order, _m, _d_order, _s,
             _start, _end,
-            _cube_list, _d_constraints            
-            );//pass everything in one pass
+            _cube_list, _d_constraints             
+        );//pass everything in one pass
+        
+        // if
         
         //1. variable set
         // _n_dim = (b_info.n_order + 1) + b_info.m
