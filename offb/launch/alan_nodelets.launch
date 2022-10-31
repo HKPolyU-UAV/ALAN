@@ -34,6 +34,7 @@
     </node> 
 
     <node name="planner_node" pkg="alan" type="planner_node" output="screen">
+            <rosparam command="load" file="$(find alan)/launch/configs/alan_land_trajectory.yaml" />
     </node>
 
 </launch>

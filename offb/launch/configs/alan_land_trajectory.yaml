@@ -8,3 +8,21 @@ LED_positions:
   - x: 0.085
     y: -0.075
     z: -0.030 #
+
+PID_gain:
+  - kp:
+    - x: 0
+      y: 0
+      z: 0
+      yaw: 0
+  - ki:
+    - x: 0
+      y: 0
+      z: 0
+      yaw: 0
+  - kd:
+    - x: 0
+      y: 0
+      z: 0
+      yaw: 0
+

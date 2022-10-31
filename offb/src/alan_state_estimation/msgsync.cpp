@@ -41,7 +41,7 @@ void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& 
     uav_acc_world = uavOdomPose.rotation() * uav_acc_body;
     uav_alan_msg.acceleration.x = uav_acc_body(0);
     uav_alan_msg.acceleration.y = uav_acc_body(1);
-    uav_alan_msg.acceleration.z = uav_acc_body(2);
+    uav_alan_msg.acceleration.z = uav_acc_body(2) - 9.8066;
 
     uav_alan_msg.orientation.ow = uav_odom.pose.pose.orientation.w;
     uav_alan_msg.orientation.ox = uav_odom.pose.pose.orientation.x;
@@ -92,7 +92,7 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
     ugv_acc_world = ugvOdomPose.rotation() * ugv_acc_body;
     ugv_alan_msg.acceleration.x = ugv_acc_body(0);
     ugv_alan_msg.acceleration.y = ugv_acc_body(1);
-    ugv_alan_msg.acceleration.z = ugv_acc_body(2);
+    ugv_alan_msg.acceleration.z = ugv_acc_body(2) - 9.8066;
 
     ugv_alan_msg.orientation.ow = ugv_odom.pose.pose.orientation.w;
     ugv_alan_msg.orientation.ox = ugv_odom.pose.pose.orientation.x;

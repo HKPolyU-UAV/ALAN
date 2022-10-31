@@ -1,6 +1,6 @@
 #include <iostream>
 #include "include/bezier_lib/traj_gen.h"
-#include <gst/gst.h>
+// #include <gst/gst.h>
 
 using namespace std;
 
@@ -10,7 +10,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 	
 	int n_order = 7;
-    int m = 3;
+    int m = 5;
     int d_order = 3;
 
     vector<double> s;

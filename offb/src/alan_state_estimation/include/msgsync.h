@@ -35,9 +35,16 @@ namespace alan
             message_filters::Subscriber<nav_msgs::Odometry> uav_sub_odom;
             message_filters::Subscriber<sensor_msgs::Imu> uav_sub_imu;
 
+            message_filters::Subscriber<nav_msgs::Odometry> ugv_sub_odom;
+            message_filters::Subscriber<sensor_msgs::Imu> ugv_sub_imu;
+
             typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Imu> uavMySyncPolicy;
             typedef message_filters::Synchronizer<uavMySyncPolicy> uavsync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<uavsync> uavsync_;     
+
+            typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Imu> ugvMySyncPolicy;
+            typedef message_filters::Synchronizer<uavMySyncPolicy> ugvsync;//(MySyncPolicy(10), subimage, subdepth);
+            boost::shared_ptr<uavsync> ugvsync_;  
 
             //private variables 
             nav_msgs::Odometry uav_odom;
@@ -72,12 +79,18 @@ namespace alan
                 //initialize publisher
 
                 //subscribe
-                uav_sub_odom.subscribe(nh, "/mavros/local_position/odom", 1);
-                uav_sub_imu.subscribe(nh, "/mavros/imu/data", 1);
+                uav_sub_odom.subscribe(nh, "/uav/mavros/local_position/odom", 1);
+                uav_sub_imu.subscribe(nh, "/uav/mavros/imu/data", 1);
 
                 uavsync_.reset(new uavsync( uavMySyncPolicy(10), uav_sub_odom, uav_sub_imu));            
                 uavsync_->registerCallback(boost::bind(&MsgSyncNodelet::uav_msg_callback, this, _1, _2));
 
+
+                ugv_sub_odom.subscribe(nh, "/uav/mavros/local_position/odom", 1);
+                ugv_sub_imu.subscribe(nh, "/uav/mavros/imu/data", 1);
+
+                ugvsync_.reset(new ugvsync( ugvMySyncPolicy(10), ugv_sub_odom, ugv_sub_imu));            
+                ugvsync_->registerCallback(boost::bind(&MsgSyncNodelet::ugv_msg_callback, this, _1, _2));
 
 
                 uav_pub_AlanPlannerMsg = nh.advertise<alan::AlanPlannerMsg>
