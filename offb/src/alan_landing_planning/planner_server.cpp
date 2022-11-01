@@ -87,13 +87,15 @@ void planner_server::uavAlanMsgCallback(const alan::AlanPlannerMsg::ConstPtr& ms
     
     // uav_traj_pose(3) = q.toRotationMatrix().eulerAngles(2);
 
-    Eigen::Vector3d euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
+    double yaw = atan2(q.toRotationMatrix()(1,0), q.toRotationMatrix()(0,0));
 
-    uav_traj_pose(3) = euler(2);
+    uav_traj_pose(3) = yaw;
 
-    cout<<euler(0)<<endl;;
-    cout<<euler(1)<<endl;;
-    cout<<euler(2)<<endl<<endl;;;
+    // cout<<"yaw: "<<uav_traj_pose(3)<<endl;
+
+    // cout<<euler(0)<<endl;;
+    // cout<<euler(1)<<endl;;
+    // cout<<euler(2)<<endl<<endl;;;
 
     // cout<<uavOdomPose.matrix()<<endl;
 
@@ -191,27 +193,58 @@ void planner_server::fsm_manager()
         }
         if(ros::Time::now().toSec() - last_request > ros::Duration(2.0).toSec())
         {
-            fsm_state = RENDEZVOUS;
+            fsm_state = FOLLOW;
             print_or_not = true;
+            last_request = ros::Time::now().toSec();
         }
 
     }
-    else if(fsm_state == RENDEZVOUS)
+    else if(fsm_state == FOLLOW)
     {
         if(print_or_not)
         {
-            ROS_GREEN_STREAM(RENDEZVOUS);
+            ROS_GREEN_STREAM(FOLLOW);
             print_or_not = false;
         }
-        if(go_to_rendezvous_pt())
+        if(go_to_rendezvous_pt_and_follow())
         {
-
+            fsm_state = LAND;
+            print_or_not = true;
+            last_request = ros::Time::now().toSec();
         }
 
     }
+    else if(fsm_state == LAND)
+    {
+        if(print_or_not)
+        {
+            ROS_CYAN_STREAM(LAND);
+            print_or_not = false;
+        }
+
+        if(land())
+        {
+            fsm_state = SHUTDOWN;
+            print_or_not = true;
+            last_request = ros::Time::now().toSec();
+        }
+
+    }
+    else if(fsm_state == SHUTDOWN)
+    {
+        if(print_or_not)
+        {
+            ROS_GREEN_STREAM(SHUTDOWN);
+            print_or_not = false;
+        }
+        if(shutdown())
+        {
+            
+        }
+    }
     else
     {
-
+        ROS_ERROR("Please Check System...");
     }
 
 }
@@ -277,25 +310,20 @@ bool planner_server::taking_off()
         return false;
 }
 
-bool planner_server::go_to_rendezvous_pt()
+bool planner_server::go_to_rendezvous_pt_and_follow()
 {
     uav_traj_pose_desired.pose.position.x = 2;
     uav_traj_pose_desired.pose.position.y = 2;
     uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
 
-    // target_traj_pose(0) = 2;
-    // target_traj_pose(1) = 2;
-    // target_traj_pose(2) = 1.2;
 
     target_traj_pose(0) = 2;
     target_traj_pose(1) = 2;
-    target_traj_pose(2) = ugv_current_AlanPlannerMsg.position.z;
+    target_traj_pose(2) = 1.2;
     target_traj_pose(3) = M_PI /2;
+    //enter ugv and uav rendezvous point here
 
     Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
-
-    
-
 
     // Eigen::Quaterniond q = yaw2q(twist_result(3) / 2);
 
@@ -309,16 +337,28 @@ bool planner_server::go_to_rendezvous_pt()
     uav_traj_twist_desired.linear.z = twist_result(2);
     uav_traj_twist_desired.angular.z = twist_result(3);
 
+    if(ros::Time::now().toSec() - last_request > ros::Duration(10.0).toSec())
+        return true;
+    else 
+        return false;
 
 }
 
+bool planner_server::land()
+{
+    
+}
 
+bool planner_server::shutdown()
+{
+    
+}
 
 void planner_server::planner_pub()
 {
     // cout<<uav_traj_desired.pose.position.x<<endl;
 
-    if(fsm_state == RENDEZVOUS)
+    if(fsm_state == FOLLOW || fsm_state == LAND)
         local_vel_pub.publish(uav_traj_twist_desired);
     else
         local_pos_pub.publish(uav_traj_pose_desired);
@@ -347,12 +387,9 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
     Eigen::Vector4d K_i(0.05, 0.05, 0.05, 0.05);
     Eigen::Vector4d K_d(0, 0, 0, 0);
 
-    
-
     error = setpoint - pose;
 
     // cout<<"error:\n"<<error<<endl;;
-
 
     if (error[3] >= M_PI)
     {
@@ -416,19 +453,6 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
     pid_last_request = ros::Time::now().toSec();
 
     return output;
-}
-
-Eigen::Quaterniond planner_server::yaw2q(double yaw)
-{
-    Eigen::Quaterniond q;
-
-    Eigen::AngleAxisd yawAngle(yaw, Eigen::Vector3d::UnitZ());
-
-    q = yawAngle;
-
-    return q;
-
-
 }
 
 

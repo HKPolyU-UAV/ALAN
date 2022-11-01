@@ -56,14 +56,15 @@ private:
 
     bool taking_off();
 
-    bool go_to_rendezvous_pt();
+    bool go_to_rendezvous_pt_and_follow();
 
-    
+    bool land();
+
+    bool shutdown();
 
     //other functions
     void planner_pub();
 
-    Eigen::Quaterniond yaw2q(double yaw);
 
     // void 
 
