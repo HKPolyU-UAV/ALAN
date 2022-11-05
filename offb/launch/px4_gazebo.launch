@@ -4,7 +4,7 @@
 
 
 	<arg name="fcu_url" default="udp://:14540@127.0.0.1:14557" />
-	<arg name="gcs_url" default="" />
+	<arg name="gcs_url" default="udp://:14560@127.0.0.1:14550" />
 	<arg name="tgt_system" default="1" />
 	<arg name="tgt_component" default="1" />
 	<arg name="log_output" default="screen" />

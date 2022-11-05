@@ -65,6 +65,8 @@ private:
     //other functions
     void planner_pub();
 
+     
+
 
     // void 
 
@@ -102,6 +104,8 @@ private:
     double kp, ki, kd;
     
     Eigen::Vector4d last_error, integral;
+
+    double uav_v_max = 1.5;
 
     
 

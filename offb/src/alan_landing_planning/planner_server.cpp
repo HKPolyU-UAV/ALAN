@@ -319,7 +319,7 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 
     target_traj_pose(0) = 2;
     target_traj_pose(1) = 2;
-    target_traj_pose(2) = 1.2;
+    target_traj_pose(2) = 2.5;
     target_traj_pose(3) = M_PI /2;
     //enter ugv and uav rendezvous point here
 
@@ -346,12 +346,13 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 
 bool planner_server::land()
 {
+
     
 }
 
 bool planner_server::shutdown()
 {
-    
+
 }
 
 void planner_server::planner_pub()
@@ -383,7 +384,7 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
     }
         
 
-    Eigen::Vector4d K_p(2, 2, 1.5, 1);
+    Eigen::Vector4d K_p(1.2, 1.2, 1.5, 1);
     Eigen::Vector4d K_i(0.05, 0.05, 0.05, 0.05);
     Eigen::Vector4d K_d(0, 0, 0, 0);
 
@@ -424,10 +425,6 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
 
         output[i] = u_p[i] + u_i[i] + u_d[i];
         
-        // cout << "-----------------------------------------------------------------------" << endl;
-        // cout << "error[" << i << "]=" << error[i] << " last_error[" << i << "]=" << last_error[i] << endl;
-        // cout << "iteration_time=" << iteration_time << " integral[" << i << "]=" << integral[i] << endl;
-        // cout << "output[" << i << "]=" << output[i] << " u_p[" << i << "]=" << u_p[i] << " u_i[" << i << "]=" << u_i[i] << " u_d[" << i << "]=" << u_d[i] << endl;
     }
 
     // cout<<endl;
