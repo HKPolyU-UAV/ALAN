@@ -9,8 +9,8 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "lala");
     ros::NodeHandle nh;
 	
-	int n_order = 7;
-    int m = 5;
+	int n_order = 6;
+    int m = 1;
     int d_order = 3;
 
     vector<double> s;
@@ -25,7 +25,7 @@ int main(int argc, char** argv)
     start.j_ = 0;
 
     alan_traj::endpt_cond end;
-    end.p_ = 280;
+    end.p_ = 60;
     end.v_ = 0;
     end.a_ = 0;
     end.j_ = 0;
@@ -38,21 +38,21 @@ int main(int argc, char** argv)
     //
     cube_list.push_back(cube);
 
-    cube.x_max = 150;
-    cube.x_min = 50;//-OsqpEigen::INFTY;//50;
-    cube_list.push_back(cube);
+    // cube.x_max = 150;
+    // cube.x_min = 50;//-OsqpEigen::INFTY;//50;
+    // cube_list.push_back(cube);
 
-    cube.x_max = 230;
-    cube.x_min = 130;//-OsqpEigen::INFTY;//130;
-    cube_list.push_back(cube);
+    // cube.x_max = 230;
+    // cube.x_min = 130;//-OsqpEigen::INFTY;//130;
+    // cube_list.push_back(cube);
     
-    cube.x_max = 300;
-    cube.x_min = 200;//-OsqpEigen::INFTY;//200;
-    cube_list.push_back(cube);
+    // cube.x_max = 300;
+    // cube.x_min = 200;//-OsqpEigen::INFTY;//200;
+    // cube_list.push_back(cube);
     
-    cube.x_max = 330;
-    cube.x_min = 230;//-OsqpEigen::INFTY;//230;
-    cube_list.push_back(cube);
+    // cube.x_max = 330;
+    // cube.x_min = 230;//-OsqpEigen::INFTY;//230;
+    // cube_list.push_back(cube);
 
     alan_traj::dynamic_constraints d_constraints;
     d_constraints.v_max =  150;

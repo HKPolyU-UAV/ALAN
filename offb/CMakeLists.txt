@@ -36,6 +36,8 @@ find_package(PCL REQUIRED)
 find_package(Sophus REQUIRED)
 find_package(osqp REQUIRED)
 find_package(OsqpEigen REQUIRED)
+find_package(decomp_util REQUIRED)
+
 
 # find_package(PkgConfig REQUIRED)
 # pkg_check_modules(gtk3 REQUIRED IMPORTED_TARGET gtk+-3.0)
@@ -101,9 +103,12 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
   ${Sophus_INCLUDE_DIRS}
   ${IPOPT_LIBRARIES}
+  ${DECOMP_UTIL_INCLUDE_DIRS}
 
   # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
+
+
 
 add_library(alan
     src/alan_state_estimation/aruco.cpp

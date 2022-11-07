@@ -1,7 +1,7 @@
 #include "tools/essential.h"
 #include "bezier_lib/traj_gen.h"
 
-#include "alan/AlanPlanner.h"
+// #include "alan/AlanPlanner.h"
 #include "alan/StateMachine.h"
 #include "alan/AlanPlannerMsg.h"
 

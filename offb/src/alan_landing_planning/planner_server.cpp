@@ -380,7 +380,7 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
     if(iteration_time > 1)
     {
         pid_last_request = ros::Time::now().toSec();
-        return Eigen::Vector4d(0,0,0,0);
+        return Eigen::Vector4d(0, 0, 0, 0);
     }
         
 
@@ -394,12 +394,12 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
 
     if (error[3] >= M_PI)
     {
-        error[3] -= 2*M_PI;
+        error[3] -= 2 * M_PI;
     }
 
     if (error[3] <= -M_PI)
     {
-        error[3] += 2*M_PI;
+        error[3] += 2  *M_PI;
     }
 
     for (int i = 0; i < 4; i++)
