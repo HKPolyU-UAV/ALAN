@@ -1,177 +1,106 @@
-﻿#include <sstream>
-#include <cmath>
-#include <string>
-
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-#include <geometry_msgs/Point.h>
-#include <std_msgs/Bool.h>
-#include "geometry_msgs/PointStamped.h"
-#include "visualization_msgs/Marker.h"
-
-
+﻿#include <iostream>
 #include "include/essential.h"
-#include "include/dbscan.hpp"
-#include "alan/obj.h"
+#include <decomp_ros_msgs/PolyhedronArray.h>
+#include <decomp_geometry/polyhedron.h>
 
+// #include <decomp_ros_utils/data_ros_utils.h>
+// decomp_ros_msg
+using namespace std;
 
-static double eps = 0.75;
-static double minPts = 4;
-static vector<Eigen::Vector3d> pcl_list;
-static vector<pts> pcl_result;
-
-
-void readfile(string filelocation)
-{
-    fstream file(filelocation, ios::in);
-    string line, value;    
-    if(file.is_open())
-    {    
-        Eigen::Vector3d temp_vector;
-
-        while(getline(file, line))
-		{
-            stringstream str(line);
-            int index = 0;
-            while(getline(str, value, ','))
-            {
-                double temp = stod(value);
-                if(index<3)
-                {
-                    temp_vector(index) = temp;
-                }
-                index ++ ;
-            }
-            pcl_list.push_back(temp_vector);                                            
-		}
-    }
+Polyhedron3D ros_to_polyhedron(const decomp_ros_msgs::Polyhedron& msg){
+  Polyhedron3D poly;
+  for(unsigned int i = 0; i < msg.points.size(); i++){
+    Vec3f pt(msg.points[i].x,
+             msg.points[i].y,
+             msg.points[i].z);
+    Vec3f n(msg.normals[i].x,
+            msg.normals[i].y,
+            msg.normals[i].z);
+    poly.add(Hyperplane3D(pt, n));
+  }
+  return poly;
 }
 
-void writefile(string filelocation)
-{
-    ofstream save(filelocation, ios::app);
-    for(const auto stuff : pcl_result)
-    {
-        save << stuff.x << " " << stuff.y << " "  << stuff.z << " " << " id: " << stuff.clid <<endl;        
-    }
-    save.close();
+vec_E<Polyhedron3D> ros_to_polyhedron_array(const decomp_ros_msgs::PolyhedronArray& msg) {
+  vec_E<Polyhedron3D> polys(msg.polyhedrons.size());
+
+  for(size_t i = 0; i < msg.polyhedrons.size(); i++)
+    polys[i] = ros_to_polyhedron(msg.polyhedrons[i]);
+
+  return polys;
 }
 
-void run_algo()
+decomp_ros_msgs::Polyhedron polyhedron_to_ros(const Polyhedron2D& poly){
+  decomp_ros_msgs::Polyhedron msg;
+  for (const auto &p : poly.hyperplanes()) {
+    geometry_msgs::Point pt, n;
+    pt.x = p.p_(0);
+    pt.y = p.p_(1);
+    pt.z = 0;
+    n.x = p.n_(0);
+    n.y = p.n_(1);
+    n.z = 0;
+    msg.points.push_back(pt);
+    msg.normals.push_back(n);
+  }
+
+  geometry_msgs::Point pt1, n1;
+  pt1.x = 0, pt1.y = 0, pt1.z = 0.01;
+  n1.x = 0, n1.y = 0, n1.z = 1;
+  msg.points.push_back(pt1);
+  msg.normals.push_back(n1);
+
+  geometry_msgs::Point pt2, n2;
+  pt2.x = 0, pt2.y = 0, pt2.z = -0.01;
+  n2.x = 0, n2.y = 0, n2.z = -1;
+  msg.points.push_back(pt2);
+  msg.normals.push_back(n2);
+
+  return msg;
+}
+
+decomp_ros_msgs::Polyhedron polyhedron_to_ros(const Polyhedron3D& poly)
 {
-    dbscan cluster(eps, minPts);
-    pcl_result = cluster.execute(pcl_list);
+  decomp_ros_msgs::Polyhedron msg;
+  for (const auto &p : poly.hyperplanes()) {
+    geometry_msgs::Point pt, n;
+    pt.x = p.p_(0);
+    pt.y = p.p_(1);
+    pt.z = p.p_(2);
+    n.x = p.n_(0);
+    n.y = p.n_(1);
+    n.z = p.n_(2);
+    msg.points.push_back(pt);
+    msg.normals.push_back(n);
+  }
+
+  return msg;
+}
+
+template <int Dim>
+decomp_ros_msgs::PolyhedronArray polyhedron_array_to_ros(const vec_E<Polyhedron<Dim>>& vs){
+  decomp_ros_msgs::PolyhedronArray msg;
+  for (const auto &v : vs)
+    msg.polyhedrons.push_back(polyhedron_to_ros(v));
+  return msg;
 }
 
 int main(int argc, char** argv)
 {
-    cout<<"Object detection..."<<endl;
-
-    ros::init(argc, argv, "dbscan");
-    ros::NodeHandle nh;
-    ros::Publisher rviz_visual 
-        = nh.advertise <visualization_msgs::Marker>("gt_points",10);
-
-
-    readfile("/home/patrick/dbscan/src/include/data.dat");
+    Polyhedron3D polyh_msg;
+    // polyh_msg.
     
-    run_algo();
 
-    // writefile("/home/patrick/dbscan/src/include/result.dat");
+	ros::init(argc, argv, "lala");
+    ros::NodeHandle nh;
 
-    visualization_msgs::Marker edge_points;
+    ros::Publisher poly_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("polyhedron_array", 1, true);
+    
+    decomp_ros_msgs::PolyhedronArray poly_msg;
+    poly_msg.header.frame_id = "map";
+    poly_pub.publish(poly_msg);
 
+	
 
-    edge_points.header.frame_id = "map";
-    edge_points.header.stamp = ros::Time::now();
-    edge_points.ns = "GT_points";
-    edge_points.id = 0;
-    edge_points.action = visualization_msgs::Marker::ADD;
-    edge_points.pose.orientation.w = 1.0;
-    edge_points.type = visualization_msgs::Marker::SPHERE_LIST;
-    edge_points.scale.x = edge_points.scale.y = edge_points.scale.z = 0.05;
-    std_msgs::ColorRGBA color_for_edge;
-    edge_points.color.a=1;
-    edge_points.color.g=0;
-    edge_points.color.r=1;
-    edge_points.color.b=0;
-
-    for(auto pts : pcl_result)
-    {
-        std_msgs::ColorRGBA color;
-        int temp_color = -1;
-        geometry_msgs::Point pt;
-        pt.x = pts.x;
-        pt.y = pts.y;
-        pt.z = pts.z;
-        temp_color = pts.clid;
-        
-        // switch(temp_color)
-        // {
-        //     case 1:
-        //         color.a = 1;
-        //         color.r = 1;
-        //         color.g = 0;
-        //         color.b = 0;
-        //         break;
-        //     case 2:
-        //         color.a = 1;
-        //         color.r = 0;
-        //         color.g = 1;
-        //         color.b = 0;
-        //         break;
-        //     case 3:
-        //         color.a = 1;
-        //         color.r = 0;
-        //         color.g = 0;
-        //         color.b = 1;
-        //         break;                
-        //     case 4:
-        //         color.a = 1;
-        //         color.r = 1;
-        //         color.g = 1;
-        //         color.b = 0;
-        //         break;
-        //     case 5:
-        //         color.a = 1;
-        //         color.r = 0;
-        //         color.g = 1;
-        //         color.b = 1;
-        //         break;
-        //     case 6:
-        //         color.a = 1;
-        //         color.r = 1;
-        //         color.g = 0;
-        //         color.b = 1;
-        //         break;
-        //     case 7:
-        //         color.a = 1;
-        //         color.r = 1;
-        //         color.g = 1;
-        //         color.b = 1;
-        //         break;
-        //     default:
-        //         color.a = 1;
-        //         color.r = 0;
-        //         color.g = 0;
-        //         color.b = 0;
-            
-        // }
-
-        edge_points.points.push_back(pt);      
-        // edge_points.colors.push_back(color);
-    }
-
-    while(ros::ok())
-    {   
-        ros::spinOnce();
-        rviz_visual.publish(edge_points);
-    }
-    ros::spin();
-    return 0;
+	return 0;
 }
-
-
-
-
