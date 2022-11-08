@@ -58,14 +58,10 @@ roslaunch_add_file_check(launch)
 
 add_message_files(
  FILES
- Object.msg
- AlanPlannerMsg.msg 
- StateMachine.msg
- Target.msg
- AlanPos.msg
- AlanVel.msg
- AlanAcc.msg
- Atti.msg
+ Normal.msg
+ Point.msg
+ Tangent.msg
+ Polyhedron.msg
 )
 
 
