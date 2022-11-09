@@ -62,10 +62,8 @@ add_message_files(
  AlanPlannerMsg.msg 
  StateMachine.msg
  Target.msg
- AlanPos.msg
- AlanVel.msg
- AlanAcc.msg
- Atti.msg
+ vector3D.msg
+ vector4D.msg
 )
 
 

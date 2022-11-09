@@ -2,7 +2,6 @@
 #include "bernstein.h"
 #include "osqpsolver.h"
 
-
 namespace alan_traj
 {
 
@@ -14,6 +13,8 @@ namespace alan_traj
 
         vector<Eigen::VectorXd> PolyCoeff;
 
+        int _axis_dim;
+
         //variable set
         int _n_dim;
 
@@ -22,9 +23,10 @@ namespace alan_traj
         Eigen::VectorXd _ub, _lb;
 
         
-        endpt_cond _start, _end;
-        vector< corridor> _cube_list;
+        endpt _start, _end;
+        vector<corridor> _cube_list;
         dynamic_constraints _d_constraints;
+        vector<alan_visualization::Polyhedron> _sfc_list;
 
         //Cost term
         Eigen::MatrixXd _MQM;

@@ -1,4 +1,9 @@
 #include "../tools/essential.h"
+#include "alan_visualization/Polyhedron.h"
+// #include "alan_landing_planning/"
+#include "alan_landing_planning/AlanPlannerMsg.h"
+
+
 
 namespace alan_traj
 {
@@ -14,15 +19,28 @@ namespace alan_traj
     * @field       kinematic   whether there is kinematic constraints
     * @field       dymamic     whether there is dynamic constraints
     */
+
     typedef struct bezier_info 
     {
+        int dimension;
         int n_order;
         int m;
         int d_order;
         vector<double> s; 
         bool kinematic = true;
         bool dynamic   = true;
+
     }bezier_info;
+
+    typedef struct  xyz
+    {
+        double x;
+        double y;
+        double z;
+
+    } xyz;
+
+
 
     typedef struct info_3d
     {
@@ -68,56 +86,55 @@ namespace alan_traj
 
     typedef struct dynamic_constraints 
     {
-        double v_max;
-        double v_min;
+        xyz v_max;
+        xyz v_min;
 
-        double a_max;
-        double a_min;
+        xyz a_max;
+        xyz a_min;
 
-        double j_max;
-        double j_min;
+        xyz j_max;
+        xyz j_min;
+
+        // double v_max;
+        // double v_min;
+
+        // double a_max;
+        // double a_min;
+
+        // double j_max;
+        // double j_min;
 
     }dynamic_constraints;
 
+    typedef struct endpt
+    {
+
+        Eigen::Vector3d posi;
+        Eigen::Vector3d velo;
+        Eigen::Vector3d accl;
+        Eigen::Vector3d jerk;
+
+    }endpt;
 
     typedef struct bezier_constraints 
     {
         //equality constraints
-        endpt_cond start;
-        endpt_cond end;
+        endpt start;
+        endpt end;
             
         //double
         vector<corridor> cube_list;
+        vector<alan_visualization::Polyhedron> sfc_list;
+
+        string corridor_type;
         
         dynamic_constraints d_constraints;
         
     }bezier_constraints;
 
-    typedef struct  xyz
-    {
-        double x;
-        double y;
-        double z;
+    
 
-    } xyz;
-
-    // typedef struct endpt
-    // {
-    //     endpt_cond x;
-    //     endpt_cond y;
-    //     endpt_cond z;
-
-    // }endpt;
-
-    typedef struct endpt
-    {
-        xyz posi;
-        xyz velo;
-        xyz accl;
-        xyz jerk;
-    }endpt;
-
-    typedef
+    // typedef
 
 
 
@@ -134,14 +151,16 @@ namespace alan_traj
         Eigen::MatrixXd getMQM_spd(){return MQM_spd;}
 
 
-        void setAeq(int n_order, int m, int d_order, vector<double> s);
-        void setUBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
-        void setLBeq(endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
+        void setAeq1D(int n_order, int m, int d_order, vector<double> s);
+        void setUBeq1D(endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
+        void setLBeq1D(endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
         
         void setAieq(int n_order, int m, int d_order, vector<double> s);
         void setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
         void setLBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
         
+        void setAieqsfc(vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order);
+
         void setA();
         void setUB();
         void setLB();
@@ -161,12 +180,24 @@ namespace alan_traj
         
     public:
         bernstein(
+            int axis_order,
             int n_order, int m, int d_order, vector<double> s,
-            endpt_cond start, endpt_cond end,
-            vector<corridor> cube_list, dynamic_constraints d_constraints
-            );
+            endpt start, endpt end,
+            vector<alan_visualization::Polyhedron> sfc_list,
+             dynamic_constraints d_constraints
+            );//for polyh
+
+        bernstein(
+            int axis_order,
+            int n_order, int m, int d_order, vector<double> s,
+            endpt start, endpt end,
+            vector<corridor> cube_list,
+             dynamic_constraints d_constraints
+            );//for cube
 
         ~bernstein(){};
+
+        void set1D_();
 
         inline Eigen::MatrixXd getMQM(){return MQM;}
         inline Eigen::MatrixXd getA(){return A;}

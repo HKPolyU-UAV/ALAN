@@ -12,18 +12,23 @@ namespace alan_traj
 {
     traj_gen::traj_gen( bezier_info b_info,  bezier_constraints b_constraints)
         //for variable set
-        : _n_dim((b_info.n_order + 1) * b_info.m),
+        :
+        _axis_dim(b_info.dimension), 
+        _n_dim((b_info.n_order + 1) * b_info.m),
 
         //for constraints set
-        _start(b_constraints.start), _end(b_constraints.end), 
+        _start(b_constraints.start), 
+        _end(b_constraints.end), 
+
         _cube_list(b_constraints.cube_list),
+        _sfc_list(b_constraints.sfc_list),
+
         _d_constraints(b_constraints.d_constraints),
 
         //for cost term
         _n_order(b_info.n_order), _m(b_info.m), _d_order(b_info.d_order), _s(b_info.s)    
     {
-        ROS_WARN("entering traj generator!");
-        
+        ROS_WARN("entering traj generator!");        
 
         // msg_printer("-----------------------------------------------------------------");
         // msg_printer("             ALan v0.1 - Autonomous Landing for UAV");
@@ -31,49 +36,107 @@ namespace alan_traj
         // msg_printer("              The Hong Kong Polytechnic University");
         // msg_printer("-----------------------------------------------------------------");
 
+        if(b_constraints.corridor_type == "POLYH")
+        {
+            //all axis matrices set here
+
+            printf("POLYH constraints...");
+
+            bernstein bezier_base(
+                _axis_dim,
+                _n_order, _m, _d_order, _s, 
+                _start, _end,
+                _sfc_list, _d_constraints
+            );
+            printf("1. variable set: ");
+            cout<<_n_dim<<endl;
+
+            //2. constraints set
+            _A = bezier_base.getA(); 
+            _ub = bezier_base.getUB();
+            _lb = bezier_base.getLB();
+
+            printf("2. constraints set: ");
+            // cout<<"_A:"<<endl;
+            cout<<_A.rows()<<endl;
+
+            // cout<<"_lb:"<<endl;
+            // cout<<_lb<<endl;
+            // cout<<"_ub:"<<endl;
+            // cout<<_ub<<endl;
+
+            // cout<<"\nsummary:\n";
+            // cout<<"A size:\n";
+            // cout<<_A.rows()<<endl;
+            // cout<<_A.cols()<<endl;
+            // cout<<"upper bound size:\n";
+            // cout<<_ub.size()<<endl;
+            // cout<<"lower bound size:\n";
+            // cout<<_lb.size()<<endl;
 
 
-        bernstein bezier_base(
+            
+            //3. cost set
+            printf("3. cost term: x'M'QMx\n");
+            _MQM = bezier_base.getMQM();
+            // _MQM = get_nearest_SPD(_MQM);
+
+
+        }
+        else if(b_constraints.corridor_type == "CUBE")
+        {
+            //all axis matrices set here
+
+            printf("CUBE constraints...");
+            bernstein bezier_base(
+            _axis_dim,
             _n_order, _m, _d_order, _s,
             _start, _end,
             _cube_list, _d_constraints             
-        );//pass everything in one pass
-        
-        // if
-        
-        //1. variable set
-        // _n_dim = (b_info.n_order + 1) + b_info.m
-        printf("1. variable set: ");
-        cout<<_n_dim<<endl;
+            );//pass everything in one pass
+            
+            // if
+            
+            //1. variable set
+            // _n_dim = (b_info.n_order + 1) + b_info.m
+            printf("1. variable set: ");
+            cout<<_n_dim<<endl;
 
-        //2. constraints set
-        _A = bezier_base.getA();
-        _ub = bezier_base.getUB();
-        _lb = bezier_base.getLB();
+            //2. constraints set
+            _A = bezier_base.getA();
+            _ub = bezier_base.getUB();
+            _lb = bezier_base.getLB();
 
-        printf("2. constraints set: ");
-        // cout<<"_A:"<<endl;
-        cout<<_A.rows()<<endl;
-        // cout<<"_lb:"<<endl;
-        // cout<<_lb<<endl;
-        // cout<<"_ub:"<<endl;
-        // cout<<_ub<<endl;
+            printf("2. constraints set: ");
+            // cout<<"_A:"<<endl;
+            cout<<_A.rows()<<endl;
 
-        // cout<<"\nsummary:\n";
-        // cout<<"A size:\n";
-        // cout<<_A.rows()<<endl;
-        // cout<<_A.cols()<<endl;
-        // cout<<"upper bound size:\n";
-        // cout<<_ub.size()<<endl;
-        // cout<<"lower bound size:\n";
-        // cout<<_lb.size()<<endl;
+            // cout<<"_lb:"<<endl;
+            // cout<<_lb<<endl;
+            // cout<<"_ub:"<<endl;
+            // cout<<_ub<<endl;
+
+            // cout<<"\nsummary:\n";
+            // cout<<"A size:\n";
+            // cout<<_A.rows()<<endl;
+            // cout<<_A.cols()<<endl;
+            // cout<<"upper bound size:\n";
+            // cout<<_ub.size()<<endl;
+            // cout<<"lower bound size:\n";
+            // cout<<_lb.size()<<endl;
 
 
-        
-        //3. cost set
-        printf("3. cost term: x'M'QMx\n");
-        _MQM = bezier_base.getMQM();
-        // _MQM = get_nearest_SPD(_MQM);
+            
+            //3. cost set
+            printf("3. cost term: x'M'QMx\n");
+            _MQM = bezier_base.getMQM();
+            // _MQM = get_nearest_SPD(_MQM);
+
+        }
+        else
+        {
+            ROS_ERROR("Please check kinematic constraint type...");
+        }
 
     };
 
