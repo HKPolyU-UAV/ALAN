@@ -4,9 +4,11 @@
 
 
 
+
 class osqpsolver
 {
 private:
+    
     /* data */
 public:
     osqpsolver(/* args */);

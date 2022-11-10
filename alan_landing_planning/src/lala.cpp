@@ -24,6 +24,9 @@ int main(int argc, char** argv)
 {
     Polyhedron3D polyh_msg;
     // polyh_msg.
+
+    // mavros_msgs::AttitudeTarget lala;
+    // lala.orientation.
     
 
     ros::init(argc, argv, "lala");
