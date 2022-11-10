@@ -67,7 +67,10 @@ add_message_files(
 )
 
 
-generate_messages(DEPENDENCIES std_msgs sensor_msgs)
+generate_messages(DEPENDENCIES 
+  std_msgs 
+  sensor_msgs
+  )
 
 catkin_package(
 #  INCLUDE_DIRS include

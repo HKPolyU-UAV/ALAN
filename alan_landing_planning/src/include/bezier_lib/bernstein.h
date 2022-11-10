@@ -2,11 +2,14 @@
 #include "alan_visualization/Polyhedron.h"
 // #include "alan_landing_planning/"
 #include "alan_landing_planning/AlanPlannerMsg.h"
+#include "alan_landing_planning/test.h"
 
 
 
 namespace alan_traj
 {
+
+    // alan_lan
 
     /*!
     * @struct      bezier_info
@@ -126,7 +129,6 @@ namespace alan_traj
         vector<Eigen::VectorXd> lb_eq_array, lb_ieq_array, lb_array;
 
         Eigen::MatrixXd getMQM_spd(){return MQM_spd;}
-
 
         void setAeq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s);
         void setUBeq1D(int axis_dim, endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
