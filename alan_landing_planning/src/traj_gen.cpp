@@ -13,8 +13,8 @@ namespace alan_traj
     traj_gen::traj_gen( bezier_info b_info,  bezier_constraints b_constraints)
         //for variable set
         :
-        _axis_dim(b_info.dimension), 
-        _n_dim((b_info.n_order + 1) * b_info.m),
+        _axis_dim(b_info.axis_dim), 
+        _n_dim((b_info.n_order + 1) * b_info.m * b_info.axis_dim),
 
         //for constraints set
         _start(b_constraints.start), 
@@ -52,6 +52,7 @@ namespace alan_traj
             cout<<_n_dim<<endl;
 
             //2. constraints set
+            //should get everything (all axis) here
             _A = bezier_base.getA(); 
             _ub = bezier_base.getUB();
             _lb = bezier_base.getLB();
@@ -103,6 +104,7 @@ namespace alan_traj
             cout<<_n_dim<<endl;
 
             //2. constraints set
+            //should be containing all axises matrices
             _A = bezier_base.getA();
             _ub = bezier_base.getUB();
             _lb = bezier_base.getLB();
@@ -111,8 +113,8 @@ namespace alan_traj
             // cout<<"_A:"<<endl;
             cout<<_A.rows()<<endl;
 
-            // cout<<"_lb:"<<endl;
-            // cout<<_lb<<endl;
+            cout<<"_lb:"<<endl;
+            cout<<_lb.size()<<endl;
             // cout<<"_ub:"<<endl;
             // cout<<_ub<<endl;
 
@@ -130,6 +132,9 @@ namespace alan_traj
             //3. cost set
             printf("3. cost term: x'M'QMx\n");
             _MQM = bezier_base.getMQM();
+
+            
+            // cout<<_MQM<<endl;
             // _MQM = get_nearest_SPD(_MQM);
 
         }

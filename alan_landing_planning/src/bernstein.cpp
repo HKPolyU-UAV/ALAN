@@ -8,7 +8,7 @@ namespace alan_traj
 
     //for cube_list
     bernstein::bernstein(
-    int axis_order,
+    int axis_dim,
     int n_order, int m, int d_order, vector<double> s,
     endpt start, endpt end,
     vector<corridor> cube_list, dynamic_constraints d_constraints
@@ -25,35 +25,35 @@ namespace alan_traj
 
         if(m == cube_list.size() && m == s.size())
         {
+            cout<<"hi: now in bernstein..."<<endl;
             A_array.clear();
             ub_array.clear();
             lb_array.clear();
+            MQM_array.clear();
 
-            for(int i = 0; i < axis_order; i++)
+            for(int axis_i = 0; axis_i < axis_dim; axis_i++)
             {
                 endpt_cond start_local, end_local;
 
-                start_local.p_ = start.posi(i);//
-                start_local.v_ = start.velo(i);
-                start_local.a_ = start.accl(i);
-                start_local.j_ = start.jerk(i);
+                start_local.p_ = start.posi(axis_i);//
+                start_local.v_ = start.velo(axis_i);
+                start_local.a_ = start.accl(axis_i);
+                start_local.j_ = start.jerk(axis_i);
 
-                end_local.p_ = end.posi(i);
-                end_local.v_ = end.velo(i);
-                end_local.a_ = end.accl(i);
-                end_local.j_ = end.jerk(i);
+                end_local.p_ = end.posi(axis_i);
+                end_local.v_ = end.velo(axis_i);
+                end_local.a_ = end.accl(axis_i);
+                end_local.j_ = end.jerk(axis_i);
 
-                setAeq1D(n_order, m, d_order, s);
-            
-                setUBeq1D(start_local, end_local, n_order, m, d_order);//remember continuotiy
-                setLBeq1D(start_local, end_local, n_order, m, d_order);//remember continuotiy
+                setAeq1D(axis_i, n_order, m, d_order, s);
+                setUBeq1D(axis_i, start_local, end_local, n_order, m, d_order);//remember continuotiy
+                setLBeq1D(axis_i, start_local, end_local, n_order, m, d_order);//remember continuotiy
 
                 printf("eq matrices: pass\n");
 
-                setAieq1D(n_order, m, d_order, s);     
-
-                setUBieq1D(cube_list, d_constraints, n_order, m, d_order);        
-                setLBieq1D(cube_list, d_constraints, n_order, m, d_order);
+                setAieq1D(axis_i, n_order, m, d_order, s);     
+                setUBieq1D(axis_i, cube_list, d_constraints, n_order, m, d_order);        
+                setLBieq1D(axis_i, cube_list, d_constraints, n_order, m, d_order);
 
                 printf("ieq matriaces: pass\n");
 
@@ -69,14 +69,33 @@ namespace alan_traj
                 // cout<<lb.size()<<endl;
 
                 // printf("pass 3\n");
-                setMQM1D(n_order, m, d_order, s);
+                setMQM1D(axis_i, n_order, m, d_order, s);
                 // printf("pass 4\n");
 
 
                 A_array.emplace_back(A);
                 ub_array.emplace_back(ub);
                 lb_array.emplace_back(lb);
-            }            
+                MQM_array.emplace_back(MQM);
+
+                // cout<<"finish 1D"<<endl;
+
+            }
+
+
+            setMQMFinal();
+            // cout<<1<<endl;
+            setAFinal();
+            // cout<<2<<endl;
+            setUbFinal();
+            // cout<<3<<endl;
+            setLbFinal();
+            // cout<<4<<endl;
+
+
+
+
+
 
         }
         else
@@ -88,7 +107,7 @@ namespace alan_traj
 
     //for polyh list
     bernstein::bernstein(
-    int axis_order,
+    int axis_dim,
     int n_order, int m, int d_order, vector<double> s,
     endpt start, endpt end,
     vector<alan_visualization::Polyhedron> sfc_list,
@@ -110,28 +129,28 @@ namespace alan_traj
             ub_array.clear();
             lb_array.clear();
 
-            for(int i = 0; i < axis_order; i++)
+            for(int axis_i = 0; axis_i < axis_dim; axis_i++)
             {
                 endpt_cond start_local, end_local;
 
-                start_local.p_ = start.posi(i);//
-                start_local.v_ = start.velo(i);
-                start_local.a_ = start.accl(i);
-                start_local.j_ = start.jerk(i);
+                start_local.p_ = start.posi(axis_i);//
+                start_local.v_ = start.velo(axis_i);
+                start_local.a_ = start.accl(axis_i);
+                start_local.j_ = start.jerk(axis_i);
 
-                end_local.p_ = end.posi(i);
-                end_local.v_ = end.velo(i);
-                end_local.a_ = end.accl(i);
-                end_local.j_ = end.jerk(i);
+                end_local.p_ = end.posi(axis_i);
+                end_local.v_ = end.velo(axis_i);
+                end_local.a_ = end.accl(axis_i);
+                end_local.j_ = end.jerk(axis_i);
 
-                setAeq1D(n_order, m, d_order, s);
+                setAeq1D(axis_i, n_order, m, d_order, s);
             
-                setUBeq1D(start_local, end_local, n_order, m, d_order);//remember continuotiy
-                setLBeq1D(start_local, end_local, n_order, m, d_order);//remember continuotiy
+                setUBeq1D(axis_i, start_local, end_local, n_order, m, d_order);//remember continuotiy
+                setLBeq1D(axis_i, start_local, end_local, n_order, m, d_order);//remember continuotiy
 
                 printf("eq matrices: pass\n");
 
-                setAieq1D(n_order, m, d_order, s);     
+                setAieq1D(axis_i, n_order, m, d_order, s);     
 
                 // setUBieq(cube_list, d_constraints, n_order, m, d_order);        
                 // setLBieq(cube_list, d_constraints, n_order, m, d_order);
@@ -150,7 +169,7 @@ namespace alan_traj
                 // cout<<lb.size()<<endl;
 
                 // printf("pass 3\n");
-                setMQM1D(n_order, m, d_order, s);
+                setMQM1D(axis_i, n_order, m, d_order, s);
                 // printf("pass 4\n");
 
 
@@ -172,8 +191,7 @@ namespace alan_traj
 
     }
 
-
-    void bernstein::setAeq1D(int n_order, int m, int d_order, vector<double> s)
+    void bernstein::setAeq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s)
     {    
         int n_cond = 0;
         int _dim = (n_order + 1) * m; //how many control points
@@ -301,10 +319,10 @@ namespace alan_traj
                 Aeq_end,
                 Aeq_cont;
 
-        // cout<<"Aeq!:\n"<<A_eq<<endl;
+        cout<<"Aeq in setAeq1D!:\n"<<A_eq.rows()<<endl<<endl;
     }
 
-    void bernstein::setUBeq1D(endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
+    void bernstein::setUBeq1D(int axis_dim, endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
     {
         // cout<<"setUBeq1D"<<endl;
         //set BUeq_start/end
@@ -377,7 +395,7 @@ namespace alan_traj
 
     }
 
-    void bernstein::setLBeq1D(endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
+    void bernstein::setLBeq1D(int axis_dim, endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
     {
         // cout<<"setLBeq"<<endl;
 
@@ -449,7 +467,7 @@ namespace alan_traj
         // cout<<"ub_eq!\n"<<lb_eq<<endl;;
     }
 
-    void bernstein::setAieq1D(int n_order, int m, int d_order, vector<double> s)
+    void bernstein::setAieq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s)
     {
         int _dim_crtl_pts = m * (n_order + 1);
         int _dim_p = m * (n_order + 1 - 0);
@@ -589,10 +607,21 @@ namespace alan_traj
             break;
         }
 
+        cout<<"Aieq in setAieq1D !:\n"<<A_ieq.rows()<<endl<<endl;;
+
     }
 
-    void bernstein::setUBieq1D(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
+    void bernstein::setUBieq1D(int axis_dim, vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
     {
+        cout<<"setUBieq1D"<<endl;
+        // for(auto what : cube_list)
+        // {
+        //     cout<<"corridor one"<<endl;
+        //     cout<<what.p_max<<endl;
+        //     cout<<what.p_min<<endl;
+
+            
+        // }
         //UBieq_p
         Eigen::VectorXd UBieq_p;
         int _dim_p = m * (n_order + 1 - 0);
@@ -605,11 +634,14 @@ namespace alan_traj
             for(int j = 0; j < n_order + 1; j++) //each control point, n_order + 1 = size of ctrl_pts per segment
             {
                 int _i = starto + j;
-                UBieq_p(_i) = cube_list[i].x_max;//remember other dimension
+                // cout<<"what's the big deal?: "<<axis_dim - 1<<endl;
+                UBieq_p(_i) = cube_list[i].p_max(axis_dim);//remember other dimension
             }
             
             starto = starto + (n_order + 1);
         }
+
+        cout<<"seUBieq_v"<<endl;
 
 
         //UBieq_v
@@ -618,7 +650,7 @@ namespace alan_traj
         UBieq_v.resize(_dim_v);
 
         for(int i = 0; i < _dim_v; i++)
-            UBieq_v(i) = d_constraints.v_max.x;
+            UBieq_v(i) = d_constraints.v_max(axis_dim);
 
 
         //UBiep_a
@@ -627,7 +659,7 @@ namespace alan_traj
         UBieq_a.resize(_dim_a);
 
         for(int i = 0; i < _dim_a; i++)
-            UBieq_a(i) = d_constraints.a_max.x;
+            UBieq_a(i) = d_constraints.a_max(axis_dim);
 
         //UBieq_j
         Eigen::VectorXd UBieq_j;
@@ -635,7 +667,7 @@ namespace alan_traj
         UBieq_j.resize(_dim_j);
         
         for(int i = 0; i < _dim_j; i++)
-            UBieq_j(i) = d_constraints.j_max.x;
+            UBieq_j(i) = d_constraints.j_max(axis_dim);
 
         
         switch (d_order)
@@ -667,7 +699,7 @@ namespace alan_traj
         }
     }
 
-    void bernstein::setLBieq1D(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
+    void bernstein::setLBieq1D(int axis_dim, vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
     {
         Eigen::VectorXd LBieq_p;
         int _dim_p = m * (n_order + 1 - 0);
@@ -679,7 +711,7 @@ namespace alan_traj
             for(int j = 0; j < n_order + 1; j++) //each control point, n_order + 1 = size of ctrl_pts per segment
             {
                 int _i = starto + j;
-                LBieq_p(_i) = cube_list[i].x_min;//remember other dimension
+                LBieq_p(_i) = cube_list[i].p_min(axis_dim);//remember other dimension
             }
             
             starto = starto + (n_order + 1);
@@ -691,7 +723,7 @@ namespace alan_traj
         LBieq_v.resize(_dim_v);
 
         for(int i = 0; i < _dim_v; i++)
-            LBieq_v(i) = d_constraints.v_min.x;
+            LBieq_v(i) = d_constraints.v_min(axis_dim);
 
 
         Eigen::VectorXd LBieq_a;
@@ -699,7 +731,7 @@ namespace alan_traj
         LBieq_a.resize(_dim_a);
 
         for(int i = 0; i < _dim_a; i++)
-            LBieq_a(i) = d_constraints.a_min.x;
+            LBieq_a(i) = d_constraints.a_min(axis_dim);
 
         
         Eigen::VectorXd LBieq_j;
@@ -707,7 +739,7 @@ namespace alan_traj
         LBieq_j.resize(_dim_j);
         
         for(int i = 0; i < _dim_j; i++)
-            LBieq_j(i) = d_constraints.j_min.x;
+            LBieq_j(i) = d_constraints.j_min(axis_dim);
 
         
         switch (d_order)
@@ -741,14 +773,9 @@ namespace alan_traj
 
     }
 
-    void bernstein::setAieqsfc(vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order)
+    void bernstein::setMQM1D(int axis_dim, int n_order, int m, int d_order, vector<double> s)
     {
-
-    }
-
-    void bernstein::setMQM1D(int n_order, int m, int d_order, vector<double> s)
-    {
-        setQM1D(n_order, m, d_order, s);
+        setQM1D(axis_dim, n_order, m, d_order, s);
         
         MQM.resize(Q.rows(), Q.cols());
         
@@ -770,7 +797,7 @@ namespace alan_traj
 
     }
 
-    void bernstein::setQM1D(int n_order, int m, int d_order, vector<double> s)
+    void bernstein::setQM1D(int axis_dim, int n_order, int m, int d_order, vector<double> s)
     {
         int n_dim = (n_order + 1) * m;
 
@@ -804,7 +831,7 @@ namespace alan_traj
                 }
             }
 
-            setM1D(n_order);
+            setM1D(axis_dim, n_order);
             M.block(starto, starto, n_order + 1, n_order + 1) = M_temp;
 
             Q.block(starto, starto, n_order + 1, n_order + 1) = Q_temp;
@@ -826,7 +853,7 @@ namespace alan_traj
             A_ieq;//,
             //  A_ieq;
 
-        // cout<<"A!:\n"<<A<<endl;
+        cout<<"A in setA1D!:\n"<<A.rows()<<endl<<endl;
 
     }
 
@@ -857,7 +884,7 @@ namespace alan_traj
 
     };
 
-    void bernstein::setM1D(int order)
+    void bernstein::setM1D(int axis_dim, int order)
     {
         M_temp.resize(order + 1, order + 1);
         switch (order)
@@ -1012,6 +1039,62 @@ namespace alan_traj
         }
         }
     }
+
+    void bernstein::setAieqsfc(vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order)
+    {
+
+    }
+
+    void bernstein::setMQMFinal()
+    {
+        int MQM_final_rows = MQM_array.size() * MQM_array[0].rows();
+        int MQM_final_cols = MQM_array.size() * MQM_array[0].cols();
+
+        MQM_final.resize(MQM_final_rows, MQM_final_cols);
+
+        for(int i = 0; i < MQM_array.size(); i++)        
+            MQM_final.block(i * MQM_array[i].rows(), i * MQM_array[i].cols(), MQM_array[i].rows(), MQM_array[i].cols()) = MQM_array[i];
+        
+    }
+
+    void bernstein::setAFinal()
+    {
+        int A_final_rows = A_array.size() * A_array[0].rows();
+        int A_final_cols = A_array.size() * A_array[0].cols();
+
+        cout<<"setAFianl"<<endl;
+
+        cout<<A_final_rows<<endl;
+        cout<<A_final_cols<<endl;
+
+        A_final.resize(A_final_rows, A_final_cols);
+
+        for(int i = 0; i < A_array.size(); i++)        
+            A_final.block(i * A_array[i].rows(), i * A_array[i].cols(), A_array[i].rows(), A_array[i].cols()) = A_array[i];
+        
+    }
+
+    void bernstein::setUbFinal()
+    {
+        int ub_final_rows = ub_array.size() * ub_array[0].size();
+        
+        ub_final.resize(ub_final_rows);
+
+        for(int i = 0; i < ub_array.size(); i++)        
+            ub_final.middleRows(ub_array[i].size() * i, ub_array[i].size()) = ub_array[i];
+    }
+
+    void bernstein::setLbFinal()
+    {
+        int lb_final_rows = lb_array.size() * lb_array[0].size();
+        
+        lb_final.resize(lb_final_rows);
+
+        for(int i = 0; i < lb_array.size(); i++)        
+            lb_final.middleRows(lb_array[i].size() * i, lb_array[i].size()) = lb_array[i];
+
+    }
+
 
     inline double bernstein::permutation(int p, int q)
     {
