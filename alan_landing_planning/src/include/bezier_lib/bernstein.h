@@ -141,12 +141,18 @@ namespace alan_traj
     class bernstein
     {
     private:
+
+        //final results
         Eigen::MatrixXd Q, Q_temp, M, M_temp, MQM, MQM_spd; 
         
         Eigen::MatrixXd A_eq, A_ieq, A; 
 
         Eigen::VectorXd ub_eq, ub_ieq, ub;
         Eigen::VectorXd lb_eq, lb_ieq, lb;
+
+        vector<Eigen::MatrixXd> A_eq_array, A_ieq_array, A_array;
+        vector<Eigen::VectorXd> ub_eq_array, ub_ieq_array, ub_array;
+        vector<Eigen::VectorXd> lb_eq_array, lb_ieq_array, lb_array;
 
         Eigen::MatrixXd getMQM_spd(){return MQM_spd;}
 
@@ -155,27 +161,34 @@ namespace alan_traj
         void setUBeq1D(endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
         void setLBeq1D(endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
         
-        void setAieq(int n_order, int m, int d_order, vector<double> s);
-        void setUBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
-        void setLBieq(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
+        void setAieq1D(int n_order, int m, int d_order, vector<double> s);
+        void setUBieq1D(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
+        void setLBieq1D(vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
         
+        void setA1D();
+        void setUB1D();
+        void setLB1D();
+
+        void setMQM1D(int n_order, int m, int d_order, vector<double> s);
+
+        void setM1D(int n_order);
+        void setQM1D(int n_order, int m, int d_order, vector<double> s);
+
+
         void setAieqsfc(vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order);
+        //coupled      
 
-        void setA();
-        void setUB();
-        void setLB();
-
-        void setM(int n_order);
-        void setQM(int n_order, int m, int d_order, vector<double> s);
+        void setFinalMatrices();
 
         Eigen::MatrixXd getSPD(Eigen::MatrixXd Q);
 
-        void setMQM(int n_order, int m, int d_order, vector<double> s);
         
         //tools
         double permutation(int p, int q);
         double factorial(int r);
         vector<double> pascal_triangle(int level);
+
+        
         
         
     public:
