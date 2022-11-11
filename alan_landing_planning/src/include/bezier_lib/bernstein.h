@@ -148,7 +148,7 @@ namespace alan_traj
         void setQM1D(int axis, int n_order, int m, int d_order, vector<double> s);
 
 
-        void setAieqsfc(vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order);
+        void setAieqsfc(vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order, vector<double> s);
         //coupled      
 
         void setFinalMatrices();

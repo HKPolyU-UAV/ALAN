@@ -42,15 +42,15 @@ int main(int argc, char** argv)
     poly_msg.header.frame_id = "map";
     poly_pub.publish(poly_msg);
 
-    alan_traj::bezier_info b_traj_info;
+    alan_traj::bezier_info b_info;
     
-    b_traj_info.axis_dim = 2;
-    b_traj_info.n_order = 7;
-    b_traj_info.m = 5;
-    b_traj_info.d_order = 3;
+    b_info.axis_dim = 2;
+    b_info.n_order = 7;
+    b_info.m = 5;
+    b_info.d_order = 3;
 
-    for(int i = 0; i < b_traj_info.m; i++)
-        b_traj_info.s.push_back(1);
+    for(int i = 0; i < b_info.m; i++)
+        b_info.s.push_back(1);
 
     //
 
@@ -331,9 +331,9 @@ int main(int argc, char** argv)
 
     double t0 = ros::Time::now().toSec();
 
-	// alan_traj::traj_gen traj(b_traj_info, b_constraints);
+	alan_traj::traj_gen traj(b_info, b_constraints);
 
-    // traj.solve_opt();
+    traj.solve_opt();
 
 
 

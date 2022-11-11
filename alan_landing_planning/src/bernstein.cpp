@@ -179,7 +179,7 @@ namespace alan_traj
 
             }
 
-            setAieqsfc(sfc_list, d_constraints, n_order, m, d_order);
+            setAieqsfc(sfc_list, d_constraints, n_order, m, d_order, s);
 
             
         }
@@ -1040,8 +1040,25 @@ namespace alan_traj
         }
     }
 
-    void bernstein::setAieqsfc(vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order)
+    void bernstein::setAieqsfc(vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order, vector<double> s)
     {
+        int _dim_crtl_pts = m * (n_order + 1);
+        int _dim_p = m * (n_order + 1 - 0);
+        int _dim_v = m * (n_order + 1 - 1);
+        int _dim_a = m * (n_order + 1 - 2);
+        int _dim_j = m * (n_order + 1 - 3);
+
+        //Aieq_p
+        Eigen::MatrixXd Aieq_p;
+        Aieq_p.resize(_dim_p, _dim_crtl_pts);
+        Aieq_p.setIdentity();
+
+
+        
+
+       
+
+        cout<<"Aieq in setAieq1D !:\n"<<A_ieq.rows()<<endl<<endl;
 
     }
 
