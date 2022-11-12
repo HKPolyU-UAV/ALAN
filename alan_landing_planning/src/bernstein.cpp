@@ -1094,7 +1094,7 @@ namespace alan_traj
                     break;
                 
                 case 2:
-                    cout<<"case 2:"<<endl;
+                    cout<<"case 2:"<<endl<<endl;;
                     A_ieqsfc(starto_row + j, starto_col + 0) = corridor[i].PolyhedronTangentArray[j].n.X;
                     A_ieqsfc(starto_row + j, starto_col + 1 * onedim_ctrl_pts) = corridor[i].PolyhedronTangentArray[j].n.Y;
                     
