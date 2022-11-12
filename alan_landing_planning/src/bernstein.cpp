@@ -92,11 +92,6 @@ namespace alan_traj
             setLbFinal();
             // cout<<4<<endl;
 
-
-
-
-
-
         }
         else
         {
@@ -179,7 +174,7 @@ namespace alan_traj
 
             }
 
-            setAieqsfc(sfc_list, d_constraints, n_order, m, d_order, s);
+            setAieqsfc(axis_dim, sfc_list, d_constraints, n_order, m, d_order, s);
 
             
         }
@@ -1040,25 +1035,95 @@ namespace alan_traj
         }
     }
 
-    void bernstein::setAieqsfc(vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order, vector<double> s)
+    void bernstein::setAieqsfc(
+        int axis_dim,
+        vector<alan_visualization::Polyhedron> corridor, 
+        dynamic_constraints d_constraints, 
+        int n_order, 
+        int m, 
+        int d_order, 
+        vector<double> s
+        )
     {
-        int _dim_crtl_pts = m * (n_order + 1);
-        int _dim_p = m * (n_order + 1 - 0);
-        int _dim_v = m * (n_order + 1 - 1);
-        int _dim_a = m * (n_order + 1 - 2);
-        int _dim_j = m * (n_order + 1 - 3);
+        int onedim_ctrl_pts = m * (n_order + 1);
+        int total_ctrl_pts = axis_dim * m * (n_order + 1);
+        
+        corridor.size();
+        //how many corridor are there
+        
+        int tangent_plane_no = 0;
+        //total kinematic constraints for control points
+        int total_constraint_no = 0;
 
-        //Aieq_p
-        Eigen::MatrixXd Aieq_p;
-        Aieq_p.resize(_dim_p, _dim_crtl_pts);
-        Aieq_p.setIdentity();
+        for(int i = 0; i < corridor.size(); i++)  
+            tangent_plane_no = tangent_plane_no + corridor[i].PolyhedronTangentArray.size();        
+        
+        total_constraint_no = tangent_plane_no * onedim_ctrl_pts;    
 
+        cout<<"total tangent plane constraints: "<<tangent_plane_no<<endl<<endl; 
+
+        A_ieqsfc.resize(total_constraint_no, total_ctrl_pts);
+        A_ieqsfc.setZero();
 
         
+        int starto_row = 0;
+        int starto_col = 0;
 
-       
+        for(int i = 0; i < corridor.size(); i++)
+        {
+            starto_col = i * onedim_ctrl_pts;
+            
+            if(i > 0)
+                starto_row = starto_row + corridor[i-1].PolyhedronTangentArray.size();
 
-        cout<<"Aieq in setAieq1D !:\n"<<A_ieq.rows()<<endl<<endl;
+            for(int j = 0; j < corridor[i].PolyhedronTangentArray.size(); j++)
+            {
+                switch (axis_dim)
+                {
+                case 1:
+                    A_ieqsfc(starto_row + j, starto_col + 0) = corridor[i].PolyhedronTangentArray[j].n.X;
+                    
+                    ub_ieqsfc(starto_row + j) = corridor[i].PolyhedronTangentArray[j].n.X 
+                                                * corridor[i].PolyhedronTangentArray[j].pt.X;
+                    
+                    break;
+                
+                case 2:
+                    A_ieqsfc(starto_row + j, starto_col + 0) = corridor[i].PolyhedronTangentArray[j].n.X;
+                    A_ieqsfc(starto_row + j, starto_col + 1 * onedim_ctrl_pts) = corridor[i].PolyhedronTangentArray[j].n.Y;
+                    
+                    ub_ieqsfc(starto_row + j) = corridor[i].PolyhedronTangentArray[j].n.X
+                                                * corridor[i].PolyhedronTangentArray[j].pt.X
+                                                +
+                                                corridor[i].PolyhedronTangentArray[j].n.Y
+                                                * corridor[i].PolyhedronTangentArray[j].pt.Y;
+                    
+                    break;
+
+                case 3: 
+                    A_ieqsfc(starto_row + j, starto_col + 0) = corridor[i].PolyhedronTangentArray[j].n.X;
+                    A_ieqsfc(starto_row + j, starto_col + 1 * onedim_ctrl_pts) = corridor[i].PolyhedronTangentArray[j].n.Y;
+                    A_ieqsfc(starto_row + j, starto_col + 2 * onedim_ctrl_pts) = corridor[i].PolyhedronTangentArray[j].n.Z;
+                    
+                    ub_ieqsfc(starto_row + j) = corridor[i].PolyhedronTangentArray[j].n.X
+                                                * corridor[i].PolyhedronTangentArray[j].pt.X
+                                                +
+                                                corridor[i].PolyhedronTangentArray[j].n.Y
+                                                * corridor[i].PolyhedronTangentArray[j].pt.Y
+                                                +
+                                                corridor[i].PolyhedronTangentArray[j].n.Z
+                                                * corridor[i].PolyhedronTangentArray[j].pt.Z;
+                    
+                    break;
+
+                default:
+                    ROS_ERROR("AXIS_DIM wrong, PLEASE CHECK!");
+                    break;
+                }            
+            }
+        }
+    
+        cout<<"Aieq_sfc in setAieq_sfc !:\n"<<A_ieqsfc.rows()<<endl<<endl;
 
     }
 

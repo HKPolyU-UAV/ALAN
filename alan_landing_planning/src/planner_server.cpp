@@ -347,11 +347,14 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 bool planner_server::land()
 {
 
+    return false;
+
     
 }
 
 bool planner_server::shutdown()
 {
+    return false;
 
 }
 

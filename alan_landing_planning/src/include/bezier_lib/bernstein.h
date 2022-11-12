@@ -121,6 +121,9 @@ namespace alan_traj
         
         Eigen::MatrixXd A_eq, A_ieq, A; 
 
+        Eigen::MatrixXd A_ieqsfc;
+        Eigen::VectorXd ub_ieqsfc, lb_ieqsfc;
+
         Eigen::VectorXd ub_eq, ub_ieq, ub;
         Eigen::VectorXd lb_eq, lb_ieq, lb;
 
@@ -142,13 +145,13 @@ namespace alan_traj
         void setUB1D();
         void setLB1D();
 
-        void setMQM1D(int axis, int n_order, int m, int d_order, vector<double> s);
+        void setMQM1D(int axis_dim, int n_order, int m, int d_order, vector<double> s);
 
-        void setM1D(int axis, int n_order);
-        void setQM1D(int axis, int n_order, int m, int d_order, vector<double> s);
+        void setM1D(int axis_dim, int n_order);
+        void setQM1D(int axis_dim, int n_order, int m, int d_order, vector<double> s);
 
 
-        void setAieqsfc(vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order, vector<double> s);
+        void setAieqsfc(int axis_dim, vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order, vector<double> s);
         //coupled      
 
         void setFinalMatrices();
