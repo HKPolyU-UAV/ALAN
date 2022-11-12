@@ -172,6 +172,8 @@ namespace alan_traj
 
             }
 
+            printf("\n\nnow set Aieqsfc...:\n\n");
+
             setAieqsfc(axis_dim, sfc_list, d_constraints, n_order, m, d_order, s);
 
             
@@ -1043,7 +1045,7 @@ namespace alan_traj
         vector<double> s
         )
     {
-        int onedim_ctrl_pts = m * (n_order + 1);
+        int onedim_ctrl_pts = (n_order + 1);
         int total_ctrl_pts = axis_dim * m * (n_order + 1);
         
         corridor.size();
@@ -1056,13 +1058,15 @@ namespace alan_traj
         for(int i = 0; i < corridor.size(); i++)  
             tangent_plane_no = tangent_plane_no + corridor[i].PolyhedronTangentArray.size();        
         
+        cout<<"onedim_ctrl_pts: "<<onedim_ctrl_pts<<endl;
+        cout<<"tangent_plane_no: "<<tangent_plane_no<<endl;
+        
         total_constraint_no = tangent_plane_no * onedim_ctrl_pts;    
-
-        cout<<"total tangent plane constraints: "<<tangent_plane_no<<endl<<endl; 
+        
+        cout<<"total tangent plane constraints: "<<total_constraint_no<<endl; 
 
         A_ieqsfc.resize(total_constraint_no, total_ctrl_pts);
         A_ieqsfc.setZero();
-
         
         int starto_row = 0;
         int starto_col = 0;
@@ -1079,6 +1083,7 @@ namespace alan_traj
                 switch (axis_dim)
                 {
                 case 1:
+                    cout<<"case 1:"<<endl;
                     A_ieqsfc(starto_row + j, starto_col + 0) = corridor[i].PolyhedronTangentArray[j].n.X;
                     
                     ub_ieqsfc(starto_row + j) = corridor[i].PolyhedronTangentArray[j].n.X 
@@ -1089,6 +1094,7 @@ namespace alan_traj
                     break;
                 
                 case 2:
+                    cout<<"case 2:"<<endl;
                     A_ieqsfc(starto_row + j, starto_col + 0) = corridor[i].PolyhedronTangentArray[j].n.X;
                     A_ieqsfc(starto_row + j, starto_col + 1 * onedim_ctrl_pts) = corridor[i].PolyhedronTangentArray[j].n.Y;
                     
@@ -1103,6 +1109,7 @@ namespace alan_traj
                     break;
 
                 case 3: 
+                    cout<<"case 3:"<<endl;
                     A_ieqsfc(starto_row + j, starto_col + 0) = corridor[i].PolyhedronTangentArray[j].n.X;
                     A_ieqsfc(starto_row + j, starto_col + 1 * onedim_ctrl_pts) = corridor[i].PolyhedronTangentArray[j].n.Y;
                     A_ieqsfc(starto_row + j, starto_col + 2 * onedim_ctrl_pts) = corridor[i].PolyhedronTangentArray[j].n.Z;

@@ -4,9 +4,6 @@
 
 #include "../tools/essential.h"
 
-
-
-
 class osqpsolver
 {
 private:

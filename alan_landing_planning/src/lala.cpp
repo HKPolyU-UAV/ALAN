@@ -317,7 +317,6 @@ int main(int argc, char** argv)
     d_constraints.a_min(1) = -200;//OsqpEigen::INFTY;//-200;
     d_constraints.j_max(1) =  400;
     d_constraints.j_min(1) = -400;//OsqpEigen::INFTY;//-400;
-    OsqpEigen::INFTY;
 
 
     alan_traj::bezier_constraints b_constraints;
@@ -334,7 +333,7 @@ int main(int argc, char** argv)
 
 	alan_traj::traj_gen traj(b_info, b_constraints);
 
-    traj.solve_opt();
+    // traj.solve_opt();
 
 
 
@@ -363,125 +362,125 @@ int main(int argc, char** argv)
 
 
 
-    //////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////
 
-    alan_traj::endpt b_traj_start;
-    b_traj_start.posi(0) = 50;
-    b_traj_start.velo(0) = 0;
-    b_traj_start.accl(0) = 0;
-    b_traj_start.jerk(0) = 0;
+    // alan_traj::endpt b_traj_start;
+    // b_traj_start.posi(0) = 50;
+    // b_traj_start.velo(0) = 0;
+    // b_traj_start.accl(0) = 0;
+    // b_traj_start.jerk(0) = 0;
 
-    b_traj_start.posi(1) = 50;
-    b_traj_start.velo(1) = 0;
-    b_traj_start.accl(1) = 0;
-    b_traj_start.jerk(1) = 0;
+    // b_traj_start.posi(1) = 50;
+    // b_traj_start.velo(1) = 0;
+    // b_traj_start.accl(1) = 0;
+    // b_traj_start.jerk(1) = 0;
     
 
-    alan_traj::endpt b_traj_end;
-    b_traj_end.posi(0) = 280;
-    b_traj_end.velo(0) = 0;
-    b_traj_end.accl(0) = 0;
-    b_traj_end.jerk(0) = 0;
+    // alan_traj::endpt b_traj_end;
+    // b_traj_end.posi(0) = 280;
+    // b_traj_end.velo(0) = 0;
+    // b_traj_end.accl(0) = 0;
+    // b_traj_end.jerk(0) = 0;
 
-    b_traj_end.posi(1) = 0;
-    b_traj_end.velo(1) = 0;
-    b_traj_end.accl(1) = 0;
-    b_traj_end.jerk(1) = 0;
+    // b_traj_end.posi(1) = 0;
+    // b_traj_end.velo(1) = 0;
+    // b_traj_end.accl(1) = 0;
+    // b_traj_end.jerk(1) = 0;
 
-    vector<alan_traj::corridor> cube_list;
-    alan_traj::corridor cube;
+    // vector<alan_traj::corridor> cube_list;
+    // alan_traj::corridor cube;
 
-    cube.p_max(0) = 100;
-    cube.p_max(1) = 100;//0;
+    // cube.p_max(0) = 100;
+    // cube.p_max(1) = 100;//0;
 
-    cube.p_min(0) = 0;
-    cube.p_min(1) = 0;//0;
-    //
-    cube_list.push_back(cube);
+    // cube.p_min(0) = 0;
+    // cube.p_min(1) = 0;//0;
+    // //
+    // cube_list.push_back(cube);
 
-    cube.p_max(0) = 150;
-    cube.p_max(1) = 170;//-OsqpEigen::INFTY;//50;
+    // cube.p_max(0) = 150;
+    // cube.p_max(1) = 170;//-OsqpEigen::INFTY;//50;
 
-    cube.p_min(0) = 50;
-    cube.p_min(1) = 70;
+    // cube.p_min(0) = 50;
+    // cube.p_min(1) = 70;
 
-    cube_list.push_back(cube);
+    // cube_list.push_back(cube);
 
-    cube.p_max(0) = 230;
-    cube.p_max(1) = 200;//-OsqpEigen::INFTY;//130;
+    // cube.p_max(0) = 230;
+    // cube.p_max(1) = 200;//-OsqpEigen::INFTY;//130;
 
-    cube.p_min(0) = 130;
-    cube.p_min(1) = 100;
+    // cube.p_min(0) = 130;
+    // cube.p_min(1) = 100;
 
-    cube_list.push_back(cube);
+    // cube_list.push_back(cube);
     
-    cube.p_max(0) = 300;
-    cube.p_max(1) = 130;//-OsqpEigen::INFTY;//200;
+    // cube.p_max(0) = 300;
+    // cube.p_max(1) = 130;//-OsqpEigen::INFTY;//200;
 
-    cube.p_min(0) = 200;
-    cube.p_min(1) = 30;
+    // cube.p_min(0) = 200;
+    // cube.p_min(1) = 30;
 
-    cube_list.push_back(cube);
+    // cube_list.push_back(cube);
     
-    cube.p_max(0) = 330;
-    cube.p_max(1) = 50;//-OsqpEigen::INFTY;//230;
+    // cube.p_max(0) = 330;
+    // cube.p_max(1) = 50;//-OsqpEigen::INFTY;//230;
 
-    cube.p_min(0) = 230;
-    cube.p_min(1) = -50;
+    // cube.p_min(0) = 230;
+    // cube.p_min(1) = -50;
 
-    cube_list.push_back(cube);
+    // cube_list.push_back(cube);
 
-    alan_traj::dynamic_constraints b_traj_d_constraints;
-    b_traj_d_constraints.v_max(0) =  150;
-    b_traj_d_constraints.v_min(0) = -150;//OsqpEigen::INFTY;//-150;
-    b_traj_d_constraints.a_max(0) =  200;
-    b_traj_d_constraints.a_min(0) = -200;//OsqpEigen::INFTY;//-200;
-    b_traj_d_constraints.j_max(0) =  400;
-    b_traj_d_constraints.j_min(0) = -400;//OsqpEigen::INFTY;//-400;
+    // alan_traj::dynamic_constraints b_traj_d_constraints;
+    // b_traj_d_constraints.v_max(0) =  150;
+    // b_traj_d_constraints.v_min(0) = -150;//OsqpEigen::INFTY;//-150;
+    // b_traj_d_constraints.a_max(0) =  200;
+    // b_traj_d_constraints.a_min(0) = -200;//OsqpEigen::INFTY;//-200;
+    // b_traj_d_constraints.j_max(0) =  400;
+    // b_traj_d_constraints.j_min(0) = -400;//OsqpEigen::INFTY;//-400;
 
-    b_traj_d_constraints.v_max(1) =  150;
-    b_traj_d_constraints.v_min(1) = -150;//OsqpEigen::INFTY;//-150;
-    b_traj_d_constraints.a_max(1) =  200;
-    b_traj_d_constraints.a_min(1) = -200;//OsqpEigen::INFTY;//-200;
-    b_traj_d_constraints.j_max(1) =  400;
-    b_traj_d_constraints.j_min(1) = -400;//OsqpEigen::INFTY;//-400;
+    // b_traj_d_constraints.v_max(1) =  150;
+    // b_traj_d_constraints.v_min(1) = -150;//OsqpEigen::INFTY;//-150;
+    // b_traj_d_constraints.a_max(1) =  200;
+    // b_traj_d_constraints.a_min(1) = -200;//OsqpEigen::INFTY;//-200;
+    // b_traj_d_constraints.j_max(1) =  400;
+    // b_traj_d_constraints.j_min(1) = -400;//OsqpEigen::INFTY;//-400;
 
-    alan_traj::bezier_info b_traj_b_info;
-    alan_traj::bezier_constraints b_traj_b_constraints;
+    // alan_traj::bezier_info b_traj_b_info;
+    // alan_traj::bezier_constraints b_traj_b_constraints;
 
-    vector<double> s;
+    // vector<double> s;
 
-    for(int i = 0; i < 5; i++)
-        s.push_back(1);
+    // for(int i = 0; i < 5; i++)
+    //     s.push_back(1);
 
-    b_traj_b_info.axis_dim = 2;
-    b_traj_b_info.n_order = 7;
-    b_traj_b_info.m = 5;
-    b_traj_b_info.d_order = 4;
-    b_traj_b_info.s = s;
+    // b_traj_b_info.axis_dim = 2;
+    // b_traj_b_info.n_order = 7;
+    // b_traj_b_info.m = 5;
+    // b_traj_b_info.d_order = 4;
+    // b_traj_b_info.s = s;
 
-    b_traj_b_constraints.start = b_traj_start;
-    b_traj_b_constraints.end = b_traj_end;
-    b_traj_b_constraints.cube_list = cube_list;
-    b_traj_b_constraints.d_constraints = b_traj_d_constraints;
-    b_traj_b_constraints.corridor_type = "CUBE";
+    // b_traj_b_constraints.start = b_traj_start;
+    // b_traj_b_constraints.end = b_traj_end;
+    // b_traj_b_constraints.cube_list = cube_list;
+    // b_traj_b_constraints.d_constraints = b_traj_d_constraints;
+    // b_traj_b_constraints.corridor_type = "CUBE";
 
-    double t2 = ros::Time::now().toSec();
+    // double t2 = ros::Time::now().toSec();
 
-    cout<<"here enter~~"<<endl;
+    // cout<<"here enter~~"<<endl;
 
-	alan_traj::traj_gen b_traj_traj(b_traj_b_info, b_traj_b_constraints);
+	// alan_traj::traj_gen b_traj_traj(b_traj_b_info, b_traj_b_constraints);
 
-	b_traj_traj.solve_opt();
+	// b_traj_traj.solve_opt();
 
-    double t3 = ros::Time::now().toSec();
+    // double t3 = ros::Time::now().toSec();
 
 
 	
 
-    double t1 = ros::Time::now().toSec();
+    // double t1 = ros::Time::now().toSec();
 
-    cout<<"fps: "<<1/(t3-t2)<<endl;
+    // cout<<"fps: "<<1/(t3-t2)<<endl;
 
 	return 0;
 }
