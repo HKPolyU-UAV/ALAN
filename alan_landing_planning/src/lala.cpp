@@ -317,6 +317,7 @@ int main(int argc, char** argv)
     d_constraints.a_min(1) = -200;//OsqpEigen::INFTY;//-200;
     d_constraints.j_max(1) =  400;
     d_constraints.j_min(1) = -400;//OsqpEigen::INFTY;//-400;
+    OsqpEigen::INFTY;
 
 
     alan_traj::bezier_constraints b_constraints;

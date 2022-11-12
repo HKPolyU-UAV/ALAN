@@ -1,3 +1,6 @@
+#ifndef BERNSTEIN_H
+#define BERNSTEIN_H
+
 #include "../tools/essential.h"
 #include "alan_visualization/Polyhedron.h"
 // #include "alan_landing_planning/"
@@ -201,3 +204,5 @@ namespace alan_traj
     };
 
 }
+
+#endif

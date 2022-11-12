@@ -1,5 +1,9 @@
+
+
 //sync all message including position, velocity, accleration
 //of both uav and ugv
+#ifndef MSGSYNC_H
+#define MSGSYNC_H
 
 #include "tools/essential.h"
 
@@ -110,3 +114,5 @@ namespace alan
     PLUGINLIB_EXPORT_CLASS(alan::MsgSyncNodelet, nodelet::Nodelet)
 
 }
+
+#endif

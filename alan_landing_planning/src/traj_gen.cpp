@@ -1,5 +1,4 @@
-#ifndef TRAJ_GEN_H
-#define TRAJ_GEN_H
+
 
 // #include "../tools/essential.h"
 // #include "bernstein.hpp"
@@ -249,5 +248,3 @@ namespace alan_traj
     }
 
 }
-
-#endif

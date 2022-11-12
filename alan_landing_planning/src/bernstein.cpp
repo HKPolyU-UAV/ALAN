@@ -1,6 +1,3 @@
-#ifndef BERNSTEIN_H
-#define BERNSTEIN_H
-
 #include "include/bezier_lib/bernstein.h"
 
 namespace alan_traj
@@ -11,7 +8,8 @@ namespace alan_traj
     int axis_dim,
     int n_order, int m, int d_order, vector<double> s,
     endpt start, endpt end,
-    vector<corridor> cube_list, dynamic_constraints d_constraints
+    vector<corridor> cube_list, 
+    dynamic_constraints d_constraints
     )
     {        
         //first check each matrix
@@ -106,7 +104,7 @@ namespace alan_traj
     int n_order, int m, int d_order, vector<double> s,
     endpt start, endpt end,
     vector<alan_visualization::Polyhedron> sfc_list,
-        dynamic_constraints d_constraints
+    dynamic_constraints d_constraints
     )
     {        
         //first check each matrix
@@ -1086,6 +1084,8 @@ namespace alan_traj
                     ub_ieqsfc(starto_row + j) = corridor[i].PolyhedronTangentArray[j].n.X 
                                                 * corridor[i].PolyhedronTangentArray[j].pt.X;
                     
+                    lb_ieqsfc(starto_row + j) = -(double)1e30;
+
                     break;
                 
                 case 2:
@@ -1097,6 +1097,8 @@ namespace alan_traj
                                                 +
                                                 corridor[i].PolyhedronTangentArray[j].n.Y
                                                 * corridor[i].PolyhedronTangentArray[j].pt.Y;
+                    
+                    lb_ieqsfc(starto_row + j) = -(double)1e30;
                     
                     break;
 
@@ -1114,6 +1116,8 @@ namespace alan_traj
                                                 corridor[i].PolyhedronTangentArray[j].n.Z
                                                 * corridor[i].PolyhedronTangentArray[j].pt.Z;
                     
+                    lb_ieqsfc(starto_row + j) = -(double)1e30;
+
                     break;
 
                 default:
@@ -1255,6 +1259,3 @@ namespace alan_traj
     }
 
 }
-
-
-#endif

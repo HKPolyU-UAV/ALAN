@@ -1,3 +1,5 @@
+#ifndef QPSOLVER_H
+#define QPSOLVER_H
 #include <OsqpEigen/OsqpEigen.h>
 
 #include "../tools/essential.h"
@@ -19,3 +21,5 @@ public:
         Eigen::MatrixXd _lb);
     ~osqpsolver();
 };
+
+#endif

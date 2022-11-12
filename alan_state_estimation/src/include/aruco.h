@@ -1,3 +1,6 @@
+#ifndef ARUCO_H
+#define ARUCO_H
+
 #include "tools/essential.h"
 
 #include <geometry_msgs/Point.h>
@@ -143,3 +146,6 @@ namespace alan
     
     PLUGINLIB_EXPORT_CLASS(alan::ArucoNodelet, nodelet::Nodelet)
 }
+
+
+#endif

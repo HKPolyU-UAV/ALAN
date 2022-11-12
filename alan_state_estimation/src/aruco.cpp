@@ -1,8 +1,6 @@
 //the aruco library is used for baseline validations as well as trial and error of algorithms
 //Author: Li-Yu LO
 
-#ifndef ARUCO_H
-#define ARUCO_H
 #include "include/aruco.h"
 
 void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
@@ -791,4 +789,3 @@ vector<Eigen::Vector3d> alan::ArucoNodelet::pointcloud_generate(vector<Eigen::Ve
 //     return icp_pose;
 // }
 
-#endif

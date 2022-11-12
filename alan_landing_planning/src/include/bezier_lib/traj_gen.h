@@ -1,3 +1,6 @@
+#ifndef TRAJ_GEN_H
+#define TRAJ_GEN_H
+
 #include "../tools/essential.h"
 #include "bernstein.h"
 #include "osqpsolver.h"
@@ -50,3 +53,5 @@ namespace alan_traj
         
     };
 }
+
+#endif

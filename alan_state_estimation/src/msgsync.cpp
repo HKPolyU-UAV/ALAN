@@ -1,6 +1,3 @@
-#ifndef IMU_H
-#define IMU_H
-
 #include "include/msgsync.h"
 
 void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu)
@@ -105,4 +102,3 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
     ugv_pub_AlanPlannerMsg.publish(ugv_alan_msg);
 
 }
-#endif

@@ -1,3 +1,6 @@
+#ifndef YOLO_H
+#define YOLO_H
+
 #include "tools/essential.h"
 
 #include <geometry_msgs/Point.h>
@@ -105,3 +108,5 @@ namespace alan{
    PLUGINLIB_EXPORT_CLASS(alan::CnnNodelet, nodelet::Nodelet)
 
 }
+
+#endif

@@ -1,7 +1,4 @@
-﻿#ifndef YOLO_H
-#define YOLO_H
-
-#include "include/yolo.h"
+﻿#include "include/yolo.h"
 
 void alan::CnnNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {
@@ -276,5 +273,3 @@ void alan::CnnNodelet::getclassname(vector<std::string> &classnames)
         classnames.push_back(line);
     }
 }
-
-#endif

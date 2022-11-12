@@ -1,6 +1,3 @@
-#ifndef QPSOLVER_H
-#define QPSOLVER_H
-
 // #include <OsqpEigen/OsqpEigen.h>
 // #include <osqp.h>
 // #include "../tools/essential.h"
@@ -93,6 +90,3 @@ void osqpsolver::qp_opt(
     
 
 }
-
-
-#endif
