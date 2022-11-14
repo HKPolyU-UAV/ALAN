@@ -102,3 +102,8 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
     ugv_pub_AlanPlannerMsg.publish(ugv_alan_msg);
 
 }
+
+void alan::MsgSyncNodelet::cam_msg_callback(const sensor_msgs::Imu::ConstPtr& imu)
+{
+    
+}

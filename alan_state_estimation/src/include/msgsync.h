@@ -36,6 +36,9 @@ namespace alan
             void uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
             void ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
 
+            // void cam_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
+            void cam_msg_callback(const sensor_msgs::Imu::ConstPtr& imu);
+
             message_filters::Subscriber<nav_msgs::Odometry> uav_sub_odom;
             message_filters::Subscriber<sensor_msgs::Imu> uav_sub_imu;
 

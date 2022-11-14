@@ -16,6 +16,9 @@ planner_server::planner_server(ros::NodeHandle& _nh)
     ugv_AlanPlannerMsg_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
             ("/AlanPlannerMsg/ugv/data", 1, &planner_server::ugvAlanMsgCallback, this);
 
+    cam_Pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
+            ("/camera/imu", 1, &planner_server::camPoseMsgCallback, this);
+
     //publish
     pub_fsm = nh.advertise<alan_landing_planning::StateMachine>
             ("/alan_fsm", 1);
@@ -135,6 +138,29 @@ void planner_server::ugvAlanMsgCallback(const alan_landing_planning::AlanPlanner
     // cout<<uav_current_AlanPlannerMsg.frame<<endl;
 
     // cout<<"im here"<<uav_current_AlanPlannerMsg.position.x<<endl;
+}
+
+void planner_server::camPoseMsgCallback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    cam_current_PoseMsg = *pose;
+
+    Eigen::Translation3d t_(
+        cam_current_PoseMsg.pose.position.x,
+        cam_current_PoseMsg.pose.position.y,
+        cam_current_PoseMsg.pose.position.z
+    );
+
+    Eigen::Quaterniond q_(
+        cam_current_PoseMsg.pose.orientation.w,
+        cam_current_PoseMsg.pose.orientation.x,
+        cam_current_PoseMsg.pose.orientation.y,
+        cam_current_PoseMsg.pose.orientation.z
+    );
+
+    camPose = t_ * q_;    
+
+    
+
 }
 
 void planner_server::mainserver()

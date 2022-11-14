@@ -34,6 +34,7 @@ private:
     //subscriber
     ros::Subscriber uav_state_sub;
     ros::Subscriber uav_AlanPlannerMsg_sub, ugv_AlanPlannerMsg_sub;
+    ros::Subscriber cam_Pose_sub;
 
     //publisher
     ros::Publisher local_pos_pub;
@@ -50,6 +51,8 @@ private:
     void uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg);
 
     void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg);
+
+    void camPoseMsgCallback(const geometry_msgs::PoseStamped::ConstPtr& imu);
 
     //fsm
     void fsm_manager();
@@ -80,13 +83,17 @@ private:
     string fsm_state = IDLE;
     waypts takeoff_hover_pt = {0,0,1.2};
     
-    Eigen::Isometry3d uavOdomPose, ugvOdomPose;
+    Eigen::Isometry3d uavOdomPose, ugvOdomPose, camPose;
 
     mavros_msgs::SetMode uav_set_mode;
     mavros_msgs::CommandBool arm_cmd;
     mavros_msgs::State uav_current_state;
 
+    // sensor_msgs::Imu cam_pose;
+    // Eigen::Quaterniond cam_pose;
+
     alan_landing_planning::AlanPlannerMsg uav_current_AlanPlannerMsg, ugv_current_AlanPlannerMsg;
+    geometry_msgs::PoseStamped cam_current_PoseMsg;
 
     geometry_msgs::PoseStamped pose;
     geometry_msgs::PoseStamped uav_traj_pose_desired;

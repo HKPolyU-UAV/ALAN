@@ -22,7 +22,6 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-
     Polyhedron3D polyh_msg;
     // polyh_msg.
 
@@ -340,7 +339,7 @@ int main(int argc, char** argv)
     double t01 = ros::Time::now().toSec();
 
     cout<<"ms: "<<(t01-t00)<<endl;
-    cout<<"fps: "<<1000/(t01-t00)<<endl;
+    cout<<"fps: "<<1/(t01-t00)<<endl;
 
 
 

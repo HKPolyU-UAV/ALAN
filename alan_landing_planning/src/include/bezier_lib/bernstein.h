@@ -206,7 +206,6 @@ namespace alan_traj
 
         ~bernstein(){};
 
-        void set1D_();
 
         inline Eigen::MatrixXd getMQM(){return MQM_final;}
         inline Eigen::MatrixXd getA(){return A_final;}
