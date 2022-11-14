@@ -8,7 +8,6 @@
 #include "alan_landing_planning/test.h"
 
 
-
 namespace alan_traj
 {
 
@@ -134,19 +133,26 @@ namespace alan_traj
         vector<Eigen::VectorXd> ub_eq_array, ub_ieq_array, ub_array;
         vector<Eigen::VectorXd> lb_eq_array, lb_ieq_array, lb_array;
 
+        vector<Eigen::MatrixXd> A_sfc_eq_array, A_sfc_ieq_dyn_array;
+
         Eigen::MatrixXd getMQM_spd(){return MQM_spd;}
 
         void setAeq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s);
         void setUBeq1D(int axis_dim, endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
         void setLBeq1D(int axis_dim, endpt_cond start, endpt_cond end, int n_order, int m, int d_order);
         
-        void setAieq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s);
+        void setAieq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s, string corridor_type);
+        
         void setUBieq1D(int axis_dim, vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
         void setLBieq1D(int axis_dim, vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order);
         
+        void setUBieq1D_polyh(int axis_dim, dynamic_constraints d_constraints, int n_order, int m, int d_order);
+        void setlBieq1D_polyh(int axis_dim, dynamic_constraints d_constraints, int n_order, int m, int d_order);
+
         void setA1D();
         void setUB1D();
         void setLB1D();
+    
 
         void setMQM1D(int axis_dim, int n_order, int m, int d_order, vector<double> s);
 
@@ -154,7 +160,7 @@ namespace alan_traj
         void setQM1D(int axis_dim, int n_order, int m, int d_order, vector<double> s);
 
 
-        void setAieqsfc(int axis_dim, vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order, vector<double> s);
+        void setAieqBieqsfc(int axis_dim, vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order, vector<double> s);
         //coupled      
 
         void setFinalMatrices();
@@ -163,6 +169,12 @@ namespace alan_traj
         void setAFinal();
         void setUbFinal();
         void setLbFinal();
+
+        void setAFinal_polyh();
+        void setUbFinal_polyh();
+        void setLbFinal_polyh();
+
+
 
         // Eigen::MatrixXd getSPD(Eigen::MatrixXd Q);
 

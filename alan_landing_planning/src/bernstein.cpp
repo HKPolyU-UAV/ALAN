@@ -49,7 +49,7 @@ namespace alan_traj
 
                 printf("eq matrices: pass\n");
 
-                setAieq1D(axis_i, n_order, m, d_order, s);     
+                setAieq1D(axis_i, n_order, m, d_order, s, "CUBE");     
                 setUBieq1D(axis_i, cube_list, d_constraints, n_order, m, d_order);        
                 setLBieq1D(axis_i, cube_list, d_constraints, n_order, m, d_order);
 
@@ -118,9 +118,20 @@ namespace alan_traj
 
         if(m == sfc_list.size() && m == s.size())
         {
-            A_array.clear();
-            ub_array.clear();
-            lb_array.clear();
+            A_sfc_eq_array.clear();
+            A_sfc_ieq_dyn_array.clear();
+
+            ub_eq_array.clear();
+            ub_ieq_array.clear();
+
+            lb_eq_array.clear();
+            lb_ieq_array.clear();
+
+
+            // A_array.emplace_back(A);
+            // ub_array.emplace_back(ub);
+            // lb_array.emplace_back(lb);
+            MQM_array.clear();
 
             for(int axis_i = 0; axis_i < axis_dim; axis_i++)
             {
@@ -143,16 +154,16 @@ namespace alan_traj
 
                 printf("eq matrices: pass\n");
 
-                setAieq1D(axis_i, n_order, m, d_order, s);     
+                setAieq1D(axis_i, n_order, m, d_order, s, "POLYH");     
 
-                // setUBieq(cube_list, d_constraints, n_order, m, d_order);        
-                // setLBieq(cube_list, d_constraints, n_order, m, d_order);
+                setUBieq1D_polyh(axis_i, d_constraints, n_order, m, d_order);        
+                setlBieq1D_polyh(axis_i, d_constraints, n_order, m, d_order);
 
                 printf("ieq matriaces: pass\n");
 
-                setA1D();
-                setUB1D();
-                setLB1D();
+                // setA1D();
+                // setUB1D();
+                // setLB1D();
 
                 // cout<<"\nhere!"<<endl;
 
@@ -165,18 +176,50 @@ namespace alan_traj
                 setMQM1D(axis_i, n_order, m, d_order, s);
                 // printf("pass 4\n");
 
+                A_sfc_eq_array.emplace_back(A_eq);
+                A_sfc_ieq_dyn_array.emplace_back(A_ieq);
 
-                A_array.emplace_back(A);
-                ub_array.emplace_back(ub);
-                lb_array.emplace_back(lb);
+                ub_eq_array.emplace_back(ub_eq);
+                ub_ieq_array.emplace_back(ub_ieq);
+
+                lb_eq_array.emplace_back(lb_eq);
+                lb_ieq_array.emplace_back(lb_ieq);
+
+
+                // A_array.emplace_back(A);
+                // ub_array.emplace_back(ub);
+                // lb_array.emplace_back(lb);
+                MQM_array.emplace_back(MQM);
+
 
             }
 
+            
+            // cout<<2<<endl;
+            // setUbFinal_polyh();
+            // cout<<3<<endl;
+            // setLbFinal_polyh();
+            // cout<<4<<endl;
+
+
             printf("\n\nnow set Aieqsfc...:\n\n");
 
-            setAieqsfc(axis_dim, sfc_list, d_constraints, n_order, m, d_order, s);
+            setAieqBieqsfc(axis_dim, sfc_list, d_constraints, n_order, m, d_order, s);
 
-            
+            // cout<<0<<endl;
+            setMQMFinal();
+
+            cout<<"set final AFinal_polyh..."<<endl;
+            setAFinal_polyh();
+            setUbFinal_polyh();
+            setLbFinal_polyh();
+            cout<<"A_Final size  = "<<A_final.rows()<<" "<<A_final.cols()<<endl;
+            cout<<"ub_final size = "<<ub_final.rows()<<endl;;
+
+            // cout<<"Aieq_sfc size: "<<A_ieqsfc.rows()<<" "<<A_ieqsfc.cols()<<endl;
+            // cout<<"ub_ieqsfc size: "<<ub_ieqsfc.size()<<endl;
+            // cout<<"lb_ieqsfc size: "<<lb_ieqsfc.size()<<endl<<endl;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
         }
         else
         {
@@ -462,7 +505,7 @@ namespace alan_traj
         // cout<<"ub_eq!\n"<<lb_eq<<endl;;
     }
 
-    void bernstein::setAieq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    void bernstein::setAieq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s, string corridor_type)
     {
         int _dim_crtl_pts = m * (n_order + 1);
         int _dim_p = m * (n_order + 1 - 0);
@@ -474,8 +517,18 @@ namespace alan_traj
         Eigen::MatrixXd Aieq_p;
         Aieq_p.resize(_dim_p, _dim_crtl_pts);
         Aieq_p.setIdentity();
+        
+        int starto_row_col = 0;
+        
+        for(int i = 0; i < s.size(); i++)
+        {
+            starto_row_col = i * (n_order + 1);   
+            cout<<"starto_row_col = "<<starto_row_col  <<endl;
 
-        // cout<<1<<endl;
+            Aieq_p.block(starto_row_col, starto_row_col, (n_order + 1), (n_order + 1)) = Aieq_p.block(starto_row_col, starto_row_col, (n_order + 1), (n_order + 1)) * pow(s[i], 1);
+        }
+
+        cout<<"should be fine..."<<endl;
 
         //Aieq_v
         Eigen::MatrixXd Aieq_v;
@@ -574,33 +627,73 @@ namespace alan_traj
         // cout<<"that's Aieq_j"<<endl;
 
         //combine
-        switch (d_order)
+        if(corridor_type == "CUBE")
         {
-        case 2:
-            A_ieq.resize(Aieq_p.rows() + Aieq_v.rows(), _dim_crtl_pts);
-            A_ieq << Aieq_p,
-                    Aieq_v;
-            break;
+            switch (d_order)
+            {
+            case 2:
+                A_ieq.resize(Aieq_p.rows() + Aieq_v.rows(), _dim_crtl_pts);
+                A_ieq << Aieq_p,
+                        Aieq_v;
+                break;
 
-        case 3:
-            A_ieq.resize(Aieq_p.rows() + Aieq_v.rows() + Aieq_a.rows(), _dim_crtl_pts);
-            A_ieq << Aieq_p,
-                    Aieq_v, 
-                    Aieq_a;
-            break;
-        
-        case 4:
-            A_ieq.resize(Aieq_p.rows() + Aieq_v.rows() + Aieq_a.rows() + Aieq_j.rows(), _dim_crtl_pts);
-            A_ieq << Aieq_p,
-                    Aieq_v,
-                    Aieq_a,
-                    Aieq_j;
-            break;
+            case 3:
+                A_ieq.resize(Aieq_p.rows() + Aieq_v.rows() + Aieq_a.rows(), _dim_crtl_pts);
+                A_ieq << Aieq_p,
+                        Aieq_v, 
+                        Aieq_a;
+                break;
             
-        default:
-            ROS_ERROR("Something wrong with Aieq.\nPlease re-select d_order:\n\t2 for min. accl,\n\t 3 for min. jerk,\n\t 4 for min. snap\n");
-            break;
+            case 4:
+                A_ieq.resize(Aieq_p.rows() + Aieq_v.rows() + Aieq_a.rows() + Aieq_j.rows(), _dim_crtl_pts);
+                A_ieq << Aieq_p,
+                        Aieq_v,
+                        Aieq_a,
+                        Aieq_j;
+                break;
+                
+            default:
+                ROS_ERROR("Something wrong with Aieq.\nPlease re-select d_order:\n\t2 for min. accl,\n\t 3 for min. jerk,\n\t 4 for min. snap\n");
+                break;
+            }
         }
+        else if(corridor_type == "POLYH")
+        {
+            switch (d_order)
+            {
+            case 2:
+                A_ieq.resize(Aieq_v.rows(), _dim_crtl_pts);
+                A_ieq << Aieq_v;
+
+                break;
+
+            case 3:
+                A_ieq.resize(Aieq_v.rows() + Aieq_a.rows(), _dim_crtl_pts);
+                A_ieq << Aieq_v, 
+                        Aieq_a;
+
+                break;
+            
+            case 4:
+                A_ieq.resize(Aieq_v.rows() + Aieq_a.rows() + Aieq_j.rows(), _dim_crtl_pts);
+                A_ieq << Aieq_v,
+                        Aieq_a,
+                        Aieq_j;
+
+                break;
+                
+            default:
+                ROS_ERROR("Something wrong with Aieq.\nPlease re-select d_order:\n\t2 for min. accl,\n\t 3 for min. jerk,\n\t 4 for min. snap\n");
+                break;
+        }
+
+        }
+        else
+        {
+            ROS_ERROR("CORRIDOR TYPE NOT YET SPECIFIED...PLEASE CHECK!");
+        }
+
+        
 
         cout<<"Aieq in setAieq1D !:\n"<<A_ieq.rows()<<endl<<endl;;
 
@@ -756,6 +849,120 @@ namespace alan_traj
             lb_ieq.resize(LBieq_p.size() + LBieq_v.size() + LBieq_a.size() + LBieq_j.size());
             lb_ieq << LBieq_p,
                     LBieq_v,
+                    LBieq_a,
+                    LBieq_j;
+            break;
+        
+        default:
+            ROS_ERROR("Something wrong with LB.\nRe-Select d_order:\n\t2 for min. accl,\n\t 3 for min. jerk,\n\t 4 for min. snap\n");
+            break;
+        }
+
+
+    }
+
+    void bernstein::setUBieq1D_polyh(int axis_dim, dynamic_constraints d_constraints, int n_order, int m, int d_order)
+    {
+        // cout<<"setUBieq1D"<<endl;
+        
+
+        // cout<<"seUBieq_v"<<endl;
+
+
+        //UBieq_v
+        Eigen::VectorXd UBieq_v;
+        int _dim_v = m * (n_order + 1 - 1);
+        UBieq_v.resize(_dim_v);
+
+        for(int i = 0; i < _dim_v; i++)
+            UBieq_v(i) = d_constraints.v_max(axis_dim);
+
+
+        //UBiep_a
+        Eigen::VectorXd UBieq_a;
+        int _dim_a = m * (n_order + 1 - 2);
+        UBieq_a.resize(_dim_a);
+
+        for(int i = 0; i < _dim_a; i++)
+            UBieq_a(i) = d_constraints.a_max(axis_dim);
+
+        //UBieq_j
+        Eigen::VectorXd UBieq_j;
+        int _dim_j = m * (n_order + 1 - 3);
+        UBieq_j.resize(_dim_j);
+        
+        for(int i = 0; i < _dim_j; i++)
+            UBieq_j(i) = d_constraints.j_max(axis_dim);
+
+        
+        switch (d_order)
+        {
+        case 2:
+            ub_ieq.resize(UBieq_v.size());
+            ub_ieq << UBieq_v;
+            break;
+        
+        case 3:
+            ub_ieq.resize(UBieq_v.size() + UBieq_a.size());
+            ub_ieq << UBieq_v,
+                    UBieq_a;
+            break;
+        
+        case 4:
+            ub_ieq.resize(UBieq_v.size() + UBieq_a.size() + UBieq_j.size());
+            ub_ieq << UBieq_v,
+                    UBieq_a,
+                    UBieq_j;
+            break;
+        
+        default:
+            ROS_ERROR("Something wrong with UB.\nRe-Select d_order:\n\t2 for min. accl,\n\t 3 for min. jerk,\n\t 4 for min. snap\n");
+            break;
+        }
+    }
+
+    void bernstein::setlBieq1D_polyh(int axis_dim, dynamic_constraints d_constraints, int n_order, int m, int d_order)
+    {                    
+        Eigen::VectorXd LBieq_v;
+        int _dim_v = m * (n_order + 1 - 1);
+        LBieq_v.resize(_dim_v);
+
+        for(int i = 0; i < _dim_v; i++)
+            LBieq_v(i) = d_constraints.v_min(axis_dim);
+
+
+        Eigen::VectorXd LBieq_a;
+        int _dim_a = m * (n_order + 1 - 2);
+        LBieq_a.resize(_dim_a);
+
+        for(int i = 0; i < _dim_a; i++)
+            LBieq_a(i) = d_constraints.a_min(axis_dim);
+
+        
+        Eigen::VectorXd LBieq_j;
+        int _dim_j = m * (n_order + 1 - 3);
+        LBieq_j.resize(_dim_j);
+        
+        for(int i = 0; i < _dim_j; i++)
+            LBieq_j(i) = d_constraints.j_min(axis_dim);
+
+        
+        switch (d_order)
+        {
+        case 2:
+            lb_ieq.resize(LBieq_v.size());
+            lb_ieq << LBieq_v;
+            break;
+        
+        case 3:
+            lb_ieq.resize(LBieq_v.size() + LBieq_a.size());
+            lb_ieq << LBieq_v,
+                    LBieq_a;
+            break;
+        
+        case 4:
+            lb_ieq.resize(LBieq_v.size() + LBieq_a.size() + LBieq_j.size());
+            lb_ieq << LBieq_v,
                     LBieq_a,
                     LBieq_j;
             break;
@@ -1035,7 +1242,7 @@ namespace alan_traj
         }
     }
 
-    void bernstein::setAieqsfc(
+    void bernstein::setAieqBieqsfc(
         int axis_dim,
         vector<alan_visualization::Polyhedron> corridor, 
         dynamic_constraints d_constraints, 
@@ -1168,21 +1375,24 @@ namespace alan_traj
             }
         }
     
-        cout<<"\nAieq_sfc in setAieq_sfc !: "<<A_ieqsfc.rows()<<endl;
-        cout<<"Aieq_sfc in setAieq_sfc !: "<<A_ieqsfc.cols()<<endl;
-        cout<<"ub_ieqsfc in setAieq_sfc !: "<<ub_ieqsfc.size()<<endl;
-        cout<<"lb_ieqsfc in setAieq_sfc !: "<<lb_ieqsfc.size()<<endl;
+        // cout<<"\nAieq_sfc in setAieq_sfc !: "<<A_ieqsfc.rows()<<endl;
+        // cout<<"Aieq_sfc in setAieq_sfc !: "<<A_ieqsfc.cols()<<endl;
+        // cout<<"ub_ieqsfc in setAieq_sfc !: "<<ub_ieqsfc.size()<<endl;
+        // cout<<"lb_ieqsfc in setAieq_sfc !: "<<lb_ieqsfc.size()<<endl;
         // cout<<A_ieqsfc<<endl<<endl;
-        cout<<lb_ieqsfc<<endl<<endl;;
+        // cout<<lb_ieqsfc<<endl<<endl;;
 
     }
 
     void bernstein::setMQMFinal()
     {
+        cout<<"now in setMQMFinal: "<<MQM_array.size()<<endl;
+
         int MQM_final_rows = MQM_array.size() * MQM_array[0].rows();
         int MQM_final_cols = MQM_array.size() * MQM_array[0].cols();
 
         MQM_final.resize(MQM_final_rows, MQM_final_cols);
+
 
         for(int i = 0; i < MQM_array.size(); i++)        
             MQM_final.block(i * MQM_array[i].rows(), i * MQM_array[i].cols(), MQM_array[i].rows(), MQM_array[i].cols()) = MQM_array[i];
@@ -1191,13 +1401,14 @@ namespace alan_traj
 
     void bernstein::setAFinal()
     {
+        // cout<<A_array[0]<<endl;
         int A_final_rows = A_array.size() * A_array[0].rows();
         int A_final_cols = A_array.size() * A_array[0].cols();
 
-        cout<<"setAFianl"<<endl;
+        // cout<<"setAFianl"<<endl;
 
-        cout<<A_final_rows<<endl;
-        cout<<A_final_cols<<endl;
+        // cout<<A_final_rows<<endl;
+        // cout<<A_final_cols<<endl;
 
         A_final.resize(A_final_rows, A_final_cols);
 
@@ -1225,8 +1436,121 @@ namespace alan_traj
         for(int i = 0; i < lb_array.size(); i++)        
             lb_final.middleRows(lb_array[i].size() * i, lb_array[i].size()) = lb_array[i];
 
+    
     }
 
+    void bernstein::setAFinal_polyh()
+    {
+        cout<<"\n\nhi now in AFinal_polyh..."<<endl;
+        // cout<<"A_sfc_eq_array..."<<A_sfc_eq_array.size()<<endl;
+        // cout<<"A_sfc_eq_array..."<<A_sfc_eq_array[0].rows()<<endl;
+        // cout<<"A_sfc_ieq_sfc...."<<A_ieqsfc.rows()<<endl;
+        // cout<<"A_sfc_ieq_array..."<<A_sfc_ieq_dyn_array.size()<<endl;
+        // cout<<"A_sfc_ieq_array..."<<A_sfc_ieq_dyn_array[0].rows()<<endl<<endl;
+        
+        int A_final_rows = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows()
+                            + A_ieqsfc.rows()
+                            + A_sfc_ieq_dyn_array.size() * A_sfc_ieq_dyn_array[0].rows();
+        
+        int A_final_cols = A_sfc_eq_array.size() * A_sfc_eq_array[0].cols();
+                            // + A_ieqsfc.cols()
+                            // + A_sfc_ieq_dyn_array.size() * A_sfc_ieq_dyn_array[0].cols();
+        
+        
+        // cout<<1<<endl;
+
+        A_final.resize(A_final_rows, A_final_cols);
+
+        cout<<"A_final_polyh size: "<<A_final.rows()<<"  "<<A_final.cols()<<endl;
+
+        for(int i = 0 ; i < A_sfc_eq_array.size(); i++)
+        {
+            A_final.block(i * A_sfc_eq_array[i].rows(), i * A_sfc_eq_array[i].cols(), A_sfc_eq_array[i].rows(), A_sfc_eq_array[i].cols()) = A_sfc_eq_array[i];
+        }
+
+        // cout<<2<<endl;
+
+        A_final.block(A_sfc_eq_array.size() * A_sfc_eq_array[0].rows(), 0, A_ieqsfc.rows(), A_ieqsfc.cols()) = A_ieqsfc;
+
+        // cout<<3<<endl;
+
+        int starto = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows() + A_ieqsfc.rows();
+
+        // cout<<"local starto = "<<starto<<endl;
+
+        for(int i = 0 ; i < A_sfc_ieq_dyn_array.size(); i++)
+        {
+            cout<<"temp_i: "<<starto + i * A_sfc_ieq_dyn_array[i].rows()<<endl;
+            cout<<"temp_j: "<<i * A_sfc_eq_array[i].cols()<<endl;
+            cout<<"temp_r: "<<A_sfc_ieq_dyn_array[i].rows()<<endl;
+            cout<<"temp_c: "<<A_sfc_ieq_dyn_array[i].cols()<<endl<<endl;
+            A_final.block(starto + i * A_sfc_ieq_dyn_array[i].rows(), i * A_sfc_eq_array[i].cols(), A_sfc_ieq_dyn_array[i].rows(), A_sfc_ieq_dyn_array[i].cols()) = A_sfc_ieq_dyn_array[i];            
+        }
+        // cout<<4<<endl;
+
+        // cout<<A_final<<endl;
+
+        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/matrix.txt");
+
+        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/matrix.txt",ios::app);
+        save<<A_final<<endl;
+        save.close();
+
+
+
+    }
+
+    void bernstein::setUbFinal_polyh()
+    {
+        int ub_final_rows = ub_eq_array.size() * ub_eq_array[0].rows()
+                            + ub_ieqsfc.rows()
+                            + ub_ieq_array.size() * ub_ieq_array[0].rows();
+
+        ub_final.resize(ub_final_rows);
+
+        for(int i = 0; i < ub_eq_array.size(); i++)
+            ub_final.middleRows(ub_eq_array[i].size() * i, ub_eq_array[i].size()) = ub_eq_array[i];
+        
+        ub_final.middleRows(ub_eq_array.size() * ub_eq_array[0].rows(), ub_ieqsfc.size()) = ub_ieqsfc;
+
+        int starto = ub_eq_array.size() * ub_eq_array[0].rows() + ub_ieqsfc.rows();
+        
+        for(int i = 0; i < ub_ieq_array.size(); i++)
+            ub_final.middleRows(starto + i * ub_ieq_array[i].size(), ub_ieq_array[i].size()) = ub_ieq_array[i];                            
+
+        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/ub.txt");
+
+        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/ub.txt",ios::app);
+        save<<ub_final<<endl;
+        save.close();
+    }
+
+    void bernstein::setLbFinal_polyh()
+    {
+        int lb_final_rows = lb_eq_array.size() * lb_eq_array[0].rows()
+                            + lb_ieqsfc.rows()
+                            + lb_ieq_array.size() * lb_ieq_array[0].rows();
+
+        lb_final.resize(lb_final_rows);
+
+        for(int i = 0; i < lb_eq_array.size(); i++)
+            lb_final.middleRows(lb_eq_array[i].size() * i, lb_eq_array[i].size()) = lb_eq_array[i];
+        
+        lb_final.middleRows(lb_eq_array.size() * lb_eq_array[0].rows(), lb_ieqsfc.size()) = lb_ieqsfc;
+
+        int starto = lb_eq_array.size() * lb_eq_array[0].rows() + lb_ieqsfc.rows();
+        
+        for(int i = 0; i < lb_ieq_array.size(); i++)
+            lb_final.middleRows(starto + i * lb_ieq_array[i].size(), lb_ieq_array[i].size()) = lb_ieq_array[i];                            
+
+
+        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/lb.txt");
+
+        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/lb.txt",ios::app);
+        save<<lb_final<<endl;
+        save.close();
+
+    }
 
     inline double bernstein::permutation(int p, int q)
     {

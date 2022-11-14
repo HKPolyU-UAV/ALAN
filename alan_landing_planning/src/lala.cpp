@@ -22,6 +22,7 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+
     Polyhedron3D polyh_msg;
     // polyh_msg.
 
@@ -35,6 +36,7 @@ int main(int argc, char** argv)
     ros::Publisher poly_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
     ros::Publisher polyh_pub = nh.advertise<alan_visualization::Polyhedron>("/alan_visualization/polyhedron", 1, true);
 
+    double t00 = ros::Time::now().toSec();
     // test.n.X
 
     decomp_ros_msgs::PolyhedronArray poly_msg;
@@ -47,7 +49,7 @@ int main(int argc, char** argv)
     b_info.axis_dim = 2;
     b_info.n_order = 7;
     b_info.m = 5;
-    b_info.d_order = 3;
+    b_info.d_order = 4;
 
     for(int i = 0; i < b_info.m; i++)
         b_info.s.push_back(1);
@@ -329,11 +331,17 @@ int main(int argc, char** argv)
 
     b_constraints.corridor_type = "POLYH";
 
-    double t0 = ros::Time::now().toSec();
 
 	alan_traj::traj_gen traj(b_info, b_constraints);
+    
 
-    // traj.solve_opt();
+    traj.solve_opt();
+
+    double t01 = ros::Time::now().toSec();
+
+    cout<<"ms: "<<(t01-t00)<<endl;
+    cout<<"fps: "<<1000/(t01-t00)<<endl;
+
 
 
 
