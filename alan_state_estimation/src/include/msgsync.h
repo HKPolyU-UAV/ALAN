@@ -19,7 +19,8 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 #include "alan_landing_planning/AlanPlannerMsg.h"
-#include "alan_visualization/Polyhedron.h"
+// #include "alan_visualization/Polyhedron.h"
+#include "alan_visualization/PolyhedronArray.h"
 
 namespace alan
 {
@@ -74,10 +75,12 @@ namespace alan
             bool ugv_imu_initiated;
 
             Eigen::Isometry3d uavOdomPose;
+            Eigen::Vector3d uav_pos_world;
             Eigen::Vector3d uav_acc_world;
             Eigen::Vector3d uav_acc_body;
 
             Eigen::Isometry3d ugvOdomPose;
+            Eigen::Vector3d ugv_pos_world;
             Eigen::Vector3d ugv_acc_world;
             Eigen::Vector3d ugv_acc_body;
 
@@ -87,11 +90,29 @@ namespace alan
             
             double FOV_H = 0, FOV_V = 0;//fov horizontal & vertical
 
+
+            Eigen::Quaterniond q1, q2, q3, q4;
+            Eigen::Vector3d cam_center_vector,
+                            cam_1axis_vector, 
+                            cam_2axis_vector, 
+                            cam_3axis_vector,
+                            cam_4axis_vector;
+
+            // alan_visualization:
+            // Polyhedron 
+            alan_visualization::Polyhedron polyh_pub_object;
+
             //private functions
-            void q2rpy();
-            void rpy2q();
+            Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
+            Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
+
+            Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
+
+            alan_visualization::Tangent construct_tangent_plane(Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector3d pt);
+            alan_visualization::Tangent set_plane_bound(Eigen::Vector3d v, Eigen::Vector3d pt);
+
             void construct_sfc();
-            void outer_product();            
+            Eigen::Vector3d get_outer_product(Eigen::Vector3d v1, Eigen::Vector3d v2);            
                     
 
             virtual void onInit() 
@@ -104,6 +125,28 @@ namespace alan
 
                 FOV_H = FOV_H / 180 * M_PI;
                 FOV_V = FOV_V / 180 * M_PI;
+
+                cout<<FOV_H<<endl;
+                cout<<FOV_V<<endl;
+
+                Eigen::Vector3d rpy_temp;
+
+                rpy_temp = Eigen::Vector3d(0, FOV_V/2, -FOV_H/2);                
+                q1 = rpy2q(rpy_temp);
+                cam_1axis_vector = q_rotate_vector(q1, Eigen::Vector3d(1,0,0));
+
+                rpy_temp = Eigen::Vector3d(0, FOV_V/2, FOV_H/2);                
+                q2 = rpy2q(rpy_temp);
+                cam_2axis_vector = q_rotate_vector(q2, Eigen::Vector3d(1,0,0));
+
+                rpy_temp = Eigen::Vector3d(0, -FOV_V/2, FOV_H/2);                
+                q3 = rpy2q(rpy_temp);
+                cam_3axis_vector = q_rotate_vector(q3, Eigen::Vector3d(1,0,0));
+
+                rpy_temp = Eigen::Vector3d(0, -FOV_V/2, -FOV_H/2);                
+                q4 = rpy2q(rpy_temp);
+                cam_4axis_vector = q_rotate_vector(q4, Eigen::Vector3d(1,0,0));
+
 
 
 
@@ -122,7 +165,7 @@ namespace alan
                 ugvsync_->registerCallback(boost::bind(&MsgSyncNodelet::ugv_msg_callback, this, _1, _2));                
 
                 cam_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-                                    ("/imu_pose", 1, &MsgSyncNodelet::cam_msg_callback);
+                                    ("/imu_pose", 1, &MsgSyncNodelet::cam_msg_callback, this);
                 
 
                 //publisher
@@ -133,7 +176,7 @@ namespace alan
                                     ("/AlanPlannerMsg/ugv/data", 1);
 
                 alan_sfc_pub = nh.advertise<alan_visualization::Polyhedron>
-                                    ("/alan/sfc", 1);
+                                    ("/alan/sfc/total_bound", 1);
                                     
                 
                 ROS_INFO("MSGSYNC Nodelet Initiated...");

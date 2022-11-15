@@ -3,13 +3,78 @@
 #include <decomp_ros_msgs/PolyhedronArray.h>
 #include <decomp_geometry/polyhedron.h>
 
-#include "alan_visualization/Polyhedron.h"
-#include "alan_visualization/Tangent.h"
+#include "alan_visualization/PolyhedronArray.h"
+#include "alan_landing_planning/Traj.h"
 
 
 // #include <decomp_ros_utils/data_ros_utils.h>
 // decomp_ros_msg
 using namespace std;
+
+static decomp_ros_msgs::PolyhedronArray sfc_pub_vis_object_polyh;
+static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
+static ros::Publisher poly_pub;
+
+void sfc_msg_sub(const alan_visualization::Polyhedron::ConstPtr & msg)
+{
+    geometry_msgs::Point temp_sfc_p, temp_sfc_n;
+
+    sfc_pub_vis_object_polyh.polyhedrons.clear();   
+    sfc_pub_vis_object_polyh.header.frame_id = "map";
+
+
+    for(auto what : msg->PolyhedronTangentArray)
+    {
+        sfc_pub_vis_object_tangent.points.clear();
+        sfc_pub_vis_object_tangent.normals.clear();
+
+        temp_sfc_p.x = what.pt.X;
+        temp_sfc_p.y = what.pt.Y;
+        temp_sfc_p.z = what.pt.Z;
+
+        temp_sfc_n.x = what.n.X;
+        temp_sfc_n.y = what.n.Y;
+        temp_sfc_n.z = what.n.Z;
+
+        sfc_pub_vis_object_tangent.points.push_back(temp_sfc_p);
+        sfc_pub_vis_object_tangent.normals.push_back(temp_sfc_n);
+        sfc_pub_vis_object_polyh.polyhedrons.push_back(sfc_pub_vis_object_tangent);
+        
+    }
+
+    poly_pub.publish(sfc_pub_vis_object_polyh);
+
+}
+
+int main(int argc, char** argv)
+{
+    Polyhedron3D polyh_msg;
+    // polyh_msg.
+    
+
+	ros::init(argc, argv, "lala");
+    ros::NodeHandle nh;
+
+    ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::Polyhedron>("/alan/sfc", 1, sfc_msg_sub);
+
+    poly_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("polyhedron_array", 1, true);
+    
+    
+
+    ros::spin();
+
+	
+
+	return 0;
+}
+
+
+
+
+
+
+
+
 
 // Polyhedron3D ros_to_polyhedron(const decomp_ros_msgs::Polyhedron& msg){
 //   Polyhedron3D poly;
@@ -89,129 +154,74 @@ using namespace std;
 //   return msg;
 // }
 
-static decomp_ros_msgs::PolyhedronArray sfc_pub_vis_object_polyh;
-static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
-static ros::Publisher poly_pub;
+// decomp_ros_msgs::Polyhedron msg;
+//     decomp_ros_msgs::PolyhedronArray poly_msg;
 
-void sfc_msg_sub(const alan_visualization::Polyhedron::ConstPtr & msg)
-{
-    geometry_msgs::Point temp_sfc_p, temp_sfc_n;
-
-    sfc_pub_vis_object_polyh.polyhedrons.clear();   
-    sfc_pub_vis_object_polyh.header.frame_id = "map";
+//     geometry_msgs::Point pt, n;
 
 
-    for(auto what : msg->PolyhedronTangentArray)
-    {
-        sfc_pub_vis_object_tangent.points.clear();
-        sfc_pub_vis_object_tangent.normals.clear();
+//     pt.x = 1;
+//     pt.y = 1;
+//     pt.z = 1;
+//     n.x = 1;
+//     n.y = 1;
+//     n.z = 0;
 
-        temp_sfc_p.x = what.pt.X;
-        temp_sfc_p.y = what.pt.Y;
-        temp_sfc_p.z = what.pt.Z;
+//     msg.points.push_back(pt);
+//     msg.normals.push_back(n);
 
-        temp_sfc_n.x = what.n.X;
-        temp_sfc_n.y = what.n.Y;
-        temp_sfc_n.z = what.n.Z;
+//     pt.x = 0;
+//     pt.y = 0;
+//     pt.z = 1;
 
-        sfc_pub_vis_object_tangent.points.push_back(temp_sfc_p);
-        sfc_pub_vis_object_tangent.normals.push_back(temp_sfc_n);
-        sfc_pub_vis_object_polyh.polyhedrons.push_back(sfc_pub_vis_object_tangent);
-        
-    }
+//     n.x = -1;
+//     n.y = -1;
+//     n.z = 0;
 
-    poly_pub.publish(sfc_pub_vis_object_polyh);
+//     msg.points.push_back(pt);
+//     msg.normals.push_back(n);
 
-}
+//     pt.x = 0;
+//     pt.y = 0;
+//     pt.z = 4;
+//     n.x = 0;
+//     n.y = 0;
+//     n.z = 1;
 
-int main(int argc, char** argv)
-{
-    Polyhedron3D polyh_msg;
-    // polyh_msg.
-    
+//     msg.points.push_back(pt);
+//     msg.normals.push_back(n);
 
-	ros::init(argc, argv, "lala");
-    ros::NodeHandle nh;
+//     pt.x = 0;
+//     pt.y = 0;
+//     pt.z = -1;
+//     n.x = 0;
+//     n.y = 0;
+//     n.z = -1;
 
-    ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::Polyhedron>("/alan/sfc", 1, sfc_msg_sub);
+//     msg.points.push_back(pt);
+//     msg.normals.push_back(n);
 
-    poly_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("polyhedron_array", 1, true);
-    
-    decomp_ros_msgs::Polyhedron msg;
-    decomp_ros_msgs::PolyhedronArray poly_msg;
+//     pt.x = 2;
+//     pt.y = -2;
+//     pt.z = -1;
+//     n.x = 1;
+//     n.y = -1;
+//     n.z = 0;
 
-    geometry_msgs::Point pt, n;
+//     msg.points.push_back(pt);
+//     msg.normals.push_back(n);
 
+//     pt.x = -2;
+//     pt.y = 2;
+//     pt.z = -1;
+//     n.x = -1;
+//     n.y = 1;
+//     n.z = 0;
 
-    pt.x = 1;
-    pt.y = 1;
-    pt.z = 1;
-    n.x = 1;
-    n.y = 1;
-    n.z = 0;
-
-    msg.points.push_back(pt);
-    msg.normals.push_back(n);
-
-    pt.x = 0;
-    pt.y = 0;
-    pt.z = 1;
-
-    n.x = -1;
-    n.y = -1;
-    n.z = 0;
-
-    msg.points.push_back(pt);
-    msg.normals.push_back(n);
-
-    pt.x = 0;
-    pt.y = 0;
-    pt.z = 4;
-    n.x = 0;
-    n.y = 0;
-    n.z = 1;
-
-    msg.points.push_back(pt);
-    msg.normals.push_back(n);
-
-    pt.x = 0;
-    pt.y = 0;
-    pt.z = -1;
-    n.x = 0;
-    n.y = 0;
-    n.z = -1;
-
-    msg.points.push_back(pt);
-    msg.normals.push_back(n);
-
-    pt.x = 2;
-    pt.y = -2;
-    pt.z = -1;
-    n.x = 1;
-    n.y = -1;
-    n.z = 0;
-
-    msg.points.push_back(pt);
-    msg.normals.push_back(n);
-
-    pt.x = -2;
-    pt.y = 2;
-    pt.z = -1;
-    n.x = -1;
-    n.y = 1;
-    n.z = 0;
-
-    msg.points.push_back(pt);
-    msg.normals.push_back(n);
+//     msg.points.push_back(pt);
+//     msg.normals.push_back(n);
 
 
-    poly_msg.polyhedrons.push_back(msg);
-    poly_msg.header.frame_id = "map";
-    poly_pub.publish(poly_msg);
-
-    ros::spin();
-
-	
-
-	return 0;
-}
+//     poly_msg.polyhedrons.push_back(msg);
+//     poly_msg.header.frame_id = "map";
+//     poly_pub.publish(poly_msg);

@@ -62,6 +62,7 @@ add_message_files(
  Point.msg
  Tangent.msg
  Polyhedron.msg
+ PolyhedronArray.msg
 )
 
 
