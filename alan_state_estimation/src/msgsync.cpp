@@ -103,7 +103,25 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
 
 }
 
-void alan::MsgSyncNodelet::cam_msg_callback(const sensor_msgs::Imu::ConstPtr& imu)
+void alan::MsgSyncNodelet::cam_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
-    
+    cam_current_PoseMsg = *pose;
+
+    Eigen::Translation3d t_(
+        cam_current_PoseMsg.pose.position.x,
+        cam_current_PoseMsg.pose.position.y,
+        cam_current_PoseMsg.pose.position.z
+    );
+
+    Eigen::Quaterniond q_(
+        cam_current_PoseMsg.pose.orientation.w,
+        cam_current_PoseMsg.pose.orientation.x,
+        cam_current_PoseMsg.pose.orientation.y,
+        cam_current_PoseMsg.pose.orientation.z
+    );
+
+    camPose = t_ * q_;
+
 }
+
+

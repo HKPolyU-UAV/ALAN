@@ -19,6 +19,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 #include "alan_landing_planning/AlanPlannerMsg.h"
+#include "alan_visualization/Polyhedron.h"
 
 namespace alan
 {
@@ -30,14 +31,14 @@ namespace alan
             //publisher
             ros::Publisher uav_pub_AlanPlannerMsg;
             ros::Publisher ugv_pub_AlanPlannerMsg;
-            
+
+            ros::Publisher alan_sfc_pub;            
 
             //subscribe
             void uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
             void ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
 
-            // void cam_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
-            void cam_msg_callback(const sensor_msgs::Imu::ConstPtr& imu);
+            void cam_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& imu);
 
             message_filters::Subscriber<nav_msgs::Odometry> uav_sub_odom;
             message_filters::Subscriber<sensor_msgs::Imu> uav_sub_imu;
@@ -52,6 +53,8 @@ namespace alan
             typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Imu> ugvMySyncPolicy;
             typedef message_filters::Synchronizer<uavMySyncPolicy> ugvsync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<uavsync> ugvsync_;  
+
+            ros::Subscriber cam_pose_sub;
 
             //private variables 
             nav_msgs::Odometry uav_odom;
@@ -77,15 +80,34 @@ namespace alan
             Eigen::Isometry3d ugvOdomPose;
             Eigen::Vector3d ugv_acc_world;
             Eigen::Vector3d ugv_acc_body;
+
+            geometry_msgs::PoseStamped cam_current_PoseMsg;
+            Eigen::Isometry3d camPose;
+            
+            
+            double FOV_H = 0, FOV_V = 0;//fov horizontal & vertical
+
+            //private functions
+            void q2rpy();
+            void rpy2q();
+            void construct_sfc();
+            void outer_product();            
                     
 
             virtual void onInit() 
             {
-                ros::NodeHandle& nh = getNodeHandle();
-                
-                //initialize publisher
+                ros::NodeHandle& nh = getNodeHandle();    
 
-                //subscribe
+                //param
+                nh.getParam("/alan_master/cam_FOV_H", FOV_H);     
+                nh.getParam("/alan_master/cam_FOV_V", FOV_V);                             
+
+                FOV_H = FOV_H / 180 * M_PI;
+                FOV_V = FOV_V / 180 * M_PI;
+
+
+
+                //subscriber
                 uav_sub_odom.subscribe(nh, "/uav/mavros/local_position/odom", 1);
                 uav_sub_imu.subscribe(nh, "/uav/mavros/imu/data", 1);
 
@@ -97,16 +119,24 @@ namespace alan
                 ugv_sub_imu.subscribe(nh, "/uav/mavros/imu/data", 1);
 
                 ugvsync_.reset(new ugvsync( ugvMySyncPolicy(10), ugv_sub_odom, ugv_sub_imu));            
-                ugvsync_->registerCallback(boost::bind(&MsgSyncNodelet::ugv_msg_callback, this, _1, _2));
+                ugvsync_->registerCallback(boost::bind(&MsgSyncNodelet::ugv_msg_callback, this, _1, _2));                
 
+                cam_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
+                                    ("/imu_pose", 1, &MsgSyncNodelet::cam_msg_callback);
+                
 
+                //publisher
                 uav_pub_AlanPlannerMsg = nh.advertise<alan_landing_planning::AlanPlannerMsg>
                                     ("/AlanPlannerMsg/uav/data", 1);
 
                 ugv_pub_AlanPlannerMsg = nh.advertise<alan_landing_planning::AlanPlannerMsg>
                                     ("/AlanPlannerMsg/ugv/data", 1);
 
-                ROS_INFO("IMU Nodelet Initiated...");
+                alan_sfc_pub = nh.advertise<alan_visualization::Polyhedron>
+                                    ("/alan/sfc", 1);
+                                    
+                
+                ROS_INFO("MSGSYNC Nodelet Initiated...");
             }     
 
             public:

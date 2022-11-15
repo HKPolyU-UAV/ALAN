@@ -89,6 +89,41 @@ using namespace std;
 //   return msg;
 // }
 
+static decomp_ros_msgs::PolyhedronArray sfc_pub_vis_object_polyh;
+static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
+static ros::Publisher poly_pub;
+
+void sfc_msg_sub(const alan_visualization::Polyhedron::ConstPtr & msg)
+{
+    geometry_msgs::Point temp_sfc_p, temp_sfc_n;
+
+    sfc_pub_vis_object_polyh.polyhedrons.clear();   
+    sfc_pub_vis_object_polyh.header.frame_id = "map";
+
+
+    for(auto what : msg->PolyhedronTangentArray)
+    {
+        sfc_pub_vis_object_tangent.points.clear();
+        sfc_pub_vis_object_tangent.normals.clear();
+
+        temp_sfc_p.x = what.pt.X;
+        temp_sfc_p.y = what.pt.Y;
+        temp_sfc_p.z = what.pt.Z;
+
+        temp_sfc_n.x = what.n.X;
+        temp_sfc_n.y = what.n.Y;
+        temp_sfc_n.z = what.n.Z;
+
+        sfc_pub_vis_object_tangent.points.push_back(temp_sfc_p);
+        sfc_pub_vis_object_tangent.normals.push_back(temp_sfc_n);
+        sfc_pub_vis_object_polyh.polyhedrons.push_back(sfc_pub_vis_object_tangent);
+        
+    }
+
+    poly_pub.publish(sfc_pub_vis_object_polyh);
+
+}
+
 int main(int argc, char** argv)
 {
     Polyhedron3D polyh_msg;
@@ -98,7 +133,9 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "lala");
     ros::NodeHandle nh;
 
-    ros::Publisher poly_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("polyhedron_array", 1, true);
+    ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::Polyhedron>("/alan/sfc", 1, sfc_msg_sub);
+
+    poly_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("polyhedron_array", 1, true);
     
     decomp_ros_msgs::Polyhedron msg;
     decomp_ros_msgs::PolyhedronArray poly_msg;
