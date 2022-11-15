@@ -92,11 +92,13 @@ namespace alan
 
 
             Eigen::Quaterniond q1, q2, q3, q4;
-            Eigen::Vector3d cam_center_vector,
+            Eigen::Vector3d cam_center_vector = Eigen::Vector3d(1,0,0),
                             cam_1axis_vector, 
                             cam_2axis_vector, 
                             cam_3axis_vector,
                             cam_4axis_vector;
+
+            double temp_i = 0;
 
             // alan_visualization:
             // Polyhedron 
@@ -126,26 +128,34 @@ namespace alan
                 FOV_H = FOV_H / 180 * M_PI;
                 FOV_V = FOV_V / 180 * M_PI;
 
-                cout<<FOV_H<<endl;
-                cout<<FOV_V<<endl;
+                // cout<<FOV_H<<endl;
+                // cout<<FOV_V<<endl;
 
                 Eigen::Vector3d rpy_temp;
 
-                rpy_temp = Eigen::Vector3d(0, FOV_V/2, -FOV_H/2);                
+                rpy_temp = Eigen::Vector3d(0, -FOV_V/2, -FOV_H/2);                
                 q1 = rpy2q(rpy_temp);
-                cam_1axis_vector = q_rotate_vector(q1, Eigen::Vector3d(1,0,0));
-
-                rpy_temp = Eigen::Vector3d(0, FOV_V/2, FOV_H/2);                
-                q2 = rpy2q(rpy_temp);
-                cam_2axis_vector = q_rotate_vector(q2, Eigen::Vector3d(1,0,0));
+                cam_1axis_vector = q_rotate_vector(q1, cam_center_vector);
 
                 rpy_temp = Eigen::Vector3d(0, -FOV_V/2, FOV_H/2);                
-                q3 = rpy2q(rpy_temp);
-                cam_3axis_vector = q_rotate_vector(q3, Eigen::Vector3d(1,0,0));
+                q2 = rpy2q(rpy_temp);
+                cam_2axis_vector = q_rotate_vector(q2, cam_center_vector);
 
-                rpy_temp = Eigen::Vector3d(0, -FOV_V/2, -FOV_H/2);                
+                rpy_temp = Eigen::Vector3d(0, FOV_V/2, FOV_H/2);                
+                q3 = rpy2q(rpy_temp); 
+                cam_3axis_vector = q_rotate_vector(q3, cam_center_vector);
+
+                rpy_temp = Eigen::Vector3d(0, FOV_V/2, -FOV_H/2);                
                 q4 = rpy2q(rpy_temp);
-                cam_4axis_vector = q_rotate_vector(q4, Eigen::Vector3d(1,0,0));
+                // cout<<endl<<q4.toRotationMatrix() * Eigen::Vector3d(1,0,0)<<endl<<endl;
+                cam_4axis_vector = q_rotate_vector(q4, cam_center_vector);
+
+                // cout<<"\nhere are the camera axises..."<<endl;
+                // cout<<cam_center_vector<<endl<<endl;
+                // cout<<cam_1axis_vector<<endl<<endl;
+                // cout<<cam_2axis_vector<<endl<<endl;
+                // cout<<cam_3axis_vector<<endl<<endl;
+                // cout<<cam_4axis_vector<<endl<<endl<<endl;
 
 
 
