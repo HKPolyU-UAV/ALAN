@@ -215,8 +215,13 @@ void alan::MsgSyncNodelet::cam_msg_callback(const geometry_msgs::PoseStamped::Co
             cam_2axis_vector, cam_3axis_vector, t_.translation()
         );
 
-        alan_visualization::Tangent plane3 = construct_tangent_plane(
-            cam_3axis_vector, cam_4axis_vector, t_.translation()
+        // alan_visualization::Tangent plane3 = construct_tangent_plane(
+        //     cam_3axis_vector, cam_4axis_vector, t_.translation()
+        // );
+
+        alan_visualization::Tangent plane3 = set_plane_bound(
+            Eigen::Vector3d(0,0,-1),
+             Eigen::Vector3d(0,0,0)
         );
 
         alan_visualization::Tangent plane4 = construct_tangent_plane(
@@ -236,8 +241,18 @@ void alan::MsgSyncNodelet::cam_msg_callback(const geometry_msgs::PoseStamped::Co
 
         Eigen::Vector3d temp_bound;
         temp_bound = q_rotate_vector(q_, Eigen::Vector3d(4,0,0));
+        cam_center_vector.z() = 0;
 
-        alan_visualization::Tangent plane_bound = set_plane_bound(
+        alan_visualization::Tangent plane_bound1 = set_plane_bound(
+            cam_center_vector, 
+            temp_bound                
+        );
+
+        temp_bound = q_rotate_vector(q_, Eigen::Vector3d(0.2,0,0));
+        cam_center_vector = cam_center_vector * -1;
+        // cam_center_vector.z() = 0;
+
+        alan_visualization::Tangent plane_bound2 = set_plane_bound(
             cam_center_vector, 
             temp_bound                
         );
@@ -251,7 +266,8 @@ void alan::MsgSyncNodelet::cam_msg_callback(const geometry_msgs::PoseStamped::Co
         polyh_pub_object.PolyhedronTangentArray.push_back(plane2);
         polyh_pub_object.PolyhedronTangentArray.push_back(plane3);
         polyh_pub_object.PolyhedronTangentArray.push_back(plane4);
-        polyh_pub_object.PolyhedronTangentArray.push_back(plane_bound);
+        polyh_pub_object.PolyhedronTangentArray.push_back(plane_bound1);
+        polyh_pub_object.PolyhedronTangentArray.push_back(plane_bound2);
 
         // if(temp_i == 0)
         //     for(auto what : polyh_pub_object.PolyhedronTangentArray)
@@ -336,7 +352,7 @@ alan_visualization::Tangent alan::MsgSyncNodelet::set_plane_bound(Eigen::Vector3
 {
     alan_visualization::Tangent tangent_plane;
     
-    v.z() = 0;
+    // v.z() = 0;
     v.normalize();
 
     tangent_plane.n.X = v.x();

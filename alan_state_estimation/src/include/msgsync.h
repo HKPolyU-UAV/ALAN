@@ -125,8 +125,8 @@ namespace alan
                 nh.getParam("/alan_master/cam_FOV_H", FOV_H);     
                 nh.getParam("/alan_master/cam_FOV_V", FOV_V);                             
 
-                FOV_H = FOV_H / 180 * M_PI;
-                FOV_V = FOV_V / 180 * M_PI;
+                FOV_H = FOV_H / 180 * M_PI * 0.5;
+                FOV_V = FOV_V / 180 * M_PI * 0.5;
 
                 // cout<<FOV_H<<endl;
                 // cout<<FOV_V<<endl;

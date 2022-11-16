@@ -27,7 +27,7 @@ void sfc_msg_callback(const alan_visualization::Polyhedron::ConstPtr & msg)
 
     sfc_pub_vis_object_polyh.polyhedrons.clear();   
 
-    // cout<<msg->PolyhedronTangentArray.size()<<endl;
+    cout<<"size..."<<msg->PolyhedronTangentArray.size()<<endl;
     sfc_pub_vis_object_tangent.points.clear();
     sfc_pub_vis_object_tangent.normals.clear();
 

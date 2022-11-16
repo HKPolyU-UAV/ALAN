@@ -8,7 +8,6 @@ Panels:
         - /Status1
         - /PolyhedronArray1
         - /TF1
-        - /TF1/Status1
       Splitter Ratio: 0.5
     Tree Height: 1079
   - Class: rviz/Selection
@@ -55,10 +54,10 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: true
     - Alpha: 0.10000000149011612
-      BoundColor: 0; 170; 255
+      BoundColor: 255; 0; 0
       Class: decomp_rviz_plugins/PolyhedronArray
       Enabled: true
-      MeshColor: 245; 121; 0
+      MeshColor: 46; 52; 54
       Name: PolyhedronArray
       Queue Size: 10
       Scale: 0.10000000149011612
@@ -151,7 +150,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 12.035191535949707
+      Distance: 23.71455192565918
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -167,9 +166,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.04479825869202614
+      Pitch: -0.07020165771245956
       Target Frame: <Fixed Frame>
-      Yaw: 1.1604044437408447
+      Yaw: 2.0104050636291504
     Saved: ~
 Window Geometry:
   Displays:
