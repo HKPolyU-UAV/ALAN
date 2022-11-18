@@ -34,7 +34,7 @@ namespace alan
             ros::Publisher ugv_pub_AlanPlannerMsg;
 
             ros::Publisher alan_sfc_pub;            
-
+            ros::Publisher alan_all_sfc_pub;
             //subscribe
             void uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
             void ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
@@ -90,6 +90,8 @@ namespace alan
             
             double FOV_H = 0, FOV_V = 0;//fov horizontal & vertical
 
+            double final_corridor_height = 0, final_corridor_length = 0;
+
 
             Eigen::Quaterniond q1, q2, q3, q4;
             Eigen::Vector3d cam_center_vector = Eigen::Vector3d(1,0,0),
@@ -102,13 +104,17 @@ namespace alan
 
             // alan_visualization:
             // Polyhedron 
-            alan_visualization::Polyhedron polyh_pub_object;
+            alan_visualization::Polyhedron polyh_total_bound;
+            alan_visualization::PolyhedronArray polyh_array_pub_object;
 
             //private functions
             Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
 
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
+
+            void set_total_bound(Eigen::Translation3d t_current, Eigen::Quaterniond q_current);
+            void set_all_sfc(Eigen::Translation3d t_current,Eigen::Quaterniond q_current, double sfc_final_length, double sfc_final_height);
 
             alan_visualization::Tangent construct_tangent_plane(Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector3d pt);
             alan_visualization::Tangent set_plane_bound(Eigen::Vector3d v, Eigen::Vector3d pt);
@@ -123,7 +129,10 @@ namespace alan
 
                 //param
                 nh.getParam("/alan_master/cam_FOV_H", FOV_H);     
-                nh.getParam("/alan_master/cam_FOV_V", FOV_V);                             
+                nh.getParam("/alan_master/cam_FOV_V", FOV_V);   
+
+                nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
+                nh.getParam("/alan_master/final_corridor_length", final_corridor_length);                          
 
                 FOV_H = FOV_H / 180 * M_PI * 0.5;
                 FOV_V = FOV_V / 180 * M_PI * 0.5;
@@ -185,8 +194,11 @@ namespace alan
                 ugv_pub_AlanPlannerMsg = nh.advertise<alan_landing_planning::AlanPlannerMsg>
                                     ("/AlanPlannerMsg/ugv/data", 1);
 
-                alan_sfc_pub = nh.advertise<alan_visualization::Polyhedron>
-                                    ("/alan/sfc/total_bound", 1);
+                // alan_sfc_pub = nh.advertise<alan_visualization::Polyhedron>
+                //                     ("/alan/sfc/total_bound", 1);
+
+                alan_all_sfc_pub = nh.advertise<alan_visualization::PolyhedronArray>
+                                    ("/alan/sfc/all_corridors", 1);
                                     
                 
                 ROS_INFO("MSGSYNC Nodelet Initiated...");

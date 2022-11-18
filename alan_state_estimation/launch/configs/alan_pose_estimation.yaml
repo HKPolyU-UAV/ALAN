@@ -4,6 +4,9 @@ cam_intrinsics_455: [633.8505249023438, 633.3872680664062, 641.8981323242188, 38
 cam_FOV_H: 90
 cam_FOV_V: 65
 
+final_corridor_height: 1.0
+final_corridor_length: 1.5
+
 LED_numbers: 6
 
 LED_positions:

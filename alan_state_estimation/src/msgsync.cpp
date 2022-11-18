@@ -33,7 +33,6 @@ void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& 
         );
     
     uavOdomPose = t_ * q_;
-    // cout<<uavOdomPose.data()<<endl;
 
     uav_odom_initiated = true;
     
@@ -158,145 +157,20 @@ void alan::MsgSyncNodelet::cam_msg_callback(const geometry_msgs::PoseStamped::Co
 
         camPose = t_ * q_;
 
+        set_total_bound(t_, q_);
+        set_all_sfc(t_, q_, final_corridor_length, final_corridor_length);
+        //remember to add ugv camera translation
+                
+        // alan_sfc_pub.publish(polyh_total_bound);
 
-        // Eigen::Vector3d rpy = q2rpy(q_);
-        // cout<<q_._transformVector(Eigen::Vector3d(1,0,0))<<endl<<endl;;;
+        cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<endl;
 
+        alan_all_sfc_pub.publish(polyh_array_pub_object);
 
-        //(R, P, Y)center of cam
-        // Eigen::qua
-        
-        cam_center_vector = Eigen::Vector3d(1,0,0);
-
-        // //(R, P+FOV_V/2, Y-FOV_H/2) 1st edge of the pyramid FOV
-        cam_1axis_vector = q_rotate_vector(q1, cam_center_vector);
-        cam_1axis_vector = q_rotate_vector(q_, cam_1axis_vector);
-
-        // cout<<(q_.toRotationMatrix() * cam_1axis_vector).x()<<endl;
-
-        
-        // //(R, P+FOV_V/2, Y+FOV_H/2) 2nd edge of the pyramid FOV
-        cam_2axis_vector = q_rotate_vector(q2, cam_center_vector);
-        cam_2axis_vector = q_rotate_vector(q_, cam_2axis_vector);
-
-        // //(R, P-FOV_V/2, Y+FOV_H/2) 3rd edge of the pyramid FOV
-        cam_3axis_vector = q_rotate_vector(q3, cam_center_vector);
-        cam_3axis_vector = q_rotate_vector(q_, cam_3axis_vector);
-
-        // //(R, P-FOV_V/2, Y-FOV_H/2) 4th edge of the pyramid FOV
-        cam_4axis_vector = q_rotate_vector(q4, cam_center_vector);
-        cam_4axis_vector = q_rotate_vector(q_, cam_4axis_vector);
-
-        
-        cam_center_vector = q_rotate_vector(q_, Eigen::Vector3d(1,0,0));
-
-
-        // q_._transformVector(Eigen::Vector3d(1,0,0));
-        
-        
-        // if(temp_i == 0)
-        // {
-        //     cout<<"here..."<<endl;
-        //     cout<<cam_center_vector<<endl;
-        //     cout<<cam_1axis_vector<<endl;
-        //     cout<<cam_2axis_vector<<endl;
-        //     cout<<cam_3axis_vector<<endl;
-        //     cout<<cam_4axis_vector<<endl<<endl;;
-        // }
-
-
-        //constuct tangent planes
-        //remeber normal vector pointing outward from the polyhedron
-        alan_visualization::Tangent plane1 = construct_tangent_plane(
-            cam_1axis_vector, cam_2axis_vector, t_.translation()
-        );
-
-        alan_visualization::Tangent plane2 = construct_tangent_plane(
-            cam_2axis_vector, cam_3axis_vector, t_.translation()
-        );
-
-        // alan_visualization::Tangent plane3 = construct_tangent_plane(
-        //     cam_3axis_vector, cam_4axis_vector, t_.translation()
-        // );
-
-        alan_visualization::Tangent plane3 = set_plane_bound(
-            Eigen::Vector3d(0,0,-1),
-             Eigen::Vector3d(0,0,0)
-        );
-
-        alan_visualization::Tangent plane4 = construct_tangent_plane(
-            cam_4axis_vector, cam_1axis_vector, t_.translation()
-        );      
-                  
-
-        Eigen::Vector3d ugv2uav_vector = uav_pos_world - ugv_pos_world;
-
-        ugv2uav_vector.normalize();
-
-
-        // alan_visualization::Tangent plane_bound = set_plane_bound(
-        //     cam_center_vector, 
-        //     uav_pos_world + ugv2uav_vector                
-        // );
-
-        Eigen::Vector3d temp_bound;
-        temp_bound = q_rotate_vector(q_, Eigen::Vector3d(4,0,0));
-        cam_center_vector.z() = 0;
-
-        alan_visualization::Tangent plane_bound1 = set_plane_bound(
-            cam_center_vector, 
-            temp_bound                
-        );
-
-        temp_bound = q_rotate_vector(q_, Eigen::Vector3d(0.2,0,0));
-        cam_center_vector = cam_center_vector * -1;
-        // cam_center_vector.z() = 0;
-
-        alan_visualization::Tangent plane_bound2 = set_plane_bound(
-            cam_center_vector, 
-            temp_bound                
-        );
-
-
-        
-
-        polyh_pub_object.PolyhedronTangentArray.clear();
-        
-        polyh_pub_object.PolyhedronTangentArray.push_back(plane1);
-        polyh_pub_object.PolyhedronTangentArray.push_back(plane2);
-        polyh_pub_object.PolyhedronTangentArray.push_back(plane3);
-        polyh_pub_object.PolyhedronTangentArray.push_back(plane4);
-        polyh_pub_object.PolyhedronTangentArray.push_back(plane_bound1);
-        polyh_pub_object.PolyhedronTangentArray.push_back(plane_bound2);
-
-        // if(temp_i == 0)
-        //     for(auto what : polyh_pub_object.PolyhedronTangentArray)
-        //     {
-        //         cout<<"normal:..."<<endl;
-        //         cout<<what.n.X<<endl;
-        //         cout<<what.n.Y<<endl;
-        //         cout<<what.n.Z<<endl;
-
-        //         cout<<"pt:..."<<endl;
-        //         cout<<what.pt.X<<endl;
-        //         cout<<what.pt.Y<<endl;
-        //         cout<<what.pt.Z<<endl;
-        //         cout<<endl<<endl;
-
-        //     }
-
-        // temp_i ++;
-
-        
-
-        alan_sfc_pub.publish(polyh_pub_object);
         ros::Duration(0.02).sleep();
-        // polyh_pub_object.PolyhedronTangentArray.push_back();
 
     }
     
-
-
 }
 
 Eigen::Vector3d alan::MsgSyncNodelet::q2rpy(Eigen::Quaterniond q)
@@ -366,6 +240,179 @@ alan_visualization::Tangent alan::MsgSyncNodelet::set_plane_bound(Eigen::Vector3
     return tangent_plane;
 }
 
+
+void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen::Quaterniond q_current)
+{
+    
+    //(R, P, Y)center of cam    
+    cam_center_vector = Eigen::Vector3d(1,0,0);
+
+    // //(R, P-FOV_V/2, Y-FOV_H/2) 1st edge of the pyramid FOV
+    cam_1axis_vector = q_rotate_vector(q_current, q_rotate_vector(q1, cam_center_vector));
+    
+    // //(R, P-FOV_V/2, Y+FOV_H/2) 2nd edge of the pyramid FOV
+    cam_2axis_vector = q_rotate_vector(q_current, q_rotate_vector(q2, cam_center_vector));
+
+    // //(R, P+FOV_V/2, Y+FOV_H/2) 3rd edge of the pyramid FOV
+    cam_3axis_vector = q_rotate_vector(q_current, q_rotate_vector(q3, cam_center_vector));
+
+    // //(R, P+FOV_V/2, Y-FOV_H/2) 4th edge of the pyramid FOV
+    cam_4axis_vector = q_rotate_vector(q_current, q_rotate_vector(q4, cam_center_vector));
+
+    
+    cam_center_vector = q_rotate_vector(q_current, Eigen::Vector3d(1,0,0));
+
+
+    //constuct tangent planes
+    //remeber normal vector pointing outward from the polyhedron
+    alan_visualization::Tangent plane1 = construct_tangent_plane(
+        cam_1axis_vector, cam_2axis_vector, t_current.translation()
+    );
+
+    alan_visualization::Tangent plane2 = construct_tangent_plane(
+        cam_2axis_vector, cam_3axis_vector, t_current.translation()
+    );
+
+    // alan_visualization::Tangent plane3 = construct_tangent_plane(
+    //     cam_3axis_vector, cam_4axis_vector, t_.translation()
+    // );
+
+    alan_visualization::Tangent plane3 = set_plane_bound(
+        Eigen::Vector3d(0,0,-1),
+        t_current.translation()
+    );
+
+    alan_visualization::Tangent plane4 = construct_tangent_plane(
+        cam_4axis_vector, cam_1axis_vector, t_current.translation()
+    );      
+                
+
+    Eigen::Vector3d ugv2uav_vector = uav_pos_world - ugv_pos_world;
+
+    ugv2uav_vector.normalize();
+
+
+    // alan_visualization::Tangent plane_bound = set_plane_bound(
+    //     cam_center_vector, 
+    //     uav_pos_world + ugv2uav_vector                
+    // );
+
+    Eigen::Vector3d temp_bound;
+    temp_bound = q_rotate_vector(q_current, Eigen::Vector3d(4,0,0));
+    cam_center_vector.z() = 0;
+
+    alan_visualization::Tangent plane_bound1 = set_plane_bound(
+        cam_center_vector, 
+        temp_bound                
+    );
+
+    temp_bound = q_rotate_vector(q_current, Eigen::Vector3d(0.2,0,0));
+    cam_center_vector = cam_center_vector * -1;
+    // cam_center_vector.z() = 0;
+
+    alan_visualization::Tangent plane_bound2 = set_plane_bound(
+        cam_center_vector, 
+        temp_bound                
+    );
+
+    polyh_total_bound.PolyhedronTangentArray.clear();
+        
+    polyh_total_bound.PolyhedronTangentArray.push_back(plane1);
+
+    polyh_total_bound.PolyhedronTangentArray.push_back(plane2);
+
+    polyh_total_bound.PolyhedronTangentArray.push_back(plane3);
+
+    polyh_total_bound.PolyhedronTangentArray.push_back(plane4);
+
+    polyh_total_bound.PolyhedronTangentArray.push_back(plane_bound1);
+
+    polyh_total_bound.PolyhedronTangentArray.push_back(plane_bound2);
+
+}
+
+void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Quaterniond q_current, double sfc_final_length, double sfc_final_height)
+{
+    polyh_array_pub_object.a_series_of_Corridor.clear();
+
+    alan_visualization::Tangent tangent_plane_temp;
+    alan_visualization::Polyhedron polyhedron_temp;
+
+    polyhedron_temp.PolyhedronTangentArray.clear();
+
+
+    //first corridor 
+
+    //1st plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[0]);
+    
+    //2nd plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[1]);
+
+    //3rd plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[2]);
+    
+    //4th plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[3]);
+
+    //5th plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[4]);
+
+    //5th plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[5]);
+
+    // cam_center_vector = q_rotate_vector(q_current, Eigen::Vector3d(1,0,0) * (-1));
+    // cam_center_vector.z() = 0;
+    // // Eigen::Vector3d(1,0,0);
+    // //6th plane
+    // polyhedron_temp.PolyhedronTangentArray.push_back(
+    //     set_plane_bound(
+    //         cam_center_vector,
+    //         t_current.translation()
+    //     )
+    // );
+
+//  + q_rotate_vector(q_current, Eigen::Vector3d(final_corridor_length, 0, 0)
+    
+    //push back first corridor
+    polyh_array_pub_object.a_series_of_Corridor.push_back(polyhedron_temp);
+
+    // //second corridor
+    // polyhedron_temp.PolyhedronTangentArray.clear();
+
+    // //1st plane
+    // polyhedron_temp.PolyhedronTangentArray.push_back(
+    //     set_plane_bound(
+    //         Eigen::Vector3d(0,0,1),
+    //         Eigen::Vector3d(0,0,final_corridor_height)
+    //     )
+    // );
+
+
+    // //2nd plane
+    // polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[1]);
+
+    // //3ed plane
+    // polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[2]);
+
+    // //4th plane
+    // polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[3]);
+
+    // //5th plane
+    // polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[4]);
+
+    // //6th plane
+    // polyhedron_temp.PolyhedronTangentArray.push_back(
+    //     set_plane_bound(
+    //         q_rotate_vector(q_current, cam_center_vector ),
+    //         q_rotate_vector(q_current, Eigen::Vector3d(final_corridor_length, 0, 0))
+    //     )
+    // );
+
+    // //push back second corridor
+    // polyh_array_pub_object.a_series_of_Corridor.push_back(polyhedron_temp);
+
+}
 
 
 

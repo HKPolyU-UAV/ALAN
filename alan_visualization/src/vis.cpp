@@ -21,34 +21,43 @@ static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
 static visualization_msgs::Marker traj_points;
 
 
-void sfc_msg_callback(const alan_visualization::Polyhedron::ConstPtr & msg)
+void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
 {
     geometry_msgs::Point temp_sfc_p, temp_sfc_n;
 
     sfc_pub_vis_object_polyh.polyhedrons.clear();   
 
-    cout<<"size..."<<msg->PolyhedronTangentArray.size()<<endl;
+    cout<<"size of corridors..."<<msg->a_series_of_Corridor.size()<<endl;
     sfc_pub_vis_object_tangent.points.clear();
     sfc_pub_vis_object_tangent.normals.clear();
 
-    for(auto what : msg->PolyhedronTangentArray)
+    for(auto what : msg->a_series_of_Corridor)
     {
-        
+        for(auto whatelse : what.PolyhedronTangentArray)
+        {
+            cout<<what.PolyhedronTangentArray.size()<<endl;
+            temp_sfc_p.x = whatelse.pt.X;
+            temp_sfc_p.y = whatelse.pt.Y;
+            temp_sfc_p.z = whatelse.pt.Z;
 
-        temp_sfc_p.x = what.pt.X;
-        temp_sfc_p.y = what.pt.Y;
-        temp_sfc_p.z = what.pt.Z;
+            temp_sfc_n.x = whatelse.n.X;
+            temp_sfc_n.y = whatelse.n.Y;
+            temp_sfc_n.z = whatelse.n.Z;
 
-        temp_sfc_n.x = what.n.X;
-        temp_sfc_n.y = what.n.Y;
-        temp_sfc_n.z = what.n.Z;
+            sfc_pub_vis_object_tangent.points.push_back(temp_sfc_p);
+            sfc_pub_vis_object_tangent.normals.push_back(temp_sfc_n);
 
-        sfc_pub_vis_object_tangent.points.push_back(temp_sfc_p);
-        sfc_pub_vis_object_tangent.normals.push_back(temp_sfc_n);
-        
+            sfc_pub_vis_object_polyh.polyhedrons.push_back(sfc_pub_vis_object_tangent);
+
+            // cout<<sf
+
+
+            sfc_pub_vis_object_tangent.points.clear();
+            sfc_pub_vis_object_tangent.normals.clear();
+        }
     }
 
-    sfc_pub_vis_object_polyh.polyhedrons.push_back(sfc_pub_vis_object_tangent);
+
     // cout<<"tangent size: "<<sfc_pub_vis_object_polyh.polyhedrons[0].points.size()<<endl;
     // cout<<"tangent size: "<<sfc_pub_vis_object_polyh.polyhedrons[0].points.size()<<endl;
     // cout<<"final size: "<<sfc_pub_vis_object_polyh.polyhedrons.size()<<endl;
@@ -156,7 +165,7 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "lala");
     ros::NodeHandle nh;
 
-    ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::Polyhedron>("/alan/sfc/total_bound", 1, &sfc_msg_callback);
+    ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>("/alan/sfc/all_corridors", 1, &sfc_msg_callback);
     ros::Subscriber traj_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>("/alan/final_traj_for_vis", 1, &traj_msg_callback);
 
     polyh_vis_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);

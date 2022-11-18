@@ -5,6 +5,8 @@ if no license, cannot run program...
 git clone https://github.com/robotology/osqp-eigen.git
 git clone --recursive https://github.com/osqp/osqp
 git clone https://github.com/sikang/DecompUtil.git
+
+git clone https://github.com/HKPolyU-UAV/scout_ros
 ```
 ```
 @article{stellato2020osqp,
