@@ -1,3 +1,6 @@
+#ifndef PLANNER_SERVER_H
+#define PLANNER_SERVER_H
+
 #include "tools/essential.h"
 #include "bezier_lib/traj_gen.h"
 
@@ -126,3 +129,6 @@ public:
     void mainserver();
 
 };
+
+
+#endif

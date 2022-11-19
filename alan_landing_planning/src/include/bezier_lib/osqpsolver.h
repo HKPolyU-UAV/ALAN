@@ -7,16 +7,21 @@
 class osqpsolver
 {
 private:
+    Eigen::VectorXd qpsol;
     
     /* data */
 public:
-    osqpsolver(/* args */);
+    osqpsolver(/* args */);    
+    ~osqpsolver();
+
     void qp_opt(
         Eigen::MatrixXd _MQM, 
         Eigen::MatrixXd _A, 
         Eigen::MatrixXd _ub, 
         Eigen::MatrixXd _lb);
-    ~osqpsolver();
+
+    Eigen::VectorXd getQpsol(){return qpsol;}
+    
 };
 
 #endif

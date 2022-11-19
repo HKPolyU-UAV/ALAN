@@ -5,6 +5,8 @@
 #include "bernstein.h"
 #include "osqpsolver.h"
 
+#include "alan_landing_planning/AlanPlannerMsg.h"
+
 namespace alan_traj
 {
 
@@ -14,7 +16,9 @@ namespace alan_traj
 
     private:
 
-        vector<Eigen::VectorXd> PolyCoeff;
+        //final result
+        Eigen::VectorXd PolyCoeff;
+        vector<alan_landing_planning::AlanPlannerMsg> optiTraj;
 
         int _axis_dim;
 
@@ -39,6 +43,9 @@ namespace alan_traj
         //math tool
         Eigen::MatrixXd get_nearest_SPD(Eigen::MatrixXd Q);
 
+        //set OptiTraj
+        void setOptiTraj();
+
         //other tool
         void msg_printer(char *s);
 
@@ -49,7 +56,10 @@ namespace alan_traj
         ~traj_gen(){};
 
         void solve_opt();
-        vector<Eigen::VectorXd> getPolyCoeff(){return PolyCoeff;}
+
+        vector<alan_landing_planning::AlanPlannerMsg> getOptiTraj(){return optiTraj;}
+
+
         
     };
 }

@@ -150,9 +150,16 @@ namespace alan_traj
 
         // qpsolve.solve_qp(_MQM, _A, _ub, _lb);
 
-        osqpsolver temp;
+        osqpsolver trajSolver;
 
-        temp.qp_opt(_MQM, _A, _ub, _lb);
+        trajSolver.qp_opt(_MQM, _A, _ub, _lb);
+        PolyCoeff = trajSolver.getQpsol();
+
+        setOptiTraj();
+
+
+
+
         // qpsolve.solve();
         // qpsolve.ifopt_test(_MQM, _A, _ub, _lb);
         // qpsolve.solve_trial();

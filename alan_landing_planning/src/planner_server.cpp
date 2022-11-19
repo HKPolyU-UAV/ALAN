@@ -1,5 +1,4 @@
-#ifndef PLANNER_SERVER_H
-#define PLANNER_SERVER_H
+
 
 #include "include/planner_server.h"
 
@@ -460,5 +459,3 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
 //     Eigen::AngleAxisd pitchAngle(0.872 * noise, Eigen::Vector3d::UnitX());
 
 //     Eigen::Quaternion<double> q = rollAngle * yawAngle * pitchAngle;
-
-#endif

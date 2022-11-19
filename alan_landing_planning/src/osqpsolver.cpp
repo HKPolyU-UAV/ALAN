@@ -78,7 +78,7 @@ void osqpsolver::qp_opt(
     if(!qpsolver.solve())
         cout<<"not yet solved"<<endl;
 
-    Eigen::VectorXd qpsol = qpsolver.getSolution();
+    qpsol = qpsolver.getSolution();
 
     cout<<"here are the solutions: "<<endl;
     cout<<qpsol<<endl;
