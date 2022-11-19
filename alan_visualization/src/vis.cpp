@@ -49,12 +49,10 @@ void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
 
             sfc_pub_vis_object_polyh.polyhedrons.push_back(sfc_pub_vis_object_tangent);
 
-            // cout<<sf
-
-
-            sfc_pub_vis_object_tangent.points.clear();
-            sfc_pub_vis_object_tangent.normals.clear();
+            // cout<<sf            
         }
+        sfc_pub_vis_object_tangent.points.clear();
+        sfc_pub_vis_object_tangent.normals.clear();
     }
 
 
