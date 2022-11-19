@@ -298,7 +298,7 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
     // );
 
     Eigen::Vector3d temp_bound;
-    temp_bound = q_rotate_vector(q_current, Eigen::Vector3d(4,0,0));
+    temp_bound = t_current.translation() + q_rotate_vector(q_current, Eigen::Vector3d(4,0,0));
     cam_center_vector.z() = 0;
 
     alan_visualization::Tangent plane_bound1 = set_plane_bound(
@@ -306,7 +306,7 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
         temp_bound                
     );
 
-    temp_bound = q_rotate_vector(q_current, Eigen::Vector3d(0.2,0,0));
+    temp_bound = t_current.translation() + q_rotate_vector(q_current, Eigen::Vector3d(0.2,0,0));
     cam_center_vector = cam_center_vector * -1;
     // cam_center_vector.z() = 0;
 
@@ -354,92 +354,66 @@ void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Qua
     //4th plane
     polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[3]);
 
+    
+    Eigen::Vector3d temp_normal = q_rotate_vector(q_current, Eigen::Vector3d(1,0,0) * -1);
+    temp_normal.z() = 0;
+
+    alan_visualization::Tangent temp_tangent = set_plane_bound(
+        temp_normal,
+         t_current.translation() + q_rotate_vector(q_current,Eigen::Vector3d(final_corridor_length,0,0))
+        );
+
+
     //5th plane
-    // polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[4]);
-
-
-
-    Eigen::Vector3d middle_bound;
-
-    middle_bound = q_rotate_vector(q_current, Eigen::Vector3d(2,0,0));
-
+    polyhedron_temp.PolyhedronTangentArray.push_back(temp_tangent);
     
-
-    Eigen::Vector3d middle_normal;
-
-    cam_center_vector = Eigen::Vector3d(1,0,0);
-    cam_center_vector = cam_center_vector * -1;    
-    middle_normal = q_rotate_vector(q_current, cam_center_vector);
-    middle_normal.z() = 0;
-
-    alan_visualization::Tangent middle_tangent = set_plane_bound(
-        middle_normal,
-        middle_bound);
-    
-
     //6th plane
-    polyhedron_temp.PolyhedronTangentArray.push_back(middle_tangent);
-
     polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[4]);
 
-
-
-
-
-
-
-
-
-    // cam_center_vector = q_rotate_vector(q_current, Eigen::Vector3d(1,0,0) * (-1));
-    // cam_center_vector.z() = 0;
-    // // Eigen::Vector3d(1,0,0);
-    // //6th plane
-    // polyhedron_temp.PolyhedronTangentArray.push_back(
-    //     set_plane_bound(
-    //         cam_center_vector,
-    //         t_current.translation()
-    //     )
-    // );
-
-//  + q_rotate_vector(q_current, Eigen::Vector3d(final_corridor_length, 0, 0)
-    
-    //push back first corridor
     polyh_array_pub_object.a_series_of_Corridor.push_back(polyhedron_temp);
 
-    // //second corridor
-    // polyhedron_temp.PolyhedronTangentArray.clear();
-
-    // //1st plane
-    // polyhedron_temp.PolyhedronTangentArray.push_back(
-    //     set_plane_bound(
-    //         Eigen::Vector3d(0,0,1),
-    //         Eigen::Vector3d(0,0,final_corridor_height)
-    //     )
-    // );
 
 
-    // //2nd plane
-    // polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[1]);
 
-    // //3ed plane
-    // polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[2]);
 
-    // //4th plane
-    // polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[3]);
+    //second corridor
+    polyhedron_temp.PolyhedronTangentArray.clear();
 
-    // //5th plane
-    // polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[4]);
+    //1st plane
+    temp_normal = Eigen::Vector3d(0,0,1);
 
-    // //6th plane
-    // polyhedron_temp.PolyhedronTangentArray.push_back(
-    //     set_plane_bound(
-    //         q_rotate_vector(q_current, cam_center_vector ),
-    //         q_rotate_vector(q_current, Eigen::Vector3d(final_corridor_length, 0, 0))
-    //     )
-    // );
+    alan_visualization::Tangent ceil_tangent = set_plane_bound(
+        temp_normal,
+        t_current.translation() + q_rotate_vector(q_current, Eigen::Vector3d(0,0,final_corridor_height))
+        );
+    
+    polyhedron_temp.PolyhedronTangentArray.push_back(ceil_tangent);
+        
+    //2nd plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[1]);
 
-    // //push back second corridor
-    // polyh_array_pub_object.a_series_of_Corridor.push_back(polyhedron_temp);
+    //3rd plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[2]);
+    
+    //4th plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[3]);
+        
+    //5th plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[5]);
+
+    temp_normal = q_rotate_vector(q_current, Eigen::Vector3d(1,0,0) * 1);
+    temp_normal.z() = 0;
+
+    temp_tangent = set_plane_bound(
+        temp_normal,
+        t_current.translation() + q_rotate_vector(q_current, Eigen::Vector3d(final_corridor_length,0,0))
+        );
+
+    
+    //6th plane
+    polyhedron_temp.PolyhedronTangentArray.push_back(temp_tangent);
+
+    polyh_array_pub_object.a_series_of_Corridor.push_back(polyhedron_temp);
 
 }
 

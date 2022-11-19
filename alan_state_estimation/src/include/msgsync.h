@@ -140,6 +140,8 @@ namespace alan
                 // cout<<FOV_H<<endl;
                 // cout<<FOV_V<<endl;
 
+                cout<<final_corridor_length<<endl;
+
                 Eigen::Vector3d rpy_temp;
 
                 rpy_temp = Eigen::Vector3d(0, -FOV_V/2, -FOV_H/2);                
