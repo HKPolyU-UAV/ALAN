@@ -25,6 +25,8 @@ namespace alan_traj
         //variable set
         int _n_dim;
 
+        int _discrete_freq;
+
         //constraints set
         Eigen::MatrixXd _A;
         Eigen::VectorXd _ub, _lb;
@@ -46,7 +48,8 @@ namespace alan_traj
 
         //set OptiTraj
         void setOptiTraj();
-        vector<double> time_vector();
+        void setTimeDiscrete();
+        vector<vector<double>> time_vector;
 
         //other tool
         void msg_printer(char *s);
@@ -71,7 +74,11 @@ namespace alan_traj
         
     public:
 
-        traj_gen( bezier_info b_info,  bezier_constraints b_constraints);
+        traj_gen( 
+            bezier_info b_info,  
+            bezier_constraints b_constraints,
+            int discrete_freq
+            );
         ~traj_gen(){};
 
         void solve_opt(int freq);

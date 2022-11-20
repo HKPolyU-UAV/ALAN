@@ -331,7 +331,7 @@ int main(int argc, char** argv)
     b_constraints.corridor_type = "POLYH";
 
 
-	alan_traj::traj_gen traj(b_info, b_constraints);
+	alan_traj::traj_gen traj(b_info, b_constraints, 50);
     
 
     traj.solve_opt(50);

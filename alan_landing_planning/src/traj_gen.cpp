@@ -9,7 +9,10 @@
 
 namespace alan_traj
 {
-    traj_gen::traj_gen( bezier_info b_info,  bezier_constraints b_constraints)
+    traj_gen::traj_gen( 
+        bezier_info b_info,  
+        bezier_constraints b_constraints, 
+        int discrete_freq)
         //for variable set
         :
         _axis_dim(b_info.axis_dim), 
@@ -25,7 +28,10 @@ namespace alan_traj
         _d_constraints(b_constraints.d_constraints),
 
         //for cost term
-        _n_order(b_info.n_order), _m(b_info.m), _d_order(b_info.d_order), _s(b_info.s)    
+        _n_order(b_info.n_order), _m(b_info.m), _d_order(b_info.d_order), _s(b_info.s),
+
+        //freq
+        _discrete_freq(discrete_freq) 
     {
         ROS_WARN("entering traj generator!");        
 
@@ -263,6 +269,8 @@ namespace alan_traj
 
         
 
+        
+
         for(int seg_i = 0; seg_i < _m; seg_i++)
         {
             for(int t = 0;;)
@@ -271,7 +279,7 @@ namespace alan_traj
                 {
                     p_base = nchoosek(_n_order, i); //t^i * (1-t)^(n_order-i);
                     // basis_p = nchoosek(n_order, i) * t^i * (1-t)^(n_order-i);
-                    
+
 
                 }   
 
@@ -286,6 +294,21 @@ namespace alan_traj
 
         optiTraj.push_back(traj_discrete_pt);
 
+    }
+
+    void traj_gen::setTimeDiscrete()
+    {
+        for(auto what : time_vector)
+            what.clear();
+
+        for(int i = 0; i < _m; i++)
+        {
+            for(int j = 0 ; i < _s.size(); i++)
+            {
+
+            }
+        }
+        
     }
 
     double traj_gen::nchoosek(int n, int k)
