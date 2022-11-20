@@ -142,9 +142,9 @@ namespace alan_traj
             ROS_ERROR("Please check kinematic constraint type...");
         }
 
-    };
+    }; 
 
-    void traj_gen::solve_opt()
+    void traj_gen::solve_opt(int freq)
     {
         // qpsolver qpsolve(_n_dim, _A.rows());
 
@@ -252,6 +252,45 @@ namespace alan_traj
     void traj_gen::msg_printer(char *s)
     {
         // printf("%*s%*s\n",10+strlen(s)/2,s,10-strlen(s)/2," ");
+    }
+
+    void traj_gen::setOptiTraj()
+    {
+        alan_landing_planning::AlanPlannerMsg traj_discrete_pt;
+        
+        double x_pos, y_pos, z_pos;
+        double p_base;
+
+        
+
+        for(int seg_i = 0; seg_i < _m; seg_i++)
+        {
+            for(int t = 0;;)
+            {
+                for(int i = 0; i < _n_order; i ++)
+                {
+                    p_base = nchoosek(_n_order, i); //t^i * (1-t)^(n_order-i);
+                    // basis_p = nchoosek(n_order, i) * t^i * (1-t)^(n_order-i);
+                    
+
+                }   
+
+            }
+
+            
+
+
+
+        }
+
+
+        optiTraj.push_back(traj_discrete_pt);
+
+    }
+
+    double traj_gen::nchoosek(int n, int k)
+    {
+        return pascal[n][k];
     }
 
 }

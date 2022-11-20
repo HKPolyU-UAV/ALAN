@@ -2,8 +2,8 @@
 
 #include "include/planner_server.h"
 
-planner_server::planner_server(ros::NodeHandle& _nh)
-: nh(_nh), last_request(ros::Time::now().toSec())
+planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
+: nh(_nh), last_request(ros::Time::now().toSec()), _pub_freq(pub_freq)
 {
     //subscribe
     uav_state_sub = nh.subscribe<mavros_msgs::State>
@@ -14,6 +14,9 @@ planner_server::planner_server(ros::NodeHandle& _nh)
 
     ugv_AlanPlannerMsg_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
             ("/AlanPlannerMsg/ugv/data", 1, &planner_server::ugvAlanMsgCallback, this);
+
+    sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>
+            ("/alan/sfc/all_corridors", 1, &planner_server::sfcMsgCallback, this);
 
 
     //publish
@@ -137,10 +140,16 @@ void planner_server::ugvAlanMsgCallback(const alan_landing_planning::AlanPlanner
     // cout<<"im here"<<uav_current_AlanPlannerMsg.position.x<<endl;
 }
 
+void planner_server::sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& msg)
+{
+    land_traj_constraint.a_series_of_Corridor.clear();
+    land_traj_constraint = *msg;
+}
+
 
 void planner_server::mainserver()
 {
-    ros::Rate rate(50.0);
+    ros::Rate rate(_pub_freq);
 
     while(ros::ok())
     {

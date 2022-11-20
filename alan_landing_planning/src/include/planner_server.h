@@ -7,8 +7,8 @@
 // #include "alan/AlanPlanner.h"
 
 #include "alan_landing_planning/AlanPlannerMsg.h"
-
 #include "alan_landing_planning/StateMachine.h"
+#include "alan_visualization/PolyhedronArray.h"
 
 
 #define IDLE "IDLE"
@@ -37,11 +37,13 @@ private:
     //subscriber
     ros::Subscriber uav_state_sub;
     ros::Subscriber uav_AlanPlannerMsg_sub, ugv_AlanPlannerMsg_sub;
+    ros::Subscriber sfc_sub;
 
     //publisher
     ros::Publisher local_pos_pub;
     ros::Publisher local_vel_pub;
     ros::Publisher pub_fsm;
+    
 
     //service
     ros::ServiceClient uav_arming_client;
@@ -53,6 +55,9 @@ private:
     void uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg);
 
     void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg);
+
+
+    void sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& msg);
 
 
     //fsm
@@ -73,11 +78,7 @@ private:
 
     //other functions
     void planner_pub();
-
      
-
-
-    // void 
 
     //server
 
@@ -93,6 +94,8 @@ private:
     mavros_msgs::CommandBool arm_cmd;
     mavros_msgs::State uav_current_state;
 
+    alan_visualization::PolyhedronArray land_traj_constraint;
+
     // sensor_msgs::Imu cam_pose;
     // Eigen::Quaterniond cam_pose;
 
@@ -104,7 +107,7 @@ private:
     geometry_msgs::Twist uav_traj_twist_desired;
     alan_landing_planning::StateMachine alan_fsm_object;
 
-    Eigen::Vector4d pid_controller(Eigen::Vector4d pose, Eigen::Vector4d setpoint);
+    Eigen::Vector4d pid_controller(Eigen::Vector4d pose, Eigen::Vector4d setpoint);    
 
     Eigen::Vector4d uav_traj_pose, ugv_traj_pose, target_traj_pose, ugv_target_traj_pose;
     
@@ -120,10 +123,12 @@ private:
 
     double uav_v_max = 1.5;
 
+    int _pub_freq = 0;
+
     
 
 public:
-    planner_server(ros::NodeHandle& _nh);
+    planner_server(ros::NodeHandle& _nh, int pub_freq);
     ~planner_server();
 
     void mainserver();

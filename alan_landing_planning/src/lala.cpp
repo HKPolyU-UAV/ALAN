@@ -334,12 +334,16 @@ int main(int argc, char** argv)
 	alan_traj::traj_gen traj(b_info, b_constraints);
     
 
-    traj.solve_opt();
+    traj.solve_opt(50);
+
+    vector<alan_landing_planning::AlanPlannerMsg> optiTraj = traj.getOptiTraj();
 
     double t01 = ros::Time::now().toSec();
 
     cout<<"ms: "<<(t01-t00)<<endl;
     cout<<"fps: "<<1/(t01-t00)<<endl;
+
+    ros::spin();
 
 
 
