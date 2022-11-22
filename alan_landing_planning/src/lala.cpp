@@ -35,6 +35,9 @@ int main(int argc, char** argv)
     ros::Publisher poly_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
     ros::Publisher polyh_pub = nh.advertise<alan_visualization::Polyhedron>("/alan_visualization/polyhedron", 1, true);
 
+    ros::Publisher traj_pub = nh.advertise<alan_landing_planning::Traj>("/alan_visualization/traj", 1, true);
+
+
     double t00 = ros::Time::now().toSec();
     // test.n.X
 
@@ -335,15 +338,25 @@ int main(int argc, char** argv)
     
 
     traj.solve_opt(50);
+    
 
-    vector<alan_landing_planning::AlanPlannerMsg> optiTraj = traj.getOptiTraj();
+    alan_landing_planning::Traj optiTraj = traj.getOptiTraj();
 
     double t01 = ros::Time::now().toSec();
 
     cout<<"ms: "<<(t01-t00)<<endl;
     cout<<"fps: "<<1/(t01-t00)<<endl;
 
-    ros::spin();
+    ros::Rate rosrate(50);
+
+    while(ros::ok())
+    {
+        traj_pub.publish(optiTraj);
+        ros::spinOnce();
+        rosrate.sleep();
+    }
+
+    
 
 
 

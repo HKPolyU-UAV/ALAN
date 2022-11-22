@@ -18,6 +18,8 @@ namespace alan_traj
         _axis_dim(b_info.axis_dim), 
         _n_dim((b_info.n_order + 1) * b_info.m * b_info.axis_dim),
 
+        _n_dim_per_axis((b_info.n_order + 1) * b_info.m),
+
         //for constraints set
         _start(b_constraints.start), 
         _end(b_constraints.end), 
@@ -161,6 +163,11 @@ namespace alan_traj
         trajSolver.qp_opt(_MQM, _A, _ub, _lb);
         PolyCoeff = trajSolver.getQpsol();
 
+        cout<<"size of ctrl pts..."<<PolyCoeff.size()<<endl;
+
+        cout<<"enter set Time Discrete..."<<endl;
+        setTimeDiscrete();
+        cout<<"enter set Opti Traj..."<<endl;
         setOptiTraj();
 
 
@@ -264,44 +271,110 @@ namespace alan_traj
     {
         alan_landing_planning::AlanPlannerMsg traj_discrete_pt;
         
-        double x_pos, y_pos, z_pos;
+        double x_pos = 0, y_pos = 0, z_pos = 0;
         double p_base;
 
-        
+        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt");
+        // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/p_base.txt");
 
-        
+        cout<<"seg_i: "<<_m<<endl;
+        cout<<"_n_order: "<<_n_order<<endl;
+
+
+        cout<<time_vector.size()<<endl;
+
 
         for(int seg_i = 0; seg_i < _m; seg_i++)
         {
-            for(int t = 0;;)
+
+            cout<<"seg time size: "<<time_vector[seg_i].size()<<endl;
+
+            for(int i = 0; i < time_vector[seg_i].size(); i++)
             {
-                for(int i = 0; i < _n_order; i ++)
+                x_pos = 0;
+                y_pos = 0;
+                z_pos = 0;
+                
+                for(int k = 0; k < _n_order + 1; k++)
                 {
-                    p_base = nchoosek(_n_order, i); //t^i * (1-t)^(n_order-i);
-                    // basis_p = nchoosek(n_order, i) * t^i * (1-t)^(n_order-i);
+                    // cout<<"here: "<<seg_i<<" "<<i<<" "<<k<<endl;
+                    // cout<<"here: "<<_n_order<<"  "<<k<<endl;
+
+                    // cout<<nchoosek(_n_order, k)<<endl;
+
+                    
+
+                    p_base = nchoosek(_n_order, k) 
+                        * pow(time_vector[seg_i][i], k) 
+                        * pow(1 - time_vector[seg_i][i], _n_order - k);
+                    // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/p_base.txt",ios::app);
+                    // save<<p_base<<endl;
+                
+                
+                    // save.close();
+                    
+                    // cout<<"p_Base: "<<p_base<<endl;
+
+                    // cout<< seg_i * (_n_order + 1) + k<<endl;
+                    // cout<< seg_i * (_n_order + 1) + k + _n_dim_per_axis<<endl;
+
+                    cout<<PolyCoeff(seg_i * (_n_order + 1) + k)<<endl;
+                    cout<<PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis)<<endl;
+                    
+                    x_pos = x_pos + PolyCoeff(seg_i * (_n_order + 1) + k) * p_base;
+                    y_pos = y_pos + PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis) * p_base;
+
+                    
+
+                    // x_pos(idx) = x_pos(idx) + poly_coef_x((k-1)*(n_order+1)+i+1) * basis_p;
+                    // y_pos(idx) = y_pos(idx) + poly_coef_y((k-1)*(n_order+1)+i+1) * basis_p;
+
+                }
+                traj_discrete_pt.position.x = x_pos;
+                traj_discrete_pt.position.y = y_pos;
 
 
-                }   
+                
 
+                ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt",ios::app);
+                save<<x_pos<<endl;
+                save<<y_pos<<endl;
+                save<<endl;
+                save.close();
+
+                optiTraj.trajectory.emplace_back(traj_discrete_pt);                
             }
         }
 
 
-        optiTraj.push_back(traj_discrete_pt);
+        
+        cout<<"here are the traj size...: "<<optiTraj.trajectory.size()<<endl;
 
     }
 
     void traj_gen::setTimeDiscrete()
     {
+        vector<double> time_vector_per_seg;
+        double discrete_time_step;
+        double seg_time;
+
         for(auto what : time_vector)
             what.clear();
 
         for(int i = 0; i < _m; i++)
         {
-            for(int j = 0 ; i < _s.size(); i++)
-            {
+            seg_time = _s[i];
+            discrete_time_step = seg_time * _discrete_freq;
 
-            }
+            time_vector_per_seg.clear();
+
+            for(double j = 0; j < discrete_time_step; j++)
+            {
+                // cout<<1 * j / discrete_time_step + 1 / discrete_time_step<<endl;
+                time_vector_per_seg.emplace_back(1 * j / discrete_time_step + 1 / discrete_time_step);
+            }            
+
+            time_vector.emplace_back(time_vector_per_seg);            
         }
         
     }

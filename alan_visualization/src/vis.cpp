@@ -144,15 +144,23 @@ void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
 
 }
 
-void traj_msg_callback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg)
+void traj_msg_callback(const alan_landing_planning::Traj::ConstPtr& msg)
 {
     geometry_msgs::Point posi_temp;
-    
-    posi_temp.x = msg->position.x;
-    posi_temp.y = msg->position.y;
-    posi_temp.z = msg->position.z;
 
-    traj_points.points.push_back(posi_temp);
+    // cout<<msg->trajectory.size()<<endl;
+
+    traj_points.points.clear();
+    
+    for(auto what : msg->trajectory)
+    {
+        posi_temp.x = what.position.x;
+        posi_temp.y = what.position.y;
+        posi_temp.z = what.position.z;
+        traj_points.points.push_back(posi_temp);
+    }
+
+    
 
     traj_vis_pub.publish(traj_points);
 
@@ -160,27 +168,27 @@ void traj_msg_callback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& ms
 
 int main(int argc, char** argv)
 {    
-	ros::init(argc, argv, "lala");
+	ros::init(argc, argv, "gan");
     ros::NodeHandle nh;
 
     ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>("/alan/sfc/all_corridors", 1, &sfc_msg_callback);
-    ros::Subscriber traj_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>("/alan/final_traj_for_vis", 1, &traj_msg_callback);
+    ros::Subscriber traj_sub = nh.subscribe<alan_landing_planning::Traj>("/alan_visualization/traj", 1, &traj_msg_callback);
 
     polyh_vis_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
     traj_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points", 1, true);
 
-    traj_points.header.frame_id = "/map";
+    traj_points.header.frame_id = "map";
     traj_points.header.stamp = ros::Time::now();
     traj_points.ns = "GT_points";
     traj_points.id = 0;
     traj_points.action = visualization_msgs::Marker::ADD;
     traj_points.pose.orientation.w = 1.0;
     traj_points.type = visualization_msgs::Marker::SPHERE_LIST;
-    traj_points.scale.x = traj_points.scale.y = traj_points.scale.z = 0.05;
+    traj_points.scale.x = traj_points.scale.y = traj_points.scale.z = 0.5;
     std_msgs::ColorRGBA color_for_edge;
     traj_points.color.a=1;
-    traj_points.color.g=0;
-    traj_points.color.r=1;
+    traj_points.color.g=1;
+    traj_points.color.r=0;
     traj_points.color.b=0;
 
 

@@ -6,6 +6,7 @@
 #include "osqpsolver.h"
 
 #include "alan_landing_planning/AlanPlannerMsg.h"
+#include "alan_landing_planning/Traj.h"
 
 namespace alan_traj
 {
@@ -18,12 +19,14 @@ namespace alan_traj
 
         //final result
         Eigen::VectorXd PolyCoeff;
-        vector<alan_landing_planning::AlanPlannerMsg> optiTraj;
+        alan_landing_planning::Traj optiTraj;
 
         int _axis_dim;
 
         //variable set
         int _n_dim;
+
+        int _n_dim_per_axis;
 
         int _discrete_freq;
 
@@ -83,7 +86,7 @@ namespace alan_traj
 
         void solve_opt(int freq);
 
-        vector<alan_landing_planning::AlanPlannerMsg> getOptiTraj(){return optiTraj;}
+        alan_landing_planning::Traj getOptiTraj(){return optiTraj;}
 
 
         
