@@ -284,11 +284,6 @@ namespace alan_traj
                 }   
 
             }
-
-            
-
-
-
         }
 
 
