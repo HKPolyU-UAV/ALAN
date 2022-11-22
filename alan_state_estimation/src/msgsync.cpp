@@ -113,9 +113,13 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
 
     ugv_odom_initiated = true;
     
-    ugv_acc_body(0) = ugv_imu.linear_acceleration.x;
-    ugv_acc_body(1) = ugv_imu.linear_acceleration.y;
-    ugv_acc_body(2) = ugv_imu.linear_acceleration.z;
+    ugv_acc_body(0) = ugv_imu.linear_acceleration.z;
+    ugv_acc_body(1) = ugv_imu.linear_acceleration.x * (-1);
+    ugv_acc_body(2) = ugv_imu.linear_acceleration.y * (-1);
+
+    // ugv_acc_body(0) = ugv_imu.linear_acceleration.x;
+    // ugv_acc_body(1) = ugv_imu.linear_acceleration.y;
+    // ugv_acc_body(2) = ugv_imu.linear_acceleration.z;
 
     ugv_acc_world = ugvOdomPose.rotation() * ugv_acc_body;
     ugv_alan_msg.acceleration.x = ugv_acc_world(0);
@@ -158,12 +162,12 @@ void alan::MsgSyncNodelet::cam_msg_callback(const geometry_msgs::PoseStamped::Co
         camPose = t_ * q_;
 
         set_total_bound(t_, q_);
-        set_all_sfc(t_, q_, final_corridor_length, final_corridor_length);
+        set_all_sfc(t_, q_);
         //remember to add ugv camera translation
                 
         // alan_sfc_pub.publish(polyh_total_bound);
 
-        cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<endl;
+        // cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<endl;
 
         alan_all_sfc_pub.publish(polyh_array_pub_object);
 
@@ -239,7 +243,6 @@ alan_visualization::Tangent alan::MsgSyncNodelet::set_plane_bound(Eigen::Vector3
         
     return tangent_plane;
 }
-
 
 void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen::Quaterniond q_current)
 {
@@ -331,7 +334,7 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
 
 }
 
-void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Quaterniond q_current, double sfc_final_length, double sfc_final_height)
+void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Quaterniond q_current)
 {
     polyh_array_pub_object.a_series_of_Corridor.clear();
 
@@ -416,6 +419,3 @@ void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Qua
     polyh_array_pub_object.a_series_of_Corridor.push_back(polyhedron_temp);
 
 }
-
-
-

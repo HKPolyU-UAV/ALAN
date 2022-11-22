@@ -5,6 +5,8 @@
 planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 : nh(_nh), last_request(ros::Time::now().toSec()), _pub_freq(pub_freq)
 {
+    nh.getParam("/alan_master/final_landing_x", final_corridor_height);
+
     //subscribe
     uav_state_sub = nh.subscribe<mavros_msgs::State>
             ("/uav/mavros/state", 1, &planner_server::uavStateCallback, this);
@@ -356,6 +358,7 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 
 bool planner_server::land()
 {
+
     return false;
 }
 

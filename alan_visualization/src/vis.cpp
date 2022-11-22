@@ -27,7 +27,7 @@ void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
 
     sfc_pub_vis_object_polyh.polyhedrons.clear();   
 
-    cout<<"size of corridors..."<<msg->a_series_of_Corridor.size()<<endl;
+    // cout<<"size of corridors..."<<msg->a_series_of_Corridor.size()<<endl;
     sfc_pub_vis_object_tangent.points.clear();
     sfc_pub_vis_object_tangent.normals.clear();
 
@@ -35,7 +35,7 @@ void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
     {
         for(auto whatelse : what.PolyhedronTangentArray)
         {
-            cout<<what.PolyhedronTangentArray.size()<<endl;
+            // cout<<what.PolyhedronTangentArray.size()<<endl;
             temp_sfc_p.x = whatelse.pt.X;
             temp_sfc_p.y = whatelse.pt.Y;
             temp_sfc_p.z = whatelse.pt.Z;

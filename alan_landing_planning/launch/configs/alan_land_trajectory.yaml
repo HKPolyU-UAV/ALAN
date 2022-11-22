@@ -4,6 +4,8 @@ m: 3
 
 d_order: 4 # p v a j
 
+final_landing_x: 1.0
+
 LED_positions:
   - x: 0.085
     y: -0.075

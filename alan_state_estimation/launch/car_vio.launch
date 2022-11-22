@@ -1,7 +1,9 @@
 
 <launch>
     <!-- VIO through flvis -->
-    <include file="$(find flvis)/launch/flvis_d455_depth.launch"/>
+    <include file="$(find flvis)/launch/flvis_d455_depth.launch">
+        <!-- <remap from="/imu_pose" to="/ugv/mavros/local_position/odom" /> -->
+    </include>
 
     <!-- ROS Nodelet manager -->
     <!-- <node pkg="nodelet" type="nodelet" name="dadiu" args="manager" output="screen"/> -->

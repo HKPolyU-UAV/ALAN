@@ -125,6 +125,8 @@ private:
 
     int _pub_freq = 0;
 
+    double final_corridor_height = 0; 
+
     
 
 public:

@@ -80,8 +80,8 @@ void osqpsolver::qp_opt(
 
     qpsol = qpsolver.getSolution();
 
-    cout<<"here are the solutions: "<<endl;
-    cout<<qpsol<<endl;
+    // cout<<"here are the solutions: "<<endl;
+    // cout<<qpsol<<endl;
 
 
     // cout<<"cost: "<<qpsol.transpose() * H * qpsol<<endl;

@@ -114,7 +114,7 @@ namespace alan
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
 
             void set_total_bound(Eigen::Translation3d t_current, Eigen::Quaterniond q_current);
-            void set_all_sfc(Eigen::Translation3d t_current,Eigen::Quaterniond q_current, double sfc_final_length, double sfc_final_height);
+            void set_all_sfc(Eigen::Translation3d t_current,Eigen::Quaterniond q_current);
 
             alan_visualization::Tangent construct_tangent_plane(Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector3d pt);
             alan_visualization::Tangent set_plane_bound(Eigen::Vector3d v, Eigen::Vector3d pt);
@@ -179,8 +179,9 @@ namespace alan
                 uavsync_->registerCallback(boost::bind(&MsgSyncNodelet::uav_msg_callback, this, _1, _2));
 
 
-                ugv_sub_odom.subscribe(nh, "/uav/mavros/local_position/odom", 1);
-                ugv_sub_imu.subscribe(nh, "/uav/mavros/imu/data", 1);
+                ugv_sub_odom.subscribe(nh, "/ugv/mavros/local_position/odom", 1);
+                ugv_sub_imu.subscribe(nh, "/camera/imu", 1);
+                ///ugv/mavros/imu/data
 
                 ugvsync_.reset(new ugvsync( ugvMySyncPolicy(10), ugv_sub_odom, ugv_sub_imu));            
                 ugvsync_->registerCallback(boost::bind(&MsgSyncNodelet::ugv_msg_callback, this, _1, _2));                

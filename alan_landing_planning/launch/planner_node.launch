@@ -4,9 +4,9 @@
     <!-- <include file="$(find flvis)/launch/flvis_d455_depth.launch"/> -->
 
     <!-- ROS Nodelet manager -->
-    <node pkg="nodelet" type="nodelet" name="alan_master" args="manager" output="screen">
+    <!-- <node pkg="nodelet" type="nodelet" name="alan_master" args="manager" output="screen">
             <rosparam command="load" file="$(find alan_landing_planning)/launch/configs/alan_pose_estimation.yaml" />
-    </node> 
+    </node>  -->
 
 
     <node name="planner_node" pkg="alan_landing_planning" type="planner_node" output="screen">

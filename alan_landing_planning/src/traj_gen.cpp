@@ -336,11 +336,11 @@ namespace alan_traj
 
                 
 
-                ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt",ios::app);
-                save<<x_pos<<endl;
-                save<<y_pos<<endl;
-                save<<endl;
-                save.close();
+                // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt",ios::app);
+                // save<<x_pos<<endl;
+                // save<<y_pos<<endl;
+                // save<<endl;
+                // save.close();
 
                 optiTraj.trajectory.emplace_back(traj_discrete_pt);                
             }
