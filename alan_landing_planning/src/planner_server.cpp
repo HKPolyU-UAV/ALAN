@@ -5,7 +5,7 @@
 planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 : nh(_nh), last_request(ros::Time::now().toSec()), _pub_freq(pub_freq)
 {
-    nh.getParam("/alan_master/final_landing_x", final_corridor_height);
+    nh.getParam("/alan_master_planner_node/final_landing_x", final_landing_x);
 
     //subscribe
     uav_state_sub = nh.subscribe<mavros_msgs::State>
@@ -37,7 +37,9 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 
     uav_set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
             ("/uav/mavros/set_mode");
-    
+
+    cout<<"final_landing_x: "<<final_landing_x<<endl;
+
     uav_set_mode.request.custom_mode = "OFFBOARD";
     arm_cmd.request.value = true;
 
@@ -62,7 +64,6 @@ void planner_server::uavStateCallback(const mavros_msgs::State::ConstPtr& msg)
 void planner_server::uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg)
 {
     uav_current_AlanPlannerMsg = *msg;
-    uav_current_AlanPlannerMsg.position.x;
 
     Eigen::Translation3d t_(
         uav_current_AlanPlannerMsg.position.x,
@@ -324,15 +325,15 @@ bool planner_server::taking_off()
 
 bool planner_server::go_to_rendezvous_pt_and_follow()
 {
-    uav_traj_pose_desired.pose.position.x = 2;
-    uav_traj_pose_desired.pose.position.y = 2;
-    uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
+    // uav_traj_pose_desired.pose.position.x = 2;
+    // uav_traj_pose_desired.pose.position.y = 2;
+    // uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
 
 
-    target_traj_pose(0) = 2;
-    target_traj_pose(1) = 2;
-    target_traj_pose(2) = 2.5;
-    target_traj_pose(3) = M_PI /2;
+    target_traj_pose(0) = 5;
+    target_traj_pose(1) = 0;
+    target_traj_pose(2) = 1.8;
+    target_traj_pose(3) = M_PI;
     //enter ugv and uav rendezvous point here
 
     Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
@@ -358,6 +359,18 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 
 bool planner_server::land()
 {
+    
+    target_traj_pose(0) = 5;
+    target_traj_pose(1) = 0;
+    target_traj_pose(2) = 1.8;
+    target_traj_pose(3) = M_PI;
+
+    Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
+
+    uav_traj_twist_desired.linear.x = twist_result(0);
+    uav_traj_twist_desired.linear.y = twist_result(1);
+    uav_traj_twist_desired.linear.z = twist_result(2);
+    uav_traj_twist_desired.angular.z = twist_result(3);
 
     return false;
 }
