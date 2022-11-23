@@ -29,7 +29,7 @@ private:
     ros::NodeHandle nh;
     std::string _robot_type;
     bool _got_camera;
-    Eigen::Isometry3d _c2b;
+    Eigen::VectorXd _c2b;
 
     ros::Publisher vehicle_marker_pub;
     
@@ -58,10 +58,14 @@ private:
     }
 
     Eigen::Quaterniond q_temp;
-    Eigen::Quaterniond q045 = rpy2q(Eigen::Vector3d(0,0,M_PI * 1 / 4));
-    Eigen::Quaterniond q135 = rpy2q(Eigen::Vector3d(0,0,M_PI * 3 / 4));
-    Eigen::Quaterniond q225 = rpy2q(Eigen::Vector3d(0,0,M_PI * 5 / 4));
-    Eigen::Quaterniond q315 = rpy2q(Eigen::Vector3d(0,0,M_PI * 7 / 4));
+    Eigen::Quaterniond q045_yaw = rpy2q(Eigen::Vector3d(0,0,M_PI * 1 / 4));
+    Eigen::Quaterniond q135_yaw = rpy2q(Eigen::Vector3d(0,0,M_PI * 3 / 4));
+    Eigen::Quaterniond q225_yaw = rpy2q(Eigen::Vector3d(0,0,M_PI * 5 / 4));
+    Eigen::Quaterniond q315_yaw = rpy2q(Eigen::Vector3d(0,0,M_PI * 7 / 4));
+
+    Eigen::Quaterniond q090_rol = rpy2q(Eigen::Vector3d(M_PI * 1 / 2,0,0));
+
+    
 
     Eigen::Quaterniond q_robot;
     Eigen::Translation3d t_robot;
@@ -147,9 +151,9 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_temp.type = visualization_msgs::Marker::CUBE;
 
-        robot_marker_temp.scale.x = 0.2;
-        robot_marker_temp.scale.y = 0.2;
-        robot_marker_temp.scale.z = 0.1;
+        robot_marker_temp.scale.x = 0.1;
+        robot_marker_temp.scale.y = 0.1;
+        robot_marker_temp.scale.z = 0.05;
 
         robot_marker_temp.color.a = 1;
         robot_marker_temp.color.r = 1;
@@ -165,10 +169,10 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
         robot_marker_temp.action = visualization_msgs::Marker::ADD;
 
         //045 dg
-        q_temp = q_robot * q045;
+        q_temp = q_robot * q045_yaw;
         robot_marker_temp.id = 1;
 
-        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(0.1,0.1,0));
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(0.06,0.06,0));
 
         robot_marker_temp.pose.orientation.w = q_temp.w();
         robot_marker_temp.pose.orientation.x = q_temp.x();
@@ -181,9 +185,9 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_temp.type = visualization_msgs::Marker::CUBE;
 
-        robot_marker_temp.scale.x = 0.3;
-        robot_marker_temp.scale.y = 0.05;
-        robot_marker_temp.scale.z = 0.02;
+        robot_marker_temp.scale.x = 0.15;
+        robot_marker_temp.scale.y = 0.025;
+        robot_marker_temp.scale.z = 0.01;
 
         robot_marker_temp.color.a = 1;
         robot_marker_temp.color.r = 0;
@@ -191,14 +195,15 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
         robot_marker_temp.color.g = 0;
 
         robot_marker_array.markers.emplace_back(robot_marker_temp);
+
 
 
 
         //135 dg
-        q_temp = q_robot * q135;
+        q_temp = q_robot * q135_yaw;
         robot_marker_temp.id = 2;
 
-        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(-0.1,0.1,0));
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(-0.06,0.06,0));
 
         robot_marker_temp.pose.orientation.w = q_temp.w();
         robot_marker_temp.pose.orientation.x = q_temp.x();
@@ -211,9 +216,9 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_temp.type = visualization_msgs::Marker::CUBE;
 
-        robot_marker_temp.scale.x = 0.3;
-        robot_marker_temp.scale.y = 0.05;
-        robot_marker_temp.scale.z = 0.02;
+        robot_marker_temp.scale.x = 0.15;
+        robot_marker_temp.scale.y = 0.025;
+        robot_marker_temp.scale.z = 0.01;
 
         robot_marker_temp.color.a = 1;
         robot_marker_temp.color.r = 0;
@@ -221,14 +226,15 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
         robot_marker_temp.color.g = 0;
 
         robot_marker_array.markers.emplace_back(robot_marker_temp);
+
 
 
 
         //225 dg
-        q_temp = q_robot * q225;
+        q_temp = q_robot * q225_yaw;
         robot_marker_temp.id = 3;
 
-        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(-0.1,-0.1,0));
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(-0.06,-0.06,0));
 
         robot_marker_temp.pose.orientation.w = q_temp.w();
         robot_marker_temp.pose.orientation.x = q_temp.x();
@@ -241,9 +247,9 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_temp.type = visualization_msgs::Marker::CUBE;
 
-        robot_marker_temp.scale.x = 0.3;
-        robot_marker_temp.scale.y = 0.05;
-        robot_marker_temp.scale.z = 0.02;
+        robot_marker_temp.scale.x = 0.15;
+        robot_marker_temp.scale.y = 0.025;
+        robot_marker_temp.scale.z = 0.01;
 
         robot_marker_temp.color.a = 1;
         robot_marker_temp.color.r = 0;
@@ -251,14 +257,15 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
         robot_marker_temp.color.g = 0;
 
         robot_marker_array.markers.emplace_back(robot_marker_temp);
+
 
 
 
         //315 dg
-        q_temp = q_robot * q315;
+        q_temp = q_robot * q315_yaw;
         robot_marker_temp.id = 4;
 
-        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(0.1,-0.1,0));
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(0.06,-0.06,0));
 
         robot_marker_temp.pose.orientation.w = q_temp.w();
         robot_marker_temp.pose.orientation.x = q_temp.x();
@@ -271,9 +278,9 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_temp.type = visualization_msgs::Marker::CUBE;
 
-        robot_marker_temp.scale.x = 0.3;
-        robot_marker_temp.scale.y = 0.05;
-        robot_marker_temp.scale.z = 0.02;
+        robot_marker_temp.scale.x = 0.15;
+        robot_marker_temp.scale.y = 0.025;
+        robot_marker_temp.scale.z = 0.01;
 
         robot_marker_temp.color.a = 1;
         robot_marker_temp.color.r = 0;
@@ -285,10 +292,10 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
 
 
-        //propeller
+        //propeller 1
         robot_marker_temp.id = 5;
 
-        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(0.2,0.2,0));
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(0.12,0.12,0));
 
         robot_marker_temp.pose.orientation.w = q_robot.w();
         robot_marker_temp.pose.orientation.x = q_robot.x();
@@ -301,9 +308,9 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_temp.type = visualization_msgs::Marker::CYLINDER;
 
-        robot_marker_temp.scale.x = 0.32;
-        robot_marker_temp.scale.y = 0.32;
-        robot_marker_temp.scale.z = 0.01;
+        robot_marker_temp.scale.x = 0.16;
+        robot_marker_temp.scale.y = 0.16;
+        robot_marker_temp.scale.z = 0.005;
 
         robot_marker_temp.color.a = 0.64;
         robot_marker_temp.color.r = 0;
@@ -313,9 +320,12 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
         robot_marker_array.markers.emplace_back(robot_marker_temp);
 
 
+
+
+        //propeller 2
         robot_marker_temp.id = 6;
 
-        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(-0.2,0.2,0));
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(-0.12,0.12,0));
 
         robot_marker_temp.pose.orientation.w = q_robot.w();
         robot_marker_temp.pose.orientation.x = q_robot.x();
@@ -328,9 +338,9 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_temp.type = visualization_msgs::Marker::CYLINDER;
 
-        robot_marker_temp.scale.x = 0.32;
-        robot_marker_temp.scale.y = 0.32;
-        robot_marker_temp.scale.z = 0.01;
+        robot_marker_temp.scale.x = 0.16;
+        robot_marker_temp.scale.y = 0.16;
+        robot_marker_temp.scale.z = 0.005;
 
         robot_marker_temp.color.a = 0.64;
         robot_marker_temp.color.r = 0;
@@ -339,9 +349,13 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_array.markers.emplace_back(robot_marker_temp);
 
+
+
+
+        //propeller 3
         robot_marker_temp.id = 7;
 
-        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(-0.2,-0.2,0));
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(-0.12,-0.12,0));
 
         robot_marker_temp.pose.orientation.w = q_robot.w();
         robot_marker_temp.pose.orientation.x = q_robot.x();
@@ -354,9 +368,9 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_temp.type = visualization_msgs::Marker::CYLINDER;
 
-        robot_marker_temp.scale.x = 0.32;
-        robot_marker_temp.scale.y = 0.32;
-        robot_marker_temp.scale.z = 0.01;
+        robot_marker_temp.scale.x = 0.16;
+        robot_marker_temp.scale.y = 0.16;
+        robot_marker_temp.scale.z = 0.005;
 
         robot_marker_temp.color.a = 0.64;
         robot_marker_temp.color.r = 0;
@@ -365,9 +379,13 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_array.markers.emplace_back(robot_marker_temp);
 
+
+
+
+        //propeller 4
         robot_marker_temp.id = 8;
 
-        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(0.2,-0.2,0));
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(0.12,-0.12,0));
 
         robot_marker_temp.pose.orientation.w = q_robot.w();
         robot_marker_temp.pose.orientation.x = q_robot.x();
@@ -380,9 +398,9 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_temp.type = visualization_msgs::Marker::CYLINDER;
 
-        robot_marker_temp.scale.x = 0.32;
-        robot_marker_temp.scale.y = 0.32;
-        robot_marker_temp.scale.z = 0.01;
+        robot_marker_temp.scale.x = 0.16;
+        robot_marker_temp.scale.y = 0.16;
+        robot_marker_temp.scale.z = 0.005;
 
         robot_marker_temp.color.a = 0.64;
         robot_marker_temp.color.r = 0;
@@ -391,19 +409,169 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
         robot_marker_array.markers.emplace_back(robot_marker_temp);
 
-
-
-
-
-
-
         //final publish
-        // cout<<robot_marker_array.markers.size()<<endl;
         vehicle_marker_pub.publish(robot_marker_array);
 
     }
     else if(_robot_type == UGV)
     {
+
+        robot_marker_temp.header.stamp = ros::Time::now();
+
+        //ugv base        
+        robot_marker_temp.action = visualization_msgs::Marker::ADD;
+        robot_marker_temp.id = 0;
+
+        robot_marker_temp.pose.orientation.w = q_robot.w();
+        robot_marker_temp.pose.orientation.x = q_robot.x();
+        robot_marker_temp.pose.orientation.y = q_robot.y();
+        robot_marker_temp.pose.orientation.z = q_robot.z();
+
+        robot_marker_temp.pose.position.x = t_robot.x();
+        robot_marker_temp.pose.position.y = t_robot.y();
+        robot_marker_temp.pose.position.z = t_robot.z();
+
+        robot_marker_temp.type = visualization_msgs::Marker::CUBE;
+
+        robot_marker_temp.scale.x = 0.5;
+        robot_marker_temp.scale.y = 0.5;
+        robot_marker_temp.scale.z = 0.20;
+
+        robot_marker_temp.color.a = 0.64;
+        robot_marker_temp.color.r = 1;
+        robot_marker_temp.color.b = 1;
+        robot_marker_temp.color.g = 1;
+
+        robot_marker_array.markers.emplace_back(robot_marker_temp);
+
+
+
+
+        //wheels 1
+        q_temp = q_robot * q090_rol;
+        robot_marker_temp.action = visualization_msgs::Marker::ADD;
+        robot_marker_temp.id = 1;
+
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(0.25,0.25,-0.12));
+
+        robot_marker_temp.pose.orientation.w = q_temp.w();
+        robot_marker_temp.pose.orientation.x = q_temp.x();
+        robot_marker_temp.pose.orientation.y = q_temp.y();
+        robot_marker_temp.pose.orientation.z = q_temp.z();
+
+        robot_marker_temp.pose.position.x = t_robot.x() + p_temp(0);
+        robot_marker_temp.pose.position.y = t_robot.y() + p_temp(1);
+        robot_marker_temp.pose.position.z = t_robot.z() + p_temp(2);
+
+        robot_marker_temp.type = visualization_msgs::Marker::CYLINDER;
+
+        robot_marker_temp.scale.x = 0.2;
+        robot_marker_temp.scale.y = 0.2;
+        robot_marker_temp.scale.z = 0.02;
+
+        robot_marker_temp.color.a = 0.8;
+        robot_marker_temp.color.r = 0;
+        robot_marker_temp.color.b = 0;
+        robot_marker_temp.color.g = 0;
+
+        robot_marker_array.markers.emplace_back(robot_marker_temp);
+
+
+        //wheels 2
+        q_temp = q_robot * q090_rol;
+        robot_marker_temp.action = visualization_msgs::Marker::ADD;
+        robot_marker_temp.id = 2;
+
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(-0.25,0.25,-0.12));
+
+        robot_marker_temp.pose.orientation.w = q_temp.w();
+        robot_marker_temp.pose.orientation.x = q_temp.x();
+        robot_marker_temp.pose.orientation.y = q_temp.y();
+        robot_marker_temp.pose.orientation.z = q_temp.z();
+
+        robot_marker_temp.pose.position.x = t_robot.x() + p_temp(0);
+        robot_marker_temp.pose.position.y = t_robot.y() + p_temp(1);
+        robot_marker_temp.pose.position.z = t_robot.z() + p_temp(2);
+
+        robot_marker_temp.type = visualization_msgs::Marker::CYLINDER;
+
+        robot_marker_temp.scale.x = 0.2;
+        robot_marker_temp.scale.y = 0.2;
+        robot_marker_temp.scale.z = 0.02;
+
+        robot_marker_temp.color.a = 0.8;
+        robot_marker_temp.color.r = 0;
+        robot_marker_temp.color.b = 0;
+        robot_marker_temp.color.g = 0;
+
+        robot_marker_array.markers.emplace_back(robot_marker_temp);
+
+        
+        //wheels 3
+        q_temp = q_robot * q090_rol;
+        robot_marker_temp.action = visualization_msgs::Marker::ADD;
+        robot_marker_temp.id = 3;
+
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(-0.25,-0.25,-0.12));
+
+        robot_marker_temp.pose.orientation.w = q_temp.w();
+        robot_marker_temp.pose.orientation.x = q_temp.x();
+        robot_marker_temp.pose.orientation.y = q_temp.y();
+        robot_marker_temp.pose.orientation.z = q_temp.z();
+
+        robot_marker_temp.pose.position.x = t_robot.x() + p_temp(0);
+        robot_marker_temp.pose.position.y = t_robot.y() + p_temp(1);
+        robot_marker_temp.pose.position.z = t_robot.z() + p_temp(2);
+
+        robot_marker_temp.type = visualization_msgs::Marker::CYLINDER;
+
+        robot_marker_temp.scale.x = 0.2;
+        robot_marker_temp.scale.y = 0.2;
+        robot_marker_temp.scale.z = 0.02;
+
+        robot_marker_temp.color.a = 0.8;
+        robot_marker_temp.color.r = 0;
+        robot_marker_temp.color.b = 0;
+        robot_marker_temp.color.g = 0;
+
+        robot_marker_array.markers.emplace_back(robot_marker_temp);
+
+
+
+        //wheels 4
+        q_temp = q_robot * q090_rol;
+        robot_marker_temp.action = visualization_msgs::Marker::ADD;
+        robot_marker_temp.id = 4;
+
+        p_temp = q_rotate_vector(q_robot, Eigen::Vector3d(0.25,-0.25,-0.12));
+
+        robot_marker_temp.pose.orientation.w = q_temp.w();
+        robot_marker_temp.pose.orientation.x = q_temp.x();
+        robot_marker_temp.pose.orientation.y = q_temp.y();
+        robot_marker_temp.pose.orientation.z = q_temp.z();
+
+        robot_marker_temp.pose.position.x = t_robot.x() + p_temp(0);
+        robot_marker_temp.pose.position.y = t_robot.y() + p_temp(1);
+        robot_marker_temp.pose.position.z = t_robot.z() + p_temp(2);
+
+        robot_marker_temp.type = visualization_msgs::Marker::CYLINDER;
+
+        robot_marker_temp.scale.x = 0.2;
+        robot_marker_temp.scale.y = 0.2;
+        robot_marker_temp.scale.z = 0.02;
+
+        robot_marker_temp.color.a = 0.8;
+        robot_marker_temp.color.r = 0;
+        robot_marker_temp.color.b = 0;
+        robot_marker_temp.color.g = 0;
+
+        robot_marker_array.markers.emplace_back(robot_marker_temp);
+
+
+
+        //final publish
+        vehicle_marker_pub.publish(robot_marker_array);
+
 
     }
     else
@@ -413,7 +581,8 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
     if(_got_camera)
     {
-        
+
+
     }
     
     
@@ -430,8 +599,5 @@ rviz_vehicle::~rviz_vehicle()
 {
 
 }
-
-
-
 
 #endif

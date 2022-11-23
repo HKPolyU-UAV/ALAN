@@ -20,8 +20,26 @@ static decomp_ros_msgs::PolyhedronArray sfc_pub_vis_object_polyh;
 static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
 static visualization_msgs::Marker traj_points;
 
+static Eigen::VectorXd c2b_ugv;
 
+Eigen::Vector3d q2rpy(Eigen::Quaterniond q) {
+    return q.toRotationMatrix().eulerAngles(2,1,0);
+};
 
+Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy){
+    Eigen::AngleAxisd rollAngle(rpy(0), Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd pitchAngle(rpy(1), Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd yawAngle(rpy(2), Eigen::Vector3d::UnitZ());
+
+    Eigen::Quaterniond q = yawAngle * pitchAngle * rollAngle;
+
+    return q;
+
+};
+
+Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v){
+    return q * v;
+}
 
 
 void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
@@ -97,14 +115,51 @@ void uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
 static geometry_msgs::PoseStamped ugv_pose;
 void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg)
 {
-    ugv_pose.pose.position.x = msg->position.x;
-    ugv_pose.pose.position.y = msg->position.y;
-    ugv_pose.pose.position.z = msg->position.z;
+    //when ugv is directly received from vicon,
+    //or gps
+    //or other info directly received from body frame...
+    // ugv_pose.pose.position.x = msg->position.x;
+    // ugv_pose.pose.position.y = msg->position.y;
+    // ugv_pose.pose.position.z = msg->position.z;
 
-    ugv_pose.pose.orientation.w = msg->orientation.ow;
-    ugv_pose.pose.orientation.x = msg->orientation.ox;
-    ugv_pose.pose.orientation.y = msg->orientation.oy;
-    ugv_pose.pose.orientation.z = msg->orientation.oz;
+    // ugv_pose.pose.orientation.w = msg->orientation.ow;
+    // ugv_pose.pose.orientation.x = msg->orientation.ox;
+    // ugv_pose.pose.orientation.y = msg->orientation.oy;
+    // ugv_pose.pose.orientation.z = msg->orientation.oz;
+
+    //when ugv is received from imu_pose (in GH034)
+    // cout<<c2b_ugv(4)<<endl;
+
+    Eigen::Quaterniond c2b_local = rpy2q(
+        Eigen::Vector3d(    
+            c2b_ugv(3),
+            c2b_ugv(4),
+            c2b_ugv(5)            
+        )
+    );
+    
+
+    c2b_local = Eigen::Quaterniond(
+        msg->orientation.ow,
+        msg->orientation.ox,
+        msg->orientation.oy,
+        msg->orientation.oz
+    ) * c2b_local ;//order matters
+
+    Eigen::Vector3d p_temp = q_rotate_vector(
+        c2b_local.inverse(), 
+        Eigen::Vector3d(msg->position.x, msg->position.y, msg->position.z)
+    );
+
+
+    ugv_pose.pose.orientation.w = c2b_local.w();
+    ugv_pose.pose.orientation.x = c2b_local.x();
+    ugv_pose.pose.orientation.y = c2b_local.y();
+    ugv_pose.pose.orientation.z = c2b_local.z();
+
+    ugv_pose.pose.position.x = p_temp(0) + c2b_ugv(0);
+    ugv_pose.pose.position.y = p_temp(1) + c2b_ugv(1);
+    ugv_pose.pose.position.z = p_temp(2) + c2b_ugv(2);    
 
 }
 
@@ -139,18 +194,20 @@ int main(int argc, char** argv)
 
     rviz_vehicle uav_rviz = rviz_vehicle(nh, UAV, false);
     
-    Eigen::VectorXd c2b_ugv;
+    
     //x, y, z
     //r, p, y
     c2b_ugv.resize(6);
 
-    c2b_ugv(0);
-    c2b_ugv(1);
-    c2b_ugv(2);
+    c2b_ugv(0) = 0.38;
+    c2b_ugv(1) = 0.0;
+    c2b_ugv(2) = 0.05;
 
-    c2b_ugv(3);
-    c2b_ugv(4);
-    c2b_ugv(5);
+    c2b_ugv(3) = 0;//r
+    c2b_ugv(4) = (-20.0) / 180.0 * M_PI;//p
+    c2b_ugv(5) = M_PI;//y
+
+    cout<<c2b_ugv<<endl;
 
     rviz_vehicle ugv_rviz = rviz_vehicle(nh, UGV, true, c2b_ugv);
 
@@ -161,6 +218,8 @@ int main(int argc, char** argv)
 
         
         uav_rviz.rviz_pub_vehicle(uav_pose);
+        ugv_rviz.rviz_pub_vehicle(ugv_pose);
+
         polyh_vis_pub.publish(sfc_pub_vis_object_polyh);
         traj_vis_pub.publish(traj_points);
             
