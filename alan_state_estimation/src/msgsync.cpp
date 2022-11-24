@@ -289,9 +289,13 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
     );      
                 
 
-    Eigen::Vector3d ugv2uav_vector = uav_pos_world - ugv_pos_world;
+    Eigen::Vector2d ugv2uav_vector = 
+        Eigen::Vector2d(
+            uav_pos_world.x() - ugv_pos_world.x(),
+            uav_pos_world.y() - ugv_pos_world.y()
+        );
 
-    ugv2uav_vector.normalize();
+    cout<<ugv2uav_vector.norm()<<endl;
 
 
     // alan_visualization::Tangent plane_bound = set_plane_bound(
@@ -299,8 +303,19 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
     //     uav_pos_world + ugv2uav_vector                
     // );
 
+    double cam2uav_xy_d = 0;
+
+    if(ugv2uav_vector.norm() > 2.5)
+        cam2uav_xy_d = ugv2uav_vector.norm() + 1.0;
+    else
+        cam2uav_xy_d = 2.5;
+
+
     Eigen::Vector3d temp_bound;
-    temp_bound = t_current.translation() + q_rotate_vector(q_current, Eigen::Vector3d(4,0,0));
+    temp_bound = t_current.translation() + q_rotate_vector(
+        q_current, 
+        Eigen::Vector3d(cam2uav_xy_d,0,0));
+        
     cam_center_vector.z() = 0;
 
     alan_visualization::Tangent plane_bound1 = set_plane_bound(

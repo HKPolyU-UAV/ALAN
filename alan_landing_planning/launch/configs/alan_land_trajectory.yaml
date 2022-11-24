@@ -6,7 +6,13 @@ d_order: 4 # p v a j
 
 final_landing_x: 1.0
 
-landing_velocity: 1.5
+landing_velocity: 1.2
+
+v_max_x: 2.0
+
+a_max_z: 4.0
+
+
 
 LED_positions:
   - x: 0.085

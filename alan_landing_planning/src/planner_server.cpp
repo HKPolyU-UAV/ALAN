@@ -1,12 +1,14 @@
-
-
 #include "include/planner_server.h"
 
 planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 : nh(_nh), last_request(ros::Time::now().toSec()), _pub_freq(pub_freq)
 {
     nh.getParam("/alan_master_planner_node/final_landing_x", final_landing_x);
-    nh.getParam("/alan_master_planner_node/landing_velocity", landing_velocity);
+    nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
+
+    nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
+    nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
+
 
     //subscribe
     uav_state_sub = nh.subscribe<mavros_msgs::State>
@@ -51,6 +53,11 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
     uav_traj_pose_desired.pose.position.x = takeoff_hover_pt.x;
     uav_traj_pose_desired.pose.position.y = takeoff_hover_pt.y;
     uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
+
+    set_btraj_info();
+    set_btraj_inequality_dynamic();
+
+
 
 }
 
@@ -361,11 +368,10 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 }
 
 bool planner_server::land()
-{
-    
-    target_traj_pose(0) = 5;
+{    
+    target_traj_pose(0) = 2.2;
     target_traj_pose(1) = 0;
-    target_traj_pose(2) = 1.8;
+    target_traj_pose(2) = 1.5;
     target_traj_pose(3) = M_PI;
 
     Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
@@ -374,6 +380,21 @@ bool planner_server::land()
     uav_traj_twist_desired.linear.y = twist_result(1);
     uav_traj_twist_desired.linear.z = twist_result(2);
     uav_traj_twist_desired.angular.z = twist_result(3);
+
+    if(plan_traj)
+    {
+        
+        set_traj_time();
+        set_btraj_equality_constraint();
+        set_btraj_inequality_kinematic();
+        
+        alan_traj::traj_gen alan_btraj(btraj_info, btraj_constraints, _pub_freq);
+        alan_btraj.solve_opt(_pub_freq);
+        alan_optiTraj = alan_btraj.getOptiTraj();
+
+
+        plan_traj = false;
+    }
 
 
 
@@ -481,3 +502,132 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
     return output;
 }
 
+void planner_server::set_btraj_info()
+{
+    btraj_info.axis_dim = 3;
+    btraj_info.n_order = 7;
+    btraj_info.m = 2;
+    btraj_info.d_order = 3;
+
+}
+
+void planner_server::set_btraj_equality_constraint()
+{
+    start_3d.posi(0) = uav_current_AlanPlannerMsg.position.x;
+    start_3d.velo(0) = uav_current_AlanPlannerMsg.velocity.x;
+    start_3d.accl(0) = uav_current_AlanPlannerMsg.acceleration.x;
+
+    start_3d.posi(1) = uav_current_AlanPlannerMsg.position.y;
+    start_3d.velo(1) = uav_current_AlanPlannerMsg.velocity.y;
+    start_3d.accl(1) = uav_current_AlanPlannerMsg.acceleration.y;
+
+    start_3d.posi(2) = uav_current_AlanPlannerMsg.position.z;
+    start_3d.velo(2) = uav_current_AlanPlannerMsg.velocity.z;
+    start_3d.accl(2) = uav_current_AlanPlannerMsg.acceleration.z;
+
+    
+    ////
+    end_3d.posi(0) = ugv_current_AlanPlannerMsg.position.x 
+        + ugv_current_AlanPlannerMsg.velocity.x * landing_time_total;
+    end_3d.velo(0) = ugv_current_AlanPlannerMsg.velocity.x; 
+    end_3d.accl(0) = ugv_current_AlanPlannerMsg.acceleration.x;
+    
+    end_3d.posi(1) = ugv_current_AlanPlannerMsg.position.y 
+        + ugv_current_AlanPlannerMsg.velocity.y * landing_time_total;
+    end_3d.velo(1) = ugv_current_AlanPlannerMsg.velocity.y;
+    end_3d.accl(1) = ugv_current_AlanPlannerMsg.acceleration.y;
+    
+    end_3d.posi(2) = ugv_current_AlanPlannerMsg.position.z;
+        + ugv_current_AlanPlannerMsg.velocity.x * landing_time_total;
+    end_3d.velo(2) = ugv_current_AlanPlannerMsg.velocity.z;
+    end_3d.accl(2) = ugv_current_AlanPlannerMsg.acceleration.z;
+
+    btraj_constraints.start = start_3d;
+    btraj_constraints.end = end_3d;
+
+}
+
+void planner_server::set_btraj_inequality_kinematic()
+{
+    int temp_size_i = 0;
+    
+    corridors.clear();
+
+    for(int i = 0; land_traj_constraint.a_series_of_Corridor.size(); i++)
+    {
+        temp_size_i = land_traj_constraint.a_series_of_Corridor[i].PolyhedronTangentArray.size();
+        
+        temp_poly.PolyhedronTangentArray.clear();
+
+        for(int j = 0; j < temp_size_i; j++)
+        {
+            temp_poly.PolyhedronTangentArray.emplace_back(
+                land_traj_constraint.a_series_of_Corridor[i].PolyhedronTangentArray[j]
+            );
+        }
+
+        corridors.emplace_back(temp_poly);
+    }
+
+    btraj_constraints.sfc_list = corridors;
+    btraj_constraints.corridor_type = "POLYH";
+
+}
+
+void planner_server::set_btraj_inequality_dynamic()
+{
+    btraj_dconstraints.v_max(0) = v_max;
+    btraj_dconstraints.v_min(0) = -v_max;
+    btraj_dconstraints.a_max(0) = a_max;
+    btraj_dconstraints.a_min(0) = -a_max;
+
+    btraj_dconstraints.v_max(1) = v_max;
+    btraj_dconstraints.v_min(1) = -v_max;
+    btraj_dconstraints.a_max(1) = a_max;
+    btraj_dconstraints.a_min(1) = -a_max;
+
+    btraj_constraints.d_constraints = btraj_dconstraints;    
+
+}
+
+
+
+void planner_server::set_traj_time()
+{
+    btraj_info.s.clear();
+
+    double distance_uav_ugv = sqrt(
+        pow(
+            uav_current_AlanPlannerMsg.position.x - ugv_current_AlanPlannerMsg.position.x,
+            2
+        )
+        +
+        pow(
+            uav_current_AlanPlannerMsg.position.y - ugv_current_AlanPlannerMsg.position.y,
+            2
+        )
+    );
+
+    double diff_velo_uav_ugv = uav_landing_velocity - 
+        sqrt(
+            pow(
+                ugv_current_AlanPlannerMsg.velocity.x,
+                2
+            ) 
+            +
+            pow(
+                ugv_current_AlanPlannerMsg.velocity.y,
+                2
+            )
+        );
+
+    landing_time_total = distance_uav_ugv / diff_velo_uav_ugv;
+
+    btraj_info.s.emplace_back(
+        landing_time_total * 1 - (final_corridor_length / distance_uav_ugv)
+        );
+    btraj_info.s.emplace_back(
+        landing_time_total * final_corridor_length / distance_uav_ugv
+        );
+
+}

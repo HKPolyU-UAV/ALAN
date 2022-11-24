@@ -133,7 +133,11 @@ include_directories(
 
 add_executable(planner_node
    src/planner_node.cpp
-   src/planner_server.cpp)
+   src/planner_server.cpp
+   
+   src/bernstein.cpp
+   src/osqpsolver.cpp
+   src/traj_gen.cpp)
 
 target_link_libraries(planner_node
   ${OpenCV_LIBRARIES}

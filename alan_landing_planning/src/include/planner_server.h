@@ -77,21 +77,9 @@ private:
     vector<alan_landing_planning::AlanPlannerMsg> traj_optimized;
 
     //other functions
-    void planner_pub();
-
-
-
-    void set_btraj_info();
-
-    void set_btraj_equality_constraint();
-
-    void set_btraj_inequality_
-
-    void setupconstraints();
-     
+    void planner_pub();     
 
     //server
-
 
     //private variables
 
@@ -137,9 +125,46 @@ private:
 
     double final_landing_x = 0; 
 
-    double landing_velocity = 0;
-
     
+    //set btraj
+    double uav_landing_velocity = 0;
+
+    void set_btraj_info();
+
+    void set_btraj_equality_constraint();
+
+    void set_btraj_inequality_kinematic();
+
+    void set_btraj_inequality_dynamic();
+
+    void set_traj_time();
+
+    double final_corridor_height = 0;
+    double final_corridor_length = 0;
+
+    alan_traj::bezier_info btraj_info;
+
+    alan_traj::endpt start_3d;
+    alan_traj::endpt end_3d;
+
+    alan_traj::dynamic_constraints btraj_dconstraints;
+
+    alan_traj::bezier_constraints btraj_constraints;
+
+    bool plan_traj = false;
+
+    int traj_i = 0;
+
+    double landing_time_total;
+
+    alan_visualization::Polyhedron temp_poly;
+    vector<alan_visualization::Polyhedron> corridors;
+
+
+    double v_max, a_max;
+
+    alan_landing_planning::Traj alan_optiTraj;
+
 
 public:
     planner_server(ros::NodeHandle& _nh, int pub_freq);
