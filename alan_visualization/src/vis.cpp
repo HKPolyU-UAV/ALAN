@@ -12,8 +12,6 @@
 
 using namespace std;
 
-static bool rviz_initiated = false;
-
 static decomp_ros_msgs::PolyhedronArray sfc_pub_vis_object_polyh;
 static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
 static visualization_msgs::Marker traj_points;
@@ -39,7 +37,7 @@ Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v){
     return q * v;
 }
 
-
+static bool rviz_sfc_initiated = false;
 void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
 {
     geometry_msgs::Point temp_sfc_p, temp_sfc_n;
@@ -75,8 +73,11 @@ void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
     }
 
     sfc_pub_vis_object_polyh.header.frame_id = "map";
+
+    rviz_sfc_initiated = true;
 }
 
+static bool rviz_traj_initiated = false;
 void traj_msg_callback(const alan_landing_planning::Traj::ConstPtr& msg)
 {
     geometry_msgs::Point posi_temp;
@@ -92,9 +93,12 @@ void traj_msg_callback(const alan_landing_planning::Traj::ConstPtr& msg)
         posi_temp.z = what.position.z;
         traj_points.points.push_back(posi_temp);
     }    
+    
+    rviz_traj_initiated = true;
 
 }
 
+static bool rviz_uav_initiated = false;
 static geometry_msgs::PoseStamped uav_pose;
 void uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg)
 {
@@ -107,8 +111,11 @@ void uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
     uav_pose.pose.orientation.y = msg->orientation.oy;
     uav_pose.pose.orientation.z = msg->orientation.oz;
 
+    rviz_uav_initiated = true;
+
 }
 
+static bool rviz_ugv_initiated = false;
 static geometry_msgs::PoseStamped ugv_pose;
 void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg)
 {
@@ -158,7 +165,7 @@ void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
     ugv_pose.pose.position.y = msg->position.y - p_temp(1);
     ugv_pose.pose.position.z = msg->position.z - p_temp(2);    
 
-    rviz_initiated = true;
+    rviz_ugv_initiated = true;
 
 }
 
@@ -216,15 +223,17 @@ int main(int argc, char** argv)
     while(ros::ok())
     {
 
-        if(rviz_initiated)
-        {
+        if(rviz_uav_initiated)
             uav_rviz.rviz_pub_vehicle(uav_pose);
+
+        if(rviz_uav_initiated)
             ugv_rviz.rviz_pub_vehicle(ugv_pose);
 
+        if(rviz_sfc_initiated)
             polyh_vis_pub.publish(sfc_pub_vis_object_polyh);
-            traj_vis_pub.publish(traj_points);
 
-        }
+        if(rviz_traj_initiated)
+            traj_vis_pub.publish(traj_points);                                                                
         
             
         ros::spinOnce();

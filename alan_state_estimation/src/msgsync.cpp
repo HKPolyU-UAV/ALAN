@@ -163,10 +163,9 @@ void alan::MsgSyncNodelet::cam_msg_callback(const geometry_msgs::PoseStamped::Co
 
         set_total_bound(t_, q_);
         set_all_sfc(t_, q_);
-        //remember to add ugv camera translation
-                
+        
+        //remember to add ugv camera translation                
         // alan_sfc_pub.publish(polyh_total_bound);
-
         // cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<endl;
 
         alan_all_sfc_pub.publish(polyh_array_pub_object);

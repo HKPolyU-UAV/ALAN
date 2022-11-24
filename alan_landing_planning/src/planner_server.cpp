@@ -477,10 +477,3 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
     return output;
 }
 
-
-
-// Eigen::AngleAxisd rollAngle(0.872 * noise, Eigen::Vector3d::UnitZ());
-//     Eigen::AngleAxisd yawAngle(0.872 * noise, Eigen::Vector3d::UnitY());
-//     Eigen::AngleAxisd pitchAngle(0.872 * noise, Eigen::Vector3d::UnitX());
-
-//     Eigen::Quaternion<double> q = rollAngle * yawAngle * pitchAngle;
