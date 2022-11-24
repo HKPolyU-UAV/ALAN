@@ -8,13 +8,12 @@
 
 #include "visualization_msgs/Marker.h"
 
-
 #include "./include/rviz_vehicle.hpp"
 
 using namespace std;
 
-
 static bool rviz_initiated = false;
+
 static decomp_ros_msgs::PolyhedronArray sfc_pub_vis_object_polyh;
 static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
 static visualization_msgs::Marker traj_points;
@@ -235,81 +234,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
-
-
-
-
-
-
-    // decomp_ros_msgs::Polyhedron lala;
-    // decomp_ros_msgs::PolyhedronArray poly_msg;
-
-    // geometry_msgs::Point pt, n;
-
-
-    // pt.x = 1;
-    // pt.y = 1;
-    // pt.z = 1;
-    // n.x = 1;
-    // n.y = 1;
-    // n.z = 0;
-
-    // lala.points.push_back(pt);
-    // lala.normals.push_back(n);
-
-    // pt.x = 0;
-    // pt.y = 0;
-    // pt.z = 1;
-
-    // n.x = -1;
-    // n.y = -1;
-    // n.z = 0;
-
-    // lala.points.push_back(pt);
-    // lala.normals.push_back(n);
-
-    // pt.x = 0;
-    // pt.y = 0;
-    // pt.z = 4;
-    // n.x = 0;
-    // n.y = 0;
-    // n.z = 1;
-
-    // lala.points.push_back(pt);
-    // lala.normals.push_back(n);
-
-    // pt.x = 0;
-    // pt.y = 0;
-    // pt.z = -1;
-    // n.x = 0;
-    // n.y = 0;
-    // n.z = -1;
-
-    // lala.points.push_back(pt);
-    // lala.normals.push_back(n);
-
-    // pt.x = 2;
-    // pt.y = -2;
-    // pt.z = -1;
-    // n.x = 1;
-    // n.y = -1;
-    // n.z = 0;
-
-    // lala.points.push_back(pt);
-    // lala.normals.push_back(n);
-
-    // pt.x = -2;
-    // pt.y = 2;
-    // pt.z = -1;
-    // n.x = -1;
-    // n.y = 1;
-    // n.z = 0;
-
-    // lala.points.push_back(pt);
-    // lala.normals.push_back(n);
-
-
-    // poly_msg.polyhedrons.push_back(lala);
-    // poly_msg.header.frame_id = "map";
-    // polyh_vis_pub.publish(poly_msg);
