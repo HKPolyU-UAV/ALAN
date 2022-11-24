@@ -13,9 +13,8 @@
 
 using namespace std;
 
-static ros::Publisher polyh_vis_pub;
-static ros::Publisher traj_vis_pub;
 
+static bool rviz_initiated = false;
 static decomp_ros_msgs::PolyhedronArray sfc_pub_vis_object_polyh;
 static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
 static visualization_msgs::Marker traj_points;
@@ -93,11 +92,10 @@ void traj_msg_callback(const alan_landing_planning::Traj::ConstPtr& msg)
         posi_temp.y = what.position.y;
         posi_temp.z = what.position.z;
         traj_points.points.push_back(posi_temp);
-    }
-
-    
+    }    
 
 }
+
 static geometry_msgs::PoseStamped uav_pose;
 void uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg)
 {
@@ -147,8 +145,8 @@ void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
     ) * c2b_local ;//order matters
 
     Eigen::Vector3d p_temp = q_rotate_vector(
-        c2b_local.inverse(), 
-        Eigen::Vector3d(msg->position.x, msg->position.y, msg->position.z)
+        c2b_local, 
+        Eigen::Vector3d(c2b_ugv(0), c2b_ugv(1), c2b_ugv(2))
     );
 
 
@@ -157,9 +155,11 @@ void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
     ugv_pose.pose.orientation.y = c2b_local.y();
     ugv_pose.pose.orientation.z = c2b_local.z();
 
-    ugv_pose.pose.position.x = p_temp(0) + c2b_ugv(0);
-    ugv_pose.pose.position.y = p_temp(1) + c2b_ugv(1);
-    ugv_pose.pose.position.z = p_temp(2) + c2b_ugv(2);    
+    ugv_pose.pose.position.x = msg->position.x - p_temp(0);
+    ugv_pose.pose.position.y = msg->position.y - p_temp(1);
+    ugv_pose.pose.position.z = msg->position.z - p_temp(2);    
+
+    rviz_initiated = true;
 
 }
 
@@ -173,9 +173,10 @@ int main(int argc, char** argv)
     ros::Subscriber uav_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>("/AlanPlannerMsg/uav/data", 1, &uavAlanMsgCallback);
     ros::Subscriber ugv_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>("/AlanPlannerMsg/ugv/data", 1, &ugvAlanMsgCallback);
 
-    polyh_vis_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
-    traj_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points", 1, true);
     
+    
+    ros::Publisher polyh_vis_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
+    ros::Publisher traj_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points", 1, true);
 
     traj_points.header.frame_id = "map";
     traj_points.header.stamp = ros::Time::now();
@@ -201,7 +202,7 @@ int main(int argc, char** argv)
 
     c2b_ugv(0) = 0.38;
     c2b_ugv(1) = 0.0;
-    c2b_ugv(2) = 0.05;
+    c2b_ugv(2) = 0.12;
 
     c2b_ugv(3) = 0;//r
     c2b_ugv(4) = (-20.0) / 180.0 * M_PI;//p
@@ -216,12 +217,16 @@ int main(int argc, char** argv)
     while(ros::ok())
     {
 
-        
-        uav_rviz.rviz_pub_vehicle(uav_pose);
-        ugv_rviz.rviz_pub_vehicle(ugv_pose);
+        if(rviz_initiated)
+        {
+            uav_rviz.rviz_pub_vehicle(uav_pose);
+            ugv_rviz.rviz_pub_vehicle(ugv_pose);
 
-        polyh_vis_pub.publish(sfc_pub_vis_object_polyh);
-        traj_vis_pub.publish(traj_points);
+            polyh_vis_pub.publish(sfc_pub_vis_object_polyh);
+            traj_vis_pub.publish(traj_points);
+
+        }
+        
             
         ros::spinOnce();
         visrate.sleep();
