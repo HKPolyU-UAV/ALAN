@@ -46,6 +46,9 @@ int main(int argc, char** argv)
     poly_msg.header.frame_id = "map";
     poly_pub.publish(poly_msg);
 
+
+
+
     alan_traj::bezier_info b_info;
     
     b_info.axis_dim = 2;
@@ -355,33 +358,6 @@ int main(int argc, char** argv)
         ros::spinOnce();
         rosrate.sleep();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -2,7 +2,7 @@
     A header HPP file for
     RViz tool package for UAV, UGV, UUV (under constrution) and camera.
     Created on 23/11/2022
-    by Patty LO 
+    (c) Patty LO 
     from the RCUAS of Hong Kong Polytechnic University
 */
 
@@ -146,12 +146,8 @@ rviz_vehicle::rviz_vehicle(
 
         for(int i = 0; i < 5; i++)
         {
-            cout<<i<<endl;
-            cout<<q_rotate_vector(q_c2b, cam_body_pyramidPoint[i])<<endl;
             cam_body_pyramidPoint[i] = 
-                q_rotate_vector(q_c2b, cam_body_pyramidPoint[i]) + t_c2b;
-
-            cout<<cam_body_pyramidPoint[i]<<endl<<endl;;
+                q_rotate_vector(q_c2b, cam_body_pyramidPoint[i]) + t_c2b;            
 
         }
 
@@ -202,12 +198,8 @@ rviz_vehicle::rviz_vehicle(
 
         for(int i = 0; i < 5; i++)
         {
-            cout<<i<<endl;
-            cout<<q_rotate_vector(q_c2b, cam_body_pyramidPoint[i])<<endl;
             cam_body_pyramidPoint[i] = 
                 q_rotate_vector(q_c2b, cam_body_pyramidPoint[i]) + t_c2b;
-
-            cout<<cam_body_pyramidPoint[i]<<endl<<endl;;
 
         }
 
@@ -322,6 +314,9 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
 
 }
+
+
+
 
 void rviz_vehicle::setupUAV()
 {

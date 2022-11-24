@@ -382,6 +382,8 @@ void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Qua
     polyhedron_temp.PolyhedronTangentArray.clear();
 
     //1st plane
+
+    polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[0]);
     temp_normal = Eigen::Vector3d(0,0,1);
 
     alan_visualization::Tangent ceil_tangent = set_plane_bound(

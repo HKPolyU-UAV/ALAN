@@ -171,16 +171,16 @@ void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
 
 int main(int argc, char** argv)
 {    
-	ros::init(argc, argv, "gan");
+	ros::init(argc, argv, "alan_rviz");
     ros::NodeHandle nh;
+
+    
 
     ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>("/alan/sfc/all_corridors", 1, &sfc_msg_callback);
     ros::Subscriber traj_sub = nh.subscribe<alan_landing_planning::Traj>("/alan_visualization/traj", 1, &traj_msg_callback);
     ros::Subscriber uav_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>("/AlanPlannerMsg/uav/data", 1, &uavAlanMsgCallback);
     ros::Subscriber ugv_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>("/AlanPlannerMsg/ugv/data", 1, &ugvAlanMsgCallback);
-
-    
-    
+        
     ros::Publisher polyh_vis_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
     ros::Publisher traj_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points", 1, true);
 
@@ -214,7 +214,9 @@ int main(int argc, char** argv)
     c2b_ugv(4) = (-20.0) / 180.0 * M_PI;//p
     c2b_ugv(5) = M_PI;//y
 
-    cout<<c2b_ugv<<endl;
+    // cout<<c2b_ugv<<endl;
+    cout<<"RVIZ for ALan...\n"<<endl;
+    
 
     rviz_vehicle ugv_rviz = rviz_vehicle(nh, UGV, true, c2b_ugv);
 
@@ -233,7 +235,7 @@ int main(int argc, char** argv)
             polyh_vis_pub.publish(sfc_pub_vis_object_polyh);
 
         if(rviz_traj_initiated)
-            traj_vis_pub.publish(traj_points);                                                                
+            traj_vis_pub.publish(traj_points);  
         
             
         ros::spinOnce();

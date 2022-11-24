@@ -6,6 +6,7 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 : nh(_nh), last_request(ros::Time::now().toSec()), _pub_freq(pub_freq)
 {
     nh.getParam("/alan_master_planner_node/final_landing_x", final_landing_x);
+    nh.getParam("/alan_master_planner_node/landing_velocity", landing_velocity);
 
     //subscribe
     uav_state_sub = nh.subscribe<mavros_msgs::State>
@@ -30,6 +31,8 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
         //   /mavros/setpoint_position/local
     local_vel_pub = nh.advertise<geometry_msgs::Twist>
             ("/uav/mavros/setpoint_velocity/cmd_vel_unstamped", 5);
+
+    
     
     //client
     uav_arming_client = nh.serviceClient<mavros_msgs::CommandBool>
@@ -372,6 +375,8 @@ bool planner_server::land()
     uav_traj_twist_desired.linear.z = twist_result(2);
     uav_traj_twist_desired.angular.z = twist_result(3);
 
+
+
     return false;
 }
 
@@ -408,7 +413,6 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
         return Eigen::Vector4d(0, 0, 0, 0);
     }
         
-
     Eigen::Vector4d K_p(1.2, 1.2, 1.5, 1);
     Eigen::Vector4d K_i(0.05, 0.05, 0.05, 0.05);
     Eigen::Vector4d K_d(0, 0, 0, 0);

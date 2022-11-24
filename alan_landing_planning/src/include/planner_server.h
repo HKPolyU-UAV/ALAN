@@ -78,6 +78,16 @@ private:
 
     //other functions
     void planner_pub();
+
+
+
+    void set_btraj_info();
+
+    void set_btraj_equality_constraint();
+
+    void set_btraj_inequality_
+
+    void setupconstraints();
      
 
     //server
@@ -126,6 +136,8 @@ private:
     int _pub_freq = 0;
 
     double final_landing_x = 0; 
+
+    double landing_velocity = 0;
 
     
 
