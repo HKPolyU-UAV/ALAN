@@ -10,8 +10,6 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
     nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
     nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
 
-    
-
 
     //subscribe
     uav_state_sub = nh.subscribe<mavros_msgs::State>
@@ -399,20 +397,8 @@ bool planner_server::land()
     uav_traj_twist_desired.angular.z = twist_result(3);
 
     if(plan_traj)
-    {
-        cout<<1<<endl;            
-        set_traj_time();
-        cout<<2<<endl;
-        set_btraj_equality_constraint();
-        cout<<3<<endl;
-        set_btraj_inequality_kinematic();
-        cout<<4<<endl;
-        
-        alan_traj::traj_gen alan_btraj(btraj_info, btraj_constraints, _pub_freq);
-        alan_btraj.solve_opt(_pub_freq);
-        alan_optiTraj = alan_btraj.getOptiTraj();
-
-
+    {        
+        set_alan_b_traj();
         plan_traj = false;
     }
 
@@ -522,6 +508,22 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
     return output;
 }
 
+void planner_server::set_alan_b_traj()
+{
+    cout<<1<<endl;            
+    set_traj_time();
+    cout<<2<<endl;
+    set_btraj_equality_constraint();
+    cout<<3<<endl;
+    set_btraj_inequality_kinematic();
+    cout<<4<<endl;
+    
+    alan_traj::traj_gen alan_btraj(btraj_info, btraj_constraints, _pub_freq);
+    alan_btraj.solve_opt(_pub_freq);
+    alan_optiTraj = alan_btraj.getOptiTraj();
+
+}
+
 void planner_server::set_btraj_info()
 {
     btraj_info.axis_dim = 3;
@@ -570,6 +572,8 @@ void planner_server::set_btraj_equality_constraint()
 void planner_server::set_btraj_inequality_kinematic()
 {
     int temp_size_i = 0;
+
+    cout<<"we got this many corridor:..."<<land_traj_constraint.a_series_of_Corridor.size()<<endl;
     
     corridors.clear();
 

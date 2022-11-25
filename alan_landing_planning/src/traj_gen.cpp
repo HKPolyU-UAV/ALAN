@@ -35,7 +35,9 @@ namespace alan_traj
         //freq
         _discrete_freq(discrete_freq) 
     {
-        ROS_WARN("entering traj generator!");        
+        ROS_WARN("entering traj generator!");  
+
+        log();      
 
         // msg_printer("-----------------------------------------------------------------");
         // msg_printer("             ALan v0.1 - Autonomous Landing for UAV");
@@ -386,13 +388,40 @@ namespace alan_traj
 
     void traj_gen::log()
     {
+        
         remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/b_traj.txt"); 
         ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/b_traj.txt",ios::app);
-        
-        // save<<p_base<<endl;
-    
-    
-        // save.close();
+
+        save<<endl<<"log start..."<<endl<<endl;
+        save<<"_axis_dim:\n"<<_axis_dim<<endl<<endl;
+        save<<"_n_dim:\n"<<_n_dim<<endl<<endl;
+        save<<"_n_dim_per_axis:\n"<<_n_dim_per_axis<<endl<<endl;
+
+        save<<"_start_posi:\n"<<_start.posi<<endl<<endl;
+        save<<"_start_velo:\n"<<_start.velo<<endl<<endl;
+        save<<"_start_accl:\n"<<_start.accl<<endl<<endl;
+
+        save<<"_sfc_list:\n";
+        for(auto what : _sfc_list)
+        {
+            save<<"here is one corridor...: "<<what.PolyhedronTangentArray.size()<<endl;
+        }
+
+        save<<endl;
+
+        save<<"_d_constraints v:\n"<<_d_constraints.v_max<<endl<<endl;
+        save<<"_d_constraints a:\n"<<_d_constraints.a_max<<endl<<endl;
+
+        save<<"_n_order\n"<<_n_order<<endl<<endl;
+        save<<"_m\n"<<_m<<endl<<endl;
+        save<<"_d_order\n"<<_d_order<<endl<<endl;
+
+        for(auto what : _s)
+            save<<"_s\n"<<what<<endl;
+
+        save<<endl<<"log end..."<<endl;
+
+        save.close();
 
     }
 }

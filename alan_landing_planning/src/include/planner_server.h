@@ -129,6 +129,8 @@ private:
     //set btraj
     double uav_landing_velocity = 0;
 
+    void set_alan_b_traj();
+
     void set_btraj_info();
 
     void set_btraj_equality_constraint();
