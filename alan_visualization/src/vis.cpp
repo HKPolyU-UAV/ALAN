@@ -228,7 +228,7 @@ int main(int argc, char** argv)
         if(rviz_uav_initiated)
             uav_rviz.rviz_pub_vehicle(uav_pose);
 
-        if(rviz_uav_initiated)
+        if(rviz_ugv_initiated)
             ugv_rviz.rviz_pub_vehicle(ugv_pose);
 
         if(rviz_sfc_initiated)

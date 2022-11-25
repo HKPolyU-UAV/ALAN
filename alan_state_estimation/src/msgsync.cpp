@@ -79,6 +79,7 @@ void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& 
 
 void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu)
 {
+    cout<<1<<endl;
     ugv_odom = *odom;
     ugv_imu = *imu;
 
@@ -295,7 +296,7 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
             uav_pos_world.y() - ugv_pos_world.y()
         );
 
-    cout<<ugv2uav_vector.norm()<<endl;
+    // cout<<ugv2uav_vector.norm()<<endl;
 
 
     // alan_visualization::Tangent plane_bound = set_plane_bound(
@@ -315,7 +316,7 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
     temp_bound = t_current.translation() + q_rotate_vector(
         q_current, 
         Eigen::Vector3d(cam2uav_xy_d,0,0));
-        
+
     cam_center_vector.z() = 0;
 
     alan_visualization::Tangent plane_bound1 = set_plane_bound(

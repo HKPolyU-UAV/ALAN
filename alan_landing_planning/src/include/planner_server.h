@@ -115,7 +115,7 @@ private:
 
     bool print_or_not = true;
 
-    double kp, ki, kd;
+    // double kp, ki, kd;
     
     Eigen::Vector4d last_error, integral;
 
@@ -141,6 +141,7 @@ private:
 
     double final_corridor_height = 0;
     double final_corridor_length = 0;
+    double take_off_height = 0;
 
     alan_traj::bezier_info btraj_info;
 
@@ -155,7 +156,7 @@ private:
 
     int traj_i = 0;
 
-    double landing_time_total;
+    double landing_time_total = 0;
 
     alan_visualization::Polyhedron temp_poly;
     vector<alan_visualization::Polyhedron> corridors;

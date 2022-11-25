@@ -4,6 +4,8 @@ m: 3
 
 d_order: 4 # p v a j
 
+take_off_height: 1.5
+
 final_landing_x: 1.0
 
 landing_velocity: 1.2

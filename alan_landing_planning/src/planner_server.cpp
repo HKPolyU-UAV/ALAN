@@ -5,9 +5,12 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 {
     nh.getParam("/alan_master_planner_node/final_landing_x", final_landing_x);
     nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
+    nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
 
     nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
     nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
+
+    
 
 
     //subscribe
@@ -50,9 +53,7 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 
     alan_fsm_object.finite_state_machine = IDLE;
 
-    uav_traj_pose_desired.pose.position.x = takeoff_hover_pt.x;
-    uav_traj_pose_desired.pose.position.y = takeoff_hover_pt.y;
-    uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
+    
 
     set_btraj_info();
     set_btraj_inequality_dynamic();
@@ -190,6 +191,19 @@ void planner_server::fsm_manager()
         {
             fsm_state = ARMED;
             print_or_not = true;
+
+            takeoff_hover_pt.x = uav_current_AlanPlannerMsg.position.x;
+            takeoff_hover_pt.y = uav_current_AlanPlannerMsg.position.y;
+            takeoff_hover_pt.z = take_off_height;
+
+            uav_traj_pose_desired.pose.position.x = takeoff_hover_pt.x;
+            uav_traj_pose_desired.pose.position.y = takeoff_hover_pt.y;
+            uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
+
+            cout<<"target takeoff position\n";
+            cout<<uav_traj_pose_desired.pose.position.x<<endl;
+            cout<<uav_traj_pose_desired.pose.position.y<<endl;
+            cout<<uav_traj_pose_desired.pose.position.z<<endl;
         }
     }
     else if(fsm_state == ARMED)
@@ -234,6 +248,8 @@ void planner_server::fsm_manager()
             fsm_state = LAND;
             print_or_not = true;
             last_request = ros::Time::now().toSec();
+
+            plan_traj = true;
         }
 
     }
@@ -340,9 +356,9 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     // uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
 
 
-    target_traj_pose(0) = 5;
+    target_traj_pose(0) = 2.2;
     target_traj_pose(1) = 0;
-    target_traj_pose(2) = 1.8;
+    target_traj_pose(2) = 1.5;
     target_traj_pose(3) = M_PI;
     //enter ugv and uav rendezvous point here
 
@@ -360,7 +376,8 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     uav_traj_twist_desired.linear.z = twist_result(2);
     uav_traj_twist_desired.angular.z = twist_result(3);
 
-    if(ros::Time::now().toSec() - last_request > ros::Duration(10.0).toSec())
+    //should be time and following quality
+    if(ros::Time::now().toSec() - last_request > ros::Duration(5.0).toSec())
         return true;
     else 
         return false;
@@ -383,10 +400,13 @@ bool planner_server::land()
 
     if(plan_traj)
     {
-        
+        cout<<1<<endl;            
         set_traj_time();
+        cout<<2<<endl;
         set_btraj_equality_constraint();
+        cout<<3<<endl;
         set_btraj_inequality_kinematic();
+        cout<<4<<endl;
         
         alan_traj::traj_gen alan_btraj(btraj_info, btraj_constraints, _pub_freq);
         alan_btraj.solve_opt(_pub_freq);

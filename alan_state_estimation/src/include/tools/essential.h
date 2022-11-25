@@ -24,6 +24,7 @@
 #include <cmath>
 #include <vector>
 #include <cmath>
+#include <random>
 
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>

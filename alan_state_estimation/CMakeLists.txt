@@ -126,45 +126,21 @@ target_link_libraries(
 
 )
 
+add_executable(virtual_car
+   src/virtual_car.cpp
+)
 
-# add_executable(planner_node
-#    src/alan_landing_planning/planner_node.cpp
-#    src/alan_landing_planning/planner_server.cpp)
-
-# target_link_libraries(planner_node
-#   ${OpenCV_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   ${PCL_LIBRARIES}
-#   ${OSQP_LIBRARIES}
-#   # mosek64
-#   # qpOASES
-#   osqp::osqp
-#   OsqpEigen#::OsqpEigen
+target_link_libraries(virtual_car
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${OSQP_LIBRARIES}
+  # mosek64
+  # qpOASES
+  osqp::osqp
+  OsqpEigen#::OsqpEigen
   
   
-#   )
-
-# add_executable(lala
-#    src/alan_landing_planning/lala.cpp
-#    src/alan_landing_planning/bernstein.cpp
-#    src/alan_landing_planning/osqpsolver.cpp
-#    src/alan_landing_planning/traj_gen.cpp)
-   
-# target_link_libraries(lala
-#   # ${OpenCV_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   ${PCL_LIBRARIES}
-#   ${OSQP_LIBRARIES}
-#   # mosek64
-#   # qpOASES
-#   osqp::osqp
-#   OsqpEigen#::OsqpEigen
-#   # PkgConfig::gtk3
-#   #   PkgConfig::gstreamer
-#   #   PkgConfig::gstreamer-sdp
-#   #   PkgConfig::gstreamer-app
-#   #   PkgConfig::gstreamer-video
-#   )
-###################################################
+  )
 
 

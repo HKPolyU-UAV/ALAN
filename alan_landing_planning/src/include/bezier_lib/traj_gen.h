@@ -56,6 +56,7 @@ namespace alan_traj
 
         //other tool
         void msg_printer(char *s);
+        void log();
 
         const double pascal[100][100] 
             = {

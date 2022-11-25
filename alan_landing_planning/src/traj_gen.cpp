@@ -384,4 +384,15 @@ namespace alan_traj
         return pascal[n][k];
     }
 
+    void traj_gen::log()
+    {
+        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/b_traj.txt"); 
+        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/b_traj.txt",ios::app);
+        
+        // save<<p_base<<endl;
+    
+    
+        // save.close();
+
+    }
 }
