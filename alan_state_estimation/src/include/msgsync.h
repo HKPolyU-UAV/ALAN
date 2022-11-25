@@ -17,6 +17,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/sync_policies/exact_time.h>
 
 #include "alan_landing_planning/AlanPlannerMsg.h"
 // #include "alan_visualization/Polyhedron.h"
@@ -51,9 +52,9 @@ namespace alan
             typedef message_filters::Synchronizer<uavMySyncPolicy> uavsync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<uavsync> uavsync_;     
 
-            typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Imu> ugvMySyncPolicy;
-            typedef message_filters::Synchronizer<uavMySyncPolicy> ugvsync;//(MySyncPolicy(10), subimage, subdepth);
-            boost::shared_ptr<uavsync> ugvsync_;  
+            typedef message_filters::sync_policies::ExactTime<nav_msgs::Odometry, sensor_msgs::Imu> ugvMySyncPolicy;
+            typedef message_filters::Synchronizer<ugvMySyncPolicy> ugvsync;//(MySyncPolicy(10), subimage, subdepth);
+            boost::shared_ptr<ugvsync> ugvsync_;  
 
             ros::Subscriber cam_pose_sub;
 
@@ -179,6 +180,7 @@ namespace alan
                 uavsync_->registerCallback(boost::bind(&MsgSyncNodelet::uav_msg_callback, this, _1, _2));
 
 
+
                 ugv_sub_odom.subscribe(nh, "/ugv/mavros/local_position/odom", 1);
                 ugv_sub_imu.subscribe(nh, "/camera/imu", 1);
                 ///ugv/mavros/imu/data
@@ -186,6 +188,7 @@ namespace alan
                 ugvsync_.reset(new ugvsync( ugvMySyncPolicy(10), ugv_sub_odom, ugv_sub_imu));            
                 ugvsync_->registerCallback(boost::bind(&MsgSyncNodelet::ugv_msg_callback, this, _1, _2));                
 
+                
                 cam_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
                                     ("/imu_pose", 1, &MsgSyncNodelet::cam_msg_callback, this);
                 

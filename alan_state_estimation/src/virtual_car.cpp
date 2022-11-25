@@ -46,9 +46,10 @@ void set_virtual_car_odom()
     Eigen::Quaterniond attitude = rpy2q(
         Eigen::Vector3d(
             0.0 + dist(generator),
-            -25.0 + dist(generator),
-            0.0 + dist(generator))
-    ) ;
+            -20.0  / 180.0 * M_PI  + dist(generator),
+            0.0 + dist(generator)
+        )
+    );
 
     virtual_car_odom.pose.pose.orientation.w = attitude.w();    
     virtual_car_odom.pose.pose.orientation.x = attitude.x();
@@ -93,10 +94,10 @@ void set_virtual_camera_pose()
     Eigen::Quaterniond attitude = rpy2q(
         Eigen::Vector3d(
             0.0 + dist(generator),
-            -25.0 + dist(generator),
+            -20.0  / 180.0 * M_PI + dist(generator),
             0.0 + dist(generator))
     ) ;
-
+    
     virtual_camera_pose.pose.orientation.w = attitude.w();
     virtual_camera_pose.pose.orientation.x = attitude.x();
     virtual_camera_pose.pose.orientation.y = attitude.y();
@@ -109,7 +110,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "virtual_car");
     ros::NodeHandle nh;
 
-    ros::Publisher virtual_car_pose_pub = nh.advertise<nav_msgs::Odometry>
+    ros::Publisher virtual_car_odom_pub = nh.advertise<nav_msgs::Odometry>
                         ("/ugv/mavros/local_position/odom", 1, true);
     
     ros::Publisher virtual_car_imu_pub = nh.advertise<sensor_msgs::Imu>
@@ -118,7 +119,7 @@ int main(int argc, char** argv)
     ros::Publisher virtual_car_cam_pub = nh.advertise<geometry_msgs::PoseStamped>
                         ("/imu_pose", 1, true);
 
-    ros::Rate virtual_car_rate(200);
+    // ros::Rate virtual_car_rate(200);
 
     while (ros::ok())    
     {
@@ -126,11 +127,11 @@ int main(int argc, char** argv)
         set_virtual_car_imu();
         set_virtual_camera_pose();
 
-        virtual_car_pose_pub.publish(virtual_car_odom);
-        // virtual_car_imu_pub.publish(virtual_car_imu);
+        virtual_car_odom_pub.publish(virtual_car_odom);
+        virtual_car_imu_pub.publish(virtual_car_imu);
         virtual_car_cam_pub.publish(virtual_camera_pose);
 
-        virtual_car_rate.sleep();
+        // virtual_car_rate.sleep();
         /* code */
     }
 

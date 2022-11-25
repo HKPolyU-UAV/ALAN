@@ -33,5 +33,8 @@
     <node pkg="nodelet" type="nodelet" name="msgsync" args="standalone alan/MsgSyncNodelet alan_master" output="screen">
     </node> 
 
+    <node name="virtual_car" pkg="alan_state_estimation" type="virtual_car" output="screen">            
+    </node>
+
 
 </launch>
