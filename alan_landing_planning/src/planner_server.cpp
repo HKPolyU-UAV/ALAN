@@ -7,8 +7,16 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
     nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
     nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
 
+    nh.getParam("/alan_master_planner_node/v_max", v_max);
+    nh.getParam("/alan_master_planner_node/a_max", a_max);
+
+    cout<<"v_max: "<<v_max<<endl;
+    cout<<"a_max: "<<a_max<<endl;
+
     nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
     nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
+
+    
 
 
     //subscribe
@@ -517,6 +525,8 @@ void planner_server::set_alan_b_traj()
     cout<<3<<endl;
     set_btraj_inequality_kinematic();
     cout<<4<<endl;
+    set_btraj_inequality_dynamic();
+    cout<<5<<endl;
     
     alan_traj::traj_gen alan_btraj(btraj_info, btraj_constraints, _pub_freq);
     alan_btraj.solve_opt(_pub_freq);
@@ -577,7 +587,7 @@ void planner_server::set_btraj_inequality_kinematic()
     
     corridors.clear();
 
-    for(int i = 0; land_traj_constraint.a_series_of_Corridor.size(); i++)
+    for(int i = 0; i < land_traj_constraint.a_series_of_Corridor.size(); i++)
     {
         temp_size_i = land_traj_constraint.a_series_of_Corridor[i].PolyhedronTangentArray.size();
         
@@ -600,6 +610,7 @@ void planner_server::set_btraj_inequality_kinematic()
 
 void planner_server::set_btraj_inequality_dynamic()
 {
+    
     btraj_dconstraints.v_max(0) = v_max;
     btraj_dconstraints.v_min(0) = -v_max;
     btraj_dconstraints.a_max(0) = a_max;
@@ -609,6 +620,11 @@ void planner_server::set_btraj_inequality_dynamic()
     btraj_dconstraints.v_min(1) = -v_max;
     btraj_dconstraints.a_max(1) = a_max;
     btraj_dconstraints.a_min(1) = -a_max;
+
+    btraj_dconstraints.v_max(2) = v_max;
+    btraj_dconstraints.v_min(2) = -v_max;
+    btraj_dconstraints.a_max(2) = a_max;
+    btraj_dconstraints.a_min(2) = -a_max;
 
     btraj_constraints.d_constraints = btraj_dconstraints;    
 
@@ -648,7 +664,7 @@ void planner_server::set_traj_time()
     landing_time_total = distance_uav_ugv / diff_velo_uav_ugv;
 
     btraj_info.s.emplace_back(
-        landing_time_total * 1 - (final_corridor_length / distance_uav_ugv)
+        landing_time_total * 1.0 - (final_corridor_length / distance_uav_ugv)
         );
     btraj_info.s.emplace_back(
         landing_time_total * final_corridor_length / distance_uav_ugv

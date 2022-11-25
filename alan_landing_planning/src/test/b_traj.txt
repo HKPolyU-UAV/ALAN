@@ -1,0 +1,56 @@
+
+log start...
+
+_axis_dim:
+3
+
+_n_dim:
+48
+
+_n_dim_per_axis:
+16
+
+_start_posi:
+  2.13685
+0.0406395
+  1.50969
+
+_start_velo:
+ -0.0514374
+-0.00156975
+ -0.0270601
+
+_start_accl:
+-0.0679211
+-0.0176736
+-0.0137247
+
+_sfc_list:
+here is one corridor...: 6
+here is one corridor...: 7
+
+_d_constraints v:
+2
+2
+2
+
+_d_constraints a:
+4
+4
+4
+
+_n_order
+7
+
+_m
+2
+
+_d_order
+3
+
+_s
+1.21942
+_s
+1
+
+log end...

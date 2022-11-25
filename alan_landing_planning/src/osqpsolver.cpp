@@ -80,6 +80,12 @@ void osqpsolver::qp_opt(
 
     qpsol = qpsolver.getSolution();
 
+    remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/polycoef.txt"); 
+    ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/polycoef.txt",ios::app);
+
+    save<<qpsol<<endl;
+    save.close();
+
     // cout<<"here are the solutions: "<<endl;
     // cout<<qpsol<<endl;
 

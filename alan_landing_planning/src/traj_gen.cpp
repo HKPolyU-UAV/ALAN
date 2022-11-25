@@ -109,8 +109,8 @@ namespace alan_traj
             
             //1. variable set
             // _n_dim = (b_info.n_order + 1) + b_info.m
-            printf("1. variable set: ");
-            cout<<_n_dim<<endl;
+            // printf("1. variable set: ");
+            // cout<<_n_dim<<endl;
 
             //2. constraints set
             //should be containing all axises matrices
@@ -118,12 +118,18 @@ namespace alan_traj
             _ub = bezier_base.getUB();
             _lb = bezier_base.getLB();
 
-            printf("2. constraints set: ");
-            // cout<<"_A:"<<endl;
-            cout<<_A.rows()<<endl;
+            // printf("2. constraints set: ");
+            // cout<<_A.rows()<<endl;
 
-            cout<<"_lb:"<<endl;
-            cout<<_lb.size()<<endl;
+            // cout<<"_lb:"<<endl;
+            // cout<<_lb.size()<<endl;
+
+
+
+
+
+
+
             // cout<<"_ub:"<<endl;
             // cout<<_ub<<endl;
 
@@ -279,11 +285,11 @@ namespace alan_traj
         remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt");
         // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/p_base.txt");
 
-        cout<<"seg_i: "<<_m<<endl;
-        cout<<"_n_order: "<<_n_order<<endl;
+        // cout<<"seg_i: "<<_m<<endl;
+        // cout<<"_n_order: "<<_n_order<<endl;
 
 
-        cout<<time_vector.size()<<endl;
+        // cout<<time_vector.size()<<endl;
 
 
         for(int seg_i = 0; seg_i < _m; seg_i++)
@@ -388,7 +394,7 @@ namespace alan_traj
 
     void traj_gen::log()
     {
-        
+
         remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/b_traj.txt"); 
         ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/b_traj.txt",ios::app);
 
