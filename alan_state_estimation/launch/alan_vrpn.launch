@@ -20,7 +20,10 @@
       #- FirstTracker
       #- SecondTracker
     </rosparam>
+    
+    <remap from="/vrpn_client_node/patty_car/pose" to="/patty_car/mavros/vision_pose/pose" />
     <remap from="/vrpn_client_node/patty_nano/pose" to="/mavros/vision_pose/pose" />
+    <remap from="/vrpn_client_node/gh034_nano/pose" to="/mavros/vision_pose/pose" />
   </node>
 
 </launch>

@@ -144,3 +144,21 @@ target_link_libraries(virtual_car
   )
 
 
+  add_executable(failsafe
+   src/failsafe.cpp
+)
+
+target_link_libraries(failsafe
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${OSQP_LIBRARIES}
+  # mosek64
+  # qpOASES
+  osqp::osqp
+  OsqpEigen#::OsqpEigen
+  
+  
+  )
+
+

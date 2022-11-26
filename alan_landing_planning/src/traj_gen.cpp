@@ -326,8 +326,8 @@ namespace alan_traj
                     // cout<< seg_i * (_n_order + 1) + k<<endl;
                     // cout<< seg_i * (_n_order + 1) + k + _n_dim_per_axis<<endl;
 
-                    cout<<PolyCoeff(seg_i * (_n_order + 1) + k)<<endl;
-                    cout<<PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis)<<endl;
+                    // cout<<PolyCoeff(seg_i * (_n_order + 1) + k)<<endl;
+                    // cout<<PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis)<<endl;
                     
                     x_pos = x_pos + PolyCoeff(seg_i * (_n_order + 1) + k) * p_base;
                     y_pos = y_pos + PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis) * p_base;
