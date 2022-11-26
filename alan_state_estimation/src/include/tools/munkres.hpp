@@ -327,7 +327,10 @@ namespace correspondence
             {
                 if(mask(r,c) == 1)
                 {
-                    matchid temp = {c, true};
+                    matchid temp;
+                    temp.detected_indices = c;
+                    temp.detected_ornot = true;
+                    // matchid temp = {c, true};
                     id_match.push_back(temp);   
                 }                         
             }
