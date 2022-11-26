@@ -9,7 +9,7 @@
 #include "include/bezier_lib/traj_gen.h"
 
 #include <decomp_ros_msgs/PolyhedronArray.h>
-#include <decomp_geometry/polyhedron.h>
+#include <decomp_geometry/polyhedron.h> 
 
 #include "alan_visualization/Polyhedron.h"
 #include "alan_visualization/Tangent.h"
