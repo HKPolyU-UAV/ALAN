@@ -1,12 +1,36 @@
 # Autonomous LANding
 ## Project under construction...
-if no license, cannot run program...
+
+This repo DOES use third-party libraries, under your workspace folder
 ```
-git clone https://github.com/robotology/osqp-eigen.git
+mkdir -p {name alan}_ws/src
+cd {name alan}_ws && mkdir alan_third_party
+
+```
+#install third party
+
+cd alan_third_party
+
 git clone --recursive https://github.com/osqp/osqp
+git clone https://github.com/robotology/osqp-eigen.git
+git clone https://github.com/catkin/catkin_simple.git
 git clone https://github.com/sikang/DecompUtil.git
 
+
+#for the above package, please do
+```mkdir build && cd build && make && sudo make install
+#then do compilation
+cd ~/{name alan}_ws
+catkin_make
+
+
+If you are using scount_ros, feel free to use our scount_ros package
+mkdir -p {name scout}_ws/src
+cd {name scout}_ws/src
 git clone https://github.com/HKPolyU-UAV/scout_ros
+catkin_make
+
+
 ```
 ```
 @article{stellato2020osqp,
