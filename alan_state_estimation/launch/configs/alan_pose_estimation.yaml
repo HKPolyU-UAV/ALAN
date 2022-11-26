@@ -162,3 +162,6 @@ MAD_z_threshold:
 
 BINARY_threshold:
  160
+
+failsafe_threshold:
+  0.20

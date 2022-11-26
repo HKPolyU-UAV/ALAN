@@ -64,8 +64,6 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
     set_btraj_info();
     set_btraj_inequality_dynamic();
 
-
-
 }
 
 planner_server::~planner_server()

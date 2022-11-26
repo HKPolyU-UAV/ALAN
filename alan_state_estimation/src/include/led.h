@@ -38,6 +38,8 @@ namespace alan
         private:
             //general objects
             cv::Mat frame, display;
+            cv::Mat frame_input;
+
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             vector<correspondence::matchid> LED_v_Detected;
             vector<Eigen::Vector3d> pts_on_body_frame, pts_on_body_frame_normalized;
@@ -67,9 +69,10 @@ namespace alan
             boost::shared_ptr<sync> sync_;                    
             
             //publisher 
-            ros::Publisher pubpose;
+            ros::Publisher uavpose_pub;
 
             image_transport::Publisher pubimage;
+            image_transport::Publisher pubimage_input;
 
 
 
@@ -145,8 +148,6 @@ namespace alan
             void use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, vector<Eigen::Vector3d> pts_3d_detect, Sophus::SE3d& pose);
 
 
-
-
             virtual void onInit()
             {
                 ros::NodeHandle& nh = getNodeHandle();
@@ -200,6 +201,13 @@ namespace alan
                 //publish
                 image_transport::ImageTransport image_transport_(nh);
                 pubimage = image_transport_.advertise("/processed_image",1);
+
+                pubimage_input = image_transport_.advertise("/input_image", 1);
+
+                uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                                ("/alan_state_estimation/LED/pose", 1, true);
+
+
 
                 //test algo here:
                 
