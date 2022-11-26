@@ -6,7 +6,7 @@ This repo DOES use third-party libraries, under your workspace folder
 mkdir -p {name alan}_ws/src
 cd {name alan}_ws && mkdir alan_third_party
 
-```
+
 #install third party
 
 cd alan_third_party
@@ -18,7 +18,8 @@ git clone https://github.com/sikang/DecompUtil.git
 
 
 #for the above package, please do
-```mkdir build && cd build && make && sudo make install
+
+mkdir build && cd build && make && sudo make install
 #then do compilation
 cd ~/{name alan}_ws
 catkin_make
@@ -29,9 +30,8 @@ mkdir -p {name scout}_ws/src
 cd {name scout}_ws/src
 git clone https://github.com/HKPolyU-UAV/scout_ros
 catkin_make
-
-
 ```
+
 ```
 @article{stellato2020osqp,
   title={OSQP: An operator splitting solver for quadratic programs},
