@@ -55,18 +55,14 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImageConstPt
     for_visual.header = rgbmsg->header;
     for_visual.encoding = sensor_msgs::image_encodings::BGR8;
     for_visual.image = imageoutput;
-    
     this->pubimage.publish(for_visual.toImageMsg());
 
 
     cv_bridge::CvImage for_visual_input;
     for_visual_input.header = rgbmsg->header;
     for_visual_input.encoding = sensor_msgs::image_encodings::BGR8;
-
     cv::cvtColor(frame_input, frame_input, cv::COLOR_GRAY2RGB);
-
     for_visual_input.image = frame_input;
-
     this->pubimage_input.publish(for_visual_input.toImageMsg());    
 } 
 
@@ -75,11 +71,11 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
     Sophus::SE3d pose;
     vector<correspondence::matchid> corres;
 
-    if(!LED_tracker_initiated)        
+    if(!LED_tracker_initiated_or_tracked)        
     {
-        LED_tracker_initiated = LED_tracking_initialize(frame, depth);
+        LED_tracker_initiated_or_tracked = LED_tracking_initialize(frame, depth);
 
-        if(LED_tracker_initiated)
+        if(LED_tracker_initiated_or_tracked)
         {
             cout<<"initialized!"<<endl;
         }
@@ -638,7 +634,6 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
                 Eigen::Vector2d reproject = reproject_3D_2D(what, pose_global);  
                 cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
             }
-
 
             map_SE3_to_pose(pose_global);
             // pose_global.

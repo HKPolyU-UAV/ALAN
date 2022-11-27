@@ -12,6 +12,30 @@ static nav_msgs::Odometry virtual_car_odom;
 static sensor_msgs::Imu virtual_car_imu;
 static geometry_msgs::PoseStamped virtual_camera_pose;
 
+
+vector<vector<string>> parseCSV(string file_localtion)
+{
+    ifstream  data(file_localtion);
+    string line;
+    vector<vector<string> > parsedCsv;
+
+    while(getline(data,line))
+    {
+        stringstream lineStream(line);
+        string cell;
+        vector<string> parsedRow;
+
+        while(getline(lineStream,cell,','))
+        {
+            parsedRow.push_back(cell);
+        }
+
+        parsedCsv.push_back(parsedRow);
+    }
+
+    return parsedCsv;
+};
+
 Eigen::Vector3d q2rpy(Eigen::Quaterniond q) {
     return q.toRotationMatrix().eulerAngles(2,1,0);
 };
@@ -80,7 +104,7 @@ void set_virtual_car_imu()
 
 }
 
-void set_virtual_camera_pose()
+void set_virtual_camera_pose(Eigen::VectorXd xyyrpy)
 {        
     std::default_random_engine generator;
     std::normal_distribution<double> dist(0, 0.001);
@@ -110,6 +134,11 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "virtual_car");
     ros::NodeHandle nh;
 
+    string csv_file_location;
+    nh.getParam("/virtual_car/pathcsv", csv_file_location);
+
+    vector<vector<string>> ugvpaths = parseCSV(csv_file_location);    
+
     ros::Publisher virtual_car_odom_pub = nh.advertise<nav_msgs::Odometry>
                         ("/ugv/mavros/local_position/odom", 1, true);
     
@@ -119,19 +148,21 @@ int main(int argc, char** argv)
     ros::Publisher virtual_car_cam_pub = nh.advertise<geometry_msgs::PoseStamped>
                         ("/imu_pose", 1, true);
 
-    // ros::Rate virtual_car_rate(200);
+    ros::Rate virtual_car_rate(200);
+    Eigen::VectorXd l;
 
     while (ros::ok())    
     {
         set_virtual_car_odom();
         set_virtual_car_imu();
-        set_virtual_camera_pose();
+
+        set_virtual_camera_pose(l);
 
         virtual_car_odom_pub.publish(virtual_car_odom);
         virtual_car_imu_pub.publish(virtual_car_imu);
         virtual_car_cam_pub.publish(virtual_camera_pose);
 
-        // virtual_car_rate.sleep();
+        virtual_car_rate.sleep();
         /* code */
     }
 

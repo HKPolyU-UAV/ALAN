@@ -413,8 +413,9 @@ void* alan::ArucoNodelet::PubMainLoop(void* tmp)
         ros::spinOnce();
         loop_rate.sleep();
     }
-    void* return_value;
     
+    void* return_value;
+
     return return_value;
 }
 

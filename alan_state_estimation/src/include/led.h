@@ -53,11 +53,7 @@ namespace alan
 
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             vector<correspondence::matchid> LED_v_Detected;
-            vector<Eigen::Vector3d> pts_on_body_frame, pts_on_body_frame_normalized;
-            
-            vector<Eigen::Vector2d> pts_obj_configuration;
-            double x_avg_pts_config_ = 0;
-            double y_avg_pts_config_ = 0;
+            vector<Eigen::Vector3d> pts_on_body_frame;
 
             Sophus::SE3d pose_global;
             vector<correspondence::matchid> corres_global;
@@ -82,9 +78,9 @@ namespace alan
         //publisher 
             //objects
             ros::Publisher uavpose_pub;
-            //functions
             image_transport::Publisher pubimage;
             image_transport::Publisher pubimage_input;
+            //functions
 
         //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
@@ -106,7 +102,7 @@ namespace alan
         //initiation & correspondence 
             //objects
             correspondence::munkres hungarian; 
-            bool LED_tracker_initiated = false;
+            bool LED_tracker_initiated_or_tracked = false;
             int LED_no;
             //functions       
             void correspondence_search(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected);    

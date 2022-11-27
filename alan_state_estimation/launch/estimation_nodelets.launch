@@ -37,7 +37,9 @@
         <remap from="/uav/alan_estimation/final_pose" to="/mavros/vision_pose/pose" />
     </node>
 
-    <node name="virtual_car" pkg="alan_state_estimation" type="virtual_car" output="screen">            
+    <node name="virtual_car" pkg="alan_state_estimation" type="virtual_car" output="screen">
+        <param name="/pathcsv" type="string" value="$(find alan_state_estimation)/launch/configs/virtual_car_path/block_path.csv"/>
+        <param name="/max_vel" type="double" value="0.5"/>
     </node>
 
 
