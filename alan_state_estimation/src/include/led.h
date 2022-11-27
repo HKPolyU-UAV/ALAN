@@ -110,9 +110,14 @@ namespace alan
             int LED_no;
             //functions       
             void correspondence_search(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected);    
-            void correspondence_search_test(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected);    
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
-            vector<Eigen::Vector2d> pts_2d_normlization(vector<Eigen::Vector2d> pts_2d);            
+        
+        //twist for correspondence search
+            //objects
+            Sophus::SE3d global_twist;
+            double time_stamped_k0 = 0;
+            double time_stamped_k1 = 0;
+            // double delta_t = 0;
 
         //main process
             void recursive_filtering(cv::Mat& frame, cv::Mat depth);
