@@ -1,6 +1,3 @@
-//the aruco library is used for baseline validations as well as trial and error of algorithms
-//Author: Li-Yu LO
-
 #include "include/aruco.h"
 
 void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)

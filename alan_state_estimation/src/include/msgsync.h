@@ -1,7 +1,16 @@
+/*
+    A ROS Nodelet H + CPP file for
+    msg filtering all information (from failsafe, VIO, vrpn, sfc).
+    Created on 01/07/2022
+    (c) pattylo
+    from the RCUAS of Hong Kong Polytechnic University
+*/
 
+/**
+ * \file msgsync.h + msgsync.cpp
+ * \brief classes for synchronization of messages
+ */
 
-//sync all message including position, velocity, accleration
-//of both uav and ugv
 #ifndef MSGSYNC_H
 #define MSGSYNC_H
 
@@ -20,7 +29,6 @@
 #include <message_filters/sync_policies/exact_time.h>
 
 #include "alan_landing_planning/AlanPlannerMsg.h"
-// #include "alan_visualization/Polyhedron.h"
 #include "alan_visualization/PolyhedronArray.h"
 
 namespace alan
@@ -30,34 +38,36 @@ namespace alan
         private:
             pthread_t tid;
 
-            //publisher
+        //publish
+            //objects
             ros::Publisher uav_pub_AlanPlannerMsg;
             ros::Publisher ugv_pub_AlanPlannerMsg;
-
             ros::Publisher alan_sfc_pub;            
             ros::Publisher alan_all_sfc_pub;
-            //subscribe
-            void uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
-            void ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
 
-            void cam_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& imu);
-
+        //subscriber
+            //objects
             message_filters::Subscriber<nav_msgs::Odometry> uav_sub_odom;
             message_filters::Subscriber<sensor_msgs::Imu> uav_sub_imu;
 
             message_filters::Subscriber<nav_msgs::Odometry> ugv_sub_odom;
             message_filters::Subscriber<sensor_msgs::Imu> ugv_sub_imu;
-
+            ros::Subscriber cam_pose_sub;
+            
             typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Imu> uavMySyncPolicy;
             typedef message_filters::Synchronizer<uavMySyncPolicy> uavsync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<uavsync> uavsync_;     
 
             typedef message_filters::sync_policies::ExactTime<nav_msgs::Odometry, sensor_msgs::Imu> ugvMySyncPolicy;
             typedef message_filters::Synchronizer<ugvMySyncPolicy> ugvsync;//(MySyncPolicy(10), subimage, subdepth);
-            boost::shared_ptr<ugvsync> ugvsync_;  
+            boost::shared_ptr<ugvsync> ugvsync_;
+            
+            //functions
+            void uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
+            void ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
 
-            ros::Subscriber cam_pose_sub;
-
+            void cam_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& imu);
+                          
             //private variables 
             nav_msgs::Odometry uav_odom;
             sensor_msgs::Imu uav_imu;  
@@ -87,12 +97,12 @@ namespace alan
 
             geometry_msgs::PoseStamped cam_current_PoseMsg;
             Eigen::Isometry3d camPose;
-            
-            
+
+
+        //SFC RVIZ
+            //objects 
             double FOV_H = 0, FOV_V = 0;//fov horizontal & vertical
-
             double final_corridor_height = 0, final_corridor_length = 0;
-
 
             Eigen::Quaterniond q1, q2, q3, q4;
             Eigen::Vector3d cam_center_vector = Eigen::Vector3d(1,0,0),
@@ -101,14 +111,10 @@ namespace alan
                             cam_3axis_vector,
                             cam_4axis_vector;
 
-            double temp_i = 0;
-
-            // alan_visualization:
-            // Polyhedron 
             alan_visualization::Polyhedron polyh_total_bound;
             alan_visualization::PolyhedronArray polyh_array_pub_object;
 
-            //private functions
+            //functions
             Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
 
@@ -127,21 +133,18 @@ namespace alan
             virtual void onInit() 
             {
                 ros::NodeHandle& nh = getNodeHandle();    
+                ROS_INFO("MSGSYNC Nodelet Initiated...");
 
-                //param
+            //param
                 nh.getParam("/alan_master/cam_FOV_H", FOV_H);     
                 nh.getParam("/alan_master/cam_FOV_V", FOV_V);   
 
                 nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
                 nh.getParam("/alan_master/final_corridor_length", final_corridor_length);                          
-
+            
+            //set sfc visualization
                 FOV_H = FOV_H / 180 * M_PI * 0.75;
-                FOV_V = FOV_V / 180 * M_PI * 0.75;
-
-                // cout<<FOV_H<<endl;
-                // cout<<FOV_V<<endl;
-
-                cout<<final_corridor_length<<endl;
+                FOV_V = FOV_V / 180 * M_PI * 0.75;        
 
                 Eigen::Vector3d rpy_temp;
 
@@ -159,27 +162,15 @@ namespace alan
 
                 rpy_temp = Eigen::Vector3d(0, FOV_V/2, -FOV_H/2);                
                 q4 = rpy2q(rpy_temp);
-                // cout<<endl<<q4.toRotationMatrix() * Eigen::Vector3d(1,0,0)<<endl<<endl;
                 cam_4axis_vector = q_rotate_vector(q4, cam_center_vector);
 
-                // cout<<"\nhere are the camera axises..."<<endl;
-                // cout<<cam_center_vector<<endl<<endl;
-                // cout<<cam_1axis_vector<<endl<<endl;
-                // cout<<cam_2axis_vector<<endl<<endl;
-                // cout<<cam_3axis_vector<<endl<<endl;
-                // cout<<cam_4axis_vector<<endl<<endl<<endl;
 
-
-
-
-                //subscriber
+            //subscriber
                 uav_sub_odom.subscribe(nh, "/uav/mavros/local_position/odom", 1);
                 uav_sub_imu.subscribe(nh, "/uav/mavros/imu/data", 1);
 
                 uavsync_.reset(new uavsync( uavMySyncPolicy(10), uav_sub_odom, uav_sub_imu));            
                 uavsync_->registerCallback(boost::bind(&MsgSyncNodelet::uav_msg_callback, this, _1, _2));
-
-
 
                 ugv_sub_odom.subscribe(nh, "/ugv/mavros/local_position/odom", 1);
                 ugv_sub_imu.subscribe(nh, "/camera/imu", 1);
@@ -193,7 +184,7 @@ namespace alan
                                     ("/imu_pose", 1, &MsgSyncNodelet::cam_msg_callback, this);
                 
 
-                //publisher
+            //publisher
                 uav_pub_AlanPlannerMsg = nh.advertise<alan_landing_planning::AlanPlannerMsg>
                                     ("/AlanPlannerMsg/uav/data", 1);
 
@@ -204,17 +195,12 @@ namespace alan
                 //                     ("/alan/sfc/total_bound", 1);
 
                 alan_all_sfc_pub = nh.advertise<alan_visualization::PolyhedronArray>
-                                    ("/alan/sfc/all_corridors", 1);
-                                    
+                                    ("/alan/sfc/all_corridors", 1);                                                    
                 
-                ROS_INFO("MSGSYNC Nodelet Initiated...");
-            }     
-
-            public:
-                static void* PubMainLoop(void* tmp);   
+            }      
 
     };
-    
+        
     PLUGINLIB_EXPORT_CLASS(alan::MsgSyncNodelet, nodelet::Nodelet)
 
 }

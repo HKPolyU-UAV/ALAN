@@ -1,3 +1,17 @@
+/*
+    A ROS Nodelet H + CPP file for
+    learning-based relative localization (3D) for UAV and UGV.
+    Created on 01/07/2022
+    (c) pattylo
+    from the RCUAS of Hong Kong Polytechnic University
+*/
+
+/**
+ * \file yolo.h + yolo.cpp
+ * \brief classes for vision-based relative localization for UAV and UGV based on ARUCOs
+ * \remark //legacy of AUTO (https://github.com/HKPolyU-UAV/AUTO) & previous 1st gen ALan (https://www.mdpi.com/1424-8220/22/1/404)
+ */
+
 #ifndef YOLO_H
 #define YOLO_H
 

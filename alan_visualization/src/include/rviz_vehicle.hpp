@@ -2,9 +2,14 @@
     A header HPP file for
     RViz tool package for UAV, UGV, UUV (under constrution) and camera.
     Created on 23/11/2022
-    (c) Patty LO 
+    (c) pattylo
     from the RCUAS of Hong Kong Polytechnic University
 */
+
+/**
+ * \file rviz_vehicle.hpp
+ * \brief a simple RViz robot visualization package of UAV, UGV, UUV
+ */
 
 #ifndef RVIZ_VEHICLE_H
 #define RVIZ_VEHICLE_H

@@ -1,3 +1,17 @@
+/*
+    A ROS Nodelet H + CPP file for
+    vision-based relative localization (6D) for UAV and UGV.
+    Created on 15/06/2022
+    (c) pattylo
+    from the RCUAS of Hong Kong Polytechnic University
+*/
+
+/**
+ * \file aruco.h + aruco.cpp
+ * \brief classes for vision-based relative localization for UAV and UGV based on ARUCOs
+ * \remark //this aruco library is used for baseline validations as well as trial and error of algorithms
+ */
+
 #ifndef ARUCO_H
 #define ARUCO_H
 

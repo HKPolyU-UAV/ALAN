@@ -1,3 +1,16 @@
+/*
+    A CPP file for
+    failsafing ALan System.
+    Created on 27/11/2022
+    (c) pattylo
+    from the RCUAS of Hong Kong Polytechnic University
+*/
+
+/**
+ * \file failsafe.cpp
+ * \brief a failsafe gate for ALan System
+ */
+
 #include "./include/tools/essential.h"
 
 static nav_msgs::Odometry uav_final_odom;

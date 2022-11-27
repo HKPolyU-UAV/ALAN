@@ -175,7 +175,6 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     
-
     ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>("/alan/sfc/all_corridors", 1, &sfc_msg_callback);
     ros::Subscriber traj_sub = nh.subscribe<alan_landing_planning::Traj>("/alan_visualization/traj", 1, &traj_msg_callback);
     ros::Subscriber uav_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>("/AlanPlannerMsg/uav/data", 1, &uavAlanMsgCallback);
@@ -215,7 +214,7 @@ int main(int argc, char** argv)
     c2b_ugv(5) = M_PI;//y
 
     // cout<<c2b_ugv<<endl;
-    cout<<"RVIZ for ALan...\n"<<endl;
+    ROS_INFO("RVIZ for ALan...\n");
     
 
     rviz_vehicle ugv_rviz = rviz_vehicle(nh, UGV, true, c2b_ugv);
