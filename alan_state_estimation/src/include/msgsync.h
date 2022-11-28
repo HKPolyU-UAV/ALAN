@@ -206,7 +206,7 @@ namespace alan
                 uavsync_->registerCallback(boost::bind(&MsgSyncNodelet::uav_msg_callback, this, _1, _2));
 
                 ugv_sub_odom.subscribe(nh, "/ugv/mavros/local_position/odom", 1);
-                ugv_sub_imu.subscribe(nh, "/camera/imu", 1);
+                ugv_sub_imu.subscribe(nh, "/ugv/mavros/imu/data", 1);
                 ///ugv/mavros/imu/data
 
                 ugvsync_.reset(new ugvsync( ugvMySyncPolicy(10), ugv_sub_odom, ugv_sub_imu));            

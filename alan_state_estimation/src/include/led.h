@@ -132,7 +132,6 @@ namespace alan
             //functions
             void map_SE3_to_pose(Sophus::SE3d pose);
 
-
             virtual void onInit()
             {
                 ros::NodeHandle& nh = getNodeHandle();

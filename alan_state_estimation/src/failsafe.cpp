@@ -12,6 +12,10 @@
  */
 
 #include "./include/tools/essential.h"
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/sync_policies/exact_time.h>
 
 static nav_msgs::Odometry uav_final_odom;
 static nav_msgs::Odometry ugv_final_odom;
@@ -24,6 +28,9 @@ static geometry_msgs::Twist uav_led_twist;
 
 static geometry_msgs::PoseStamped ugv_vrpn_pose;
 static geometry_msgs::Twist ugv_vrpn_twist;
+
+static geometry_msgs::PoseStamped cam_vrpn_pose;
+static geometry_msgs::Twist cam_vrpn_twist;
 
 
 static bool uav_vrpn_pose_initiated = false;
@@ -72,11 +79,17 @@ void uav_twist_callback(const geometry_msgs::Twist::ConstPtr& twist)
 void led_pose_callback(const geometry_msgs::PoseStamped::ConstPtr &pose)
 {
     uav_led_pose = *pose;
+
 }
 
 void led_twist_callback(const geometry_msgs::Twist::ConstPtr &pose)
 {
     uav_led_twist = *pose;
+}
+
+void ugv_led_callback(const geometry_msgs::PoseStamped::ConstPtr& ugv_pose, const geometry_msgs::PoseStamped::ConstPtr& led_pose)
+{
+
 }
 
 void ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
@@ -89,6 +102,16 @@ void ugv_twist_callback(const geometry_msgs::Twist::ConstPtr& twist)
 {
     uav_vrpn_twist = *twist;
     ugv_vrpn_twist_initiated = true;    
+}
+
+void cam_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    cam_vrpn_pose = *pose;      
+}
+
+void cam_twist_callback(const geometry_msgs::Twist::ConstPtr& twist)
+{
+    cam_vrpn_twist = *twist;
 }
 
 void set_uav_final_odom()
@@ -171,7 +194,16 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "failsafe");
     ros::NodeHandle nh;
 
+
     nh.getParam("/alan_master/failsafe_threshold", failsafe_threshold);
+    
+    Eigen::VectorXd extrinsics_value;
+    XmlRpc::XmlRpcValue extrinsics_list;
+    nh.getParam("/alan_master/cam_extrinsics_455", extrinsics_list);
+    for(int i = 0; i < 6; i++)
+    {
+        extrinsics_value[i] = extrinsics_list[i];
+    }
 
     ros::Subscriber vrpn_uavpose_sub = nh.subscribe<geometry_msgs::PoseStamped>
                     ("/vrpn_client_node/gh034_nano/pose", 1, uav_pose_callback);
@@ -191,6 +223,23 @@ int main(int argc, char** argv)
 
     ros::Subscriber vrpn_ugvtwist_sub = nh.subscribe<geometry_msgs::Twist>
                     ("/vrpn_client_node/gh034_car/twist", 1, ugv_twist_callback);
+
+
+    message_filters::Subscriber<geometry_msgs::PoseStamped> ugv_pose_sub;
+    message_filters::Subscriber<geometry_msgs::PoseStamped> led_pose_sub;
+
+    typedef message_filters::sync_policies::ApproximateTime
+        <geometry_msgs::PoseStamped, geometry_msgs::PoseStamped> ledMysyncPolicy;
+    typedef message_filters::Synchronizer<ledMysyncPolicy> ledsync;
+    boost::shared_ptr<ledsync> ledsync_;
+
+    ugv_pose_sub.subscribe(nh, "", 1);
+    led_pose_sub.subscribe(nh, "", 1);
+
+    ledsync_.reset(new ledsync(ledMysyncPolicy(10), ugv_pose_sub, led_pose_sub));
+    ledsync_->registerCallback(boost::bind(&ugv_led_callback, _1, _2));
+
+
 
     
 

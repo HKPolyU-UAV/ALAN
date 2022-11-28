@@ -16,8 +16,6 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
     nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
     nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
 
-    
-
 
     //subscribe
     uav_state_sub = nh.subscribe<mavros_msgs::State>
@@ -541,8 +539,7 @@ Eigen::Vector4d planner_server::set_following_target_pose()
 }
 
 Eigen::Vector4d planner_server::set_uav_block_pose()
-{
-    
+{    
     if(set_block_traj)
     { 
         double vel = 0.2;
@@ -646,7 +643,6 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
         // cout<<block_traj_pts[0][0].y()<<endl;
         // cout<<block_traj_pts[0][0].z()<<endl;
     }
-
 
     Eigen::Vector4d following_target_pose;
     // cout<<traj_counter_j<<endl;

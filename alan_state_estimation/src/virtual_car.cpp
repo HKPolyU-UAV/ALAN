@@ -174,8 +174,6 @@ void calculate_heading_traj(double start_yaw, double end_yaw, vector<double>& ya
     {
         // cout<<start_yaw + delta_yaw / time_steps * (i + 1)<<endl;
         yaw_traj.emplace_back(start_yaw + delta_yaw / time_steps * (i + 1));
-
-
     }
         
 }
@@ -344,7 +342,7 @@ int main(int argc, char** argv)
     current_traj_wp(2) = 0.0;
 
     current_traj_wp(3) = 0.0;
-    current_traj_wp(4) = -20;
+    current_traj_wp(4) = 0.0;
     current_traj_wp(5) = 0.0;
 
 
