@@ -72,7 +72,7 @@ void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
         sfc_pub_vis_object_tangent.normals.clear();
     }
 
-    sfc_pub_vis_object_polyh.header.frame_id = "map";
+    sfc_pub_vis_object_polyh.header.frame_id = "map";    
 
     rviz_sfc_initiated = true;
 }

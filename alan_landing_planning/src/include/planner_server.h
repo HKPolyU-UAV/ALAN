@@ -73,6 +73,8 @@ private:
 
     bool shutdown();
 
+    Eigen::Vector4d set_following_target_pose();
+
     //trajectory
     vector<alan_landing_planning::AlanPlannerMsg> traj_optimized;
 
@@ -85,6 +87,7 @@ private:
 
     string fsm_state = IDLE;
     waypts takeoff_hover_pt = {0,0,1.2};
+    waypts landing_hover_pt = {0,0,1.2};
     
     Eigen::Isometry3d uavOdomPose, ugvOdomPose;
 
@@ -167,6 +170,26 @@ private:
     double v_max, a_max;
 
     alan_landing_planning::Traj alan_optiTraj;
+
+    //rotation function
+    Eigen::Vector3d q2rpy(Eigen::Quaterniond q) {
+        return q.toRotationMatrix().eulerAngles(2,1,0);
+    };
+
+    Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy){
+        Eigen::AngleAxisd rollAngle(rpy(0), Eigen::Vector3d::UnitX());
+        Eigen::AngleAxisd pitchAngle(rpy(1), Eigen::Vector3d::UnitY());
+        Eigen::AngleAxisd yawAngle(rpy(2), Eigen::Vector3d::UnitZ());
+
+        Eigen::Quaterniond q = yawAngle * pitchAngle * rollAngle;
+
+        return q;
+
+    };
+
+    Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v){
+        return q * v;
+    }
 
 
 public:

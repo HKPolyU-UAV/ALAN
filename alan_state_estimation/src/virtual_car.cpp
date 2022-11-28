@@ -199,7 +199,7 @@ void set_current_traj_wp(Eigen::VectorXd& xyzrpy)
 
     if(cal_new_traj)
     {
-        // cout<<"cal_new_traj here!"<<global_wp_counter<<endl;   
+        cout<<"cal_new_traj here!"<<global_wp_counter<<endl;   
         if(global_wp_counter + 1 == ugvpaths.size())
         {
             notyetfinish = false;     
@@ -231,8 +231,8 @@ void set_current_traj_wp(Eigen::VectorXd& xyzrpy)
                 vector_start_end(1),
                 vector_start_end(0)
             ) / M_PI * 180;
-            cout<<"yaw_start:"<<yaw_start<<endl;
-            cout<<"yaw_end:  "<<yaw_end<<endl;
+            // cout<<"yaw_start:"<<yaw_start<<endl;
+            // cout<<"yaw_end:  "<<yaw_end<<endl;
             calculate_heading_traj(yaw_start, yaw_end, yaw_traj);
 
             fsm = TURN;

@@ -79,7 +79,6 @@ void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& 
 
 void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu)
 {
-    // cout<<1<<endl;
     ugv_odom = *odom;
     ugv_imu = *imu;
 
@@ -141,11 +140,6 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
     // cout<<2<<endl;
     if(uav_odom_initiated && ugv_odom_initiated || true)
     {
-
-        
-
-        // cout<<cam_current_PoseMsg.pose.orientation.x<<endl;
-
         camPose = ugvOdomPose * body_to_cam_Pose;;
 
         set_total_bound(
@@ -174,7 +168,6 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
         // cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<endl;
 
         alan_all_sfc_pub.publish(polyh_array_pub_object);
-
 
     }
 
