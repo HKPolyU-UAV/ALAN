@@ -113,6 +113,10 @@ namespace alan
 
             alan_visualization::Polyhedron polyh_total_bound;
             alan_visualization::PolyhedronArray polyh_array_pub_object;
+            Eigen::VectorXd c2b_ugv;
+            Eigen::Quaterniond q_c2b;
+            Eigen::Translation3d t_c2b;
+            Eigen::Isometry3d body_to_cam_Pose;
 
             //functions
             Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
@@ -127,7 +131,7 @@ namespace alan
             alan_visualization::Tangent set_plane_bound(Eigen::Vector3d v, Eigen::Vector3d pt);
 
             void construct_sfc();
-            Eigen::Vector3d get_outer_product(Eigen::Vector3d v1, Eigen::Vector3d v2);            
+            Eigen::Vector3d get_outer_product(Eigen::Vector3d v1, Eigen::Vector3d v2);          
                     
 
             virtual void onInit() 
@@ -164,6 +168,34 @@ namespace alan
                 q4 = rpy2q(rpy_temp);
                 cam_4axis_vector = q_rotate_vector(q4, cam_center_vector);
 
+                c2b_ugv.resize(6);
+    
+                c2b_ugv(0) = 0.38;
+                c2b_ugv(1) = 0.0;
+                c2b_ugv(2) = 0.12;
+
+                c2b_ugv(3) = 0;//r
+                c2b_ugv(4) = (-20.0) / 180.0 * M_PI;//p
+                c2b_ugv(5) = M_PI;//y
+
+                q_c2b = rpy2q(
+                    Eigen::Vector3d(
+                        c2b_ugv(3),
+                        c2b_ugv(4),
+                        c2b_ugv(5)
+                    )
+                );
+
+                t_c2b = Eigen::Translation3d(
+                    c2b_ugv(0),
+                    c2b_ugv(1),
+                    c2b_ugv(2)
+                );
+
+                body_to_cam_Pose = t_c2b * q_c2b;
+
+
+
 
             //subscriber
                 uav_sub_odom.subscribe(nh, "/uav/mavros/local_position/odom", 1);
@@ -179,10 +211,7 @@ namespace alan
                 ugvsync_.reset(new ugvsync( ugvMySyncPolicy(10), ugv_sub_odom, ugv_sub_imu));            
                 ugvsync_->registerCallback(boost::bind(&MsgSyncNodelet::ugv_msg_callback, this, _1, _2));                
 
-                
-                cam_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-                                    ("/imu_pose", 1, &MsgSyncNodelet::cam_msg_callback, this);
-                
+            
 
             //publisher
                 uav_pub_AlanPlannerMsg = nh.advertise<alan_landing_planning::AlanPlannerMsg>

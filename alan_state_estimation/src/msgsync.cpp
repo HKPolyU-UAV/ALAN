@@ -137,34 +137,37 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
 
     ugv_pub_AlanPlannerMsg.publish(ugv_alan_msg);
 
-}
 
-void alan::MsgSyncNodelet::cam_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
-{
     // cout<<2<<endl;
     if(uav_odom_initiated && ugv_odom_initiated || true)
     {
-        cam_current_PoseMsg = *pose;
 
-        Eigen::Translation3d t_(
-            cam_current_PoseMsg.pose.position.x,
-            cam_current_PoseMsg.pose.position.y,
-            cam_current_PoseMsg.pose.position.z
-        );
-
-        Eigen::Quaterniond q_(
-            cam_current_PoseMsg.pose.orientation.w,
-            cam_current_PoseMsg.pose.orientation.x,
-            cam_current_PoseMsg.pose.orientation.y,
-            cam_current_PoseMsg.pose.orientation.z
-        );
+        
 
         // cout<<cam_current_PoseMsg.pose.orientation.x<<endl;
 
-        camPose = t_ * q_;
+        camPose = ugvOdomPose * body_to_cam_Pose;;
 
-        set_total_bound(t_, q_);
-        set_all_sfc(t_, q_);
+        set_total_bound(
+            Eigen::Translation3d(
+                camPose.translation().x(),
+                camPose.translation().y(),
+                camPose.translation().z()
+            ),
+            Eigen::Quaterniond(
+                camPose.rotation()
+            )
+        );
+        set_all_sfc(
+            Eigen::Translation3d(
+                camPose.translation().x(),
+                camPose.translation().y(),
+                camPose.translation().z()
+            ),
+            Eigen::Quaterniond(
+                camPose.rotation()
+            )
+        );
         
         //remember to add ugv camera translation                
         // alan_sfc_pub.publish(polyh_total_bound);
@@ -172,11 +175,11 @@ void alan::MsgSyncNodelet::cam_msg_callback(const geometry_msgs::PoseStamped::Co
 
         alan_all_sfc_pub.publish(polyh_array_pub_object);
 
-        ros::Duration(0.02).sleep();
 
     }
-    
+
 }
+
 
 Eigen::Vector3d alan::MsgSyncNodelet::q2rpy(Eigen::Quaterniond q)
 {

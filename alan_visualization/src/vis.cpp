@@ -122,48 +122,50 @@ void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
     //when ugv is directly received from vicon,
     //or gps
     //or other info directly received from body frame...
-    // ugv_pose.pose.position.x = msg->position.x;
-    // ugv_pose.pose.position.y = msg->position.y;
-    // ugv_pose.pose.position.z = msg->position.z;
+    ugv_pose.pose.position.x = msg->position.x;
+    ugv_pose.pose.position.y = msg->position.y;
+    ugv_pose.pose.position.z = msg->position.z;
 
-    // ugv_pose.pose.orientation.w = msg->orientation.ow;
-    // ugv_pose.pose.orientation.x = msg->orientation.ox;
-    // ugv_pose.pose.orientation.y = msg->orientation.oy;
-    // ugv_pose.pose.orientation.z = msg->orientation.oz;
+    ugv_pose.pose.orientation.w = msg->orientation.ow;
+    ugv_pose.pose.orientation.x = msg->orientation.ox;
+    ugv_pose.pose.orientation.y = msg->orientation.oy;
+    ugv_pose.pose.orientation.z = msg->orientation.oz;
+
+    // cout<<ugv_pose.pose.orientation.w<<endl;
 
     //when ugv is received from imu_pose (in GH034)
     // cout<<c2b_ugv(4)<<endl;
 
-    Eigen::Quaterniond c2b_local = rpy2q(
-        Eigen::Vector3d(    
-            c2b_ugv(3),
-            c2b_ugv(4),
-            c2b_ugv(5)            
-        )
-    );
+    // Eigen::Quaterniond c2b_local = rpy2q(
+    //     Eigen::Vector3d(    
+    //         c2b_ugv(3),
+    //         c2b_ugv(4),
+    //         c2b_ugv(5)            
+    //     )
+    // );
     
 
-    c2b_local = Eigen::Quaterniond(
-        msg->orientation.ow,
-        msg->orientation.ox,
-        msg->orientation.oy,
-        msg->orientation.oz
-    ) * c2b_local ;//order matters
+    // c2b_local = Eigen::Quaterniond(
+    //     msg->orientation.ow,
+    //     msg->orientation.ox,
+    //     msg->orientation.oy,
+    //     msg->orientation.oz
+    // ) * c2b_local ;//order matters
 
-    Eigen::Vector3d p_temp = q_rotate_vector(
-        c2b_local, 
-        Eigen::Vector3d(c2b_ugv(0), c2b_ugv(1), c2b_ugv(2))
-    );
+    // Eigen::Vector3d p_temp = q_rotate_vector(
+    //     c2b_local, 
+    //     Eigen::Vector3d(c2b_ugv(0), c2b_ugv(1), c2b_ugv(2))
+    // );
 
 
-    ugv_pose.pose.orientation.w = c2b_local.w();
-    ugv_pose.pose.orientation.x = c2b_local.x();
-    ugv_pose.pose.orientation.y = c2b_local.y();
-    ugv_pose.pose.orientation.z = c2b_local.z();
+    // ugv_pose.pose.orientation.w = c2b_local.w();
+    // ugv_pose.pose.orientation.x = c2b_local.x();
+    // ugv_pose.pose.orientation.y = c2b_local.y();
+    // ugv_pose.pose.orientation.z = c2b_local.z();
 
-    ugv_pose.pose.position.x = msg->position.x - p_temp(0);
-    ugv_pose.pose.position.y = msg->position.y - p_temp(1);
-    ugv_pose.pose.position.z = msg->position.z - p_temp(2);    
+    // ugv_pose.pose.position.x = msg->position.x - p_temp(0);
+    // ugv_pose.pose.position.y = msg->position.y - p_temp(1);
+    // ugv_pose.pose.position.z = msg->position.z - p_temp(2);    
 
     rviz_ugv_initiated = true;
 
@@ -219,7 +221,7 @@ int main(int argc, char** argv)
 
     rviz_vehicle ugv_rviz = rviz_vehicle(nh, UGV, true, c2b_ugv);
 
-    ros::Rate visrate(20);
+    ros::Rate visrate(60);
 
     while(ros::ok())
     {

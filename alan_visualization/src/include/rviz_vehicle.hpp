@@ -322,7 +322,6 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
 
 
-
 void rviz_vehicle::setupUAV()
 {
     robot_marker_temp.header.stamp = ros::Time::now();

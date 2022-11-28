@@ -39,7 +39,9 @@
 
     <node name="virtual_car" pkg="alan_state_estimation" type="virtual_car" output="screen">
         <param name="/pathcsv" type="string" value="$(find alan_state_estimation)/launch/configs/virtual_car_path/block_path.csv"/>
-        <param name="/max_vel" type="double" value="0.5"/>
+        <param name="/max_vel_lin" type="double" value="1.0"/>
+        <param name="/max_vel_ang" type="double" value="45"/>
+        <param name="/pub_freq" type="int" value="200"/>
     </node>
 
 
