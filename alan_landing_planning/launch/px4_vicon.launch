@@ -1,0 +1,6 @@
+<launch>
+
+  <include file="$(find alan_landing_planning)/launch/px4.launch" />
+  <!-- <include file="$(find alan_landing_planning)/launch/px4_car.launch" /> -->
+
+</launch>

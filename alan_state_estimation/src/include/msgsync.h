@@ -58,7 +58,7 @@ namespace alan
             typedef message_filters::Synchronizer<uavMySyncPolicy> uavsync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<uavsync> uavsync_;     
 
-            typedef message_filters::sync_policies::ExactTime<nav_msgs::Odometry, sensor_msgs::Imu> ugvMySyncPolicy;
+            typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Imu> ugvMySyncPolicy;
             typedef message_filters::Synchronizer<ugvMySyncPolicy> ugvsync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<ugvsync> ugvsync_;
             
@@ -205,7 +205,7 @@ namespace alan
                 uavsync_.reset(new uavsync( uavMySyncPolicy(10), uav_sub_odom, uav_sub_imu));            
                 uavsync_->registerCallback(boost::bind(&MsgSyncNodelet::uav_msg_callback, this, _1, _2));
 
-                ugv_sub_odom.subscribe(nh, "/ugv/mavros/local_position/odom", 1);
+                ugv_sub_odom.subscribe(nh, "/ugv/alan_estimation/final_odom", 1);
                 ugv_sub_imu.subscribe(nh, "/ugv/mavros/imu/data", 1);
                 ///ugv/mavros/imu/data
 

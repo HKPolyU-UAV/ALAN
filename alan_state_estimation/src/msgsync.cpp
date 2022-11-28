@@ -79,6 +79,7 @@ void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& 
 
 void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu)
 {
+    // cout<<1<<endl;
     ugv_odom = *odom;
     ugv_imu = *imu;
 
