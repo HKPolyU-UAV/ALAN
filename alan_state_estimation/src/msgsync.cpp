@@ -162,6 +162,12 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
                 camPose.rotation()
             )
         );
+
+        cam_pos_world = Eigen::Vector3d(
+            camPose.translation().x(),
+            camPose.translation().y(),
+            camPose.translation().z()
+        );
         
         //remember to add ugv camera translation                
         // alan_sfc_pub.publish(polyh_total_bound);
@@ -287,10 +293,10 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
     );      
                 
 
-    Eigen::Vector2d ugv2uav_vector = 
+    Eigen::Vector2d cam2uav_vector = 
         Eigen::Vector2d(
-            uav_pos_world.x() - ugv_pos_world.x(),
-            uav_pos_world.y() - ugv_pos_world.y()
+            uav_pos_world.x() - cam_pos_world.x(),
+            uav_pos_world.y() - cam_pos_world.y()
         );
 
     // cout<<ugv2uav_vector.norm()<<endl;
@@ -303,8 +309,8 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
 
     double cam2uav_xy_d = 0;
 
-    if(ugv2uav_vector.norm() > 2.5)
-        cam2uav_xy_d = ugv2uav_vector.norm() + 1.0;
+    if(cam2uav_vector.norm() > 2.5)
+        cam2uav_xy_d = cam2uav_vector.norm() + 1.0;
     else
         cam2uav_xy_d = 2.5;
 

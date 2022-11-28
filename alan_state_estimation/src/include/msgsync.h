@@ -97,6 +97,7 @@ namespace alan
 
             geometry_msgs::PoseStamped cam_current_PoseMsg;
             Eigen::Isometry3d camPose;
+            Eigen::Vector3d cam_pos_world;
 
 
         //SFC RVIZ

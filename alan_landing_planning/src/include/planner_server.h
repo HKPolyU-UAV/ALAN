@@ -29,6 +29,7 @@ class planner_server
         double x;
         double y;
         double z;
+        double yaw;
     }waypts;
 
 private:
@@ -72,8 +73,15 @@ private:
     bool land();
 
     bool shutdown();
-
+    
+    //block trajectory (for data collection)
     Eigen::Vector4d set_following_target_pose();
+    Eigen::Vector4d set_uav_block_pose();
+    bool set_block_traj = false;
+    vector<vector<Eigen::Vector3d>> block_traj_pts;
+    int wp_counter_i = 0;
+    int traj_counter_j = 0;
+
 
     //trajectory
     vector<alan_landing_planning::AlanPlannerMsg> traj_optimized;
@@ -86,8 +94,8 @@ private:
     //private variables
 
     string fsm_state = IDLE;
-    waypts takeoff_hover_pt = {0,0,1.2};
-    waypts landing_hover_pt = {0,0,1.2};
+    waypts takeoff_hover_pt = {0,0,1.2,0};
+    waypts landing_hover_pt = {0,0,1.2,0};
     
     Eigen::Isometry3d uavOdomPose, ugvOdomPose;
 

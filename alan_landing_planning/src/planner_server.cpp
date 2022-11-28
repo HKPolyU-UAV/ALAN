@@ -64,6 +64,10 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
     set_btraj_info();
     set_btraj_inequality_dynamic();
 
+    //block traj temp
+    set_block_traj = true;
+
+
 }
 
 planner_server::~planner_server()
@@ -364,7 +368,8 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     // uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
 
 
-    target_traj_pose = set_following_target_pose();
+    // target_traj_pose = set_following_target_pose();
+    target_traj_pose = set_uav_block_pose();
     // target_traj_pose(0) = 2.2;
     // target_traj_pose(1) = 0;
     // target_traj_pose(2) = 1.5;
@@ -409,11 +414,11 @@ bool planner_server::land()
     uav_traj_twist_desired.linear.z = twist_result(2);
     uav_traj_twist_desired.angular.z = twist_result(3);
 
-    if(plan_traj)
-    {        
-        set_alan_b_traj();
-        plan_traj = false;
-    }
+    // if(plan_traj)
+    // {        
+    //     set_alan_b_traj();
+    //     plan_traj = false;
+    // }
 
 
 
@@ -445,8 +450,6 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
     // error[0] = 1;
     double iteration_time = ros::Time::now().toSec() - pid_last_request;
 
-    // cout<<"time: "<<iteration_time<<endl<<endl;
-
     if(iteration_time > 1)
     {
         pid_last_request = ros::Time::now().toSec();
@@ -459,7 +462,6 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
 
     error = setpoint - pose;
 
-    // cout<<"error:\n"<<error<<endl;;
 
     if (error[3] >= M_PI)
     {
@@ -496,10 +498,6 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
         
     }
 
-    // cout<<endl;
-
-    // cout<<"output here:\n"<<output<<endl;
-
     for (int i = 0; i < 3; i++)
     {
         if(output[i] >  1)
@@ -513,18 +511,14 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
         }
     }
 
-    // cout<<"output here:\n"<<output<<endl<<endl;;
-
     last_error = error;
     pid_last_request = ros::Time::now().toSec();
 
     return output;
 }
 
-
 Eigen::Vector4d planner_server::set_following_target_pose()
 {
-
     Eigen::Vector3d uav_following_pt = Eigen::Vector3d(-1.6, 0, take_off_height);    
     uav_following_pt =  ugvOdomPose.rotation() * uav_following_pt 
         + Eigen::Vector3d(
@@ -532,21 +526,181 @@ Eigen::Vector4d planner_server::set_following_target_pose()
             ugvOdomPose.translation().y(),
             ugvOdomPose.translation().z()
         );
-    // cout<<uav_following_pt<<endl;
 
     // uav_following_pt.x() = ugv_traj_pose(0);
     // uav_following_pt.y() = ugv_traj_pose(1);
     // uav_following_pt.z() = ugv_traj_pose(2) + take_off_height;
-    
-    double yaw = ugv_traj_pose(3);
 
     Eigen::Vector4d following_target_pose;
     following_target_pose(0) = uav_following_pt(0);
     following_target_pose(1) = uav_following_pt(1);
     following_target_pose(2) = uav_following_pt(2);
-    following_target_pose(3) = yaw;
+    following_target_pose(3) = ugv_traj_pose(3);
 
     return following_target_pose;
+}
+
+Eigen::Vector4d planner_server::set_uav_block_pose()
+{
+    
+    if(set_block_traj)
+    { 
+        double vel = 0.2;
+
+        Eigen::Vector3d v1 = Eigen::Vector3d(-1.0,  0.5, take_off_height);
+        Eigen::Vector3d v2 = Eigen::Vector3d(-1.0, -0.5, take_off_height);
+        Eigen::Vector3d v3 = Eigen::Vector3d(-3.0, -0.5, take_off_height);
+        Eigen::Vector3d v4 = Eigen::Vector3d(-3.0,  0.5, take_off_height);
+
+        vector<Eigen::Vector3d> traj_per_edge;
+        
+        //v1-v2
+        double delta_distance = (v1 - v2).norm();
+        int total_time_steps = delta_distance / vel * _pub_freq;
+
+        for(int i = 0; i < total_time_steps; i++)
+        {
+            traj_per_edge.emplace_back(Eigen::Vector3d(
+                v1.x(),
+                v1.y() + (v2.y() - v1.y()) / total_time_steps * (i + 1),
+                v1.z()
+            ));
+        }
+        block_traj_pts.emplace_back(traj_per_edge);
+
+        //v2-v3
+        traj_per_edge.clear();
+        delta_distance = (v2 - v3).norm();
+        total_time_steps = delta_distance / vel * _pub_freq;
+
+        for(int i = 0; i < total_time_steps; i++)
+        {
+            traj_per_edge.emplace_back(Eigen::Vector3d(
+                v2.x() + (v3.x() - v2.x()) / total_time_steps * (i + 1),
+                v2.y(),
+                v2.z()
+            ));
+        }
+        block_traj_pts.emplace_back(traj_per_edge);
+
+        //v3-v4
+        traj_per_edge.clear();
+        delta_distance = (v3 - v4).norm();
+        total_time_steps = delta_distance / vel * _pub_freq;
+
+        for(int i = 0; i < total_time_steps; i++)
+        {
+            traj_per_edge.emplace_back(Eigen::Vector3d(
+                v3.x(),
+                v3.y() + (v4.y() - v3.y()) / total_time_steps * (i + 1),
+                v3.z()
+            ));
+        }
+        block_traj_pts.emplace_back(traj_per_edge);
+
+        //v4-v1
+        traj_per_edge.clear();
+        delta_distance = (v1 - v4).norm();
+        total_time_steps = delta_distance / vel * _pub_freq;
+
+        for(int i = 0; i < total_time_steps; i++)
+        {
+            traj_per_edge.emplace_back(Eigen::Vector3d(
+                v4.x() + (v1.x() - v4.x()) / total_time_steps * (i + 1),
+                v4.y(),
+                v4.z()
+            ));
+        }
+        block_traj_pts.emplace_back(traj_per_edge);
+
+        cout<<"total edge:..."<<block_traj_pts.size()<<endl;
+        cout<<"v1-v2:........"<<block_traj_pts[0].size()<<endl;
+        cout<<"v2-v3:........"<<block_traj_pts[1].size()<<endl;
+        cout<<"v3-v4:........"<<block_traj_pts[2].size()<<endl;
+        cout<<"v4-v1:........"<<block_traj_pts[3].size()<<endl;
+
+
+        //repeat 4 times        
+
+        for(int i = 0; i < 4; i++)
+        {
+            block_traj_pts.emplace_back(block_traj_pts[i]);
+        }
+
+        for(int i = 0; i < 4; i++)
+        {
+            block_traj_pts.emplace_back(block_traj_pts[i]);
+        }
+
+        for(int i = 0; i < 4; i++)
+        {
+            block_traj_pts.emplace_back(block_traj_pts[i]);
+        }
+        
+        cout<<"total edge:..."<<block_traj_pts.size()<<endl;
+
+        set_block_traj = false;
+        wp_counter_i = 0;
+        traj_counter_j = 0;
+        // cout<<block_traj_pts[0][0].x()<<endl;
+        // cout<<block_traj_pts[0][0].y()<<endl;
+        // cout<<block_traj_pts[0][0].z()<<endl;
+    }
+
+
+    Eigen::Vector4d following_target_pose;
+    // cout<<traj_counter_j<<endl;
+    // cout<<wp_counter_i<<endl<<endl;
+
+    if(traj_counter_j == block_traj_pts[wp_counter_i].size())
+    {
+        wp_counter_i++;
+        traj_counter_j = 0;
+        landing_hover_pt.x = uav_traj_pose(0);
+        landing_hover_pt.y = uav_traj_pose(1);
+        landing_hover_pt.z = uav_traj_pose(2);
+        landing_hover_pt.yaw = uav_traj_pose(3);
+    }
+        
+    
+    if(wp_counter_i == block_traj_pts.size())
+    {
+        following_target_pose(0) = landing_hover_pt.x;
+        following_target_pose(1) = landing_hover_pt.y;
+        following_target_pose(2) = landing_hover_pt.z;
+        following_target_pose(3) = landing_hover_pt.yaw;
+
+        return following_target_pose;
+    }
+    else 
+    {
+        Eigen::Vector3d uav_following_pt;
+        uav_following_pt.x() = block_traj_pts[wp_counter_i][traj_counter_j].x();
+        uav_following_pt.y() = block_traj_pts[wp_counter_i][traj_counter_j].y();
+        uav_following_pt.z() = block_traj_pts[wp_counter_i][traj_counter_j].z();
+
+        uav_following_pt =  ugvOdomPose.rotation() * uav_following_pt 
+        + Eigen::Vector3d(
+            ugvOdomPose.translation().x(),
+            ugvOdomPose.translation().y(),
+            ugvOdomPose.translation().z()
+        );
+
+        traj_counter_j ++;
+        // cout<<traj_counter_j<<endl;
+        // cout<<"here"<<endl;
+        following_target_pose(0) = uav_following_pt.x();
+        following_target_pose(1) = uav_following_pt.y();
+        following_target_pose(2) = uav_following_pt.z();
+        following_target_pose(3) = ugv_traj_pose(3);
+
+        // cout<<following_target_pose<<endl<<endl;
+
+
+        return following_target_pose;
+        
+    }
+
 }
 
 void planner_server::set_alan_b_traj()

@@ -81,7 +81,7 @@ Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v){
 void set_virtual_car_odom(Eigen::VectorXd xyzrpy)
 {        
     std::default_random_engine generator;
-    std::normal_distribution<double> dist(0, 0.0005);
+    std::normal_distribution<double> dist(0, 0.0001);
 
     generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
     
@@ -130,7 +130,7 @@ void set_virtual_car_imu(Eigen::VectorXd xyzrpy)
 void set_virtual_pose_twist_imu(Eigen::VectorXd xyzrpy)
 {        
     std::default_random_engine generator;
-    std::normal_distribution<double> dist(0, 0.001);
+    std::normal_distribution<double> dist(0, 0.0001);
 
     generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
 
@@ -293,6 +293,16 @@ void set_current_traj_wp(Eigen::VectorXd& xyzrpy)
             ROS_ERROR("PLEASE CHECK...FSM");
         }
 
+    }
+    else
+    {
+        xyzrpy(0) = current_traj_wp(0);
+        xyzrpy(1) = current_traj_wp(1);
+        xyzrpy(2) = 0;
+
+        xyzrpy(3) = 0.0;//r
+        xyzrpy(4) = 0.0;//p
+        xyzrpy(5) = current_traj_wp(5);//y
     }
         
 
