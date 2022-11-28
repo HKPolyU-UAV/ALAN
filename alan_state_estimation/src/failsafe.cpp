@@ -126,46 +126,46 @@ void set_uav_final_odom()
         pow(deltaz, 2)  
     );
 
-    if(delta_total > failsafe_threshold)
-    {
-        uav_final_odom.pose.pose.position.x = uav_vrpn_pose.pose.position.x;
-        uav_final_odom.pose.pose.position.y = uav_vrpn_pose.pose.position.y;
-        uav_final_odom.pose.pose.position.z = uav_vrpn_pose.pose.position.z;
+    // if(delta_total > failsafe_threshold)
+    // {
+    uav_final_odom.pose.pose.position.x = uav_vrpn_pose.pose.position.x;
+    uav_final_odom.pose.pose.position.y = uav_vrpn_pose.pose.position.y;
+    uav_final_odom.pose.pose.position.z = uav_vrpn_pose.pose.position.z;
 
-        uav_final_odom.pose.pose.orientation.w = uav_vrpn_pose.pose.orientation.w;
-        uav_final_odom.pose.pose.orientation.x = uav_vrpn_pose.pose.orientation.x;
-        uav_final_odom.pose.pose.orientation.y = uav_vrpn_pose.pose.orientation.y;
-        uav_final_odom.pose.pose.orientation.z = uav_vrpn_pose.pose.orientation.z;        
+    uav_final_odom.pose.pose.orientation.w = uav_vrpn_pose.pose.orientation.w;
+    uav_final_odom.pose.pose.orientation.x = uav_vrpn_pose.pose.orientation.x;
+    uav_final_odom.pose.pose.orientation.y = uav_vrpn_pose.pose.orientation.y;
+    uav_final_odom.pose.pose.orientation.z = uav_vrpn_pose.pose.orientation.z;        
 
-        uav_final_odom.twist.twist.linear.x = uav_vrpn_twist.twist.linear.x;
-        uav_final_odom.twist.twist.linear.y = uav_vrpn_twist.twist.linear.y;
-        uav_final_odom.twist.twist.linear.z = uav_vrpn_twist.twist.linear.z;
+    uav_final_odom.twist.twist.linear.x = uav_vrpn_twist.twist.linear.x;
+    uav_final_odom.twist.twist.linear.y = uav_vrpn_twist.twist.linear.y;
+    uav_final_odom.twist.twist.linear.z = uav_vrpn_twist.twist.linear.z;
 
-        uav_final_odom.twist.twist.angular.x = uav_vrpn_twist.twist.angular.x;
-        uav_final_odom.twist.twist.angular.y = uav_vrpn_twist.twist.angular.y;
-        uav_final_odom.twist.twist.angular.z = uav_vrpn_twist.twist.angular.z;
+    uav_final_odom.twist.twist.angular.x = uav_vrpn_twist.twist.angular.x;
+    uav_final_odom.twist.twist.angular.y = uav_vrpn_twist.twist.angular.y;
+    uav_final_odom.twist.twist.angular.z = uav_vrpn_twist.twist.angular.z;
         
-    }
-    else
-    {
-        uav_final_odom.pose.pose.position.x = uav_led_pose.pose.position.x;
-        uav_final_odom.pose.pose.position.y = uav_led_pose.pose.position.y;
-        uav_final_odom.pose.pose.position.z = uav_led_pose.pose.position.z;
+    // }
+    // else
+    // {
+    //     uav_final_odom.pose.pose.position.x = uav_led_pose.pose.position.x;
+    //     uav_final_odom.pose.pose.position.y = uav_led_pose.pose.position.y;
+    //     uav_final_odom.pose.pose.position.z = uav_led_pose.pose.position.z;
 
-        uav_final_odom.pose.pose.orientation.w = uav_led_pose.pose.orientation.w;
-        uav_final_odom.pose.pose.orientation.x = uav_led_pose.pose.orientation.x;
-        uav_final_odom.pose.pose.orientation.y = uav_led_pose.pose.orientation.y;
-        uav_final_odom.pose.pose.orientation.z = uav_led_pose.pose.orientation.z;        
+    //     uav_final_odom.pose.pose.orientation.w = uav_led_pose.pose.orientation.w;
+    //     uav_final_odom.pose.pose.orientation.x = uav_led_pose.pose.orientation.x;
+    //     uav_final_odom.pose.pose.orientation.y = uav_led_pose.pose.orientation.y;
+    //     uav_final_odom.pose.pose.orientation.z = uav_led_pose.pose.orientation.z;        
 
-        uav_final_odom.twist.twist.linear.x = uav_led_twist.twist.linear.x;
-        uav_final_odom.twist.twist.linear.y = uav_led_twist.twist.linear.y;
-        uav_final_odom.twist.twist.linear.z = uav_led_twist.twist.linear.z;
+    //     uav_final_odom.twist.twist.linear.x = uav_led_twist.twist.linear.x;
+    //     uav_final_odom.twist.twist.linear.y = uav_led_twist.twist.linear.y;
+    //     uav_final_odom.twist.twist.linear.z = uav_led_twist.twist.linear.z;
 
-        uav_final_odom.twist.twist.angular.x = uav_led_twist.twist.angular.x;
-        uav_final_odom.twist.twist.angular.y = uav_led_twist.twist.angular.y;
-        uav_final_odom.twist.twist.angular.z = uav_led_twist.twist.angular.z;
+    //     uav_final_odom.twist.twist.angular.x = uav_led_twist.twist.angular.x;
+    //     uav_final_odom.twist.twist.angular.y = uav_led_twist.twist.angular.y;
+    //     uav_final_odom.twist.twist.angular.z = uav_led_twist.twist.angular.z;
         
-    }
+    // }
 
 }
 
@@ -209,7 +209,7 @@ int main(int argc, char** argv)
     // }
 
     ros::Subscriber vrpn_uavpose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-                    ("/mavros/vision_pose/pose", 1, uav_pose_callback);
+                    ("/uav/mavros/vision_pose/pose", 1, uav_pose_callback);
 
     ros::Subscriber vrpn_uavtwist_sub = nh.subscribe<geometry_msgs::TwistStamped>
                     ("/vrpn_client_node/gh034_nano/twist", 1, uav_twist_callback);
@@ -252,15 +252,15 @@ int main(int argc, char** argv)
                     ("/ugv/alan_estimation/final_odom", 1, true);
                         
 
-    ros::Rate failsafeRate(60.0);
+    ros::Rate failsafeRate(200.0);
 
     while (ros::ok())
     {                
-        if(uav_vrpn_pose_initiated && uav_vrpn_twist_initiated)
-        {
-            set_uav_final_odom();
-            uav_odom_final_pub.publish(uav_final_odom);
-        }
+        // if(uav_vrpn_pose_initiated && uav_vrpn_twist_initiated)
+        // {
+        //     set_uav_final_odom();
+        //     uav_odom_final_pub.publish(uav_final_odom);
+        // }
                         
         if(ugv_vrpn_pose_initiated && ugv_vrpn_twist_initiated)
         {

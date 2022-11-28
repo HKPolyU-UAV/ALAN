@@ -207,9 +207,9 @@ int main(int argc, char** argv)
     //r, p, y
     c2b_ugv.resize(6);
 
-    c2b_ugv(0) = 0.38;
+    c2b_ugv(0) = 0.57;
     c2b_ugv(1) = 0.0;
-    c2b_ugv(2) = 0.12;
+    c2b_ugv(2) = 0.025;
 
     c2b_ugv(3) = 0;//r
     c2b_ugv(4) = (-20.0) / 180.0 * M_PI;//p

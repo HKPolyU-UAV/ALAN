@@ -544,10 +544,10 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
     { 
         double vel = 0.2;
 
-        Eigen::Vector3d v1 = Eigen::Vector3d(-1.0,  0.5, take_off_height);
-        Eigen::Vector3d v2 = Eigen::Vector3d(-1.0, -0.5, take_off_height);
-        Eigen::Vector3d v3 = Eigen::Vector3d(-3.0, -0.5, take_off_height);
-        Eigen::Vector3d v4 = Eigen::Vector3d(-3.0,  0.5, take_off_height);
+        Eigen::Vector3d v1 = Eigen::Vector3d(-0.5,  0.2, take_off_height);
+        Eigen::Vector3d v2 = Eigen::Vector3d(-0.5, -0.2, take_off_height);
+        Eigen::Vector3d v3 = Eigen::Vector3d(-2.5, -0.2, take_off_height);
+        Eigen::Vector3d v4 = Eigen::Vector3d(-2.5,  0.2, take_off_height);
 
         vector<Eigen::Vector3d> traj_per_edge;
         
