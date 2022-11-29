@@ -154,7 +154,7 @@ classnamepath:
   "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names"
 
 LANDING_DISTANCE:
-  1.6
+  4.5
 
 MAD_x_threshold:
   0.1
@@ -164,7 +164,7 @@ MAD_z_threshold:
   0.1
 
 BINARY_threshold:
- 160
+ 20
 
 failsafe_threshold:
   0.20

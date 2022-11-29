@@ -209,7 +209,7 @@ int main(int argc, char** argv)
     // }
 
     ros::Subscriber vrpn_uavpose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-                    ("/uav/mavros/vision_pose/pose", 1, uav_pose_callback);
+                    ("/uav/mavros/vision_position/pose", 1, uav_pose_callback);
 
     ros::Subscriber vrpn_uavtwist_sub = nh.subscribe<geometry_msgs::TwistStamped>
                     ("/vrpn_client_node/gh034_nano/twist", 1, uav_twist_callback);
@@ -228,19 +228,19 @@ int main(int argc, char** argv)
                     ("/vrpn_client_node/gh034_car/twist", 1, ugv_twist_callback);
 
 
-    message_filters::Subscriber<geometry_msgs::PoseStamped> ugv_pose_sub;
-    message_filters::Subscriber<geometry_msgs::PoseStamped> led_pose_sub;
+    // message_filters::Subscriber<geometry_msgs::PoseStamped> ugv_pose_sub;
+    // message_filters::Subscriber<geometry_msgs::PoseStamped> led_pose_sub;
 
-    typedef message_filters::sync_policies::ApproximateTime
-        <geometry_msgs::PoseStamped, geometry_msgs::PoseStamped> ledMysyncPolicy;
-    typedef message_filters::Synchronizer<ledMysyncPolicy> ledsync;
-    boost::shared_ptr<ledsync> ledsync_;
+    // typedef message_filters::sync_policies::ApproximateTime
+    //     <geometry_msgs::PoseStamped, geometry_msgs::PoseStamped> ledMysyncPolicy;
+    // typedef message_filters::Synchronizer<ledMysyncPolicy> ledsync;
+    // boost::shared_ptr<ledsync> ledsync_;
 
-    ugv_pose_sub.subscribe(nh, "", 1);
-    led_pose_sub.subscribe(nh, "", 1);
+    // ugv_pose_sub.subscribe(nh, "", 1);
+    // led_pose_sub.subscribe(nh, "", 1);
 
-    ledsync_.reset(new ledsync(ledMysyncPolicy(10), ugv_pose_sub, led_pose_sub));
-    ledsync_->registerCallback(boost::bind(&ugv_led_callback, _1, _2));
+    // ledsync_.reset(new ledsync(ledMysyncPolicy(10), ugv_pose_sub, led_pose_sub));
+    // ledsync_->registerCallback(boost::bind(&ugv_led_callback, _1, _2));
 
 
 

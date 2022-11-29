@@ -55,7 +55,8 @@ namespace alan
             vector<correspondence::matchid> LED_v_Detected;
             vector<Eigen::Vector3d> pts_on_body_frame;
 
-            Sophus::SE3d pose_global;
+            Eigen::Matrix4d pose_global;
+            Sophus::SE3d pose_global_sophus;
             vector<correspondence::matchid> corres_global;
             
         //temp objects
@@ -81,10 +82,14 @@ namespace alan
             image_transport::Publisher pubimage;
             image_transport::Publisher pubimage_input;
             //functions
+        
 
         //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
             Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
+
+        //main process
+            void recursive_filtering(cv::Mat& frame, cv::Mat depth);
 
         //pnp + BA
             void solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
@@ -110,13 +115,20 @@ namespace alan
         
         //twist for correspondence search
             //objects
-            Sophus::SE3d global_twist;
-            double time_stamped_k0 = 0;
-            double time_stamped_k1 = 0;
-            // double delta_t = 0;
+            Eigen::Matrix4d pose_previous;
+            Eigen::Matrix4d pose_current;
+            Eigen::Matrix4d pose_predicted;            
+            double time_previous = 0;
+            double time_current = 0;
+            double time_predicted = 0;
+            int global_counter = 0;
+            //functions
+            void set_pose_predict();
+            Eigen::VectorXd logarithmMap(Eigen::Matrix4d trans);
+            Eigen::Matrix4d exponentialMap(Eigen::VectorXd& twist);
+            Eigen::Matrix3d skewSymmetricMatrix(Eigen::Vector3d w);
 
-        //main process
-            void recursive_filtering(cv::Mat& frame, cv::Mat depth);
+        
 
         //outlier rejection 
             //objects
@@ -131,9 +143,14 @@ namespace alan
             geometry_msgs::PoseStamped uav_pose_estimated;
             //functions
             void map_SE3_to_pose(Sophus::SE3d pose);
+            void set_image_to_publish(
+                double t2, 
+                double t1, 
+                const sensor_msgs::CompressedImageConstPtr & rgbmsg
+            );
 
             virtual void onInit()
-            {
+            {                
                 ros::NodeHandle& nh = getNodeHandle();
                 ROS_INFO("LED Nodelet Initiated...");
                                 
@@ -190,10 +207,9 @@ namespace alan
                 uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>
                                 ("/alan_state_estimation/LED/pose", 1, true);
 
-            }
+                pose_global.setIdentity();
 
-            public:
-                static void* PubMainLoop(void* tmp);
+            }
 
     };
 

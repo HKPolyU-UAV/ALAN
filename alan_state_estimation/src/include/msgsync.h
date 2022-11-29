@@ -195,11 +195,8 @@ namespace alan
 
                 body_to_cam_Pose = t_c2b * q_c2b;
 
-
-
-
             //subscriber
-                uav_sub_odom.subscribe(nh, "/uav/mavros/local_position/odom", 1);
+                uav_sub_odom.subscribe(nh, "/uav/alan_estimation/final_odom", 1);
                 uav_sub_imu.subscribe(nh, "/uav/mavros/imu/data", 1);
 
                 uavsync_.reset(new uavsync( uavMySyncPolicy(10), uav_sub_odom, uav_sub_imu));            
@@ -211,7 +208,6 @@ namespace alan
 
                 ugvsync_.reset(new ugvsync( ugvMySyncPolicy(10), ugv_sub_odom, ugv_sub_imu));            
                 ugvsync_->registerCallback(boost::bind(&MsgSyncNodelet::ugv_msg_callback, this, _1, _2));                
-
             
 
             //publisher

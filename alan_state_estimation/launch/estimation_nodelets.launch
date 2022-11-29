@@ -25,12 +25,12 @@
     </node> -->
 
     <!-- LedNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="led" args="standalone alan/LedNodelet alan_master" output="screen">
-    </node>  -->
+    <node pkg="nodelet" type="nodelet" name="led" args="load alan/LedNodelet alan_master" output="screen">
+    </node> 
 
 
     <!-- MsgSyncNodelet -->
-    <node pkg="nodelet" type="nodelet" name="msgsync" args="standalone alan/MsgSyncNodelet alan_master" output="screen">
+    <node pkg="nodelet" type="nodelet" name="msgsync" args="load alan/MsgSyncNodelet alan_master" output="screen">
     </node> 
 
     <node name="failsafe" pkg="alan_state_estimation" type="failsafe" output="screen">            
