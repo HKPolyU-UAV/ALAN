@@ -301,9 +301,7 @@ void set_current_traj_wp(Eigen::VectorXd& xyzrpy)
         xyzrpy(3) = 0.0;//r
         xyzrpy(4) = 0.0;//p
         xyzrpy(5) = current_traj_wp(5);//y
-    }
-        
-
+    }        
 
 }
 
