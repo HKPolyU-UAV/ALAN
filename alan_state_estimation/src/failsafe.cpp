@@ -2,9 +2,9 @@
 
 void alan::FailSafeNodelet::uav_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& pose, const geometry_msgs::TwistStamped::ConstPtr& twist)
 {
-    ROS_INFO("uav_msg_callback");
-    uav_final_odom.header.stamp.sec = ros::Time::now().toSec();
-    uav_final_odom.header.stamp.nsec = ros::Time::now().toNSec();
+    // ROS_INFO("uav_msg_callback");
+    uav_final_odom.header.stamp = ros::Time::now();
+    // uav_final_odom.header.stamp.nsec = ros::Time::now().toNSec() - ros::Time::now().toSec() * 1e9;
     
     uav_final_odom.pose.pose.position.x = pose->pose.position.x;
     uav_final_odom.pose.pose.position.y = pose->pose.position.y;
@@ -30,9 +30,9 @@ void alan::FailSafeNodelet::uav_msg_callback(const geometry_msgs::PoseStamped::C
 
 void alan::FailSafeNodelet::ugv_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& pose, const geometry_msgs::TwistStamped::ConstPtr& twist)
 {
-    ROS_INFO("ugv_msg_callback");
-    ugv_final_odom.header.stamp.sec = ros::Time::now().toSec();
-    ugv_final_odom.header.stamp.nsec = ros::Time::now().toNSec();
+    // ROS_INFO("ugv_msg_callback");
+    ugv_final_odom.header.stamp = ros::Time::now();
+    // ugv_final_odom.header.stamp.nsec = ros::Time::now().toNSec();
     
     ugv_final_odom.pose.pose.position.x = pose->pose.position.x;
     ugv_final_odom.pose.pose.position.y = pose->pose.position.y;

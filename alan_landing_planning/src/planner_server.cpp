@@ -6,7 +6,8 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
     nh.getParam("/alan_master_planner_node/final_landing_x", final_landing_x);
     nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
     nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
-
+    nh.getParam("/alan_master_planner_node/ugv_height", ugv_height);
+    cout<<"ugv_height: "<<ugv_height<<endl;
     nh.getParam("/alan_master_planner_node/v_max", v_max);
     nh.getParam("/alan_master_planner_node/a_max", a_max);
 
@@ -204,7 +205,7 @@ void planner_server::fsm_manager()
 
             takeoff_hover_pt.x = uav_current_AlanPlannerMsg.position.x;
             takeoff_hover_pt.y = uav_current_AlanPlannerMsg.position.y;
-            takeoff_hover_pt.z = take_off_height;
+            takeoff_hover_pt.z = take_off_height + ugv_height;
 
             uav_traj_pose_desired.pose.position.x = takeoff_hover_pt.x;
             uav_traj_pose_desired.pose.position.y = takeoff_hover_pt.y;
@@ -366,8 +367,8 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     // uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
 
 
-    // target_traj_pose = set_following_target_pose();
-    target_traj_pose = set_uav_block_pose();
+    target_traj_pose = set_following_target_pose();
+    // target_traj_pose = set_uav_block_pose();
     // target_traj_pose(0) = 2.2;
     // target_traj_pose(1) = 0;
     // target_traj_pose(2) = 1.5;
@@ -517,7 +518,7 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
 
 Eigen::Vector4d planner_server::set_following_target_pose()
 {
-    Eigen::Vector3d uav_following_pt = Eigen::Vector3d(-1.6, 0, take_off_height);    
+    Eigen::Vector3d uav_following_pt = Eigen::Vector3d(-0.4, 0, take_off_height);    
     uav_following_pt =  ugvOdomPose.rotation() * uav_following_pt 
         + Eigen::Vector3d(
             ugvOdomPose.translation().x(),
@@ -543,6 +544,8 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
     if(set_block_traj)
     { 
         double vel = 0.2;
+
+        cout<<"take_off_height: "<<take_off_height<<endl;
 
         Eigen::Vector3d v1 = Eigen::Vector3d(-0.0,  0.2, take_off_height);
         Eigen::Vector3d v2 = Eigen::Vector3d(-0.0, -0.2, take_off_height);

@@ -25,8 +25,8 @@
     </node> -->
 
     <!-- LedNodelet -->
-    <node pkg="nodelet" type="nodelet" name="led" args="load alan/LedNodelet alan_master" output="screen">
-    </node> 
+    <!-- <node pkg="nodelet" type="nodelet" name="led" args="load alan/LedNodelet alan_master" output="screen">
+    </node>  -->
 
 
     <!-- MsgSyncNodelet -->
@@ -41,12 +41,12 @@
         <remap from="/uav/alan_estimation/final_pose" to="/mavros/vision_pose/pose" />
     </node> -->
 
-    <node name="virtual_car" pkg="alan_state_estimation" type="virtual_car" output="screen">
+    <!-- <node name="virtual_car" pkg="alan_state_estimation" type="virtual_car" output="screen">
         <param name="/pathcsv" type="string" value="$(find alan_state_estimation)/launch/configs/virtual_car_path/ugv_still_path.csv"/>
         <param name="/max_vel_lin" type="double" value="0.75"/>
         <param name="/max_vel_ang" type="double" value="15"/>
         <param name="/pub_freq" type="int" value="200"/>
-    </node>
+    </node> -->
 
 
 </launch>

@@ -4,7 +4,9 @@ m: 3
 
 d_order: 4 # p v a j
 
-take_off_height: 0.45
+take_off_height: 0.2
+ugv_height: 0.259
+
 
 final_landing_x: 1.0
 

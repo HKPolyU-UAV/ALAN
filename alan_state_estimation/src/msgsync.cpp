@@ -1,6 +1,6 @@
 #include "include/msgsync.h"
 
-void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu)
+void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const geometry_msgs::TwistStamped::ConstPtr& imu)
 {
     uav_odom = *odom;
     uav_imu = *imu;
@@ -36,9 +36,9 @@ void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& 
 
     uav_odom_initiated = true;
     
-    uav_acc_body(0) = uav_imu.linear_acceleration.x;
-    uav_acc_body(1) = uav_imu.linear_acceleration.y;
-    uav_acc_body(2) = uav_imu.linear_acceleration.z;
+    uav_acc_body(0) = uav_imu.twist.linear.x;
+    uav_acc_body(1) = uav_imu.twist.linear.y;
+    uav_acc_body(2) = uav_imu.twist.linear.z;
 
     uav_acc_world = uavOdomPose.rotation() * uav_acc_body;
     uav_alan_msg.acceleration.x = uav_acc_body(0);

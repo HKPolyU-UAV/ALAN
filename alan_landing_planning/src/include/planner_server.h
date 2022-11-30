@@ -155,6 +155,7 @@ private:
     double final_corridor_height = 0;
     double final_corridor_length = 0;
     double take_off_height = 0;
+    double ugv_height = 0.0;
 
     alan_traj::bezier_info btraj_info;
 

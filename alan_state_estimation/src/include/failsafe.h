@@ -28,6 +28,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/sync_policies/exact_time.h>
 #include <sensor_msgs/Image.h>
 
 #include <opencv2/aruco.hpp>
@@ -88,7 +89,7 @@ namespace alan
             {
                 ros::NodeHandle& nh = getMTNodeHandle();
                     
-                vrpn_uavpose_sub.subscribe(nh, "/uav/mavros/vision_position/pose", 1);
+                vrpn_uavpose_sub.subscribe(nh, "/uav/mavros/vision_pose/pose", 1);
                 vrpn_uavtwist_sub.subscribe(nh, "/vrpn_client_node/gh034_nano/twist", 1);
                 
                 uavsync_.reset(new uavsync( uavMySyncPolicy(10), vrpn_uavpose_sub, vrpn_uavtwist_sub));            

@@ -48,13 +48,13 @@ namespace alan
         //subscriber
             //objects
             message_filters::Subscriber<nav_msgs::Odometry> uav_sub_odom;
-            message_filters::Subscriber<sensor_msgs::Imu> uav_sub_imu;
+            message_filters::Subscriber<geometry_msgs::TwistStamped> uav_sub_imu;
 
             message_filters::Subscriber<nav_msgs::Odometry> ugv_sub_odom;
             message_filters::Subscriber<sensor_msgs::Imu> ugv_sub_imu;
             ros::Subscriber cam_pose_sub;
             
-            typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Imu> uavMySyncPolicy;
+            typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, geometry_msgs::TwistStamped> uavMySyncPolicy;
             typedef message_filters::Synchronizer<uavMySyncPolicy> uavsync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<uavsync> uavsync_;     
 
@@ -63,14 +63,14 @@ namespace alan
             boost::shared_ptr<ugvsync> ugvsync_;
             
             //functions
-            void uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
+            void uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const geometry_msgs::TwistStamped::ConstPtr& imu);
             void ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
 
             void cam_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& imu);
                           
             //private variables 
             nav_msgs::Odometry uav_odom;
-            sensor_msgs::Imu uav_imu;  
+            geometry_msgs::TwistStamped uav_imu;  
 
             nav_msgs::Odometry ugv_odom;
             sensor_msgs::Imu ugv_imu; 
@@ -137,7 +137,7 @@ namespace alan
 
             virtual void onInit() 
             {
-                ros::NodeHandle& nh = getNodeHandle();    
+                ros::NodeHandle& nh = getMTNodeHandle();    
                 ROS_INFO("MSGSYNC Nodelet Initiated...");
 
             //param
@@ -197,7 +197,7 @@ namespace alan
 
             //subscriber
                 uav_sub_odom.subscribe(nh, "/uav/alan_estimation/final_odom", 1);
-                uav_sub_imu.subscribe(nh, "/uav/mavros/imu/data", 1);
+                uav_sub_imu.subscribe(nh, "/vrpn_client_node/gh034_nano/accel", 1);
 
                 uavsync_.reset(new uavsync( uavMySyncPolicy(10), uav_sub_odom, uav_sub_imu));            
                 uavsync_->registerCallback(boost::bind(&MsgSyncNodelet::uav_msg_callback, this, _1, _2));
