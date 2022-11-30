@@ -27,4 +27,11 @@
             Launch nodelet here. MsgSync it is.
         </description>
     </class>
+    <class name ="alan/FailSafeNodelet" 
+        type="alan::FailSafeNodelet"
+        base_class_type="nodelet::Nodelet">
+        <description>
+            Launch nodelet here. FailSafe it is.
+        </description>
+    </class>
 </library> 

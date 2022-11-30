@@ -113,6 +113,7 @@ add_library(alan
     src/yolo.cpp
     src/led.cpp
     src/msgsync.cpp
+    src/failsafe.cpp
     )
 
 ## Specify libraries to link a library or executable target against
@@ -144,21 +145,21 @@ target_link_libraries(virtual_car
   )
 
 
-  add_executable(failsafe
-   src/failsafe.cpp
-)
+#   add_executable(failsafe
+#    src/failsafe.cpp
+# )
 
-target_link_libraries(failsafe
-  ${OpenCV_LIBRARIES}
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-  ${OSQP_LIBRARIES}
-  # mosek64
-  # qpOASES
-  osqp::osqp
-  OsqpEigen#::OsqpEigen
+# target_link_libraries(failsafe
+#   ${OpenCV_LIBRARIES}
+#   ${catkin_LIBRARIES}
+#   ${PCL_LIBRARIES}
+#   ${OSQP_LIBRARIES}
+#   # mosek64
+#   # qpOASES
+#   osqp::osqp
+#   OsqpEigen#::OsqpEigen
   
   
-  )
+#   )
 
 

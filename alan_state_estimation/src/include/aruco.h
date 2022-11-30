@@ -39,6 +39,8 @@
 
 
 #include <pthread.h>
+#include <boost/thread.hpp>
+
 
 namespace alan
 {
@@ -149,6 +151,8 @@ namespace alan
                 subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&ArucoNodelet::camera_callback, this, _1, _2));
+
+                
 
                 ROS_INFO("Aruco Nodelet Initiated...");
             }     

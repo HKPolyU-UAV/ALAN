@@ -126,9 +126,7 @@ namespace alan
             void set_pose_predict();
             Eigen::VectorXd logarithmMap(Eigen::Matrix4d trans);
             Eigen::Matrix4d exponentialMap(Eigen::VectorXd& twist);
-            Eigen::Matrix3d skewSymmetricMatrix(Eigen::Vector3d w);
-
-        
+            Eigen::Matrix3d skewSymmetricMatrix(Eigen::Vector3d w);        
 
         //outlier rejection 
             //objects
