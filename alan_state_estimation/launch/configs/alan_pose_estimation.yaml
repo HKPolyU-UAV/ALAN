@@ -4,7 +4,7 @@ LANDING_DISTANCE:
 cam_intrinsics_435: [420.8413391113281, 420.5337829589844, 425.25750732421875, 257.9543762207031]#fx fy cx cy
 cam_intrinsics_455: [633.8505249023438, 633.3872680664062, 641.8981323242188, 387.1009521484375]#fx fy cx cy
 
-cam_extrinsics_d455: [0,0,0,0,0]#xyzrpy
+cam_extrinsics_d455: [0.57, 0.0, 0.025, 0.0, -20.0, 180.0]#xyzrpy
 
 
 cam_FOV_H: 90
@@ -155,6 +155,9 @@ cfgpath:
 
 classnamepath:
   "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names"
+
+CAR_POSE_TOPIC:
+  "/vrpn_client_node/gh034_car/pose"
 
 
 

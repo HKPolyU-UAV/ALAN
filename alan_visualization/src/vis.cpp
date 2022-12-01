@@ -142,7 +142,7 @@ void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
     //         c2b_ugv(4),
     //         c2b_ugv(5)            
     //     )
-    // );
+    // );//cam_to_body
     
 
     // c2b_local = Eigen::Quaterniond(
@@ -151,6 +151,7 @@ void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
     //     msg->orientation.oy,
     //     msg->orientation.oz
     // ) * c2b_local ;//order matters
+    //got cam, 
 
     // Eigen::Vector3d p_temp = q_rotate_vector(
     //     c2b_local, 

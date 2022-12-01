@@ -52,7 +52,43 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
 
 void alan::LedNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
-    ugv_pose = *pose;
+    ugv_pose_msg = *pose;
+    ugv_pose_msg.header.frame_id = "map";
+    
+    Eigen::Translation3d t_(
+        ugv_pose_msg.pose.position.x,
+        ugv_pose_msg.pose.position.y,
+        ugv_pose_msg.pose.position.z
+    );
+
+    Eigen::Quaterniond q_(
+        ugv_pose_msg.pose.orientation.w,
+        ugv_pose_msg.pose.orientation.x,
+        ugv_pose_msg.pose.orientation.y,
+        ugv_pose_msg.pose.orientation.z  
+    );
+
+    ugv_pose = t_ * q_;//body_to_world
+
+    Eigen::Vector3d cam_origin;
+    cam_origin.setZero();
+
+    Eigen::Quaterniond q_cam =  q_ * q_c2b;
+    Eigen::Vector3d t_cam = q_.toRotationMatrix() * t_c2b.translation() + t_.translation();
+
+    geometry_msgs::PoseStamped pose_cam;
+    pose_cam.header.frame_id = "map";
+    pose_cam.pose.position.x = t_cam.x();
+    pose_cam.pose.position.y = t_cam.y();
+    pose_cam.pose.position.z = t_cam.z();
+
+    pose_cam.pose.orientation.w = q_cam.w();
+    pose_cam.pose.orientation.x = q_cam.x();
+    pose_cam.pose.orientation.y = q_cam.y();
+    pose_cam.pose.orientation.z = q_cam.z();
+
+    campose_pub.publish(pose_cam);    
+    ugvpose_pub.publish(ugv_pose_msg);
 }
 
 void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
@@ -172,17 +208,8 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
                 }
 
                 BA_error = reproject_error;
-                
 
-                pose_predicted.block(0,0,3,3) = pose_global_sophus.rotationMatrix();
-                pose_predicted(0,3) = pose_global_sophus.translation().x();
-                pose_predicted(1,3) = pose_global_sophus.translation().y();
-                pose_predicted(2,3) = pose_global_sophus.translation().z();
-                pose_predicted(3,3) = 1.0;
-
-                
             }            
-            // pause();
         }    
         else
             LED_tracker_initiated_or_tracked = false;
@@ -201,7 +228,6 @@ inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Soph
     result = cameraMat * (R * P + t); 
 
     Eigen::Vector2d result2d;
-    
 
     result2d <<
         result(0)/result(2), 
@@ -734,12 +760,6 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 
         optimize(pose_global_sophus, pts_on_body_frame, pts_2d_detect_correct_order);
 
-        pose_predicted.block(0,0,3,3) = pose_global_sophus.rotationMatrix();
-        pose_predicted(0,3) = pose_global_sophus.translation().x();
-        pose_predicted(1,3) = pose_global_sophus.translation().y();
-        pose_predicted(2,3) = pose_global_sophus.translation().z();
-        pose_predicted(3,3) = 1.0;
-
         return true;
     }
     else
@@ -889,12 +909,6 @@ bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, c
         }        
 
         optimize(pose_global_sophus, pts_on_body_frame, pts_2d_detect_correct_order);
-
-        pose_predicted.block(0,0,3,3) = pose_global_sophus.rotationMatrix();
-        pose_predicted(0,3) = pose_global_sophus.translation().x();
-        pose_predicted(1,3) = pose_global_sophus.translation().y();
-        pose_predicted(2,3) = pose_global_sophus.translation().z();
-        pose_predicted(3,3) = 1.0;
 
         return true;
     }
@@ -1063,21 +1077,25 @@ inline double alan::LedNodelet::calculate_MAD(vector<double> norm_of_points)
     return MAD;
 }
 
-void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+Eigen::Vector3d alan::LedNodelet::q2rpy(Eigen::Quaterniond q) 
 {
-    uav_pose_estimated.pose.position.x = pose.translation().x();
-    uav_pose_estimated.pose.position.y = pose.translation().y();
-    uav_pose_estimated.pose.position.z = pose.translation().z();
+    return q.toRotationMatrix().eulerAngles(2,1,0);
+}
 
-    Eigen::Quaterniond q = Eigen::Quaterniond(pose.rotationMatrix());
-    uav_pose_estimated.pose.orientation.w = q.w();
-    uav_pose_estimated.pose.orientation.x = q.x();
-    uav_pose_estimated.pose.orientation.y = q.y();
-    uav_pose_estimated.pose.orientation.z = q.z();
+Eigen::Quaterniond alan::LedNodelet::rpy2q(Eigen::Vector3d rpy)
+{
+    Eigen::AngleAxisd rollAngle(rpy(0), Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd pitchAngle(rpy(1), Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd yawAngle(rpy(2), Eigen::Vector3d::UnitZ());
 
-    uav_pose_estimated.header.stamp = led_pose_stamp;
+    Eigen::Quaterniond q = yawAngle * pitchAngle * rollAngle;
 
-    uavpose_pub.publish(uav_pose_estimated);
+    return q;
+}
+
+Eigen::Vector3d alan::LedNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v)
+{
+    return q * v;
 }
 
 void alan::LedNodelet::set_image_to_publish(double t2, double t1, const sensor_msgs::CompressedImageConstPtr & rgbmsg)
@@ -1112,6 +1130,23 @@ void alan::LedNodelet::set_image_to_publish(double t2, double t1, const sensor_m
     for_visual_input.image = frame_input;
     this->pubimage_input.publish(for_visual_input.toImageMsg());    
 
+}
+
+void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+{
+    uav_pose_estimated.pose.position.x = pose.translation().x();
+    uav_pose_estimated.pose.position.y = pose.translation().y();
+    uav_pose_estimated.pose.position.z = pose.translation().z();
+
+    Eigen::Quaterniond q = Eigen::Quaterniond(pose.rotationMatrix());
+    uav_pose_estimated.pose.orientation.w = q.w();
+    uav_pose_estimated.pose.orientation.x = q.x();
+    uav_pose_estimated.pose.orientation.y = q.y();
+    uav_pose_estimated.pose.orientation.z = q.z();
+
+    uav_pose_estimated.header.stamp = led_pose_stamp;
+
+    uavpose_pub.publish(uav_pose_estimated);
 }
 
 

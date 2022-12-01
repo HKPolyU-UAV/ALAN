@@ -44,25 +44,37 @@ namespace alan
 {
     class LedNodelet : public nodelet::Nodelet
     {
-        //general objects
+        //primary objects
+            //frames
             cv::Mat frame, display, hsv;
             cv::Mat frame_input;
             cv::Mat im_with_keypoints;
             cv::Mat frame_initial_thresholded;
+            
+            //time related
             ros::Time led_pose_stamp;
-
             double last_request = 0;
 
+            //camera related
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
-            vector<correspondence::matchid> LED_v_Detected;
-            vector<Eigen::Vector3d> pts_on_body_frame;
+            Eigen::VectorXd cameraEX;
+            Eigen::Quaterniond q_c2b;
+            Eigen::Translation3d t_c2b;
 
-            Eigen::Matrix4d pose_global;
-            Sophus::SE3d pose_global_sophus;
-            geometry_msgs::PoseStamped ugv_pose;
+            //LED config and correspondences
+            vector<Eigen::Vector3d> pts_on_body_frame;
             vector<correspondence::matchid> corres_global;
+
+            //poses
+            Sophus::SE3d pose_global_sophus;
+            geometry_msgs::PoseStamped ugv_pose_msg;
+            Eigen::Isometry3d ugv_pose;
+            Eigen::Isometry3d cam_pose;
+            Eigen::Isometry3d ugv_cam_pose;
+            Eigen::Vector3d cam_origin_in_body_frame, cam_origin;
             
-        //temp objects
+            
+        //secondary objects
             // double temp = 0;
             int i = 0;
             bool nodelet_activated = false;
@@ -87,7 +99,7 @@ namespace alan
         
         //publisher 
             //objects
-            ros::Publisher uavpose_pub;
+            ros::Publisher uavpose_pub, campose_pub, ugvpose_pub;
             image_transport::Publisher pubimage;
             image_transport::Publisher pubimage_input;
             //functions
@@ -105,7 +117,7 @@ namespace alan
                 //converge problem need to be solved //-> fuck you, your Jacobian was wrong
             void solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
 
-        //LED ext   raction tool
+        //LED extraction tool
             //objects
             double LANDING_DISTANCE = 0;
             int BINARY_THRES = 0;
@@ -145,6 +157,11 @@ namespace alan
                 double t1, 
                 const sensor_msgs::CompressedImageConstPtr & rgbmsg
             );
+            //functions
+            Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
+            Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
+            Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
+
 
             virtual void onInit()
             {                
@@ -162,8 +179,8 @@ namespace alan
             //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
-                nh.getParam("/alan_master/cam_intrinsics_455", intrinsics_list);                
-                                
+                nh.getParam("/alan_master/cam_intrinsics_455", intrinsics_list);
+                                                
                 for(int i = 0; i < 4; i++)
                 {
                     intrinsics_value[i] = intrinsics_list[i];
@@ -172,8 +189,45 @@ namespace alan
                 cameraMat <<    
                     intrinsics_value[0], 0, intrinsics_value[2], 
                     0, intrinsics_value[1], intrinsics_value[3],
-                    0, 0,  1;      
+                    0, 0,  1; 
 
+                cameraEX.resize(6);
+                XmlRpc::XmlRpcValue extrinsics_list;
+                
+                nh.getParam("/alan_master/cam_extrinsics_d455", extrinsics_list);                
+                
+                for(int i = 0; i < 6; i++)
+                {                    
+                    cameraEX(i) = extrinsics_list[i];                    
+                }
+
+                cout<<Eigen::Vector3d(
+                        cameraEX(3) / 180 * M_PI,
+                        cameraEX(4) / 180 * M_PI,
+                        cameraEX(5) / 180 * M_PI              
+                    )<<endl;
+
+                q_c2b = rpy2q(
+                    Eigen::Vector3d(
+                        cameraEX(3) / 180 * M_PI,
+                        cameraEX(4) / 180 * M_PI,
+                        cameraEX(5) / 180 * M_PI              
+                    )
+                );
+
+                t_c2b.translation() = Eigen::Vector3d(
+                    cameraEX(0),
+                    cameraEX(1),
+                    cameraEX(2)
+                );
+
+                q_c2b = q_c2b;
+                t_c2b.translation() = Eigen::Vector3d(0,0,0) + t_c2b.translation();
+
+                ugv_cam_pose = t_c2b * q_c2b;//cam_to_body
+                // cam_origin_in_body_frame = ugv_cam_pose.rotation() * Eigen::Vector3d(0.0,0.0,0.0) + ugv_cam_pose.translation();
+                // cam_origin = cam_origin_in_body_frame;
+                // ugv_cam_pose = ugv_cam_pose.inverse();
 
             //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
@@ -209,16 +263,17 @@ namespace alan
 
                 uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>
                                 ("/alan_state_estimation/LED/pose", 1, true);
-
-                pose_global.setIdentity();
-                pose_current.setIdentity();
-                pose_predicted.setIdentity();
-                pose_previous.setIdentity();
+                campose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                                ("/alan_state_estimation/CAM/pose", 1, true); 
+                ugvpose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                                ("/alan_state_estimation/UGV/pose", 1, true); 
+                
 
             }
 
 
             //below is the courtesy of UZH Faessler et al.
+            //which was tested but NOT used in this project
             /*
                 @inproceedings{faessler2014monocular,
                 title={A monocular pose estimation system based on infrared leds},
@@ -229,7 +284,7 @@ namespace alan
                 organization={IEEE}
                 }
             */
-           
+
             //twist for correspondence search
             //objects
             Eigen::Matrix4d pose_previous;
