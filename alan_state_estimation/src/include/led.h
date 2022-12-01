@@ -151,6 +151,7 @@ namespace alan
             //objects
             cv::Point3f pcl_center_point_wo_outlier_previous;
             double MAD_x_threshold = 0, MAD_y_threshold = 0, MAD_z_threshold = 0;
+            double min_blob_size = 0;
             //functions
             void reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect);
             double calculate_MAD(vector<double> norm_of_points);
