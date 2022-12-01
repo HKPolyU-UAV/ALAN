@@ -63,6 +63,7 @@ namespace alan
             cv::Mat frame0, frame1;
             cv::Mat final_frame;
             cv::Mat im_with_keypoints;
+            cv::Mat frame_initial_thresholded;
 
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             vector<correspondence::matchid> LED_v_Detected;
@@ -79,6 +80,7 @@ namespace alan
             double BA_error = 0;
             double depth_avg_of_all = 0;
             vector<cv::KeyPoint> blobs_for_initialize;
+            int _width = 0, _height = 0;
 
         //subscribe                                    
             //objects
@@ -117,7 +119,8 @@ namespace alan
             int BINARY_THRES = 0;
             vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
             vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
-                        
+            void get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected);
+
         //initiation & correspondence 
             //objects
             correspondence::munkres hungarian1; 
@@ -152,7 +155,7 @@ namespace alan
             void reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect);
             double calculate_MAD(vector<double> norm_of_points);
         //reinitialization
-            bool reinitialization(vector<Eigen::Vector2d> pts_2d_detect, vector<Eigen::Vector3d> pts_3d_pcl_detect);
+            bool reinitialization(vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth);
 
             
         //publish
@@ -171,9 +174,11 @@ namespace alan
                 ros::NodeHandle& nh = getNodeHandle();
                 ROS_INFO("LED Nodelet Initiated...");
                                 
-            //load POT_extract config
+            //load POI_extract config
                 nh.getParam("/alan_master/LANDING_DISTANCE", LANDING_DISTANCE);     
                 nh.getParam("/alan_master/BINARY_threshold", BINARY_THRES);     
+                nh.getParam("/alan_master/frame_width", _width);
+                nh.getParam("/alan_master/frame_height", _height);
 
                 
             //load camera intrinsics
@@ -225,6 +230,9 @@ namespace alan
                                 ("/alan_state_estimation/LED/pose", 1, true);
 
                 pose_global.setIdentity();
+                pose_current.setIdentity();
+                pose_predicted.setIdentity();
+                pose_previous.setIdentity();
 
             }
 

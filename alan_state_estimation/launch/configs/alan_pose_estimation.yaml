@@ -166,5 +166,10 @@ MAD_z_threshold:
 BINARY_threshold:
  20
 
+frame_width:
+ 848
+frame_height:
+ 480
+
 failsafe_threshold:
-  0.20
+ 0.20
