@@ -42,21 +42,8 @@
 
 namespace alan
 {
-    
-
     class LedNodelet : public nodelet::Nodelet
     {
-        public:
-        private:
-        cv::Scalar colorTab[6] =
-        {//B G R
-            cv::Scalar(0, 0, 255),
-            cv::Scalar(0,255,0),
-            cv::Scalar(255,100,100),
-            cv::Scalar(255,0,255),
-            cv::Scalar(0,255,255),
-            cv::Scalar(255,0,0)
-        };
         //general objects
             cv::Mat frame, display, hsv;
             cv::Mat frame_input;
@@ -97,6 +84,7 @@ namespace alan
             //functions
             void camera_callback(const sensor_msgs::CompressedImage::ConstPtr & rgbimage, const sensor_msgs::Image::ConstPtr & depth);            
             void ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
+        
         //publisher 
             //objects
             ros::Publisher uavpose_pub;
@@ -104,7 +92,6 @@ namespace alan
             image_transport::Publisher pubimage_input;
             //functions
         
-
         //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
             Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
@@ -135,9 +122,7 @@ namespace alan
             //functions       
             void correspondence_search_kmeans(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected);        
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
-        
-              
-
+                      
         //outlier rejection 
             //objects
             cv::Point3f pcl_center_point_wo_outlier_previous;
@@ -149,7 +134,6 @@ namespace alan
 
         //reinitialization
             bool reinitialization(vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth);
-
             
         //publish
             //objects
@@ -233,6 +217,19 @@ namespace alan
 
             }
 
+
+            //below is the courtesy of UZH Faessler et al.
+            /*
+                @inproceedings{faessler2014monocular,
+                title={A monocular pose estimation system based on infrared leds},
+                author={Faessler, Matthias and Mueggler, Elias and Schwabe, Karl and Scaramuzza, Davide},
+                booktitle={2014 IEEE international conference on robotics and automation (ICRA)},
+                pages={907--913},
+                year={2014},
+                organization={IEEE}
+                }
+            */
+           
             //twist for correspondence search
             //objects
             Eigen::Matrix4d pose_previous;
