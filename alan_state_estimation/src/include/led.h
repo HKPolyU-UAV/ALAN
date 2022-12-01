@@ -60,10 +60,11 @@ namespace alan
         //general objects
             cv::Mat frame, display, hsv;
             cv::Mat frame_input;
-            cv::Mat frame0, frame1;
-            cv::Mat final_frame;
             cv::Mat im_with_keypoints;
             cv::Mat frame_initial_thresholded;
+            ros::Time led_pose_stamp;
+
+            double last_request = 0;
 
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             vector<correspondence::matchid> LED_v_Detected;
@@ -71,16 +72,19 @@ namespace alan
 
             Eigen::Matrix4d pose_global;
             Sophus::SE3d pose_global_sophus;
+            geometry_msgs::PoseStamped ugv_pose;
             vector<correspondence::matchid> corres_global;
             
         //temp objects
             // double temp = 0;
             int i = 0;
+            bool nodelet_activated = false;
             int detect_no = 0;
             double BA_error = 0;
             double depth_avg_of_all = 0;
             vector<cv::KeyPoint> blobs_for_initialize;
             int _width = 0, _height = 0;
+            string CAR_POSE_TOPIC;
 
         //subscribe                                    
             //objects
@@ -89,9 +93,10 @@ namespace alan
             typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> MySyncPolicy;
             typedef message_filters::Synchronizer<MySyncPolicy> sync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<sync> sync_;                    
+            ros::Subscriber ugv_pose_sub;
             //functions
-            void camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth);
-            
+            void camera_callback(const sensor_msgs::CompressedImage::ConstPtr & rgbimage, const sensor_msgs::Image::ConstPtr & depth);            
+            void ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
         //publisher 
             //objects
             ros::Publisher uavpose_pub;
@@ -128,24 +133,10 @@ namespace alan
             bool LED_tracker_initiated_or_tracked = false;
             int LED_no;
             //functions       
-            void correspondence_search(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected);
             void correspondence_search_kmeans(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected);        
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
         
-        //twist for correspondence search
-            //objects
-            Eigen::Matrix4d pose_previous;
-            Eigen::Matrix4d pose_current;
-            Eigen::Matrix4d pose_predicted;            
-            double time_previous = 0;
-            double time_current = 0;
-            double time_predicted = 0;
-            int global_counter = 0;
-            //functions
-            void set_pose_predict();
-            Eigen::VectorXd logarithmMap(Eigen::Matrix4d trans);
-            Eigen::Matrix4d exponentialMap(Eigen::VectorXd& twist);
-            Eigen::Matrix3d skewSymmetricMatrix(Eigen::Vector3d w);        
+              
 
         //outlier rejection 
             //objects
@@ -155,6 +146,7 @@ namespace alan
             //functions
             void reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect);
             double calculate_MAD(vector<double> norm_of_points);
+
         //reinitialization
             bool reinitialization(vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth);
 
@@ -172,7 +164,7 @@ namespace alan
 
             virtual void onInit()
             {                
-                ros::NodeHandle& nh = getNodeHandle();
+                ros::NodeHandle& nh = getMTNodeHandle();
                 ROS_INFO("LED Nodelet Initiated...");
                                 
             //load POI_extract config
@@ -180,6 +172,7 @@ namespace alan
                 nh.getParam("/alan_master/BINARY_threshold", BINARY_THRES);     
                 nh.getParam("/alan_master/frame_width", _width);
                 nh.getParam("/alan_master/frame_height", _height);
+                nh.getParam("/alan_master/CAR_POSE_TOPIC", CAR_POSE_TOPIC);
 
                 
             //load camera intrinsics
@@ -220,6 +213,9 @@ namespace alan
                 subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
+                
+                ugv_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
+                    (CAR_POSE_TOPIC, 1, &LedNodelet::ugv_pose_callback, this);
 
             //publish
                 image_transport::ImageTransport image_transport_(nh);
@@ -237,6 +233,20 @@ namespace alan
 
             }
 
+            //twist for correspondence search
+            //objects
+            Eigen::Matrix4d pose_previous;
+            Eigen::Matrix4d pose_current;
+            Eigen::Matrix4d pose_predicted;            
+            double time_previous = 0;
+            double time_current = 0;
+            double time_predicted = 0;
+            int global_counter = 0;
+            //functions
+            void set_pose_predict();
+            Eigen::VectorXd logarithmMap(Eigen::Matrix4d trans);
+            Eigen::Matrix4d exponentialMap(Eigen::VectorXd& twist);
+            Eigen::Matrix3d skewSymmetricMatrix(Eigen::Vector3d w);  
     };
 
     PLUGINLIB_EXPORT_CLASS(alan::LedNodelet, nodelet::Nodelet)
