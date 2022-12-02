@@ -67,11 +67,14 @@ namespace alan
 
             //poses
             Sophus::SE3d pose_global_sophus;
-            geometry_msgs::PoseStamped ugv_pose_msg;
+            geometry_msgs::PoseStamped ugv_pose_msg, uav_pose_msg;
             Eigen::Isometry3d ugv_pose;
             Eigen::Isometry3d cam_pose;
-            Eigen::Isometry3d ugv_cam_pose;
+            Eigen::Isometry3d ugv_cam_pose, led_cambody_pose;
+            Eigen::Isometry3d led_pose;
             Eigen::Vector3d cam_origin_in_body_frame, cam_origin;
+            Eigen::Quaterniond q_cam, q_led_cambody;
+            Eigen::Vector3d t_cam, t_led_cambody;
             
             
         //secondary objects
@@ -84,6 +87,7 @@ namespace alan
             vector<cv::KeyPoint> blobs_for_initialize;
             int _width = 0, _height = 0;
             string CAR_POSE_TOPIC;
+            string UAV_POSE_TOPIC;
 
         //subscribe                                    
             //objects
@@ -92,14 +96,15 @@ namespace alan
             typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> MySyncPolicy;
             typedef message_filters::Synchronizer<MySyncPolicy> sync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<sync> sync_;                    
-            ros::Subscriber ugv_pose_sub;
+            ros::Subscriber ugv_pose_sub, uav_pose_sub;
             //functions
             void camera_callback(const sensor_msgs::CompressedImage::ConstPtr & rgbimage, const sensor_msgs::Image::ConstPtr & depth);            
             void ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
+            void uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
         
         //publisher 
             //objects
-            ros::Publisher uavpose_pub, campose_pub, ugvpose_pub;
+            ros::Publisher ledpose_pub, campose_pub, ugvpose_pub, uavpose_pub;
             image_transport::Publisher pubimage;
             image_transport::Publisher pubimage_input;
             //functions
@@ -149,7 +154,7 @@ namespace alan
             
         //publish
             //objects
-            geometry_msgs::PoseStamped uav_pose_estimated;
+            geometry_msgs::PoseStamped led_pose_estimated;
             //functions
             void map_SE3_to_pose(Sophus::SE3d pose);
             void set_image_to_publish(
@@ -174,6 +179,7 @@ namespace alan
                 nh.getParam("/alan_master/frame_width", _width);
                 nh.getParam("/alan_master/frame_height", _height);
                 nh.getParam("/alan_master/CAR_POSE_TOPIC", CAR_POSE_TOPIC);
+                nh.getParam("/alan_master/UAV_POSE_TOPIC", UAV_POSE_TOPIC);
 
                 
             //load camera intrinsics
@@ -225,6 +231,16 @@ namespace alan
                 t_c2b.translation() = Eigen::Vector3d(0,0,0) + t_c2b.translation();
 
                 ugv_cam_pose = t_c2b * q_c2b;//cam_to_body
+
+                Eigen::Matrix<double, 4, 4> cam_to_body;
+                cam_to_body << 
+                    0,0,1,0,
+                    -1,0,0,0,
+                    0,-1,0,0,
+                    0,0,0,1;
+                led_cambody_pose = Eigen::Isometry3d(cam_to_body);
+                q_led_cambody = Eigen::Quaterniond(led_cambody_pose.rotation());
+                // t_led_cambody = Eigen::
                 // cam_origin_in_body_frame = ugv_cam_pose.rotation() * Eigen::Vector3d(0.0,0.0,0.0) + ugv_cam_pose.translation();
                 // cam_origin = cam_origin_in_body_frame;
                 // ugv_cam_pose = ugv_cam_pose.inverse();
@@ -254,6 +270,8 @@ namespace alan
                 
                 ugv_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
                     (CAR_POSE_TOPIC, 1, &LedNodelet::ugv_pose_callback, this);
+                uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
+                    (UAV_POSE_TOPIC, 1, &LedNodelet::uav_pose_callback, this);
 
             //publish
                 image_transport::ImageTransport image_transport_(nh);
@@ -261,12 +279,15 @@ namespace alan
                 pubimage = image_transport_.advertise("/processed_image",1);
                 pubimage_input = image_transport_.advertise("/input_image", 1);
 
-                uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                ledpose_pub = nh.advertise<geometry_msgs::PoseStamped>
                                 ("/alan_state_estimation/LED/pose", 1, true);
                 campose_pub = nh.advertise<geometry_msgs::PoseStamped>
                                 ("/alan_state_estimation/CAM/pose", 1, true); 
                 ugvpose_pub = nh.advertise<geometry_msgs::PoseStamped>
                                 ("/alan_state_estimation/UGV/pose", 1, true); 
+                uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                                ("/alan_state_estimation/UAV/pose", 1, true);
+
                 
 
             }

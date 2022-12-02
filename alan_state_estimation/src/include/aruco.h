@@ -51,7 +51,7 @@ namespace alan
 
             //publisher
             ros::Publisher nodelet_pub;
-            ros::Publisher pubpose;
+            ros::Publisher pubpose, arucopose_pub;
             image_transport::Publisher pubimage;
             
             //subscriber
@@ -69,6 +69,14 @@ namespace alan
             geometry_msgs::PoseStamped pose_estimated;
             bool add_noise = false;       
             int temp_i = 0;     
+
+            cv::Mat cameraMatrix = cv::Mat::eye(3,3, CV_64F);
+            cv::Mat distCoeffs;
+            std::vector<cv::Vec3d> rvecs, tvecs;
+            Sophus::SE3d pose_aruco;
+            
+
+
 
 
             //functions
@@ -111,7 +119,7 @@ namespace alan
                 //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
-                nh.getParam("/alan_pose/cam_intrinsics_455", intrinsics_list);                
+                nh.getParam("/alan_master/cam_intrinsics_455", intrinsics_list);                
                                 
                 for(int i = 0; i < 4; i++)
                 {
@@ -123,12 +131,20 @@ namespace alan
                     0, intrinsics_value[1], intrinsics_value[3],
                     0, 0,  1;    
 
+                cameraMatrix.at<double>(0,0) = intrinsics_value[0];
+                cameraMatrix.at<double>(1,1) = intrinsics_value[1];
+                cameraMatrix.at<double>(0,2) = intrinsics_value[2];
+                cameraMatrix.at<double>(1,2) = intrinsics_value[3];
+
+                distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+
+
                 // cout<<cameraMat.inverse()<<endl;
 
 
                 //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
-                nh.getParam("/alan_pose/LED_positions", LED_list); 
+                nh.getParam("/alan_master/ARUCO_positions", LED_list); 
                 for(int i = 0; i < LED_list.size(); i++)
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
@@ -138,9 +154,10 @@ namespace alan
                 //initialize publisher
                 nodelet_pub = nh.advertise<std_msgs::Bool>("/obj_found",1);
                 pubpose = nh.advertise<geometry_msgs::PoseStamped>("/alan_pose/pose", 1);
+                arucopose_pub = nh.advertise<geometry_msgs::PoseStamped>("/alan_pose/aruco_pose", 1);
                 // test_pub = nh.advertise<std_msgs::Bool>("/ob_found",1);
 
-                pthread_create(&tid, NULL, ArucoNodelet::PubMainLoop, (void*)this);
+                // pthread_create(&tid, NULL, ArucoNodelet::PubMainLoop, (void*)this);
 
                 image_transport::ImageTransport image_transport_(nh);
                 pubimage = image_transport_.advertise("/processed_image",1);

@@ -77,7 +77,8 @@
         "variant": "cpp",
         "bit": "cpp",
         "*.ipp": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "specialfunctions": "cpp"
     },
     "python.analysis.extraPaths": [
         "/home/patty/vio_ws/devel/lib/python3/dist-packages",

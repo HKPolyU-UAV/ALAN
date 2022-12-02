@@ -73,8 +73,10 @@ void alan::LedNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::Const
     Eigen::Vector3d cam_origin;
     cam_origin.setZero();
 
-    Eigen::Quaterniond q_cam =  q_ * q_c2b;
-    Eigen::Vector3d t_cam = q_.toRotationMatrix() * t_c2b.translation() + t_.translation();
+    q_cam =  q_ * q_c2b;
+    t_cam = q_.toRotationMatrix() * t_c2b.translation() + t_.translation();
+
+    cam_pose = Eigen::Translation3d(t_cam) * q_cam;
 
     geometry_msgs::PoseStamped pose_cam;
     pose_cam.header.frame_id = "map";
@@ -89,6 +91,47 @@ void alan::LedNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::Const
 
     campose_pub.publish(pose_cam);    
     ugvpose_pub.publish(ugv_pose_msg);
+}
+
+void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    uav_pose_msg = *pose;
+    uav_pose_msg.header.frame_id = "map";
+
+    uavpose_pub.publish(uav_pose_msg);
+}
+
+void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+{
+    Eigen::Quaterniond q_led = Eigen::Quaterniond(pose.rotationMatrix());
+    Eigen::Translation3d t_led = Eigen::Translation3d(pose.translation());
+
+
+
+    led_pose = t_led * q_led;    
+    // led_pose = led_pose.inverse();//led in camera frame    
+
+    // q_led = q_cam * q_led.inverse();
+    // t_led.translation() = q_led.toRotationMatrix() * t_led.translation() + t_cam;
+
+
+    Eigen::Quaterniond q_final = Eigen::Quaterniond(led_pose.rotation());
+    Eigen::Translation3d t_final = Eigen::Translation3d(led_pose.translation());
+
+
+    led_pose_estimated.header.stamp = led_pose_stamp;
+    led_pose_estimated.header.frame_id = "map";
+    
+    led_pose_estimated.pose.position.x = t_final.translation().x();
+    led_pose_estimated.pose.position.y = t_final.translation().y();
+    led_pose_estimated.pose.position.z = t_final.translation().z();
+
+    led_pose_estimated.pose.orientation.w = q_final.w();    
+    led_pose_estimated.pose.orientation.x = q_final.x();
+    led_pose_estimated.pose.orientation.y = q_final.y();
+    led_pose_estimated.pose.orientation.z = q_final.z();
+
+    ledpose_pub.publish(led_pose_estimated);
 }
 
 void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
@@ -225,7 +268,23 @@ inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Soph
     Eigen::Matrix3d R = pose.rotationMatrix();
     Eigen::Vector3d t = pose.translation();
 
+    
+
+    cout<<cameraMat<<endl;
+    cout<<R*P<<endl;
+    cout<<t<<endl;
+    cout<<"------"<<endl;
+    cout<<(R * P + t)<<endl;
     result = cameraMat * (R * P + t); 
+    cout<<result<<endl<<endl;
+
+    Eigen::Matrix<double, 4, 4> cam_to_body;
+    cam_to_body << 0,0,1,0,
+        -1,0,0,0,
+        0,-1,0,0,
+        0,0,0,1;
+    // cameraMat * (R * P + t);
+    // cout<<t<<endl;
 
     Eigen::Vector2d result2d;
 
@@ -259,7 +318,7 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
     for(auto what : pts_2d)
     {
         temp2d.x = what(0);
-        temp2d.y = what(1);
+        temp2d.y = what(1);    
 
         pts_2d_.push_back(temp2d);
     }
@@ -1132,22 +1191,7 @@ void alan::LedNodelet::set_image_to_publish(double t2, double t1, const sensor_m
 
 }
 
-void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
-{
-    uav_pose_estimated.pose.position.x = pose.translation().x();
-    uav_pose_estimated.pose.position.y = pose.translation().y();
-    uav_pose_estimated.pose.position.z = pose.translation().z();
 
-    Eigen::Quaterniond q = Eigen::Quaterniond(pose.rotationMatrix());
-    uav_pose_estimated.pose.orientation.w = q.w();
-    uav_pose_estimated.pose.orientation.x = q.x();
-    uav_pose_estimated.pose.orientation.y = q.y();
-    uav_pose_estimated.pose.orientation.z = q.z();
-
-    uav_pose_estimated.header.stamp = led_pose_stamp;
-
-    uavpose_pub.publish(uav_pose_estimated);
-}
 
 
 //below is the courtesy of UZH Faessler et al.

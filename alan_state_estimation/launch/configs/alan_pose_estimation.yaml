@@ -59,6 +59,20 @@ pts_2d_list:
   - x: 311.0
     y: 210.0
 
+ARUCO_positions:
+  - x: 0.0
+    y: -0.0225
+    z: -0.010
+  - x: 0.0
+    y: 0.0225
+    z: -0.010
+  - x: 0.0
+    y: 0.0225
+    z: -0.055
+  - x: 0.0
+    y: -0.0225
+    z: -0.055
+
 
 
 
@@ -158,6 +172,9 @@ classnamepath:
 
 CAR_POSE_TOPIC:
   "/vrpn_client_node/gh034_car/pose"
+
+UAV_POSE_TOPIC:
+  "/uav/mavros/vision_pose/pose"
 
 
 
