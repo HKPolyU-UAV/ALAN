@@ -270,13 +270,13 @@ inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Soph
 
     
 
-    cout<<cameraMat<<endl;
-    cout<<R*P<<endl;
-    cout<<t<<endl;
-    cout<<"------"<<endl;
-    cout<<(R * P + t)<<endl;
+    // cout<<cameraMat<<endl;
+    // cout<<R*P<<endl;
+    // cout<<t<<endl;
+    // cout<<"------"<<endl;
+    // cout<<(R * P + t)<<endl;
     result = cameraMat * (R * P + t); 
-    cout<<result<<endl<<endl;
+    // cout<<result<<endl<<endl;
 
     Eigen::Matrix<double, 4, 4> cam_to_body;
     cam_to_body << 0,0,1,0,
@@ -771,8 +771,11 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
                 {
                     pts_2d_detect_temp.push_back(pts_2d_detect[what]);
                 }
+                // cout<<pts_2d_detect_temp.size()<<endl;
+                // cout<<pts_on_body_frame.size()<<endl;
                                                         
                 solve_pnp_initial_pose(pts_2d_detect_temp, pts_on_body_frame, R, t);
+                // cout<<"gan"<<endl;
                 
                 pose_global_sophus = Sophus::SE3d(R, t);
 

@@ -322,7 +322,7 @@ int main(int argc, char** argv)
 
 
     ros::Publisher virtual_car_odom_pub = nh.advertise<nav_msgs::Odometry>
-                        ("/ugv/mavros/local_position/odom", 1, true);
+                        ("/uav/alan_estimation/final_odom", 1, true);
     
     ros::Publisher virtual_car_imu_pub = nh.advertise<sensor_msgs::Imu>
                         ("/camera/imu", 1, true);
