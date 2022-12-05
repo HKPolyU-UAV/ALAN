@@ -58,6 +58,120 @@ void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConst
 
 }
 
+void alan::ArucoNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    uav_pose_msg = *pose;
+    uav_pose_msg.header.frame_id = "map";
+
+    uavpose_pub.publish(uav_pose_msg);
+}
+
+
+void alan::ArucoNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    ugv_pose_msg = *pose;
+    ugv_pose_msg.header.frame_id = "map";
+    
+    Eigen::Translation3d t_(
+        ugv_pose_msg.pose.position.x,
+        ugv_pose_msg.pose.position.y,
+        ugv_pose_msg.pose.position.z
+    );
+
+    Eigen::Quaterniond q_(
+        ugv_pose_msg.pose.orientation.w,
+        ugv_pose_msg.pose.orientation.x,
+        ugv_pose_msg.pose.orientation.y,
+        ugv_pose_msg.pose.orientation.z
+    );
+
+    // ugv_pose = ugvcam_t_ * ugvcam_q_;    
+
+
+    Eigen::Vector3d cam_origin;
+    cam_origin.setZero();
+
+    // q_cam =  q_ * q_c2b;
+    // t_cam = q_.toRotationMatrix() * t_c2b.translation() + t_.translation();
+
+    q_cam =  q_;
+    t_cam = t_.translation();
+
+    cam_pose = Eigen::Translation3d(t_cam) * q_cam;
+
+    geometry_msgs::PoseStamped pose_cam;
+    pose_cam.header.frame_id = "map";
+    pose_cam.pose.position.x = t_cam.x();
+    pose_cam.pose.position.y = t_cam.y();
+    pose_cam.pose.position.z = t_cam.z();
+
+    pose_cam.pose.orientation.w = q_cam.w();
+    pose_cam.pose.orientation.x = q_cam.x();
+    pose_cam.pose.orientation.y = q_cam.y();
+    pose_cam.pose.orientation.z = q_cam.z();
+
+    campose_pub.publish(pose_cam);
+    ugvpose_pub.publish(ugv_pose_msg);
+}
+
+void alan::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+{
+    geometry_msgs::PoseStamped aruco_pose_msg;
+
+    aruco_pose_msg.pose.position.x = pose_aruco.translation().x();
+    aruco_pose_msg.pose.position.y = pose_aruco.translation().y();
+    aruco_pose_msg.pose.position.z = pose_aruco.translation().z();
+
+    Eigen::Quaterniond q_aruco = Eigen::Quaterniond(pose_aruco.rotationMatrix());
+
+    // cout<<q2rpy(q) / M_PI * 180<<endl;
+    // cout<<"-----------"<<endl;
+    aruco_pose_msg.pose.orientation.w = q_aruco.w();
+    aruco_pose_msg.pose.orientation.x = q_aruco.x();
+    aruco_pose_msg.pose.orientation.y = q_aruco.y();
+    aruco_pose_msg.pose.orientation.z = q_aruco.z();
+
+    aruco_pose_msg.header.frame_id = "map";
+
+    arucopose_pub.publish(aruco_pose_msg);
+
+    
+    
+    //my pose    
+    //cam_pose
+    geometry_msgs::PoseStamped aruco_pose_my_msg;
+    //Sophus::SE3d pose in {camera} frame
+
+    Eigen::Vector3d my_pose_t_ = pose_aruco.translation();
+    Eigen::Quaterniond my_pose_q_ = Eigen::Quaterniond(pose_aruco.rotationMatrix());
+    
+    Eigen::Matrix3d cam_to_body;
+    cam_to_body << 0,0,1,
+        -1,0,0,
+        0,-1,0;
+        
+    my_pose_t_ =  q_cam.toRotationMatrix() * cam_to_body * my_pose_t_ + t_cam;
+    //q_cam.toRotationMatrix() *
+    // cout<<my_pose_t_<<endl;
+    my_pose_q_ = q_cam * my_pose_q_;
+
+    aruco_pose_my_msg.pose.position.x = my_pose_t_.x();
+    aruco_pose_my_msg.pose.position.y = my_pose_t_.y();
+    aruco_pose_my_msg.pose.position.z = my_pose_t_.z();
+
+    // cout<<aruco_pose_my_msg.pose.position.x<<endl;
+
+    aruco_pose_my_msg.pose.orientation.w = my_pose_q_.w();
+    aruco_pose_my_msg.pose.orientation.x = my_pose_q_.x();
+    aruco_pose_my_msg.pose.orientation.y = my_pose_q_.y();
+    aruco_pose_my_msg.pose.orientation.z = my_pose_q_.z();
+    
+    aruco_pose_my_msg.header.frame_id = "map";
+
+    mypose_pub.publish(aruco_pose_my_msg);
+
+}
+
 //pnp + BA implementation
 void alan::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
 {
@@ -259,6 +373,8 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& p
         if(markercorners.size() == 1)
         {
             cv::aruco::estimatePoseSingleMarkers(markercorners, 0.045, cameraMatrix, distCoeffs, rvecs, tvecs);
+            // cv::aruco::drawDetectedMarkers(frame, markercorners, markerids);
+            cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[0], tvecs[0], 0.1);
             cv::Mat rmat = cv::Mat::eye(3,3,CV_64F);
             cv::Rodrigues(rvecs[0], rmat);
 
@@ -421,55 +537,19 @@ void alan::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pt
 
 }
 
-void alan::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
-{
-    // pose = pose;
-    pose_estimated.pose.position.x = pose.translation().x();
-    pose_estimated.pose.position.y = pose.translation().y();
-    pose_estimated.pose.position.z = pose.translation().z();
-
-    Eigen::Quaterniond q = Eigen::Quaterniond(pose.rotationMatrix());
-    pose_estimated.pose.orientation.w = q.w();
-    pose_estimated.pose.orientation.x = q.x();
-    pose_estimated.pose.orientation.y = q.y();
-    pose_estimated.pose.orientation.z = q.z();
-
-
-    Eigen::Quaterniond q_aruco = Eigen::Quaterniond(pose_aruco.rotationMatrix());
-
-    // Eigen::Quaterniond q_relative = q_aruco.inverse(q);
-
-    geometry_msgs::PoseStamped aruco_pose_msg;
-    
-    aruco_pose_msg.pose.position.x = pose_aruco.translation().x();
-    aruco_pose_msg.pose.position.y = pose_aruco.translation().y();
-    aruco_pose_msg.pose.position.z = pose_aruco.translation().z();
-
-    aruco_pose_msg.pose.orientation.w = Eigen::Quaterniond(pose_aruco.rotationMatrix()).w();
-    aruco_pose_msg.pose.orientation.x = Eigen::Quaterniond(pose_aruco.rotationMatrix()).x();
-    aruco_pose_msg.pose.orientation.y = Eigen::Quaterniond(pose_aruco.rotationMatrix()).y();
-    aruco_pose_msg.pose.orientation.z = Eigen::Quaterniond(pose_aruco.rotationMatrix()).z();
-
-    pose_estimated.header.frame_id = "map";
-    aruco_pose_msg.header.frame_id = "map";
-
-    pubpose.publish(pose_estimated);
-    arucopose_pub.publish(aruco_pose_msg);
-
-}
 
 void* alan::ArucoNodelet::PubMainLoop(void* tmp)
 {
     ArucoNodelet* pub = (ArucoNodelet*) tmp;
 
-    ros::Rate loop_rate(50);
-    while (ros::ok()) 
-    {
-        // ROS_INFO("%d,publish!", num++);
-        pub->pubpose.publish(pub->pose_estimated);
-        ros::spinOnce();
-        loop_rate.sleep();
-    }
+    // ros::Rate loop_rate(50);
+    // while (ros::ok()) 
+    // {
+    //     // ROS_INFO("%d,publish!", num++);
+    //     pub->pubpose.publish(pub->pose_estimated);
+    //     ros::spinOnce();
+    //     loop_rate.sleep();
+    // }
     
     void* return_value;
 
@@ -716,4 +796,26 @@ vector<Eigen::Vector3d> alan::ArucoNodelet::pointcloud_generate(vector<Eigen::Ve
     }
 
     return pointclouds;
+}
+
+
+Eigen::Vector3d alan::ArucoNodelet::q2rpy(Eigen::Quaterniond q) 
+{
+    return q.toRotationMatrix().eulerAngles(2,1,0);
+}
+
+Eigen::Quaterniond alan::ArucoNodelet::rpy2q(Eigen::Vector3d rpy)
+{
+    Eigen::AngleAxisd rollAngle(rpy(0), Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd pitchAngle(rpy(1), Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd yawAngle(rpy(2), Eigen::Vector3d::UnitZ());
+
+    Eigen::Quaterniond q = yawAngle * pitchAngle * rollAngle;
+
+    return q;
+}
+
+Eigen::Vector3d alan::ArucoNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v)
+{
+    return q * v;
 }
