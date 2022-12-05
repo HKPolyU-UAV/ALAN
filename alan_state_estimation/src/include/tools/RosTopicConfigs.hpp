@@ -1,17 +1,19 @@
 /*
     A HPP file for
-    ROS subscribe and publish configuration.
+    ROS subscribe and publish configuration. Use it with SUBPUB_topics.yaml
     Created on 05/12/2022
     (c) pattylo
     from the RCUAS of Hong Kong Polytechnic University
 */
 
 /**
- * \file rosconfigs.hpp
- * \brief classes subscribers and publishers configuration
+ * \file RosTopicConfigs.hpp
+ * \brief classes subscribers and publishers configuration, 
+ * \brief just simply pass in ros nodehandle and rosparam namespace 
  */
-#ifndef ROSCONFIGS_HPP
-#define ROSCONFIGS_HPP
+
+#ifndef ROSTOPICCONFIGS_HPP
+#define ROSTOPICCONFIGS_HPP
 
 #include <ros/ros.h>
 #include <iostream>
@@ -54,7 +56,7 @@ struct CONFIG_SETUP{
     int SUB_PUB;
 };
 
-class rosconfigs
+class RosTopicConfigs
 {
 private:
     ros::NodeHandle nh;
@@ -65,25 +67,25 @@ private:
     
     
 public:
-    rosconfigs(ros::NodeHandle& _nh);
-    ~rosconfigs();
+    RosTopicConfigs(ros::NodeHandle& _nh, string param_namespace);
+    ~RosTopicConfigs();
 
     string getTopicName(string designated_name);
 };
 
-rosconfigs::rosconfigs(ros::NodeHandle& _nh)
+RosTopicConfigs::RosTopicConfigs(ros::NodeHandle& _nh, string param_namespace)
 : nh(_nh)
 {
-    nh.getParam("/alan_master/TOPICLIST", TOPICLIST);
+    nh.getParam(param_namespace + "/TOPICLIST", TOPICLIST);
 
     setupTOPICLIST();
 }
 
-rosconfigs::~rosconfigs()
+RosTopicConfigs::~RosTopicConfigs()
 {
 }
 
-string rosconfigs::getTopicName(string designated_types)
+string RosTopicConfigs::getTopicName(string designated_types)
 {
     string returnvalue;
 
@@ -104,7 +106,7 @@ string rosconfigs::getTopicName(string designated_types)
     return returnvalue;
 }
 
-void rosconfigs::setupTOPICLIST()
+void RosTopicConfigs::setupTOPICLIST()
 {
     CONFIG_SETUP config_setup_temp;
     string topic_type;

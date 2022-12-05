@@ -41,7 +41,7 @@
 #include <pthread.h>
 #include <boost/thread.hpp>
 
-#include "tools/rosconfigs.hpp"
+#include "tools/RosTopicConfigs.hpp"
 
 
 namespace alan
@@ -118,7 +118,7 @@ namespace alan
             {
                 ros::NodeHandle& nh = getMTNodeHandle();
 
-                rosconfigs configs(nh);
+                RosTopicConfigs configs(nh, "/alan_master");
 
                 // cout<<"in oninit..."<<temp<<endl;
                 //load camera intrinsics

@@ -1,6 +1,6 @@
 # this are the topic type for rosconfigs.hpp
 
-# from rosconfigs.hpp Line 20~43
+# from rosconfigs.hpp Line 28-51
 # support up to 4 topic each
 # could add more via customizing hpp if needed
 
