@@ -1,0 +1,55 @@
+# this are the topic type for rosconfigs.hpp
+
+# from rosconfigs.hpp Line 20~43
+# support up to 4 topic each
+# could add more via customizing hpp if needed
+
+# #define CAMERA_SUB_TOPIC_A "CAMERA_SUB_TOPIC_A"
+# #define CAMERA_SUB_TOPIC_B "CAMERA_SUB_TOPIC_B"
+# #define CAMERA_SUB_TOPIC_C "CAMERA_SUB_TOPIC_C"
+# #define CAMERA_SUB_TOPIC_D "CAMERA_SUB_TOPIC_D"
+
+# #define DEPTH_SUB_TOPIC_A "DEPTH_SUB_TOPIC_A"
+# #define DEPTH_SUB_TOPIC_B "DEPTH_SUB_TOPIC_B"
+# #define DEPTH_SUB_TOPIC_C "DEPTH_SUB_TOPIC_C"
+# #define DEPTH_SUB_TOPIC_D "DEPTH_SUB_TOPIC_D"
+
+# #define POSE_SUB_TOPIC_A "POSE_SUB_TOPIC_A"
+# #define POSE_SUB_TOPIC_B "POSE_SUB_TOPIC_B"
+# #define POSE_SUB_TOPIC_C "POSE_SUB_TOPIC_C"
+# #define POSE_SUB_TOPIC_D "POSE_SUB_TOPIC_D"
+
+# #define POSE_PUB_TOPIC_A "POSE_PUB_TOPIC_A"
+# #define POSE_PUB_TOPIC_B "POSE_PUB_TOPIC_B"
+# #define POSE_PUB_TOPIC_C "POSE_PUB_TOPIC_C"
+# #define POSE_PUB_TOPIC_D "POSE_PUB_TOPIC_D"
+
+# #define IMAGE_PUB_TOPIC_A "IMAGE_PUB_TOPIC_A"
+# #define IMAGE_PUB_TOPIC_B "IMAGE_PUB_TOPIC_B"
+# #define IMAGE_PUB_TOPIC_C "IMAGE_PUB_TOPIC_C"
+# #define IMAGE_PUB_TOPIC_D "IMAGE_PUB_TOPIC_D"
+
+# SUBORPUB -> 0 as SUB, 1 as PUB
+
+TOPICLIST: # for 
+  - TOPICTYPE: "CAMERA_SUB_TOPIC_A"
+    TOPICNAME: "/camera/color/image_raw/compressed"
+    SUBORPUB:  0
+  - TOPICTYPE: "DEPTH_SUB_TOPIC_A"
+    TOPICNAME: "/camera/aligned_depth_to_color/image_raw"
+    SUBORPUB:  0
+  - TOPICTYPE: "POSE_SUB_TOPIC_A"
+    TOPICNAME: "/uav/mavros/vision_pose/pose"
+    SUBORPUB:  0
+  - TOPICTYPE: "POSE_SUB_TOPIC_B"
+    TOPICNAME: "/vrpn_client_node/gh034_car/pose"
+    SUBORPUB:  0
+  - TOPICTYPE: "POSE_PUB_TOPIC_A"
+    TOPICNAME: "/alan_pose/pose"
+    SUBORPUB:  1
+  - TOPICTYPE: "POSE_PUB_TOPIC_B"
+    TOPICNAME: "/alan_pose/aruco_pose"
+    SUBORPUB:  1
+  - TOPICTYPE: "IMAGE_PUB_TOPIC_A"
+    TOPICNAME: "/processed_image"
+    SUBORPUB:  1

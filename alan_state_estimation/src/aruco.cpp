@@ -276,15 +276,11 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& p
                 rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
                 rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
 
-            R = R * cam_to_body.block(0,0,3,3) ;
-
             t <<
                 tvecs[0](0),
                 tvecs[0](1),
                 tvecs[0](2);
             
-            t = cam_to_body.block(0,0,3,3) * t;
-
             pose_aruco = Sophus::SE3d(R,t);
         }
         

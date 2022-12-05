@@ -41,6 +41,8 @@
 #include <pthread.h>
 #include <boost/thread.hpp>
 
+#include "tools/rosconfigs.hpp"
+
 
 namespace alan
 {
@@ -74,7 +76,7 @@ namespace alan
             cv::Mat distCoeffs;
             std::vector<cv::Vec3d> rvecs, tvecs;
             Sophus::SE3d pose_aruco;
-            
+
 
 
 
@@ -114,8 +116,11 @@ namespace alan
 
             virtual void onInit() 
             {
-                ros::NodeHandle& nh = getNodeHandle();
+                ros::NodeHandle& nh = getMTNodeHandle();
 
+                rosconfigs configs(nh);
+
+                // cout<<"in oninit..."<<temp<<endl;
                 //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
@@ -152,20 +157,19 @@ namespace alan
                 }
                 
                 //initialize publisher
-                nodelet_pub = nh.advertise<std_msgs::Bool>("/obj_found",1);
-                pubpose = nh.advertise<geometry_msgs::PoseStamped>("/alan_pose/pose", 1);
-                arucopose_pub = nh.advertise<geometry_msgs::PoseStamped>("/alan_pose/aruco_pose", 1);
+                pubpose = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_A), 1);
+                arucopose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_B), 1);
                 // test_pub = nh.advertise<std_msgs::Bool>("/ob_found",1);
 
                 // pthread_create(&tid, NULL, ArucoNodelet::PubMainLoop, (void*)this);
 
                 image_transport::ImageTransport image_transport_(nh);
-                pubimage = image_transport_.advertise("/processed_image",1);
+                pubimage = image_transport_.advertise(configs.getTopicName(IMAGE_PUB_TOPIC_A),1);
 
                 //initialize subscribe
                 // subimage = nh.subscribe("/camera/color/image_raw/compressed", 1, &ArucoNodelet::camera_callback, this);
-                subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
-                subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
+                subimage.subscribe(nh, configs.getTopicName(CAMERA_SUB_TOPIC_A), 1);
+                subdepth.subscribe(nh, configs.getTopicName(DEPTH_SUB_TOPIC_A), 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&ArucoNodelet::camera_callback, this, _1, _2));
 

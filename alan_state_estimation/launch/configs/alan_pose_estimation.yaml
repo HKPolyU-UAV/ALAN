@@ -184,12 +184,6 @@ cfgpath:
 classnamepath:
   "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names"
 
-CAR_POSE_TOPIC:
-  "/vrpn_client_node/gh034_car/pose"
-
-UAV_POSE_TOPIC:
-  "/uav/mavros/vision_pose/pose"
-
 
 
 MAD_x_threshold:
