@@ -11,8 +11,8 @@
 
 
     <!-- ArucoNodelet -->
-    <node pkg="nodelet" type="nodelet" name="aruco" args="load alan/ArucoNodelet alan_master" output="screen">
-    </node>
+    <!-- <node pkg="nodelet" type="nodelet" name="aruco" args="load alan/ArucoNodelet alan_master" output="screen">
+    </node> -->
     <!-- <nodec -->
 
     <!-- CnnNodelet -->
@@ -24,8 +24,8 @@
     </node> -->
 
     <!-- LedNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="led" args="load alan/LedNodelet alan_master" output="screen">
-    </node>  -->
+    <node pkg="nodelet" type="nodelet" name="led" args="load alan/LedNodelet alan_master" output="screen">
+    </node> 
 
 
     <!-- MsgSyncNodelet -->

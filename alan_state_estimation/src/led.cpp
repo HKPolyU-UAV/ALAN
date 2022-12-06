@@ -150,7 +150,12 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
             ROS_GREEN_STREAM("SHOULD BE FINE...\n");
 
             if(BA_error > LED_no * 5)
-                    ROS_WARN("REPROJECTION_ERROR OVER 30");
+            {
+                ROS_WARN("REPROJECTION_ERROR OVER 30");
+                
+
+            }
+                    
 
             map_SE3_to_pose(pose_global_sophus);
         }
@@ -231,8 +236,8 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
                 solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order, R, t);        
                 pose_global_sophus = Sophus::SE3d(R, t);
 
-                if(pts_on_body_frame_in_corres_order.size() == pts_detected_in_corres_order.size())
-                        optimize(pose_global_sophus, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);//pose, body_frame_pts, pts_2d_detect
+                // if(pts_on_body_frame_in_corres_order.size() == pts_detected_in_corres_order.size())
+                //         optimize(pose_global_sophus, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);//pose, body_frame_pts, pts_2d_detect
 
                 double reproject_error = 0;
 
@@ -251,6 +256,11 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
                 }
 
                 BA_error = reproject_error;
+
+                // cout<<BA_error<<endl<<endl<<endl;
+
+                // if(BA_error > 30)
+                //     ros::shutdown();
 
             }            
         }    
@@ -297,8 +307,19 @@ inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Soph
 
 void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
-    cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+    cv::Mat distCoeffs = cv::Mat::zeros(5, 1, CV_64F);
+    
+    // distCoeffs.at<double>(0) = -0.056986890733242035;
+    // distCoeffs.at<double>(1) = 0.06356718391180038;
+    // distCoeffs.at<double>(2) = -0.0012483829632401466;
+    // distCoeffs.at<double>(3) = -0.00018130485841538757;
+    // distCoeffs.at<double>(4) = -0.019809694960713387;
+
+    cv::Mat no_ro_rmat = cv::Mat::eye(3,3,CV_64F);
+    
     cv::Vec3d rvec, tvec;
+    cv::Rodrigues(no_ro_rmat, rvec);
+
     cv::Mat camMat = cv::Mat::eye(3,3,CV_64F);
     vector<cv::Point3d> pts_3d_;
     vector<cv::Point2d> pts_2d_;
@@ -312,6 +333,8 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
         temp3d.y = what(1);
         temp3d.z = what(2);
 
+        // cout<<what<<endl;
+
         pts_3d_.push_back(temp3d);
     }
 
@@ -319,6 +342,7 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
     {
         temp2d.x = what(0);
         temp2d.y = what(1);    
+        // cout<<what<<endl;
 
         pts_2d_.push_back(temp2d);
     }
@@ -328,8 +352,8 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
     camMat.at<double>(1,1) = cameraMat(1,1);
     camMat.at<double>(1,2) = cameraMat(1,2);
 
-    cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);
-    
+    cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);//, cv::SOLVEPNP_EPNP
+        
     //return values
     cv::Mat rmat = cv::Mat::eye(3,3,CV_64F);
     cv::Rodrigues(rvec, rmat);
@@ -820,7 +844,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
             corres_global.push_back(corres_temp);
         }        
 
-        optimize(pose_global_sophus, pts_on_body_frame, pts_2d_detect_correct_order);
+        // optimize(pose_global_sophus, pts_on_body_frame, pts_2d_detect_correct_order);
 
         return true;
     }
@@ -970,7 +994,7 @@ bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, c
             corres_global.push_back(corres_temp);
         }        
 
-        optimize(pose_global_sophus, pts_on_body_frame, pts_2d_detect_correct_order);
+        // optimize(pose_global_sophus, pts_on_body_frame, pts_2d_detect_correct_order);
 
         return true;
     }
@@ -1190,7 +1214,11 @@ void alan::LedNodelet::set_image_to_publish(double t2, double t1, const sensor_m
     for_visual_input.header = rgbmsg->header;
     for_visual_input.encoding = sensor_msgs::image_encodings::BGR8;
     for_visual_input.image = frame_input;
-    this->pubimage_input.publish(for_visual_input.toImageMsg());    
+    this->pubimage_input.publish(for_visual_input.toImageMsg());   
+
+
+    // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/in_camera_frame/"+ to_string(i)+ ".png", display); 
+    // i++;
 
 }
 

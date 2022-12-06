@@ -203,20 +203,32 @@ namespace alan
 
                 // cout<<cameraMat.inverse()<<endl;
 
+                Eigen::Matrix3d body_to_cam;//rpy = 0 -90 90
+                body_to_cam << 
+                    0.0000000,  -1.0000000,  0.0000000,
+                    0.0000000,  0.0000000,  -1.0000000,
+                    1.0000000, 0.0000000,  0.0000000;
+
 
                 //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
                 nh.getParam("/alan_master/ARUCO_positions", LED_list); 
+                cout<<endl<<"Pts here:..."<<endl;
+
                 for(int i = 0; i < LED_list.size(); i++)
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
+                    // temp = body_to_cam * temp;
+                    cout<<temp<<endl;
+                    cout<<"------"<<endl;
                     body_frame_pts.push_back(temp);
                 }
+                cout<<endl;
                 
                 //initialize publisher
                 arucopose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_A), 1);
                 mypose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_B), 1);
-                
+
                 ugvpose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_C), 1);
                 campose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_D), 1);
                 uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_E), 1);

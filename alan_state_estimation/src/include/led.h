@@ -207,11 +207,11 @@ namespace alan
                     cameraEX(i) = extrinsics_list[i];                    
                 }
 
-                cout<<Eigen::Vector3d(
-                        cameraEX(3) / 180 * M_PI,
-                        cameraEX(4) / 180 * M_PI,
-                        cameraEX(5) / 180 * M_PI              
-                    )<<endl;
+                // cout<<Eigen::Vector3d(
+                //         cameraEX(3) / 180 * M_PI,
+                //         cameraEX(4) / 180 * M_PI,
+                //         cameraEX(5) / 180 * M_PI              
+                //     )<<endl;
 
                 q_c2b = rpy2q(
                     Eigen::Vector3d(
@@ -245,15 +245,68 @@ namespace alan
                 // cam_origin = cam_origin_in_body_frame;
                 // ugv_cam_pose = ugv_cam_pose.inverse();
 
+
+
+            Eigen::Matrix3d body_to_cam;//rpy = 0 -90 90
+            body_to_cam << 
+                0.0000000,  -1.0000000,  0.0000000,
+                0.0000000,  0.0000000,  -1.0000000,
+                1.0000000, 0.0000000,  0.0000000;
+
             //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
                 nh.getParam("/alan_master/LED_positions", LED_list); 
+
                 for(int i = 0; i < LED_list.size(); i++)
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
+                    temp = body_to_cam * temp;
+                    cout<<temp<<endl;
+                    cout<<"-----"<<endl;
                     pts_on_body_frame.push_back(temp);
                 }   
                 LED_no = pts_on_body_frame.size();
+
+
+                // vector<Eigen::Vector2d> pts_2d_temp;
+                // XmlRpc::XmlRpcValue pts_2d_list;
+                // nh.getParam("/alan_master/pts_2d_list", pts_2d_list); 
+
+                // for(int i = 0; i < pts_2d_list.size(); i++)
+                // {
+                //     Eigen::Vector2d temp(pts_2d_list[i]["x"], pts_2d_list[i]["y"]);
+                //     pts_2d_temp.push_back(temp);
+                // }   
+
+                // Eigen::Matrix3d R;
+                // Eigen::Vector3d t;
+
+                // solve_pnp_initial_pose(pts_2d_temp, pts_on_body_frame, R, t);
+                // pose_global_sophus = Sophus::SE3d(R,t);
+
+                // double reproject_error = 0;
+
+                // for(int i = 0 ; i < pts_on_body_frame.size(); i++)
+                // {
+                //     Eigen::Vector2d reproject = reproject_3D_2D(
+                //         pts_on_body_frame[i], 
+                //         pose_global_sophus
+                //     ); 
+
+                //     double temp_error = (reproject - pts_2d_temp[i]).norm();
+                //     //can save as reprojection for next frame
+                //     reproject_error = reproject_error + temp_error;
+                    
+                // }
+
+                // cout<<"final: error"<<reproject_error<<endl;
+                // cout<<"result:"<<endl;
+                // cout<<R<<endl;
+                // cout<<t<<endl;
+
+                // ros::shutdown();
+
+
 
             //load outlier rejection info
                 nh.getParam("/alan_master/MAD_x_threshold", MAD_x_threshold);

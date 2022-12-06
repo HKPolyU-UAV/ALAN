@@ -124,11 +124,11 @@ void alan::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 
     Eigen::Quaterniond q_aruco = Eigen::Quaterniond(pose_aruco.rotationMatrix());
 
-    cout<<q2rpy(q_aruco) / M_PI * 180<<endl;
+    // cout<<q2rpy(q_aruco) / M_PI * 180<<endl;
 
 
     // cout<<q2rpy(q) / M_PI * 180<<endl;
-    cout<<"-----------"<<endl;
+    // cout<<"-----------"<<endl;
     aruco_pose_msg.pose.orientation.w = q_aruco.w();
     aruco_pose_msg.pose.orientation.x = q_aruco.x();
     aruco_pose_msg.pose.orientation.y = q_aruco.y();
@@ -164,8 +164,8 @@ void alan::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 
     // my_pose_q_ = my_pose_q_ * Eigen::Quaterniond(mirrored) ;
 
-    cout<<q2rpy(my_pose_q_) / M_PI * 180<<endl;
-    cout<<"-----------"<<endl<<endl;;
+    // cout<<q2rpy(my_pose_q_) / M_PI * 180<<endl;
+    // cout<<"-----------"<<endl<<endl;;
 
 
     aruco_pose_my_msg.pose.position.x = my_pose_t_.x();
@@ -250,8 +250,8 @@ void alan::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
         //     cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
         // }
 
-        if(body_frame_pts.size() == pts_2d_detect.size())
-            optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
+        // if(body_frame_pts.size() == pts_2d_detect.size())
+        //     optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
 
         // cout<<body_frame_pts.size()<<endl;
         for(auto what : body_frame_pts)
@@ -298,6 +298,7 @@ inline Eigen::Vector2d alan::ArucoNodelet::reproject_3D_2D(Eigen::Vector3d P, So
 {
     Eigen::Vector3d result;
 
+
     Eigen::Matrix3d R = pose.rotationMatrix();
     Eigen::Vector3d t = pose.translation();
 
@@ -343,21 +344,17 @@ void alan::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector
     cv::Point3d temp3d;
     cv::Point2d temp2d;
 
-    Eigen::Matrix3d body_to_cam;//rpy = 0 -90 90
-    body_to_cam << 
-    0.0000000,  -1.0000000,  0.0000000,
-   0.0000000,  0.0000000,  -1.0000000,
-   1.0000000, 0.0000000,  0.0000000;
 
 
-    cout<<"body_frame_pts..."<<endl;
+
+    // cout<<"body_frame_pts..."<<endl;
     for(auto what : body_frame_pts)
     {
         // what = r_mirrored1 * what;
         // what = r_mirrored2 * what;
-        what = body_to_cam * what;
 
-        cout<<what<<endl<<endl;;
+
+        // cout<<what<<endl<<endl;;
         
 
         temp3d.x = what(0);
@@ -367,7 +364,7 @@ void alan::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector
         pts_3d_.push_back(temp3d);
     }
 
-    cout<<"end body_frame_pts..."<<endl;
+    // cout<<"end body_frame_pts..."<<endl;
 
 
     for(auto what : pts_2d)
@@ -384,6 +381,8 @@ void alan::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector
     camMat.at<double>(1,1) = cameraMat(1,1);
     camMat.at<double>(1,2) = cameraMat(1,2);
 
+    // cout<<"use epnp"<<endl;
+
     cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);//, cv::SOLVEPNP_EPNP
 
     
@@ -396,6 +395,9 @@ void alan::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector
         rmat.at<double>(0,0), rmat.at<double>(0,1), rmat.at<double>(0,2),
         rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
         rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
+
+    cout<<"R_pnp:"<<endl;
+    cout<<R<<endl<<endl;
 
     // R =  R * r_mirrored;
     
@@ -426,17 +428,17 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& p
             double markerlength = 0.045;
 
             cv::aruco::estimatePoseSingleMarkers(markercorners, 0.045, cameraMatrix, distCoeffs, rvecs, tvecs);
-            cout<<"how opencv solve:..."<<endl;
+            // cout<<"how opencv solve:..."<<endl;
 
-            for(auto what : markercorners)
-            {
-                cout<<what<<endl;
-            }
-            cout<<"----------"<<endl;
-            cout<<cv::Point2d(-markerlength / 2.f, markerlength / 2.f)<<endl;
-            cout<<cv::Point2d(markerlength / 2.f, markerlength / 2.f)<<endl;
-            cout<<cv::Point2d(markerlength / 2.f, -markerlength / 2.f)<<endl;
-            cout<<cv::Point2d(-markerlength / 2.f, -markerlength / 2.f)<<endl<<endl;;
+            // for(auto what : markercorners)
+            // {
+            //     cout<<what<<endl;
+            // }
+            // cout<<"----------"<<endl;
+            // cout<<cv::Point2d(-markerlength / 2.f, markerlength / 2.f)<<endl;
+            // cout<<cv::Point2d(markerlength / 2.f, markerlength / 2.f)<<endl;
+            // cout<<cv::Point2d(markerlength / 2.f, -markerlength / 2.f)<<endl;
+            // cout<<cv::Point2d(-markerlength / 2.f, -markerlength / 2.f)<<endl<<endl;;
 
             // cv::aruco::drawDetectedMarkers(frame, markercorners, markerids);
             cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[0], tvecs[0], 0.1);
@@ -456,6 +458,8 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& p
                 rmat.at<double>(0,0), rmat.at<double>(0,1), rmat.at<double>(0,2),
                 rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
                 rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
+            cout<<"R_aruco:"<<endl;
+            cout<<R<<endl;
 
             t <<
                 tvecs[0](0),
@@ -473,7 +477,7 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& p
 
             for(auto& that : what)
             {
-                cout<<that<<endl;
+                // cout<<that<<endl;
                 cv::circle(frame, cv::Point(that.x, that.y), 4, CV_RGB(0,0,255),-1);
                 Eigen::Vector2d result;
                 result << 
@@ -482,8 +486,8 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& p
                 pts_2d.push_back(result);
             }
 
-            cout<<"end aruco_detect"<<endl;
-            cout<<"------"<<endl;
+            // cout<<"end aruco_detect"<<endl;
+            // cout<<"------"<<endl;
 
             if(markercorners.size() > 1)
                 pts_2d.clear();
@@ -566,6 +570,7 @@ void alan::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pt
         for(int i=0; i < points_no; i++)
         {
             //get the Jacobian for this point
+            pts_3d_exists[i] = pts_3d_exists[i];
             solveJacobian(J, pose, pts_3d_exists[i]);
 
             e = pts_2d_detected[i] - reproject_3D_2D(pts_3d_exists[i], pose) ; 

@@ -144,6 +144,41 @@ target_link_libraries(virtual_car
   
   )
 
+  add_executable(poselala
+  src/poselala.cpp
+)
+
+target_link_libraries(poselala
+ ${OpenCV_LIBRARIES}
+ ${catkin_LIBRARIES}
+ ${PCL_LIBRARIES}
+ ${OSQP_LIBRARIES}
+ # mosek64
+ # qpOASES
+ osqp::osqp
+ OsqpEigen#::OsqpEigen
+ 
+ 
+ )
+
+
+ add_executable(calibrate
+  src/calibrate.cpp
+)
+
+target_link_libraries(calibrate
+ ${OpenCV_LIBRARIES}
+ ${catkin_LIBRARIES}
+ ${PCL_LIBRARIES}
+ ${OSQP_LIBRARIES}
+ # mosek64
+ # qpOASES
+ osqp::osqp
+ OsqpEigen#::OsqpEigen
+ 
+ 
+ )
+
 
 #   add_executable(failsafe
 #    src/failsafe.cpp
