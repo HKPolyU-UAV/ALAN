@@ -241,8 +241,6 @@ bool alan::LedNodelet::search_corres_and_pose_predict(vector<Eigen::Vector2d> pt
         Eigen::Matrix3d R;
         Eigen::Vector3d t;           
 
-        // cout<<pts_detected_in_corres_order.size()<<endl;
-
         solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order, R, t);        
         pose_global_sophus = Sophus::SE3d(R, t);
 
@@ -278,23 +276,7 @@ inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Soph
     Eigen::Matrix3d R = pose.rotationMatrix();
     Eigen::Vector3d t = pose.translation();
 
-    
-
-    // cout<<cameraMat<<endl;
-    // cout<<R*P<<endl;
-    // cout<<t<<endl;
-    // cout<<"------"<<endl;
-    // cout<<(R * P + t)<<endl;
     result = cameraMat * (R * P + t); 
-    // cout<<result<<endl<<endl;
-
-    Eigen::Matrix<double, 4, 4> cam_to_body;
-    cam_to_body << 0,0,1,0,
-        -1,0,0,0,
-        0,-1,0,0,
-        0,0,0,1;
-    // cameraMat * (R * P + t);
-    // cout<<t<<endl;
 
     Eigen::Vector2d result2d;
 
@@ -308,12 +290,6 @@ inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Soph
 void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
     cv::Mat distCoeffs = cv::Mat::zeros(5, 1, CV_64F);
-    
-    // distCoeffs.at<double>(0) = -0.056986890733242035;
-    // distCoeffs.at<double>(1) = 0.06356718391180038;
-    // distCoeffs.at<double>(2) = -0.0012483829632401466;
-    // distCoeffs.at<double>(3) = -0.00018130485841538757;
-    // distCoeffs.at<double>(4) = -0.019809694960713387;
 
     cv::Mat no_ro_rmat = cv::Mat::eye(3,3,CV_64F);
     
@@ -333,8 +309,6 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
         temp3d.y = what(1);
         temp3d.z = what(2);
 
-        // cout<<what<<endl;
-
         pts_3d_.push_back(temp3d);
     }
 
@@ -342,7 +316,6 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
     {
         temp2d.x = what(0);
         temp2d.y = what(1);    
-        // cout<<what<<endl;
 
         pts_2d_.push_back(temp2d);
     }
@@ -372,7 +345,6 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
 }
 
 void alan::LedNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected)
-//converge problem need to be solved //-> fuck you, your Jacobian was wrong
 {
     //execute Gaussian-Newton Method
     // cout<<"Bundle Adjustment Optimization"<<endl;
@@ -406,9 +378,7 @@ void alan::LedNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_
             solveJacobian(J, pose, pts_3d_exists[i]);
 
             e = pts_2d_detected[i] - reproject_3D_2D(pts_3d_exists[i], pose) ; 
-            //jibai, forget to minus the detected points
-            //you set your Jacobian according to "u-KTP/s", and you messed up the order, you fat fuck
-    
+            
             cost += e.norm();
 
             //form Ax = b
@@ -500,7 +470,6 @@ vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Ma
         }
     }
    
-
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     cv::threshold(frame, frame, BINARY_THRES, 255, cv::THRESH_BINARY);
     frame_initial_thresholded = frame.clone();
@@ -714,8 +683,6 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
         norm_of_y_points.push_back(what.y());
         norm_of_z_points.push_back(what.z());
     }
-    
-
 
     if(pts_3d_pcl_detect.size() == LED_no  //we got LED_no
         && calculate_MAD(norm_of_x_points) < MAD_x_threshold //no outlier
@@ -868,8 +835,6 @@ bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, c
         norm_of_y_points.push_back(what.y());
         norm_of_z_points.push_back(what.z());
     }
-    
-
 
     if(pts_3d_pcl_detect.size() == LED_no  //we got LED_no
         && calculate_MAD(norm_of_x_points) < MAD_x_threshold //no outlier
@@ -1192,8 +1157,7 @@ Eigen::Vector3d alan::LedNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::V
 }
 
 void alan::LedNodelet::set_image_to_publish(double t2, double t1, const sensor_msgs::CompressedImageConstPtr & rgbmsg)
-{
-    
+{    
     char hz[40];
     char fps[10] = " fps";
     sprintf(hz, "%.2f", 1 / (t2 - t1));
@@ -1223,14 +1187,10 @@ void alan::LedNodelet::set_image_to_publish(double t2, double t1, const sensor_m
     for_visual_input.image = frame_input;
     this->pubimage_input.publish(for_visual_input.toImageMsg());   
 
-
     // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/in_camera_frame/"+ to_string(i)+ ".png", display); 
     // i++;
 
 }
-
-
-
 
 //below is the courtesy of UZH Faessler et al.
 /*
