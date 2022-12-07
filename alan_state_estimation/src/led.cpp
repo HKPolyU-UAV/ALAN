@@ -681,8 +681,12 @@ void alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
         cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/wrong/final_ROI_gan"+ to_string(i)+ ".png", final_ROI);
         i++;
     }
-        
+    
+    cout<<"get_final_POI kmeans"<<endl;
+    cout<<POI_pts.size()<<endl;
+    cout<<no_cluster<<endl;
     cv::kmeans(POI_pts, no_cluster, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
+    cout<<"pass get_final_POI kmeans"<<endl;
 
     pts_2d_detected.clear();
     for(int i = 0; i < centers.size(); i++)
@@ -1029,8 +1033,12 @@ void alan::LedNodelet::correspondence_search_kmeans(vector<Eigen::Vector3d> pts_
     vector<cv::Point2f> centers;
     cv::Mat labels;
     
+    cout<<"correspondence_search_kmeans kmeans..."<<endl;
+    cout<<pts_3d_detected.size()<<endl;
+    cout<<pts_2d_detected.size()<<endl;
+    cout<<pts.size()<<endl;
     cv::kmeans(pts, LED_no, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
-    
+    cout<<"pass correspondence search..."<<endl;
     int error_count = 0;
 
     for(int i = 0; i < LED_no; i++)
@@ -1095,7 +1103,8 @@ void alan::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, ve
     if(calculate_MAD(norm_of_x_points) > MAD_x_threshold  
         || calculate_MAD(norm_of_y_points) > MAD_y_threshold
         || calculate_MAD(norm_of_z_points) > MAD_z_threshold)
-    {
+    {   
+        cout<<"reject_outlier kmeans"<<endl;
         cv::kmeans(pts, 2, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
 
         double d0 = cv::norm(pcl_center_point_wo_outlier_previous - centers[0]);
