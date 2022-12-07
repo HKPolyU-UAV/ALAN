@@ -38,8 +38,18 @@
 
 #include <pthread.h>
 
-#include "tools/munkres.hpp"
+#include "tools/RosTopicConfigs.h"
 
+namespace correspondence
+{
+    typedef struct matchid
+        {
+            int detected_indices; //
+            bool detected_ornot = false;
+            Eigen::Vector3d pts_3d_correspond;
+            Eigen::Vector2d pts_2d_correspond;
+        }matchid;
+}
 namespace alan
 {
     class LedNodelet : public nodelet::Nodelet
@@ -86,8 +96,7 @@ namespace alan
             double depth_avg_of_all = 0;
             vector<cv::KeyPoint> blobs_for_initialize;
             int _width = 0, _height = 0;
-            string CAR_POSE_TOPIC;
-            string UAV_POSE_TOPIC;
+
 
         //subscribe                                    
             //objects
@@ -133,8 +142,6 @@ namespace alan
 
         //initiation & correspondence 
             //objects
-            correspondence::munkres hungarian1; 
-            correspondence::munkres hungarian2; 
             bool LED_tracker_initiated_or_tracked = false;
             int LED_no;
             //functions       
@@ -168,19 +175,24 @@ namespace alan
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
 
-
+//---------------------------------------------------------------------------------------
             virtual void onInit()
             {                
                 ros::NodeHandle& nh = getMTNodeHandle();
                 ROS_INFO("LED Nodelet Initiated...");
+
+                RosTopicConfigs configs(nh, "alan_master");
                                 
             //load POI_extract config
                 nh.getParam("/alan_master/LANDING_DISTANCE", LANDING_DISTANCE);     
                 nh.getParam("/alan_master/BINARY_threshold", BINARY_THRES);     
                 nh.getParam("/alan_master/frame_width", _width);
                 nh.getParam("/alan_master/frame_height", _height);
-                nh.getParam("/alan_master/CAR_POSE_TOPIC", CAR_POSE_TOPIC);
-                nh.getParam("/alan_master/UAV_POSE_TOPIC", UAV_POSE_TOPIC);
+
+                // #define CAR_POSE_TOPIC POSE_SUB_TOPIC_A
+                // cout<<CAR_POSE_TOPIC<<endl;
+                // nh.getParam("/alan_master/CAR_POSE_TOPIC", CAR_POSE_TOPIC);
+                // nh.getParam("/alan_master/UAV_POSE_TOPIC", UAV_POSE_TOPIC);
 
                 
             //load camera intrinsics
@@ -322,10 +334,10 @@ namespace alan
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
                 
-                ugv_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-                    (CAR_POSE_TOPIC, 1, &LedNodelet::ugv_pose_callback, this);
-                uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-                    (UAV_POSE_TOPIC, 1, &LedNodelet::uav_pose_callback, this);
+                // ugv_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
+                //     (CAR_POSE_TOPIC, 1, &LedNodelet::ugv_pose_callback, this);
+                // uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
+                //     (UAV_POSE_TOPIC, 1, &LedNodelet::uav_pose_callback, this);
 
             //publish
                 image_transport::ImageTransport image_transport_(nh);

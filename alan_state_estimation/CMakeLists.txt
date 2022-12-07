@@ -114,6 +114,7 @@ add_library(alan
     src/led.cpp
     src/msgsync.cpp
     src/failsafe.cpp
+    src/tools/RosTopicConfigs.cpp
     )
 
 ## Specify libraries to link a library or executable target against
@@ -128,7 +129,7 @@ target_link_libraries(
 )
 
 add_executable(virtual_car
-   src/virtual_car.cpp
+   src/tools/virtual_car.cpp
 )
 
 target_link_libraries(virtual_car
@@ -145,7 +146,7 @@ target_link_libraries(virtual_car
   )
 
   add_executable(poselala
-  src/poselala.cpp
+  src/tools/poselala.cpp
 )
 
 target_link_libraries(poselala
@@ -163,7 +164,7 @@ target_link_libraries(poselala
 
 
  add_executable(calibrate
-  src/calibrate.cpp
+  src/tools/calibrate.cpp
 )
 
 target_link_libraries(calibrate

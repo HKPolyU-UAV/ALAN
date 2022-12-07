@@ -41,8 +41,7 @@
 #include <pthread.h>
 #include <boost/thread.hpp>
 
-#include "tools/RosTopicConfigs.hpp"
-
+#include "tools/RosTopicConfigs.h"
 
 namespace alan
 {
@@ -135,10 +134,11 @@ namespace alan
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
 
-
+//---------------------------------------------------------------------------------------
             virtual void onInit() 
             {
                 ros::NodeHandle& nh = getMTNodeHandle();
+                ROS_INFO("Aruco Nodelet Initiated...");
 
                 RosTopicConfigs configs(nh, "/alan_master");
 
@@ -249,7 +249,7 @@ namespace alan
                 uav_pose_sub = nh.subscribe(configs.getTopicName(POSE_SUB_TOPIC_A), 1, &ArucoNodelet::uav_pose_callback, this);
                 ugv_pose_sub = nh.subscribe(configs.getTopicName(POSE_SUB_TOPIC_B), 1, &ArucoNodelet::ugv_pose_callback, this);
 
-                ROS_INFO("Aruco Nodelet Initiated...");
+                
             }     
 
             public:
