@@ -151,12 +151,8 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
 
             if(BA_error > LED_no * 5)
             {
-                ROS_WARN("REPROJECTION_ERROR OVER 30");
-                
-
-            }
-                    
-
+                ROS_WARN("REPROJECTION_ERROR OVER 30");                
+            }                    
             map_SE3_to_pose(pose_global_sophus);
         }
         else
@@ -184,37 +180,15 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 
     if(!pts_2d_detect.empty())
     {
-        vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
-        //what is this for?
-        //to get 3d coordinates in body frame, so that 
-        //outlier rejection could be performed
-
-        reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
-        get_final_POI(pts_2d_detect);
+        reject_outlier(pts_2d_detect, depth);
+        bool sufficient_pts = get_final_POI(pts_2d_detect);
 
         detect_no = pts_2d_detect.size();
 
-
-        if(pts_2d_detect.size() >= 4)
+        if(sufficient_pts)
         {            
-            correspondence_search_kmeans(pts_3d_pcl_detect, pts_2d_detect);
-
-            vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
-            vector<Eigen::Vector2d> pts_detected_in_corres_order;            
-
-            for(int i = 0; i < corres_global.size(); i++)
-            {            
-                if(corres_global[i].detected_ornot)
-                {   
-                    pts_detected_in_corres_order.push_back(corres_global[i].pts_2d_correspond);             
-                    pts_on_body_frame_in_corres_order.push_back(pts_on_body_frame[i]);
-                    corres_global[i].detected_ornot = false;//reset for next time step
-                }        
-            }
-
-            detect_no = pts_on_body_frame_in_corres_order.size();
-
-            if(detect_no < 4)
+            
+            if(!search_corres_and_pose_predict(pts_2d_detect))
             {
                 if(reinitialization(pts_2d_detect, depth))
                 {
@@ -228,47 +202,73 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
             }
             else
             {
-                Eigen::Matrix3d R;
-                Eigen::Vector3d t;           
-
-                // cout<<pts_detected_in_corres_order.size()<<endl;
-
-                solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order, R, t);        
-                pose_global_sophus = Sophus::SE3d(R, t);
-
-                // if(pts_on_body_frame_in_corres_order.size() == pts_detected_in_corres_order.size())
-                //         optimize(pose_global_sophus, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);//pose, body_frame_pts, pts_2d_detect
-
-                double reproject_error = 0;
-
-                for(int i = 0 ; i < pts_on_body_frame_in_corres_order.size(); i++)
-                {
-                    Eigen::Vector2d reproject = reproject_3D_2D(
-                        pts_on_body_frame_in_corres_order[i], 
-                        pose_global_sophus
-                    ); 
-
-                    double temp_error = (reproject - pts_detected_in_corres_order[i]).norm();
-                    //can save as reprojection for next frame
-                    reproject_error = reproject_error + temp_error;
-                    
-                    cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
-                }
-
-                BA_error = reproject_error;
-
-                // cout<<BA_error<<endl<<endl<<endl;
-
-                // if(BA_error > 30)
-                //     ros::shutdown();
-
+                //perhaps Kalman filtering w/ depth                
             }            
         }    
         else
+        {
+            ROS_RED_STREAM("INSUFFICIENT LED DETECTED");
             LED_tracker_initiated_or_tracked = false;
+        }        
+    }                                
+}
 
+bool alan::LedNodelet::search_corres_and_pose_predict(vector<Eigen::Vector2d> pts_2d_detect)
+{
+    correspondence_search_kmeans(pts_2d_detect);
+
+    vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
+    vector<Eigen::Vector2d> pts_detected_in_corres_order;            
+
+    for(int i = 0; i < corres_global.size(); i++)
+    {            
+        if(corres_global[i].detected_ornot)
+        {   
+            pts_detected_in_corres_order.push_back(corres_global[i].pts_2d_correspond);             
+            pts_on_body_frame_in_corres_order.push_back(pts_on_body_frame[i]);
+            corres_global[i].detected_ornot = false;//reset for next time step
+        }        
     }
-                                
+
+    detect_no = pts_on_body_frame_in_corres_order.size();
+
+    if(detect_no < 4)
+    {
+        return false;
+    }
+    else
+    {
+        Eigen::Matrix3d R;
+        Eigen::Vector3d t;           
+
+        // cout<<pts_detected_in_corres_order.size()<<endl;
+
+        solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order, R, t);        
+        pose_global_sophus = Sophus::SE3d(R, t);
+
+        // if(pts_on_body_frame_in_corres_order.size() == pts_detected_in_corres_order.size())
+        //         optimize(pose_global_sophus, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);//pose, body_frame_pts, pts_2d_detect
+
+        double reproject_error = 0;
+
+        for(int i = 0 ; i < pts_on_body_frame_in_corres_order.size(); i++)
+        {
+            Eigen::Vector2d reproject = reproject_3D_2D(
+                pts_on_body_frame_in_corres_order[i], 
+                pose_global_sophus
+            ); 
+
+            double temp_error = (reproject - pts_detected_in_corres_order[i]).norm();
+            //can save as reprojection for next frame
+            reproject_error = reproject_error + temp_error;
+            
+            cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+        }
+
+        BA_error = reproject_error;
+
+        return true;
+    }    
 }
 
 inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
@@ -602,7 +602,7 @@ vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(vector<Eigen::Vect
     return pointclouds;
 }
 
-void alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
+bool alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
 {
     double x_min = INFINITY, y_min = INFINITY;
     double x_max = -INFINITY, y_max = -INFINITY;
@@ -678,15 +678,12 @@ void alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
 
     if(no_cluster < 4)
     {
-        cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/wrong/final_ROI_gan"+ to_string(i)+ ".png", final_ROI);
-        i++;
+        // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/wrong/final_ROI_gan"+ to_string(i)+ ".png", final_ROI);
+        // i++;
+        return false;
     }
-    
-    cout<<"get_final_POI kmeans"<<endl;
-    cout<<POI_pts.size()<<endl;
-    cout<<no_cluster<<endl;
+
     cv::kmeans(POI_pts, no_cluster, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
-    cout<<"pass get_final_POI kmeans"<<endl;
 
     pts_2d_detected.clear();
     for(int i = 0; i < centers.size(); i++)
@@ -695,6 +692,8 @@ void alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
     }
 
     frame_input = im_with_keypoints.clone();
+
+    return true;
 
 }
 
@@ -727,7 +726,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 
         int i = 0;
 
-        //hsv detect feature
+        //hsv detect color feature
         cv::cvtColor(hsv, hsv, CV_RGB2HSV);
         vector<bool> g_or_r; //g = true
 
@@ -1006,7 +1005,7 @@ bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, c
         return false;
 }
 
-void alan::LedNodelet::correspondence_search_kmeans(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected)
+void alan::LedNodelet::correspondence_search_kmeans(vector<Eigen::Vector2d> pts_2d_detected)
 {
     vector<cv::Point2f> pts;
     Eigen::Vector2d reproject_temp;  
@@ -1032,13 +1031,9 @@ void alan::LedNodelet::correspondence_search_kmeans(vector<Eigen::Vector3d> pts_
     
     vector<cv::Point2f> centers;
     cv::Mat labels;
-    
-    cout<<"correspondence_search_kmeans kmeans..."<<endl;
-    cout<<pts_3d_detected.size()<<endl;
-    cout<<pts_2d_detected.size()<<endl;
-    cout<<pts.size()<<endl;
+
     cv::kmeans(pts, LED_no, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
-    cout<<"pass correspondence search..."<<endl;
+
     int error_count = 0;
 
     for(int i = 0; i < LED_no; i++)
@@ -1079,8 +1074,12 @@ void alan::LedNodelet::correspondence_search_kmeans(vector<Eigen::Vector3d> pts_
     //we then calcullate the distance between the centroid of the cluster to the
     //center at previous time step(pcl_center_point_wo_outlier_previous)
     //and determine which cluster is the one that we want
-void alan::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect)
+void alan::LedNodelet::reject_outlier(vector<Eigen::Vector2d>& pts_2d_detect, cv::Mat depth)
 {
+    vector<Eigen::Vector3d> pts_3d_detect = pointcloud_generate(pts_2d_detect, depth);
+    //what is this for?
+    //to get 3d coordinates in body frame, so that 
+    //outlier rejection could be performed
     int n = pts_3d_detect.size();
 
     vector<cv::Point3f> pts;
@@ -1104,7 +1103,6 @@ void alan::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, ve
         || calculate_MAD(norm_of_y_points) > MAD_y_threshold
         || calculate_MAD(norm_of_z_points) > MAD_z_threshold)
     {   
-        cout<<"reject_outlier kmeans"<<endl;
         cv::kmeans(pts, 2, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
 
         double d0 = cv::norm(pcl_center_point_wo_outlier_previous - centers[0]);

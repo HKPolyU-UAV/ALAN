@@ -111,10 +111,11 @@ namespace alan
         
         //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
-            Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
+            Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);            
 
         //main process
             void recursive_filtering(cv::Mat& frame, cv::Mat depth);
+            bool search_corres_and_pose_predict(vector<Eigen::Vector2d> pts_2d_detect);
 
         //pnp + BA
             void solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
@@ -128,7 +129,7 @@ namespace alan
             int BINARY_THRES = 0;
             vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
             vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
-            void get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected);
+            bool get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected);
 
         //initiation & correspondence 
             //objects
@@ -137,7 +138,7 @@ namespace alan
             bool LED_tracker_initiated_or_tracked = false;
             int LED_no;
             //functions       
-            void correspondence_search_kmeans(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected);        
+            void correspondence_search_kmeans(vector<Eigen::Vector2d> pts_2d_detected);        
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
                       
         //outlier rejection 
@@ -146,7 +147,7 @@ namespace alan
             double MAD_x_threshold = 0, MAD_y_threshold = 0, MAD_z_threshold = 0;
             double min_blob_size = 0;
             //functions
-            void reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect);
+            void reject_outlier(vector<Eigen::Vector2d>& pts_2d_detect, cv::Mat depth);
             double calculate_MAD(vector<double> norm_of_points);
 
         //reinitialization
