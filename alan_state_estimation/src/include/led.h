@@ -182,7 +182,7 @@ namespace alan
                 ros::NodeHandle& nh = getMTNodeHandle();
                 ROS_INFO("LED Nodelet Initiated...");
 
-                RosTopicConfigs configs(nh, "alan_master");
+                RosTopicConfigs configs(nh, "/alan_master");
                                 
             //load POI_extract config
                 nh.getParam("/alan_master/LANDING_DISTANCE", LANDING_DISTANCE);     
@@ -274,7 +274,7 @@ namespace alan
                 for(int i = 0; i < LED_list.size(); i++)
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
-                    temp = body_to_cam * temp;
+                    // temp = body_to_cam * temp;
                     cout<<temp<<endl;
                     cout<<"-----"<<endl;
                     pts_on_body_frame.push_back(temp);
@@ -335,10 +335,14 @@ namespace alan
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
                 
-                // ugv_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-                //     (CAR_POSE_TOPIC, 1, &LedNodelet::ugv_pose_callback, this);
-                // uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-                //     (UAV_POSE_TOPIC, 1, &LedNodelet::uav_pose_callback, this);
+                #define UAV_POSE_SUB_TOPIC POSE_SUB_TOPIC_A
+                uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
+                    (configs.getTopicName(UAV_POSE_SUB_TOPIC), 1, &LedNodelet::uav_pose_callback, this);
+
+                #define UGV_POSE_SUB_TOPIC POSE_SUB_TOPIC_B
+                ugv_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
+                    (configs.getTopicName(UGV_POSE_SUB_TOPIC), 1, &LedNodelet::ugv_pose_callback, this);
+                
 
             //publish
                 image_transport::ImageTransport image_transport_(nh);
@@ -346,17 +350,21 @@ namespace alan
                 pubimage = image_transport_.advertise("/processed_image",1);
                 pubimage_input = image_transport_.advertise("/input_image", 1);
 
+                #define LED_POSE_PUB_TOPIC POSE_PUB_TOPIC_A
                 ledpose_pub = nh.advertise<geometry_msgs::PoseStamped>
-                                ("/alan_state_estimation/LED/pose", 1, true);
-                campose_pub = nh.advertise<geometry_msgs::PoseStamped>
-                                ("/alan_state_estimation/CAM/pose", 1, true); 
-                ugvpose_pub = nh.advertise<geometry_msgs::PoseStamped>
-                                ("/alan_state_estimation/UGV/pose", 1, true); 
-                uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>
-                                ("/alan_state_estimation/UAV/pose", 1, true);
-
+                                (configs.getTopicName(LED_POSE_PUB_TOPIC), 1, true);
                 
+                #define UGV_POSE_PUB_TOPIC POSE_PUB_TOPIC_B
+                ugvpose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                                (configs.getTopicName(UGV_POSE_PUB_TOPIC), 1, true); 
+                
+                #define UAV_POSE_PUB_TOPIC POSE_PUB_TOPIC_C
+                uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                                (configs.getTopicName(UAV_POSE_PUB_TOPIC), 1, true);
 
+                #define CAM_POSE_PUB_TOPIC POSE_PUB_TOPIC_D
+                campose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                                (configs.getTopicName(CAM_POSE_PUB_TOPIC), 1, true);                 
             }
 
 

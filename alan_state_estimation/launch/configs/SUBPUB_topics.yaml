@@ -2,30 +2,45 @@ TOPICLIST:
   - TOPICTYPE: "CAMERA_SUB_TOPIC_A"
     TOPICNAME: "/camera/color/image_raw/compressed"
     SUBORPUB:  0
+
   - TOPICTYPE: "DEPTH_SUB_TOPIC_A"
     TOPICNAME: "/camera/aligned_depth_to_color/image_raw"
     SUBORPUB:  0
+
   - TOPICTYPE: "POSE_SUB_TOPIC_A"
-    TOPICNAME: "/mavros/local_position/pose"
+    TOPICNAME: "/uav/mavros/vision_pose/pose"
+    #/uav/mavros/vision_pose/pose #/mavros/local_position/pose
     SUBORPUB:  0
+
   - TOPICTYPE: "POSE_SUB_TOPIC_B"
-    TOPICNAME: "/imu_pose" #"/vrpn_client_node/gh034_car/pose"
+    TOPICNAME: "/vrpn_client_node/gh034_car/pose" 
+    #/vrpn_client_node/gh034_car/pose #/imu_pose
     SUBORPUB:  0
+
   - TOPICTYPE: "POSE_PUB_TOPIC_A"
-    TOPICNAME: "/alan_pose/aruco_pose"
+    TOPICNAME: "/alan_state_estimation/LED/pose"
+     #/alan_pose/aruco_pose #/alan_state_estimation/LED/pose
     SUBORPUB:  1
+
   - TOPICTYPE: "POSE_PUB_TOPIC_B"
-    TOPICNAME: "/alan_pose/aruco_pose_myself"
+    TOPICNAME: "/alan_state_estimation/UGV/pose"
+    #/alan_pose/ugv_pose #/alan_state_estimation/UGV/pose
     SUBORPUB:  1
+
   - TOPICTYPE: "POSE_PUB_TOPIC_C"
-    TOPICNAME: "/alan_pose/ugv_pose"
+    TOPICNAME: "/alan_state_estimation/UAV/pose"    
+    #/alan_pose/aruco_pose_myself #/alan_state_estimation/UAV/pose
     SUBORPUB:  1
+
   - TOPICTYPE: "POSE_PUB_TOPIC_D"
-    TOPICNAME: "/alan_pose/cam_pose"
+    TOPICNAME: "/alan_state_estimation/CAM/pose"
+    #/alan_state_estimation/CAM/pose #/alan_pose/cam_pose
     SUBORPUB:  1
+
   - TOPICTYPE: "POSE_PUB_TOPIC_E"
     TOPICNAME: "/alan_pose/uav_pose"
     SUBORPUB:  1
+    
   - TOPICTYPE: "IMAGE_PUB_TOPIC_A"
     TOPICNAME: "/processed_image"
     SUBORPUB:  1
