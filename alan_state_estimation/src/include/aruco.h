@@ -43,6 +43,7 @@
 
 #include "tools/RosTopicConfigs.h"
 
+
 namespace alan
 {
     class ArucoNodelet : public nodelet::Nodelet
