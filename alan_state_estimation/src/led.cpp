@@ -96,6 +96,22 @@ void alan::LedNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::Const
 void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
     uav_pose_msg = *pose;
+
+    Eigen::Translation3d t_(
+        uav_pose_msg.pose.position.x,
+        uav_pose_msg.pose.position.y,
+        uav_pose_msg.pose.position.z
+    );
+
+    Eigen::Quaterniond q_(
+        uav_pose_msg.pose.orientation.w,
+        uav_pose_msg.pose.orientation.x,
+        uav_pose_msg.pose.orientation.y,
+        uav_pose_msg.pose.orientation.z  
+    );
+
+    uav_pose = t_ * q_;
+
     uav_pose_msg.header.frame_id = "map";
 
     uavpose_pub.publish(uav_pose_msg);
@@ -103,23 +119,24 @@ void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::Const
 
 void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 {
-    // Eigen::Matrix3d rmat = pose.rotationMatrix();
-    // Eigen::Vector3d tvec = pose.translation();
-
+    // cout<<"relative distance...";
+    Eigen::Vector2d temp(
+        (uav_pose.translation() - cam_pose.translation()).x(),
+        (uav_pose.translation() - cam_pose.translation()).y()
+    );
     
+    // cout<< temp.norm()<<endl;
+    Eigen::Matrix3d cam_to_body;
+    cam_to_body << 0,0,1,
+        -1,0,0,
+        0,-1,0;
 
-    // rmat = rmat.transpose();
+//* cam_to_body * q_cam.toRotationMatrix()
+//* cam_to_body
+    Eigen::Quaterniond q_led = Eigen::Quaterniond(pose.rotationMatrix() );
+    Eigen::Translation3d t_led = Eigen::Translation3d(pose.translation() );
 
-
-    Eigen::Quaterniond q_led = Eigen::Quaterniond(pose.rotationMatrix());
-    Eigen::Translation3d t_led = Eigen::Translation3d(pose.translation());
-
-
-
-
-
-    led_pose = t_led * q_led;    
-    // led_pose = led_pose.inverse();//led in camera frame    
+    led_pose = t_led * q_led;//in {c} frame
 
     // q_led = q_cam * q_led.inverse();
     // t_led.translation() = q_led.toRotationMatrix() * t_led.translation() + t_cam;
@@ -158,7 +175,7 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
         if(LED_tracker_initiated_or_tracked)
         {
             printf("\n");
-            ROS_GREEN_STREAM("TRACKER INITIALIZED");
+            ROS_GREEN_STREAM("TRACKER INITIALIZED!");
             ROS_GREEN_STREAM("SHOULD BE FINE...\n");
 
             if(BA_error > LED_no * 5)
@@ -177,16 +194,8 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
     {
         recursive_filtering(frame, depth);
 
-        Eigen::Matrix3d reverseeee;
-        reverseeee <<
-              1.0000000,  0.0000000,  0.0000000,
-                0.0000000, -1.0000000, -0.0000000,
-                0.0000000,  0.0000000, -1.0000000; ;
-        
-        // cout<<q2rpy(Eigen::Quaterniond(pose_global_sophus.rotationMatrix())) / M_PI * 180<<endl; 
-        // cout<<"gan"<<endl;
-        // cout<<q2rpy(Eigen::Quaterniond(pose_global_sophus.rotationMatrix() * reverseeee )) / M_PI * 180<<endl; 
-        // cout<<"-----"<<endl<<endl;
+        // cout<< q2rpy(Eigen::Quaterniond(pose_global_sophus.rotationMatrix())) / M_PI * 180<<endl; 
+        // cout<<"----------"<<endl;
         if(BA_error > LED_no * 5)
         {
             ROS_WARN("REPROJECTION_ERROR OVER 30");     
@@ -212,8 +221,7 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
         detect_no = pts_2d_detect.size();
 
         if(sufficient_pts)
-        {            
-            
+        {                        
             if(!search_corres_and_pose_predict(pts_2d_detect))
             {
                 if(reinitialization(pts_2d_detect, depth))
@@ -316,6 +324,11 @@ inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Soph
 void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
 {
     cv::Mat distCoeffs = cv::Mat::zeros(5, 1, CV_64F);
+    // distCoeffs.at<double>(0) = -0.056986890733242035;
+    // distCoeffs.at<double>(1) = 0.06356718391180038;
+    // distCoeffs.at<double>(2) = -0.0012483829632401466;
+    // distCoeffs.at<double>(3) = -0.00018130485841538757;
+    // distCoeffs.at<double>(4) = -0.019809694960713387;
 
     cv::Mat no_ro_rmat = cv::Mat::eye(3,3,CV_64F);
     
@@ -357,36 +370,34 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
     cv::Mat rmat = cv::Mat::eye(3,3,CV_64F);
     cv::Rodrigues(rvec, rmat);
 
-    // rmat = rmat.t();
-
-    // cv::Mat r_temp =  rmat * cv::Mat(tvec);
-    // tvec(0) = r_temp.at<double>(0);// cv::Mat(tvec);// * tvec;
-    // tvec(1) = r_temp.at<double>(1);
-    // tvec(2) = r_temp.at<double>(2);
-
-    // tvec = (-1) * tvec;
-
-
     R <<
         rmat.at<double>(0,0), rmat.at<double>(0,1), rmat.at<double>(0,2),
         rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
         rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
-
-    Eigen::Matrix3d reverseeee;
-        reverseeee <<
-              1.0000000,  0.0000000,  0.0000000,
-                0.0000000, -1.0000000, -0.0000000,
-                0.0000000,  0.0000000, -1.0000000; ;
-
-    R = R * reverseeee;
-
-
+        
     t <<
         tvec(0),
         tvec(1),
         tvec(2); 
 
-    t = (-1) * t;
+    if(tvec(2) < 0)
+    {
+        //sometime opencv's solvepnp gives mirrored results
+        Eigen::Matrix3d reverse_mat;
+        reverse_mat <<
+              1.0000000,  0.0000000,  0.0000000,
+                0.0000000, -1.0000000, -0.0000000,
+                0.0000000,  0.0000000, -1.0000000;
+
+        R = R * reverse_mat;
+
+        t = (-1) * t;
+        // t.z() = depth_avg_of_all;
+    }
+    else
+    {
+        //do nothing
+    }
 
 }
 
@@ -569,6 +580,8 @@ vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(vector<Eigen::Vect
 
     int x_pixel, y_pixel;
     Eigen::Vector3d temp;
+
+    depth_avg_of_all = 0;
     
 
     for(int i = 0; i < pts_2d_detected.size(); i++)
@@ -607,7 +620,6 @@ vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(vector<Eigen::Vect
         temp.z() = 1;
 
         temp = z_depth * cameraMat.inverse() * temp;
-
         
         pointclouds.push_back(temp);
     }
@@ -1103,6 +1115,7 @@ void alan::LedNodelet::reject_outlier(vector<Eigen::Vector2d>& pts_2d_detect, cv
         norm_of_x_points.push_back(what.x());
         norm_of_y_points.push_back(what.y());
         norm_of_z_points.push_back(what.z());
+
         pts.push_back(cv::Point3f(what.x(), what.y(), what.z()));
     }
 
@@ -1159,10 +1172,17 @@ void alan::LedNodelet::reject_outlier(vector<Eigen::Vector2d>& pts_2d_detect, cv
     {
         cv::Mat temp;
         
-        cv::reduce(pts, temp, 01, CV_REDUCE_AVG);
+        cv::reduce(pts, temp, 0, CV_REDUCE_AVG);
         pcl_center_point_wo_outlier_previous = cv::Point3f(temp.at<float>(0,0), temp.at<float>(0,1), temp.at<float>(0,2));
 
     }
+
+    
+    led_3d_posi_in_camera_frame = Eigen::Vector3d(
+        pcl_center_point_wo_outlier_previous.x,
+        pcl_center_point_wo_outlier_previous.y,
+        pcl_center_point_wo_outlier_previous.z
+    );
 
 }
 

@@ -82,6 +82,8 @@ namespace alan
             Eigen::Isometry3d ugv_pose;
             Eigen::Isometry3d cam_pose;
             Eigen::Isometry3d ugv_cam_pose, led_cambody_pose;
+            Eigen::Isometry3d uav_pose;
+            
             Eigen::Isometry3d led_pose;
             Eigen::Vector3d cam_origin_in_body_frame, cam_origin;
             Eigen::Quaterniond q_cam, q_led_cambody;
@@ -95,6 +97,7 @@ namespace alan
             int detect_no = 0;
             double BA_error = 0;
             double depth_avg_of_all = 0;
+            
             vector<cv::KeyPoint> blobs_for_initialize;
             int _width = 0, _height = 0;
 
@@ -157,6 +160,10 @@ namespace alan
             //functions
             void reject_outlier(vector<Eigen::Vector2d>& pts_2d_detect, cv::Mat depth);
             double calculate_MAD(vector<double> norm_of_points);
+        
+        //depth compensation
+            //objects
+            Eigen::Vector3d led_3d_posi_in_camera_frame;
 
         //reinitialization
             bool reinitialization(vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth);
@@ -221,11 +228,6 @@ namespace alan
                     cameraEX(i) = extrinsics_list[i];                    
                 }
 
-                // cout<<Eigen::Vector3d(
-                //         cameraEX(3) / 180 * M_PI,
-                //         cameraEX(4) / 180 * M_PI,
-                //         cameraEX(5) / 180 * M_PI              
-                //     )<<endl;
 
                 q_c2b = rpy2q(
                     Eigen::Vector3d(
@@ -261,11 +263,11 @@ namespace alan
 
 
 
-            Eigen::Matrix3d body_to_cam;//rpy = 0 -90 90
-            body_to_cam << 
-                0.0000000,  -1.0000000,  0.0000000,
-                0.0000000,  0.0000000,  -1.0000000,
-                1.0000000, 0.0000000,  0.0000000;
+            // Eigen::Matrix3d body_to_cam;//rpy = 0 -90 90
+            // body_to_cam << 
+            //     0.0000000,  -1.0000000,  0.0000000,
+            //     0.0000000,  0.0000000,  -1.0000000,
+            //     1.0000000, 0.0000000,  0.0000000;
 
             //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
@@ -274,7 +276,7 @@ namespace alan
                 for(int i = 0; i < LED_list.size(); i++)
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
-                    // temp = body_to_cam * temp;
+
                     cout<<temp<<endl;
                     cout<<"-----"<<endl;
                     pts_on_body_frame.push_back(temp);

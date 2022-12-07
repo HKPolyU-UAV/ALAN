@@ -1,10 +1,12 @@
 LANDING_DISTANCE:
-  4.5
+  4.0
 
 cam_intrinsics_435: [420.8413391113281, 420.5337829589844, 425.25750732421875, 257.9543762207031]#fx fy cx cy
 cam_intrinsics_455: [633.8505249023438, 633.3872680664062, 641.8981323242188, 387.1009521484375]#fx fy cx cy
-
-cam_extrinsics_d455: [0.57, 0.0, 0.025, 0.0, -20.0, 180.0]#xyzrpy
+#cam_intrinsics_455: [633.8505249023438, 633.3872680664062, 641.8981323242188, 387.1009521484375]#fx fy cx cy
+# 566.94	0	310.38	0	566.62	255.85
+# 613.171	0	328.574	0	613.014	249.063
+cam_extrinsics_d455: [0.54446, 0.0, 0.0307356, 0.0, -20.0, 180.0] #xyzrpy
 
 cam_FOV_H: 90
 cam_FOV_V: 65
@@ -64,7 +66,53 @@ LED_positions:
   #   y: 0.075
   #   z: -0.03
 
+ARUCO_positions:
+  - x: 0.01
+    y: 0.0225
+    z: -0.055
+  - x: 0.01
+    y: -0.0225
+    z: -0.055
+  - x: 0.01
+    y: -0.0225
+    z: -0.010
+  - x: 0.01
+    y: 0.0225
+    z: -0.010
 
+weightpath:
+  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.weights"
+
+cfgpath:
+  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.cfg"
+
+classnamepath:
+  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names"
+
+
+MAD_x_threshold:
+  0.1
+MAD_y_threshold:
+  0.1
+MAD_z_threshold:
+  0.1
+
+BINARY_threshold:
+ 20
+
+frame_width:
+ 848
+frame_height:
+ 480
+
+failsafe_threshold:
+ 0.20
+
+
+
+
+# for algo test
+# ----------------------------------------------------------------------------------
 pts_2d_list:
   - x: 314.867
     y: 358.133
@@ -83,80 +131,6 @@ pts_2d_list:
 
   - x: 368.152
     y: 358.667
-
-
-
-ARUCO_positions:
-  - x: 0.01
-    y: 0.0225
-    z: -0.055
-  - x: 0.01
-    y: -0.0225
-    z: -0.055
-  - x: 0.01
-    y: -0.0225
-    z: -0.010
-  - x: 0.01
-    y: 0.0225
-    z: -0.010
-
-  
-  # - x: 0.055
-  #   y: -0.0225
-  #   z: -0.010
-  # - x: 0.055
-  #   y: 0.0225
-  #   z: -0.010
-  # - x: 0.055
-  #   y: 0.0225
-  #   z: -0.055
-  # - x: 0.055
-  #   y: -0.0225
-  #   z: -0.055
-
-  # - x: 0.0
-  #   y: 0.0225
-  #   z: -0.0225
-  # - x: 0.0
-  #   y: -0.0225
-  #   z: -0.0225
-  # - x: 0.0
-  #   y: -0.0225
-  #   z: 0.0225
-  # - x: 0.0
-  #   y: 0.0225
-  #   z: 0.0225
-
-
-  # - x: 0.055
-  #   y: -0.0225
-  #   z: -0.010
-  # - x: 0.055
-  #   y: 0.0225
-  #   z: -0.010
-  # - x: 0.055
-  #   y: 0.0225
-  #   z: -0.055
-  # - x: 0.055
-  #   y: -0.0225
-  #   z: -0.055
-
-# ARUCO_positions:
-#   - z: 0.0
-#     x: -0.0225
-#     y: -0.0225
-#   - z: 0.0
-#     x: 0.0225
-#     y: -0.0225
-#   - z: 0.0
-#     x: 0.0225
-#     y: 0.0225
-#   - z: 0.0
-#     x: -0.0225
-#     y: 0.0225
-
-
-
 
 pts_2d_list_previous:
   - x: 324.0
@@ -243,31 +217,59 @@ pts_3d_list_previous:
   #   y: -0.0225
   #   z: -0.055
 
-weightpath:
-  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.weights"
-
-cfgpath:
-  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.cfg"
-
-classnamepath:
-  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names"
 
 
 
-MAD_x_threshold:
-  0.1
-MAD_y_threshold:
-  0.1
-MAD_z_threshold:
-  0.1
+  # - x: 0.055
+  #   y: -0.0225
+  #   z: -0.010
+  # - x: 0.055
+  #   y: 0.0225
+  #   z: -0.010
+  # - x: 0.055
+  #   y: 0.0225
+  #   z: -0.055
+  # - x: 0.055
+  #   y: -0.0225
+  #   z: -0.055
 
-BINARY_threshold:
- 20
+  # - x: 0.0
+  #   y: 0.0225
+  #   z: -0.0225
+  # - x: 0.0
+  #   y: -0.0225
+  #   z: -0.0225
+  # - x: 0.0
+  #   y: -0.0225
+  #   z: 0.0225
+  # - x: 0.0
+  #   y: 0.0225
+  #   z: 0.0225
 
-frame_width:
- 848
-frame_height:
- 480
 
-failsafe_threshold:
- 0.20
+  # - x: 0.055
+  #   y: -0.0225
+  #   z: -0.010
+  # - x: 0.055
+  #   y: 0.0225
+  #   z: -0.010
+  # - x: 0.055
+  #   y: 0.0225
+  #   z: -0.055
+  # - x: 0.055
+  #   y: -0.0225
+  #   z: -0.055
+
+# ARUCO_positions:
+#   - z: 0.0
+#     x: -0.0225
+#     y: -0.0225
+#   - z: 0.0
+#     x: 0.0225
+#     y: -0.0225
+#   - z: 0.0
+#     x: 0.0225
+#     y: 0.0225
+#   - z: 0.0
+#     x: -0.0225
+#     y: 0.0225
