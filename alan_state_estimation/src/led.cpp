@@ -35,14 +35,18 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
         LED_tracker_initiated_or_tracked = false;
         printf("\033c");
         ROS_RED_STREAM("RESET TERMINAL!");
-    }                        
+    }           
+           
 
     solve_pose_w_LED(frame, depth);
     
     double t1 = ros::Time::now().toSec();    
 
-    set_image_to_publish(t1, t0, rgbmsg);
+    if(LED_tracker_initiated_or_tracked)
+        terminal_msg_display(1 / (t1 - t0));
 
+    set_image_to_publish(1 / (t1 - t0), rgbmsg);
+                    
     last_request = ros::Time::now().toSec();
 
     if(!nodelet_activated)
@@ -119,13 +123,13 @@ void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::Const
 
 void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 {
-    cout<<"relative distance...";
+    // cout<<"relative distance...";
     Eigen::Vector2d temp(
         (uav_pose.translation() - cam_pose.translation()).x(),
         (uav_pose.translation() - cam_pose.translation()).y()
     );
     
-    cout<< temp.norm()<<endl;
+    // cout<< temp.norm()<<endl;
     Eigen::Matrix3d cam_to_body;
     cam_to_body << 0,0,1,
         -1,0,0,
@@ -198,7 +202,9 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
         {
             ROS_WARN("REPROJECTION_ERROR OVER %d", LED_no * 2);                 
             cv::imwrite("/home/patty/alan_ws/misc/i.png", display);
+
         }
+          
 
         map_SE3_to_pose(pose_global_sophus);
     }
@@ -288,8 +294,8 @@ bool alan::LedNodelet::search_corres_and_pose_predict(vector<Eigen::Vector2d> pt
             true
         );
 
-        cout<<"reproject_error..."<<endl;
-        cout<<reproject_error<<endl;      
+        // cout<<"reproject_error..."<<endl;
+        // cout<<reproject_error<<endl;      
 
         BA_error = reproject_error;
 
@@ -1255,22 +1261,27 @@ Eigen::Vector3d alan::LedNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::V
     return q * v;
 }
 
-void alan::LedNodelet::set_image_to_publish(double t2, double t1, const sensor_msgs::CompressedImageConstPtr & rgbmsg)
+void alan::LedNodelet::set_image_to_publish(double freq, const sensor_msgs::CompressedImageConstPtr & rgbmsg)
 {    
     char hz[40];
     char fps[10] = " fps";
-    sprintf(hz, "%.2f", 1 / (t2 - t1));
+    sprintf(hz, "%.2f", freq);
     strcat(hz, fps);
 
     char BA[40] = "BA: ";
     char BA_error_display[10];
     sprintf(BA_error_display, "%.2f", BA_error);
     strcat(BA, BA_error_display);
+
+    char dpth[40] = "DPTH: ";
+    char dpth_display[10];
+    sprintf(dpth_display, "%.2f", depth_avg_of_all);
+    strcat(dpth, dpth_display);
     
     cv::putText(display, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));  
     cv::putText(display, to_string(detect_no), cv::Point(720,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
     cv::putText(display, BA, cv::Point(720,60), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
-    cv::putText(display, to_string(depth_avg_of_all), cv::Point(20,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+    cv::putText(display, dpth, cv::Point(20,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
 
     cv::Mat imageoutput = display.clone();
     cv_bridge::CvImage for_visual;
@@ -1285,10 +1296,36 @@ void alan::LedNodelet::set_image_to_publish(double t2, double t1, const sensor_m
     for_visual_input.encoding = sensor_msgs::image_encodings::BGR8;
     for_visual_input.image = frame_input;
     this->pubimage_input.publish(for_visual_input.toImageMsg());   
-
     // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/in_camera_frame/"+ to_string(i)+ ".png", display); 
     // i++;
+}
 
+void alan::LedNodelet::terminal_msg_display(double hz)
+{
+    string LED_terminal_display = "LED_no: " + to_string(detect_no);
+
+    std::ostringstream out1;
+    out1.precision(2);
+    out1<<fixed<<BA_error;
+    string BA_terminal_display = " || BA_ERROR: " + out1.str();
+
+    std::ostringstream out2;
+    out2.precision(2);
+    out2<<fixed<<depth_avg_of_all;
+    string dpth_terminal_display = " || dpth: " + out2.str();
+
+    std::ostringstream out3;
+    out3.precision(2);
+    out3<<fixed<<hz;
+    string hz_terminal_display = " || hz: " + out3.str();
+
+    string final_msg = LED_terminal_display 
+        + BA_terminal_display 
+        + dpth_terminal_display
+        + hz_terminal_display;
+
+    
+    ROS_BLUE_STREAM(final_msg);
 }
 
 //below is the courtesy of UZH Faessler et al.

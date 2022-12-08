@@ -178,14 +178,15 @@ namespace alan
             //functions
             void map_SE3_to_pose(Sophus::SE3d pose);
             void set_image_to_publish(
-                double t2, 
-                double t1, 
+                double hz, 
                 const sensor_msgs::CompressedImageConstPtr & rgbmsg
             );
+            void terminal_msg_display(double hz);
             //functions
             Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
+            
 
 //---------------------------------------------------------------------------------------
             virtual void onInit()
