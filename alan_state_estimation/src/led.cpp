@@ -37,13 +37,11 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
         ROS_RED_STREAM("RESET TERMINAL!");
     }           
            
-
     solve_pose_w_LED(frame, depth);
     
     double t1 = ros::Time::now().toSec();    
 
-    if(LED_tracker_initiated_or_tracked)
-        terminal_msg_display(1 / (t1 - t0));
+    terminal_msg_display(1 / (t1 - t0));
 
     set_image_to_publish(1 / (t1 - t0), rgbmsg);
                     
@@ -124,12 +122,12 @@ void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::Const
 void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 {
     // cout<<"relative distance...";
-    Eigen::Vector2d temp(
-        (uav_pose.translation() - cam_pose.translation()).x(),
-        (uav_pose.translation() - cam_pose.translation()).y()
-    );
-    
+    // Eigen::Vector2d temp(
+    //     (uav_pose.translation() - cam_pose.translation()).x(),
+    //     (uav_pose.translation() - cam_pose.translation()).y()
+    // );
     // cout<< temp.norm()<<endl;
+    
     Eigen::Matrix3d cam_to_body;
     cam_to_body << 0,0,1,
         -1,0,0,
@@ -195,18 +193,26 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
     {
         recursive_filtering(frame, depth);
 
+        if(!LED_tracker_initiated_or_tracked)
+        {
+            ROS_RED_STREAM("TRACKER FAIL");
+        }
+        else       
+            map_SE3_to_pose(pose_global_sophus);
+
         // cout<< q2rpy(Eigen::Quaterniond(pose_global_sophus.rotationMatrix())) / M_PI * 180<<endl; 
         // cout<<"----------"<<endl;
 
-        if(BA_error > LED_no * 2)
-        {
-            ROS_WARN("REPROJECTION_ERROR OVER %d", LED_no * 2);                 
-            cv::imwrite("/home/patty/alan_ws/misc/i.png", display);
-
-        }
-          
-
-        map_SE3_to_pose(pose_global_sophus);
+        // if(BA_error > LED_no * 2)
+        // {
+        //     if(!LED_tracker_initiated_or_tracked)
+        //     {
+        //         ROS_WARN("REPROJECTION_ERROR OVER %d", LED_no * 2);  
+        //         ROS_ERROR("");              
+        //         cv::imwrite("/home/patty/alan_ws/misc/i.png", display);                
+        //     }            
+        // }
+        
     }
 }
 
@@ -224,8 +230,6 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
         bool sufficient_pts = get_final_POI(pts_2d_detect);
         //the former retrieved POI could be noisy,
         //so get final POI
-
-        detect_no = pts_2d_detect.size();
 
         if(sufficient_pts)
         {                        
@@ -251,7 +255,9 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
             ROS_RED_STREAM("INSUFFICIENT LED DETECTED");
             LED_tracker_initiated_or_tracked = false;
         }        
-    }                                
+    }      
+    else
+        LED_tracker_initiated_or_tracked = false;                          
 }
 
 bool alan::LedNodelet::search_corres_and_pose_predict(vector<Eigen::Vector2d> pts_2d_detect)
@@ -299,7 +305,10 @@ bool alan::LedNodelet::search_corres_and_pose_predict(vector<Eigen::Vector2d> pt
 
         BA_error = reproject_error;
 
-        return true;
+        if(BA_error > LED_no * 2)
+            return false;
+        else
+            return true;
     }    
 }
 
@@ -409,13 +418,16 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
             0.0000000, -1.0000000, -0.0000000,
             0.0000000,  0.0000000, -1.0000000;
 
-    R = R * reverse_mat;
+    
 
-    t = (-1) * Eigen::Vector3d(
+    t =  Eigen::Vector3d(
           tvec(0),
           tvec(1),
           tvec(2)  
         );
+
+    R = R * reverse_mat;
+    t = (-1) * t;
 
     pose_epnp_sophus = Sophus::SE3d(R, t);
     
@@ -583,7 +595,6 @@ vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Ma
     // cv::imshow("frame", frame);
     // cv::waitKey(10);
     
-    detect_no = keypoints_rgb_d.size();
     
     blobs_for_initialize = keypoints_rgb_d;
 
@@ -717,9 +728,7 @@ bool alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
     
     // cv::imshow("final_ROI", final_ROI);
     // cv::waitKey(10);
-    
-    detect_no = keypoints_rgb_d.size();
-    
+        
     blobs_for_initialize = keypoints_rgb_d;
 
     vector<cv::Point2f> POI_pts;
@@ -756,9 +765,11 @@ bool alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
     }
 
     frame_input = im_with_keypoints.clone();
-
-    return true;
-
+    // cout<<"final POI:..."<<pts_2d_detected.size()<<endl;
+    if(pts_2d_detected.size() < 4)
+        return false;
+    else
+        return true;
 }
 
 bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
@@ -1273,15 +1284,15 @@ void alan::LedNodelet::set_image_to_publish(double freq, const sensor_msgs::Comp
     sprintf(BA_error_display, "%.2f", BA_error);
     strcat(BA, BA_error_display);
 
-    char dpth[40] = "DPTH: ";
-    char dpth_display[10];
-    sprintf(dpth_display, "%.2f", depth_avg_of_all);
-    strcat(dpth, dpth_display);
+    char depth[40] = "DPTH: ";
+    char depth_display[10];
+    sprintf(depth_display, "%.2f", depth_avg_of_all);
+    strcat(depth, depth_display);
     
     cv::putText(display, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));  
     cv::putText(display, to_string(detect_no), cv::Point(720,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
     cv::putText(display, BA, cv::Point(720,60), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
-    cv::putText(display, dpth, cv::Point(20,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+    cv::putText(display, depth, cv::Point(20,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
 
     cv::Mat imageoutput = display.clone();
     cv_bridge::CvImage for_visual;
@@ -1312,7 +1323,7 @@ void alan::LedNodelet::terminal_msg_display(double hz)
     std::ostringstream out2;
     out2.precision(2);
     out2<<fixed<<depth_avg_of_all;
-    string dpth_terminal_display = " || dpth: " + out2.str();
+    string depth_terminal_display = " || depth: " + out2.str();
 
     std::ostringstream out3;
     out3.precision(2);
@@ -1321,11 +1332,22 @@ void alan::LedNodelet::terminal_msg_display(double hz)
 
     string final_msg = LED_terminal_display 
         + BA_terminal_display 
-        + dpth_terminal_display
+        + depth_terminal_display
         + hz_terminal_display;
 
-    
-    ROS_BLUE_STREAM(final_msg);
+    string LED_tracker_status_display;
+
+    if(LED_tracker_initiated_or_tracked)
+    {
+        final_msg = "LED GOOD || " + final_msg;
+        ROS_GREEN_STREAM(final_msg);
+    }
+    else
+    {
+        final_msg = "LED BAD! || " + final_msg;
+        ROS_RED_STREAM(final_msg);
+    }
+
 }
 
 //below is the courtesy of UZH Faessler et al.

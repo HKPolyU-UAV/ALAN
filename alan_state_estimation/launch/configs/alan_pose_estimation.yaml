@@ -1,5 +1,5 @@
 LANDING_DISTANCE:
-  4.0
+  2.0
 #fx fy cx cy
 cam_intrinsics_435: [607.4324951171875, 606.439697265625, 421.5857238769531, 243.94647216796875]
 cam_intrinsics_455: [420.04037475585948, 419.7333984375, 425.25750732421875, 257.9543762207031]
@@ -17,6 +17,15 @@ final_corridor_length: 1.2
 LED_r_number: 3 #2
 LED_g_number: 3
 
+
+# double reproject_error = get_reprojection_error(
+#             pts_on_body_frame,
+#             pts_2d_detect_correct_order,
+#             pose_global_sophus,
+#             true
+#         );
+
+#         BA_error = reproject_error;
 LED_positions:
 #5LEDs co-planar
   # - x: 0.0517723
