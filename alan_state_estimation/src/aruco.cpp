@@ -376,6 +376,20 @@ void alan::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector
         pts_2d_.push_back(temp2d);
     }
 
+    vector<cv::Point3d> pts_3d_final;
+    vector<cv::Point2d> pts_2d_final;
+
+    pts_3d_final.emplace_back(pts_3d_[2]);
+    pts_3d_final.emplace_back(pts_3d_[1]);
+    pts_3d_final.emplace_back(pts_3d_[0]);
+    pts_3d_final.emplace_back(pts_3d_[3]);
+
+    pts_2d_final.emplace_back(pts_2d_[2]);
+    pts_2d_final.emplace_back(pts_2d_[1]);
+    pts_2d_final.emplace_back(pts_2d_[0]);
+    pts_2d_final.emplace_back(pts_2d_[3]);
+
+
     camMat.at<double>(0,0) = cameraMat(0,0);
     camMat.at<double>(0,2) = cameraMat(0,2);
     camMat.at<double>(1,1) = cameraMat(1,1);
@@ -383,7 +397,7 @@ void alan::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector
 
     // cout<<"use epnp"<<endl;
 
-    cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);//, cv::SOLVEPNP_EPNP
+    cv::solvePnP(pts_3d_final,pts_2d_final ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);//, cv::SOLVEPNP_EPNP
 
     
     //return values

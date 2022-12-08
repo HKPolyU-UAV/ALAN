@@ -78,12 +78,13 @@ namespace alan
 
             //poses
             Sophus::SE3d pose_global_sophus;
+            Sophus::SE3d pose_epnp_sophus, pose_depth_sophus;
             geometry_msgs::PoseStamped ugv_pose_msg, uav_pose_msg;
             Eigen::Isometry3d ugv_pose;
             Eigen::Isometry3d cam_pose;
             Eigen::Isometry3d ugv_cam_pose, led_cambody_pose;
             Eigen::Isometry3d uav_pose;
-            
+
             Eigen::Isometry3d led_pose;
             Eigen::Vector3d cam_origin_in_body_frame, cam_origin;
             Eigen::Quaterniond q_cam, q_led_cambody;
@@ -124,14 +125,15 @@ namespace alan
         
         //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
-            Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);            
+            Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);   
+            double get_reprojection_error(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector2d> pts_2d, Sophus::SE3d pose, bool draw_reproject);         
 
         //main process
             void recursive_filtering(cv::Mat& frame, cv::Mat depth);
             bool search_corres_and_pose_predict(vector<Eigen::Vector2d> pts_2d_detect);
 
         //pnp + BA
-            void solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
+            void solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts);
             void optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected);
                 //converge problem need to be solved //-> fuck you, your Jacobian was wrong
             void solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
@@ -148,6 +150,8 @@ namespace alan
             //objects
             bool LED_tracker_initiated_or_tracked = false;
             int LED_no;
+            int LED_r_no;
+            int LED_g_no;
             //functions       
             void correspondence_search_kmeans(vector<Eigen::Vector2d> pts_2d_detected);        
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
@@ -163,7 +167,7 @@ namespace alan
         
         //depth compensation
             //objects
-            Eigen::Vector3d led_3d_posi_in_camera_frame;
+            Eigen::Vector3d led_3d_posi_in_camera_frame_depth;
 
         //reinitialization
             bool reinitialization(vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth);
@@ -206,7 +210,7 @@ namespace alan
             //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
-                nh.getParam("/alan_master/cam_intrinsics_455", intrinsics_list);
+                nh.getParam("/alan_master/cam_intrinsics_435", intrinsics_list);
                                                 
                 for(int i = 0; i < 4; i++)
                 {
@@ -283,12 +287,15 @@ namespace alan
                 }   
                 LED_no = pts_on_body_frame.size();
 
+                nh.getParam("/alan_master/LED_r_number", LED_r_no);
+                nh.getParam("/alan_master/LED_g_number", LED_g_no);
+
 
                 // vector<Eigen::Vector2d> pts_2d_temp;
                 // XmlRpc::XmlRpcValue pts_2d_list;
                 // nh.getParam("/alan_master/pts_2d_list", pts_2d_list); 
 
-                // for(int i = 0; i < pts_2d_list.size(); i++)
+                // for(int i = 5; i > -1; i--)
                 // {
                 //     Eigen::Vector2d temp(pts_2d_list[i]["x"], pts_2d_list[i]["y"]);
                 //     pts_2d_temp.push_back(temp);

@@ -168,7 +168,7 @@ namespace alan
 
                 cameraEX.resize(6);
                 XmlRpc::XmlRpcValue extrinsics_list;
-                nh.getParam("/alan_master/cam_extrinsics_d455", extrinsics_list);
+                nh.getParam("/alan_master/cam_extrinsics_d435", extrinsics_list);
 
                 for(int i = 0; i < 6; i++)
                 {
