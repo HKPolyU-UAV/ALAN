@@ -211,7 +211,7 @@ namespace alan
             //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
-                nh.getParam("/alan_master/cam_intrinsics_435", intrinsics_list);
+                nh.getParam("/alan_master/cam_intrinsics_455", intrinsics_list);
                                                 
                 for(int i = 0; i < 4; i++)
                 {
