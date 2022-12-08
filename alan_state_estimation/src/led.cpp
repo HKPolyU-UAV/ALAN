@@ -30,7 +30,7 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
 
     double t0 = ros::Time::now().toSec(); 
 
-    if(t0 - last_request > ros::Duration(0.5).toSec() && nodelet_activated)
+    if(t0 - last_request > ros::Duration(0.1).toSec() && nodelet_activated)
     {
         LED_tracker_initiated_or_tracked = false;
         printf("\033c");
@@ -196,6 +196,7 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
         if(!LED_tracker_initiated_or_tracked)
         {
             ROS_RED_STREAM("TRACKER FAIL");
+            detect_no = 0;            
         }
         else       
             map_SE3_to_pose(pose_global_sophus);
@@ -603,8 +604,7 @@ vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Ma
     vector<Eigen::Vector2d> POI;
     for(auto what : keypoints_rgb_d)
     {
-        if(what.size < min_blob_size)
-            min_blob_size = what.size;
+        min_blob_size =(what.size < min_blob_size ? what.size : min_blob_size);
 
         POI.push_back(Eigen::Vector2d(what.pt.x, what.pt.y));
     }
@@ -681,17 +681,10 @@ bool alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
 
     for(auto what : pts_2d_detected)
     {
-        if(what.x() < x_min)
-            x_min = what.x();
-        
-        if(what.y() < y_min)
-            y_min = what.y();
-        
-        if(what.x() > x_max)
-            x_max = what.x();
-
-        if(what.y() > y_max)
-            y_max = what.y();
+        x_min = (what.x() < x_min ? what.x() : x_min);        
+        y_min = (what.y() < y_min ? what.y() : y_min);        
+        x_max = (what.x() > x_max ? what.x() : x_max);
+        y_max = (what.y() > y_max ? what.y() : y_max);
 
     }
     
@@ -740,13 +733,13 @@ bool alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
         POI_pts.emplace_back(cv::Point2f(what.pt.x, what.pt.y));
     }
 
-    int no_cluster = POI_pts.size();
+    int no_cluster = (POI_pts.size() > LED_no ? LED_no : POI_pts.size());
 
 
-    if(no_cluster > LED_no)
-        no_cluster = LED_no;
-    else
-        no_cluster = no_cluster;
+    // if(no_cluster > LED_no)
+    //     no_cluster = LED_no;
+    // else
+    //     no_cluster = no_cluster;
 
 
     if(no_cluster < 4)
@@ -924,6 +917,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
         }        
 
         optimize(pose_global_sophus, pts_on_body_frame, pts_2d_detect_correct_order);
+        detect_no = 6;
 
         return true;
     }
@@ -1066,6 +1060,8 @@ bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, c
         }        
 
         optimize(pose_global_sophus, pts_on_body_frame, pts_2d_detect_correct_order);
+        
+        detect_no = 6;
 
         return true;
     }
@@ -1313,7 +1309,7 @@ void alan::LedNodelet::set_image_to_publish(double freq, const sensor_msgs::Comp
 
 void alan::LedNodelet::terminal_msg_display(double hz)
 {
-    string LED_terminal_display = "LED_no: " + to_string(detect_no);
+    string LED_terminal_display = "DETECT_no: " + to_string(detect_no);
 
     std::ostringstream out1;
     out1.precision(2);

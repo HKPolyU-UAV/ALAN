@@ -1,5 +1,5 @@
 LANDING_DISTANCE:
-  2.0
+  4.0
 #fx fy cx cy
 cam_intrinsics_435: [607.4324951171875, 606.439697265625, 421.5857238769531, 243.94647216796875]
 cam_intrinsics_455: [420.04037475585948, 419.7333984375, 425.25750732421875, 257.9543762207031]
@@ -123,12 +123,11 @@ classnamepath:
   "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names"
 
 
-MAD_x_threshold:
+MAD_dilate:
+  10.0
+MAD_max:
   0.1
-MAD_y_threshold:
-  0.1
-MAD_z_threshold:
-  0.1
+
 
 BINARY_threshold:
  20

@@ -159,6 +159,7 @@ namespace alan
         //outlier rejection 
             //objects
             cv::Point3f pcl_center_point_wo_outlier_previous;
+            double MAD_dilate, MAD_max;
             double MAD_x_threshold = 0, MAD_y_threshold = 0, MAD_z_threshold = 0;
             double min_blob_size = 0;
             //functions
@@ -278,64 +279,39 @@ namespace alan
                 XmlRpc::XmlRpcValue LED_list;
                 nh.getParam("/alan_master/LED_positions", LED_list); 
 
+                vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
+
+                cout<<"\nPts on body frame (X Y Z):\n";
                 for(int i = 0; i < LED_list.size(); i++)
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
-
-                    cout<<temp<<endl;
+                    
+                    norm_of_x_points.push_back(temp.x());
+                    norm_of_y_points.push_back(temp.y());
+                    norm_of_z_points.push_back(temp.z());                    
                     cout<<"-----"<<endl;
+                    cout<<temp<<endl;                    
                     pts_on_body_frame.push_back(temp);
                 }   
+                cout<<endl;
+                
                 LED_no = pts_on_body_frame.size();
 
                 nh.getParam("/alan_master/LED_r_number", LED_r_no);
                 nh.getParam("/alan_master/LED_g_number", LED_g_no);
 
 
-                // vector<Eigen::Vector2d> pts_2d_temp;
-                // XmlRpc::XmlRpcValue pts_2d_list;
-                // nh.getParam("/alan_master/pts_2d_list", pts_2d_list); 
-
-                // for(int i = 5; i > -1; i--)
-                // {
-                //     Eigen::Vector2d temp(pts_2d_list[i]["x"], pts_2d_list[i]["y"]);
-                //     pts_2d_temp.push_back(temp);
-                // }   
-
-                // Eigen::Matrix3d R;
-                // Eigen::Vector3d t;
-
-                // solve_pnp_initial_pose(pts_2d_temp, pts_on_body_frame, R, t);
-                // pose_global_sophus = Sophus::SE3d(R,t);
-
-                // double reproject_error = 0;
-
-                // for(int i = 0 ; i < pts_on_body_frame.size(); i++)
-                // {
-                //     Eigen::Vector2d reproject = reproject_3D_2D(
-                //         pts_on_body_frame[i], 
-                //         pose_global_sophus
-                //     ); 
-
-                //     double temp_error = (reproject - pts_2d_temp[i]).norm();
-                //     //can save as reprojection for next frame
-                //     reproject_error = reproject_error + temp_error;
-                    
-                // }
-
-                // cout<<"final: error"<<reproject_error<<endl;
-                // cout<<"result:"<<endl;
-                // cout<<R<<endl;
-                // cout<<t<<endl;
-
-                // ros::shutdown();
-
-
-
             //load outlier rejection info
-                nh.getParam("/alan_master/MAD_x_threshold", MAD_x_threshold);
-                nh.getParam("/alan_master/MAD_y_threshold", MAD_y_threshold);
-                nh.getParam("/alan_master/MAD_z_threshold", MAD_z_threshold);
+                nh.getParam("/alan_master/MAD_dilate", MAD_dilate);
+                nh.getParam("/alan_master/MAD_max", MAD_max);
+
+                MAD_x_threshold = (calculate_MAD(norm_of_x_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_x_points) * MAD_dilate);
+                MAD_y_threshold = (calculate_MAD(norm_of_y_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_y_points) * MAD_dilate);
+                MAD_z_threshold = (calculate_MAD(norm_of_z_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_z_points) * MAD_dilate);
+
+                cout<<MAD_x_threshold<<endl;
+                cout<<MAD_y_threshold<<endl;
+                cout<<MAD_z_threshold<<endl;
 
                 LED_no = pts_on_body_frame.size();
                                                                 
