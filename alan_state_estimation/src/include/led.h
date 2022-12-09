@@ -227,7 +227,7 @@ namespace alan
                 cameraEX.resize(6);
                 XmlRpc::XmlRpcValue extrinsics_list;
                 
-                nh.getParam("/alan_master/cam_extrinsics_d455", extrinsics_list);                
+                nh.getParam("/alan_master/cam_ugv_extrinsics_d455", extrinsics_list);                
                 
                 for(int i = 0; i < 6; i++)
                 {                    
@@ -294,7 +294,7 @@ namespace alan
                     pts_on_body_frame.push_back(temp);
                 }   
                 cout<<endl;
-                
+
                 LED_no = pts_on_body_frame.size();
 
                 nh.getParam("/alan_master/LED_r_number", LED_r_no);

@@ -129,25 +129,20 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     // cout<< temp.norm()<<endl;
     
     Eigen::Matrix3d cam_to_body;
-    cam_to_body << 0,0,1,
+    cam_to_body << 
+        0,0,1,
         -1,0,0,
         0,-1,0;
 
-//* cam_to_body * q_cam.toRotationMatrix()
-//* cam_to_body
+
     Eigen::Quaterniond q_led = Eigen::Quaterniond(pose.rotationMatrix() );
     Eigen::Translation3d t_led = Eigen::Translation3d(pose.translation() );
 
     led_pose = t_led * q_led;//in {c} frame
 
-    // q_led = q_cam * q_led.inverse();
-    // t_led.translation() = q_led.toRotationMatrix() * t_led.translation() + t_cam;
-
-
-    Eigen::Quaterniond q_final = Eigen::Quaterniond(led_pose.rotation());
-    Eigen::Translation3d t_final = Eigen::Translation3d(led_pose.translation());
-
-    // t_final.translation() = (-1) * t_final.translation();
+    // transfer to {w} frame
+    Eigen::Quaterniond q_final = Eigen::Quaterniond(cam_pose.rotation() * cam_to_body * led_pose.rotation());
+    Eigen::Translation3d t_final = Eigen::Translation3d(cam_pose.rotation() * cam_to_body * led_pose.translation() + cam_pose.translation());// Eigen::Translation3d(led_pose.translation());
 
 
     led_pose_estimated.header.stamp = led_pose_stamp;
@@ -185,7 +180,7 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
         }
         else
         {
-            ROS_CYAN_STREAM("WAITING FOR INITIALIZATION");
+            ROS_CYAN_STREAM("WAITING FOR INITIALIZATION...");
         }
 
     }
@@ -400,6 +395,7 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
     // cout<<camMat<<endl;
 
     cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);
+    //opt pnp algorithm
     //, cv::SOLVEPNP_EPNP
     //, cv::SOLVEPNP_IPPE
     //, cv::SOLVEPNP_P3P
@@ -427,8 +423,11 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
           tvec(2)  
         );
 
-    R = R * reverse_mat;
-    t = (-1) * t;
+    if(tvec(2) < 0) //sometimes opencv yeilds reversed results, flip it 
+    {
+        R = R * reverse_mat;
+        t = (-1) * t;
+    }
 
     pose_epnp_sophus = Sophus::SE3d(R, t);
     

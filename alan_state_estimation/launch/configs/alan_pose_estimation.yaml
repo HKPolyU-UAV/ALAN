@@ -1,12 +1,11 @@
 LANDING_DISTANCE:
   4.0
+
 #fx fy cx cy
 cam_intrinsics_435: [607.4324951171875, 606.439697265625, 421.5857238769531, 243.94647216796875]
 cam_intrinsics_455: [420.04037475585948, 419.7333984375, 425.25750732421875, 257.9543762207031]
 
-# 566.94	0	310.38	0	566.62	255.85
-# 613.171	0	328.574	0	613.014	249.063
-cam_extrinsics_d455: [0.54446, 0.0, 0.0307356, 0.0, -20.0, 180.0] #xyzrpy
+cam_ugv_extrinsics_d455: [0.54446, 0.0, 0.0307356, 0.0, -20.0, 180.0] #xyzrpy
 
 cam_FOV_H: 90
 cam_FOV_V: 65
@@ -17,38 +16,7 @@ final_corridor_length: 1.2
 LED_r_number: 3 #2
 LED_g_number: 3
 
-
-# double reproject_error = get_reprojection_error(
-#             pts_on_body_frame,
-#             pts_2d_detect_correct_order,
-#             pose_global_sophus,
-#             true
-#         );
-
-#         BA_error = reproject_error;
 LED_positions:
-#5LEDs co-planar
-  # - x: 0.0517723
-  #   y: -0.050
-  #   z: -0.0720355 #
-
-  # - x: 0.0517723
-  #   y: -0.03
-  #   z: -0.0320355
-
-  # - x: 0.0517723
-  #   y: -0.0125
-  #   z: -0.0720355
-
-  # - x: 0.0517723
-  #   y: 0.0215
-  #   z: -0.0395335
-
-  # - x: 0.0517723
-  #   y: 0.05
-  #   z: -0.0720355
-
-
 #6LEDs non-planar
   - x: 0.0727433
     y: -0.0765
@@ -73,6 +41,27 @@ LED_positions:
   - x: 0.0727433
     y: 0.0765
     z: -0.05678305
+
+#5LEDs co-planar
+  # - x: 0.0517723
+  #   y: -0.050
+  #   z: -0.0720355 #
+
+  # - x: 0.0517723
+  #   y: -0.03
+  #   z: -0.0320355
+
+  # - x: 0.0517723
+  #   y: -0.0125
+  #   z: -0.0720355
+
+  # - x: 0.0517723
+  #   y: 0.0215
+  #   z: -0.0395335
+
+  # - x: 0.0517723
+  #   y: 0.05
+  #   z: -0.0720355
 
 #theoretical values...
   # - x: 0.085
@@ -139,6 +128,23 @@ frame_height:
 
 failsafe_threshold:
  0.20
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
