@@ -201,32 +201,3 @@ void KalmanFilter::ukf_update(Eigen::VectorXd& x, Eigen::VectorXd zk)
     Pk = I_KH * Pk_bar * I_KH.transpose() + Kk * Rk * Kk.transpose();
 
 }
-
-
-
-
-// Vec7 GenerateCameraLP(Vec7 UGV_lp){ /* Special thanks to Jazzy Dorian Feng */
-//     Eigen::Quaterniond CARq;
-//     CARq.w() = UGV_lp[3];
-//     CARq.x() = UGV_lp[4];
-//     CARq.y() = UGV_lp[5];
-//     CARq.z() = UGV_lp[6];
-//     Eigen::Matrix3d CAR_Rotation_world = Eigen::Matrix3d::Identity();
-//     CAR_Rotation_world = CARq.matrix();
-//     Vec3 CAR_Translation_world(UGV_lp[0], UGV_lp[1], UGV_lp[2]);
-//     SE3 T_ugv(CAR_Rotation_world, CAR_Translation_world);
-
-//     Mat3x3 r;
-//     Vec3 t;
-//     r<< 0.0342161,   -0.334618,  -0.941732,
-//         0.999403,     0.0159477,  0.0306448,
-//         0.00476414,  -0.942219,   0.334964;
-//     t << 0.567003, -0.018069, 0.0174849;
-//     SE3 T_ugv_cam(r,t);
-//     SE3 T_cam = T_ugv * T_ugv_cam;
-
-//     Vec7 CAM_lp;
-//     CAM_lp << T_cam.translation().x(), T_cam.translation().y(), T_cam.translation().z(),
-//               T_cam.unit_quaternion().w(), T_cam.unit_quaternion().x(), T_cam.unit_quaternion().y(), T_cam.unit_quaternion().z();
-//     return(CAM_lp);
-// }
