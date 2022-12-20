@@ -518,7 +518,7 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
 
 Eigen::Vector4d planner_server::set_following_target_pose()
 {
-    Eigen::Vector3d uav_following_pt = Eigen::Vector3d(-0.4, 0, take_off_height);    
+    Eigen::Vector3d uav_following_pt = Eigen::Vector3d(-0.0, 0, take_off_height);    
     uav_following_pt =  ugvOdomPose.rotation() * uav_following_pt 
         + Eigen::Vector3d(
             ugvOdomPose.translation().x(),
