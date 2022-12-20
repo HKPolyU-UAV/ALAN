@@ -3,6 +3,7 @@
 void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 //void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr& rgbimage)
 {
+    // cout<<rgbimage.size
     // cout<<depth->data.at<uchar>(0,0)<<endl;
     cv_bridge::CvImageConstPtr depth_ptr;
     try
@@ -28,27 +29,10 @@ void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConst
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
 
-    // if(temp_i < 4)
-    // {
-    //     if(temp_i<1)
-    //     {
-    //         ofstream save("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/test.txt", ios::app); 
-    //         save<<image_dep<<endl;
-    //         save.close();
-    //     }
-    //     cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/" + to_string(temp_i) + ".png", frame);
-    //     cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/" + to_string(temp_i) + "_d.png", image_dep);
-    // }
-
-    // temp_i ++ ;
-
-    // std::cout<<frame.size()<<std::endl;
-    // std::cout<<image_dep.size()<<std::endl;
-
     double t1 = ros::Time::now().toSec();  
 
-    pose_w_aruco_icp(frame, image_dep);
-    pose_w_aruco_pnp(test);//, image_dep);
+    // pose_w_aruco_icp(frame, image_dep);
+    pose_w_aruco_pnp(frame);//, image_dep);
 
     double t2 = ros::Time::now().toSec();
    
@@ -57,6 +41,7 @@ void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConst
     sprintf(hz, "%.2f", 1 / (t2 - t1));
     strcat(hz, fps);
     cv::putText(frame, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+
     cv::Mat imageoutput = frame.clone();
     cv_bridge::CvImage for_visual;
     for_visual.header = rgbimage->header;
@@ -73,8 +58,168 @@ void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConst
 
 }
 
+void alan::ArucoNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    uav_pose_msg = *pose;
+    uav_pose_msg.header.frame_id = "map";
+
+    uavpose_pub.publish(uav_pose_msg);
+}
 
 
+void alan::ArucoNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    ugv_pose_msg = *pose;
+    ugv_pose_msg.header.frame_id = "map";
+    
+    Eigen::Translation3d t_(
+        ugv_pose_msg.pose.position.x,
+        ugv_pose_msg.pose.position.y,
+        ugv_pose_msg.pose.position.z
+    );
+
+    Eigen::Quaterniond q_(
+        ugv_pose_msg.pose.orientation.w,
+        ugv_pose_msg.pose.orientation.x,
+        ugv_pose_msg.pose.orientation.y,
+        ugv_pose_msg.pose.orientation.z
+    );
+
+    // ugv_pose = ugvcam_t_ * ugvcam_q_;    
+
+
+    Eigen::Vector3d cam_origin;
+    cam_origin.setZero();
+
+    // q_cam =  q_ * q_c2b;
+    // t_cam = q_.toRotationMatrix() * t_c2b.translation() + t_.translation();
+
+    q_cam =  q_;
+    t_cam = t_.translation();
+
+    cam_pose = Eigen::Translation3d(t_cam) * q_cam;
+
+    geometry_msgs::PoseStamped pose_cam;
+    pose_cam.header.frame_id = "map";
+    pose_cam.pose.position.x = t_cam.x();
+    pose_cam.pose.position.y = t_cam.y();
+    pose_cam.pose.position.z = t_cam.z();
+
+    pose_cam.pose.orientation.w = q_cam.w();
+    pose_cam.pose.orientation.x = q_cam.x();
+    pose_cam.pose.orientation.y = q_cam.y();
+    pose_cam.pose.orientation.z = q_cam.z();
+
+    campose_pub.publish(pose_cam);
+    ugvpose_pub.publish(ugv_pose_msg);
+}
+
+void alan::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+{
+    geometry_msgs::PoseStamped aruco_pose_msg;
+
+    aruco_pose_msg.pose.position.x = pose_aruco.translation().x();
+    aruco_pose_msg.pose.position.y = pose_aruco.translation().y();
+    aruco_pose_msg.pose.position.z = pose_aruco.translation().z();
+
+    Eigen::Quaterniond q_aruco = Eigen::Quaterniond(pose_aruco.rotationMatrix());
+
+    // cout<<q2rpy(q_aruco) / M_PI * 180<<endl;
+
+
+    // cout<<q2rpy(q) / M_PI * 180<<endl;
+    // cout<<"-----------"<<endl;
+    aruco_pose_msg.pose.orientation.w = q_aruco.w();
+    aruco_pose_msg.pose.orientation.x = q_aruco.x();
+    aruco_pose_msg.pose.orientation.y = q_aruco.y();
+    aruco_pose_msg.pose.orientation.z = q_aruco.z();
+
+    aruco_pose_msg.header.frame_id = "map";
+
+    arucopose_pub.publish(aruco_pose_msg);
+
+
+
+
+
+    geometry_msgs::PoseStamped aruco_pose_my_msg;
+    //Sophus::SE3d pose in {camera} frame
+
+    // pose = pose.inverse();
+
+    Eigen::Vector3d my_pose_t_ = pose.translation();
+    Eigen::Quaterniond my_pose_q_ = Eigen::Quaterniond(pose.rotationMatrix());
+    
+    Eigen::Matrix3d cam_to_body;
+    cam_to_body << 0,0,1,
+        -1,0,0,
+        0,-1,0;
+    
+    Eigen::Matrix3d mirrored;
+    mirrored << -1, 0, 0,
+    0, 1, 0,
+    -0, 0, -1;
+        
+    // my_pose_t_ =  q_cam.toRotationMatrix() * cam_to_body * my_pose_t_ + t_cam;
+
+    // my_pose_q_ = my_pose_q_ * Eigen::Quaterniond(mirrored) ;
+
+    // cout<<q2rpy(my_pose_q_) / M_PI * 180<<endl;
+    // cout<<"-----------"<<endl<<endl;;
+
+
+    aruco_pose_my_msg.pose.position.x = my_pose_t_.x();
+    aruco_pose_my_msg.pose.position.y = my_pose_t_.y();
+    aruco_pose_my_msg.pose.position.z = my_pose_t_.z();
+
+    aruco_pose_my_msg.pose.orientation.w = my_pose_q_.w();
+    aruco_pose_my_msg.pose.orientation.x = my_pose_q_.x();
+    aruco_pose_my_msg.pose.orientation.y = my_pose_q_.y();
+    aruco_pose_my_msg.pose.orientation.z = my_pose_q_.z();
+    
+    aruco_pose_my_msg.header.frame_id = "map";
+
+    mypose_pub.publish(aruco_pose_my_msg);
+
+    
+    
+    //my pose    
+    //cam_pose
+    // geometry_msgs::PoseStamped aruco_pose_my_msg;
+    // //Sophus::SE3d pose in {camera} frame
+
+    // Eigen::Vector3d my_pose_t_ = pose_aruco.translation();
+    // Eigen::Quaterniond my_pose_q_ = Eigen::Quaterniond(pose_aruco.rotationMatrix());
+    
+    // Eigen::Matrix3d cam_to_body;
+    // cam_to_body << 0,0,1,
+    //     -1,0,0,
+    //     0,-1,0;
+        
+    // my_pose_t_ =  q_cam.toRotationMatrix() * cam_to_body * my_pose_t_ + t_cam;
+    // //q_cam.toRotationMatrix() *
+    // // cout<<my_pose_t_<<endl;
+    // my_pose_q_ = q_cam * my_pose_q_;
+
+    // aruco_pose_my_msg.pose.position.x = my_pose_t_.x();
+    // aruco_pose_my_msg.pose.position.y = my_pose_t_.y();
+    // aruco_pose_my_msg.pose.position.z = my_pose_t_.z();
+
+    // // cout<<aruco_pose_my_msg.pose.position.x<<endl;
+
+    // aruco_pose_my_msg.pose.orientation.w = my_pose_q_.w();
+    // aruco_pose_my_msg.pose.orientation.x = my_pose_q_.x();
+    // aruco_pose_my_msg.pose.orientation.y = my_pose_q_.y();
+    // aruco_pose_my_msg.pose.orientation.z = my_pose_q_.z();
+    
+    // aruco_pose_my_msg.header.frame_id = "map";
+
+    // mypose_pub.publish(aruco_pose_my_msg);
+
+
+
+
+}
 
 //pnp + BA implementation
 void alan::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
@@ -85,6 +230,7 @@ void alan::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
     {
         Eigen::Vector3d t;
         Eigen::Matrix3d R;
+        // cout<<pts_2d_detect.size()<<endl;
 
         get_initial_pose(pts_2d_detect, body_frame_pts, R, t);
         
@@ -104,16 +250,18 @@ void alan::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
         //     cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
         // }
 
-        if(body_frame_pts.size() == pts_2d_detect.size())
-            optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
+        // if(body_frame_pts.size() == pts_2d_detect.size())
+        //     optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
 
+        // cout<<body_frame_pts.size()<<endl;
         for(auto what : body_frame_pts)
         {
-            Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
-            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+            Eigen::Vector2d reproject = reproject_3D_2D(what, pose);    
+            // cout<<reproject<<endl;        
+            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 5, CV_RGB(0,255,0),-1);
         }
 
-        // map_SE3_to_pose(pose);
+        map_SE3_to_pose(pose);
     }    
 
 }
@@ -149,6 +297,7 @@ inline Sophus::SE3d alan::ArucoNodelet::pose_add_noise(Eigen::Vector3d t, Eigen:
 inline Eigen::Vector2d alan::ArucoNodelet::reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
 {
     Eigen::Vector3d result;
+
 
     Eigen::Matrix3d R = pose.rotationMatrix();
     Eigen::Vector3d t = pose.translation();
@@ -195,8 +344,19 @@ void alan::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector
     cv::Point3d temp3d;
     cv::Point2d temp2d;
 
+
+
+
+    // cout<<"body_frame_pts..."<<endl;
     for(auto what : body_frame_pts)
     {
+        // what = r_mirrored1 * what;
+        // what = r_mirrored2 * what;
+
+
+        // cout<<what<<endl<<endl;;
+        
+
         temp3d.x = what(0);
         temp3d.y = what(1);
         temp3d.z = what(2);
@@ -204,39 +364,66 @@ void alan::ArucoNodelet::get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector
         pts_3d_.push_back(temp3d);
     }
 
+    // cout<<"end body_frame_pts..."<<endl;
+
+
     for(auto what : pts_2d)
     {
         temp2d.x = what(0);
         temp2d.y = what(1);
 
+
         pts_2d_.push_back(temp2d);
     }
+
+    vector<cv::Point3d> pts_3d_final;
+    vector<cv::Point2d> pts_2d_final;
+
+    pts_3d_final.emplace_back(pts_3d_[2]);
+    pts_3d_final.emplace_back(pts_3d_[1]);
+    pts_3d_final.emplace_back(pts_3d_[0]);
+    pts_3d_final.emplace_back(pts_3d_[3]);
+
+    pts_2d_final.emplace_back(pts_2d_[2]);
+    pts_2d_final.emplace_back(pts_2d_[1]);
+    pts_2d_final.emplace_back(pts_2d_[0]);
+    pts_2d_final.emplace_back(pts_2d_[3]);
+
 
     camMat.at<double>(0,0) = cameraMat(0,0);
     camMat.at<double>(0,2) = cameraMat(0,2);
     camMat.at<double>(1,1) = cameraMat(1,1);
     camMat.at<double>(1,2) = cameraMat(1,2);
 
-    cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);
+    // cout<<"use epnp"<<endl;
+
+    cv::solvePnP(pts_3d_final,pts_2d_final ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);//, cv::SOLVEPNP_EPNP
+
     
     //return values
     cv::Mat rmat = cv::Mat::eye(3,3,CV_64F);
     cv::Rodrigues(rvec, rmat);
+
 
     R <<
         rmat.at<double>(0,0), rmat.at<double>(0,1), rmat.at<double>(0,2),
         rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
         rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
 
+    cout<<"R_pnp:"<<endl;
+    cout<<R<<endl<<endl;
 
+    // R =  R * r_mirrored;
+    
     t <<
         tvec(0),
         tvec(1),
         tvec(2); 
 
-    // cout<<"PnP: "<<R<<endl<<endl;;
-
-    // cout<<"PnP: "<<t<<endl<<endl;;
+    // if(t.z() < 0)
+    // {
+    //     t = t * -1;
+    // }
 
 }
 
@@ -250,7 +437,53 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& p
 
     if(markercorners.size() != 0)
     {
+        if(markercorners.size() == 1)
+        {
+            double markerlength = 0.045;
+
+            cv::aruco::estimatePoseSingleMarkers(markercorners, 0.045, cameraMatrix, distCoeffs, rvecs, tvecs);
+            // cout<<"how opencv solve:..."<<endl;
+
+            // for(auto what : markercorners)
+            // {
+            //     cout<<what<<endl;
+            // }
+            // cout<<"----------"<<endl;
+            // cout<<cv::Point2d(-markerlength / 2.f, markerlength / 2.f)<<endl;
+            // cout<<cv::Point2d(markerlength / 2.f, markerlength / 2.f)<<endl;
+            // cout<<cv::Point2d(markerlength / 2.f, -markerlength / 2.f)<<endl;
+            // cout<<cv::Point2d(-markerlength / 2.f, -markerlength / 2.f)<<endl<<endl;;
+
+            // cv::aruco::drawDetectedMarkers(frame, markercorners, markerids);
+            cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[0], tvecs[0], 0.1);
+            cv::Mat rmat = cv::Mat::eye(3,3,CV_64F);
+            cv::Rodrigues(rvecs[0], rmat);
+
+            Eigen::Matrix3d R;
+            Eigen::Vector3d t;
+
+            Eigen::Matrix<double, 4, 4> cam_to_body;
+            cam_to_body << 0,0,1,0,
+                -1,0,0,0,
+                0,-1,0,0,
+                0,0,0,1;
+
+            R <<
+                rmat.at<double>(0,0), rmat.at<double>(0,1), rmat.at<double>(0,2),
+                rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
+                rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
+            cout<<"R_aruco:"<<endl;
+            cout<<R<<endl;
+
+            t <<
+                tvecs[0](0),
+                tvecs[0](1),
+                tvecs[0](2);
+            
+            pose_aruco = Sophus::SE3d(R,t);
+        }
         
+        // rvecs.f
         for(auto& what : markercorners)
         {
             if(what.size() != 4)
@@ -258,6 +491,7 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& p
 
             for(auto& that : what)
             {
+                // cout<<that<<endl;
                 cv::circle(frame, cv::Point(that.x, that.y), 4, CV_RGB(0,0,255),-1);
                 Eigen::Vector2d result;
                 result << 
@@ -265,6 +499,9 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& p
                     that.y;
                 pts_2d.push_back(result);
             }
+
+            // cout<<"end aruco_detect"<<endl;
+            // cout<<"------"<<endl;
 
             if(markercorners.size() > 1)
                 pts_2d.clear();
@@ -347,6 +584,7 @@ void alan::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pt
         for(int i=0; i < points_no; i++)
         {
             //get the Jacobian for this point
+            pts_3d_exists[i] = pts_3d_exists[i];
             solveJacobian(J, pose, pts_3d_exists[i]);
 
             e = pts_2d_detected[i] - reproject_3D_2D(pts_3d_exists[i], pose) ; 
@@ -387,32 +625,19 @@ void alan::ArucoNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pt
 
 }
 
-void alan::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
-{
-    pose_estimated.pose.position.x = pose.translation().x();
-    pose_estimated.pose.position.y = pose.translation().y();
-    pose_estimated.pose.position.z = pose.translation().z();
-
-    Eigen::Quaterniond q = Eigen::Quaterniond(pose.rotationMatrix());
-    pose_estimated.pose.orientation.w = q.w();
-    pose_estimated.pose.orientation.x = q.x();
-    pose_estimated.pose.orientation.y = q.y();
-    pose_estimated.pose.orientation.z = q.z();
-
-}
 
 void* alan::ArucoNodelet::PubMainLoop(void* tmp)
 {
     ArucoNodelet* pub = (ArucoNodelet*) tmp;
 
-    ros::Rate loop_rate(50);
-    while (ros::ok()) 
-    {
-        // ROS_INFO("%d,publish!", num++);
-        pub->pubpose.publish(pub->pose_estimated);
-        ros::spinOnce();
-        loop_rate.sleep();
-    }
+    // ros::Rate loop_rate(50);
+    // while (ros::ok()) 
+    // {
+    //     // ROS_INFO("%d,publish!", num++);
+    //     pub->pubpose.publish(pub->pose_estimated);
+    //     ros::spinOnce();
+    //     loop_rate.sleep();
+    // }
     
     void* return_value;
 
@@ -509,25 +734,6 @@ void alan::ArucoNodelet::pose_w_aruco_icp(cv::Mat& rgbframe, cv::Mat& depthframe
     }    
 
 }
-
-// pcl::PointCloud<pcl::PointXYZ>::Ptr alan::ArucoNodelet::eigen_2_pcl(vector<Eigen::Vector3d> pts_3d)
-// {
-//     int N = pts_3d.size();
-    
-//     pcl::PointCloud<pcl::PointXYZ>::Ptr pts_3d_pcl(new pcl::PointCloud<pcl::PointXYZ>(N,1));
-//     pcl::PointXYZ pt_temp;
-
-//     for(int i = 0; i < N; i++)
-//     {
-//         pts_3d_pcl->at(i).x = pts_3d[i].x();
-//         pts_3d_pcl->at(i).y = pts_3d[i].y();
-//         pts_3d_pcl->at(i).z = pts_3d[i].z();
-
-//     }
-
-//     return pts_3d_pcl;
-
-// }
 
 void alan::ArucoNodelet::use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, Sophus::SE3d& pose)
 {
@@ -681,112 +887,23 @@ vector<Eigen::Vector3d> alan::ArucoNodelet::pointcloud_generate(vector<Eigen::Ve
 }
 
 
-// Eigen::Matrix4f alan::ArucoNodelet::icp_pcl(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_body, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_camera)
-// {
-//     //get SE(3) from  body to camera, i.e., camera = T * body
-//     //get T!
+Eigen::Vector3d alan::ArucoNodelet::q2rpy(Eigen::Quaterniond q) 
+{
+    return q.toRotationMatrix().eulerAngles(2,1,0);
+}
 
-//     //cloud_in = cloud_body
-//     //cloud_out = cloud_camera
+Eigen::Quaterniond alan::ArucoNodelet::rpy2q(Eigen::Vector3d rpy)
+{
+    Eigen::AngleAxisd rollAngle(rpy(0), Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd pitchAngle(rpy(1), Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd yawAngle(rpy(2), Eigen::Vector3d::UnitZ());
 
-//     cout<<"hi icp_pcl: "<<endl;
+    Eigen::Quaterniond q = yawAngle * pitchAngle * rollAngle;
 
-//     double t1 = ros::Time::now().toSec();
+    return q;
+}
 
-//     pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
-
-//     float scale = 1;
-
-//     for(auto& what : *cloud_body)
-//     {
-//         what.x = what.x * scale;
-//         what.y = what.y * scale;
-//         what.z = what.z * scale;
-//     }
-
-//     for(auto& what : *cloud_camera)
-//     {
-//         what.x = what.x * scale;
-//         what.y = what.y * scale;
-//         what.z = what.z * scale;
-//     }
-
-//     pcl::console::setVerbosityLevel(pcl::console::L_VERBOSE);
-
-//     pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>::Ptr rej_ransac(new pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ>);
-
-//     icp.convergence_criteria_->setTranslationThreshold(0.01);
-//     // icp.convergence_criteria_->set
-//     icp.convergence_criteria_->setAbsoluteMSE(0.01);
-//     icp.setTransformationEpsilon(1e-12); 
-//     icp.setEuclideanFitnessEpsilon(1e-12); 
-//     // icp.
-
-//     icp.setInputSource(cloud_body);
-//     icp.setInputTarget(cloud_camera);
-
-//     pcl::PointCloud<pcl::PointXYZ> Final;
-    
-
-
-
-
-//     icp.align(Final);
-
-
-
-//     for(auto what : *icp.correspondence_estimation_->getIndices())
-//     {
-//         cout<<"gan: ";
-//         cout<<what<<endl;
-//     };
-
-
-
-//     std::cout << "has converged:" << icp.hasConverged() << " score: " <<
-//     icp.getFitnessScore() << std::endl;
-
-//     cout << icp.getFinalTransformation() << endl;  
-
-
-//     cout<<"show ptcloud in {B}"<<endl;
-
-//     for(auto& what : *cloud_body)
-//     {
-//         cout<<what.x<<", "<<what.y<<", "<<what.z<<", ";
-//         cout<<endl;
-//     }
-
-//     cout<<"show ptcloud in {c}"<<endl;
-
-//     for(auto what : *cloud_camera)
-//     {
-//         cout<<what.x<<", "<<what.y<<", "<<what.z<<", ";
-//         cout<<endl;
-//     }
-
-//     cout<<"now show ptcloud in with T"<<endl;
-
-
-//     for (auto& what : Final)
-//     {
-//         cout<<what.x<<", "<<what.y<<", "<<what.z<<", ";
-//         cout<<endl;
-//     }
-
-//     Eigen::Matrix4f icp_pose =  icp.getFinalTransformation();
-
-//     icp_pose.block<3,1>(0,3) = icp_pose.block<3,1>(0,3)/scale;
-
-//     double t2 = ros::Time::now().toSec();
-
-//     cout << endl << "Hz: " << 1 / (t2-t1) <<endl<<endl;   
-
-//     pcl::Indices a, b;
-
-//     boost::shared_ptr< pcl::registration::TransformationEstimation< pcl::PointXYZ, pcl::PointXYZ > > estPtr;
-
-
-//     return icp_pose;
-// }
-
+Eigen::Vector3d alan::ArucoNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v)
+{
+    return q * v;
+}

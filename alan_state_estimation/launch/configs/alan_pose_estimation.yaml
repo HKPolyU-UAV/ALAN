@@ -1,8 +1,11 @@
-cam_intrinsics_435: [420.8413391113281, 420.5337829589844, 425.25750732421875, 257.9543762207031]#fx fy cx cy
-cam_intrinsics_455: [633.8505249023438, 633.3872680664062, 641.8981323242188, 387.1009521484375]#fx fy cx cy
+LANDING_DISTANCE:
+  2.0
 
-cam_extrinsics_d455: [0,0,0,0,0]#xyzrpy
+#fx fy cx cy
+cam_intrinsics_435: [607.4324951171875, 606.439697265625, 421.5857238769531, 243.94647216796875]
+cam_intrinsics_455: [420.04037475585948, 419.7333984375, 425.25750732421875, 257.9543762207031]
 
+cam_ugv_extrinsics_d455: [0.54446, 0.0, 0.0307356, 0.0, -20.0, 180.0] #xyzrpy
 
 cam_FOV_H: 90
 cam_FOV_V: 65
@@ -10,54 +13,162 @@ cam_FOV_V: 65
 final_corridor_height: 0.4
 final_corridor_length: 1.2
 
-LED_numbers: 6
+LED_r_number: 3 #2
+LED_g_number: 3
 
 LED_positions:
-  - x: 0.085
-    y: -0.075
-    z: -0.030 #
+#6LEDs non-planar
+  - x: 0.0727433
+    y: -0.0765
+    z: -0.05678305 #
 
-  - x: 0.055
+  - x: 0.0467723
     y: -0.05
-    z: -0.05
+    z: -0.0720355
 
-  - x: 0.055
+  - x: 0.0467723
     y: -0.03
-    z: -0.05
+    z: -0.0720355
 
-  - x: 0.055
+  - x: 0.0467723
     y: 0.03
-    z: -0.01
+    z: -0.0320355
 
-  - x: 0.055
+  - x: 0.0467723
     y: 0.05
-    z: -0.05
+    z: -0.0720355
 
-  - x: 0.085
-    y: 0.075
-    z: -0.03
+  - x: 0.0727433
+    y: 0.0765
+    z: -0.05678305
 
+#5LEDs co-planar
+  # - x: 0.0517723
+  #   y: -0.050
+  #   z: -0.0720355 #
+
+  # - x: 0.0517723
+  #   y: -0.03
+  #   z: -0.0320355
+
+  # - x: 0.0517723
+  #   y: -0.0125
+  #   z: -0.0720355
+
+  # - x: 0.0517723
+  #   y: 0.0215
+  #   z: -0.0395335
+
+  # - x: 0.0517723
+  #   y: 0.05
+  #   z: -0.0720355
+
+#theoretical values...
+  # - x: 0.085
+  #   y: -0.075
+  #   z: -0.030 #
+
+  # - x: 0.055
+  #   y: -0.05
+  #   z: -0.05
+
+  # - x: 0.055
+  #   y: -0.03
+  #   z: -0.05
+
+  # - x: 0.055
+  #   y: 0.03
+  #   z: -0.01
+
+  # - x: 0.055
+  #   y: 0.05
+  #   z: -0.05
+
+  # - x: 0.085
+  #   y: 0.075
+  #   z: -0.03
+
+ARUCO_positions:
+  - x: 0.01
+    y: 0.0225
+    z: -0.055
+  - x: 0.01
+    y: -0.0225
+    z: -0.055
+  - x: 0.01
+    y: -0.0225
+    z: -0.010
+  - x: 0.01
+    y: 0.0225
+    z: -0.010
+
+weightpath:
+  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.weights"
+
+cfgpath:
+  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.cfg"
+
+classnamepath:
+  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names"
+
+
+MAD_dilate:
+  10.0
+MAD_max:
+  0.1
+
+
+BINARY_threshold:
+ 20
+
+frame_width:
+ 848
+frame_height:
+ 480
+
+failsafe_threshold:
+ 0.20
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# for algo test
+# ----------------------------------------------------------------------------------
 pts_2d_list:
-  - x: 320.0
-    y: 228.778
+  - x: 314.867
+    y: 358.133
 
-  - x: 282.778
-    y: 228.444
+  - x: 325.697
+    y: 364.697
 
-  - x: 273.133
-    y: 227.867
+  - x: 332.5
+    y: 364.5
 
-  - x: 330.778
-    y: 219.0
+  - x: 354.242
+    y: 351.03
     
-  - x: 257.0
-    y: 217.222
+  - x: 361.734
+    y: 365.038
 
-  - x: 311.0
-    y: 210.0
-
-
-
+  - x: 368.152
+    y: 358.667
 
 pts_2d_list_previous:
   - x: 324.0
@@ -144,27 +255,59 @@ pts_3d_list_previous:
   #   y: -0.0225
   #   z: -0.055
 
-weightpath:
-  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.weights"
 
-cfgpath:
-  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav_new.cfg"
 
-classnamepath:
-  "/home/patty/alan_ws/src/alan/offb/src/include/yolo/uav.names"
 
-LANDING_DISTANCE:
-  4.5
+  # - x: 0.055
+  #   y: -0.0225
+  #   z: -0.010
+  # - x: 0.055
+  #   y: 0.0225
+  #   z: -0.010
+  # - x: 0.055
+  #   y: 0.0225
+  #   z: -0.055
+  # - x: 0.055
+  #   y: -0.0225
+  #   z: -0.055
 
-MAD_x_threshold:
-  0.1
-MAD_y_threshold:
-  0.1
-MAD_z_threshold:
-  0.1
+  # - x: 0.0
+  #   y: 0.0225
+  #   z: -0.0225
+  # - x: 0.0
+  #   y: -0.0225
+  #   z: -0.0225
+  # - x: 0.0
+  #   y: -0.0225
+  #   z: 0.0225
+  # - x: 0.0
+  #   y: 0.0225
+  #   z: 0.0225
 
-BINARY_threshold:
- 20
 
-failsafe_threshold:
-  0.20
+  # - x: 0.055
+  #   y: -0.0225
+  #   z: -0.010
+  # - x: 0.055
+  #   y: 0.0225
+  #   z: -0.010
+  # - x: 0.055
+  #   y: 0.0225
+  #   z: -0.055
+  # - x: 0.055
+  #   y: -0.0225
+  #   z: -0.055
+
+# ARUCO_positions:
+#   - z: 0.0
+#     x: -0.0225
+#     y: -0.0225
+#   - z: 0.0
+#     x: 0.0225
+#     y: -0.0225
+#   - z: 0.0
+#     x: 0.0225
+#     y: 0.0225
+#   - z: 0.0
+#     x: -0.0225
+#     y: 0.0225

@@ -11,8 +11,8 @@ cd {name alan}_ws && mkdir alan_third_party
 
 cd alan_third_party
 
-git clone --recursive https://github.com/osqp/osqp
-git clone https://github.com/robotology/osqp-eigen.git
+git clone --recursive https://github.com/pattylo/osqp.git
+git clone https://github.com/pattylo/osqp-eigen.git
 git clone https://github.com/catkin/catkin_simple.git
 git clone https://github.com/sikang/DecompUtil.git
 

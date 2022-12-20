@@ -1,8 +1,9 @@
 #include "include/led.h"
 
-void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbmsg, const sensor_msgs::ImageConstPtr & depthmsg)
+void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr & rgbmsg, const sensor_msgs::Image::ConstPtr & depthmsg)
 {
     cv_bridge::CvImageConstPtr depth_ptr;
+    led_pose_stamp = rgbmsg->header.stamp;
 
     try
     {
@@ -20,155 +21,291 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImageConstPt
     {
         frame = cv::imdecode(cv::Mat(rgbmsg->data), 1);
         display = frame.clone();
+        hsv = frame.clone();
     }
     catch (cv_bridge::Exception& e)
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
 
-    double t1 = ros::Time::now().toSec(); 
+    double t0 = ros::Time::now().toSec(); 
 
-    time_predicted = rgbmsg->header.stamp.toSec();
-
+    if(t0 - last_request > ros::Duration(0.1).toSec() && nodelet_activated)
+    {
+        LED_tracker_initiated_or_tracked = false;
+        printf("\033c");
+        ROS_RED_STREAM("RESET TERMINAL!");
+    }           
+           
     solve_pose_w_LED(frame, depth);
     
-    double t2 = ros::Time::now().toSec();
+    double t1 = ros::Time::now().toSec();    
 
-    uavpose_pub.publish(uav_pose_estimated);
+    terminal_msg_display(1 / (t1 - t0));
 
-    set_image_to_publish(t2, t1, rgbmsg);
+    set_image_to_publish(1 / (t1 - t0), rgbmsg);
+                    
+    last_request = ros::Time::now().toSec();
+
+    if(!nodelet_activated)
+        nodelet_activated = true;
+
 } 
 
-void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
+void alan::LedNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
-    Sophus::SE3d pose;
-    vector<correspondence::matchid> corres;
+    ugv_pose_msg = *pose;
+    ugv_pose_msg.header.frame_id = "map";
+    
+    Eigen::Translation3d t_(
+        ugv_pose_msg.pose.position.x,
+        ugv_pose_msg.pose.position.y,
+        ugv_pose_msg.pose.position.z
+    );
 
+    Eigen::Quaterniond q_(
+        ugv_pose_msg.pose.orientation.w,
+        ugv_pose_msg.pose.orientation.x,
+        ugv_pose_msg.pose.orientation.y,
+        ugv_pose_msg.pose.orientation.z  
+    );
+
+    ugv_pose = t_ * q_;//body_to_world
+
+    Eigen::Vector3d cam_origin;
+    cam_origin.setZero();
+
+    q_cam =  q_ * q_c2b;
+    t_cam = q_.toRotationMatrix() * t_c2b.translation() + t_.translation();
+
+    cam_pose = Eigen::Translation3d(t_cam) * q_cam;
+
+    geometry_msgs::PoseStamped pose_cam;
+    pose_cam.header.frame_id = "map";
+    pose_cam.pose.position.x = t_cam.x();
+    pose_cam.pose.position.y = t_cam.y();
+    pose_cam.pose.position.z = t_cam.z();
+
+    pose_cam.pose.orientation.w = q_cam.w();
+    pose_cam.pose.orientation.x = q_cam.x();
+    pose_cam.pose.orientation.y = q_cam.y();
+    pose_cam.pose.orientation.z = q_cam.z();
+
+    campose_pub.publish(pose_cam);    
+    ugvpose_pub.publish(ugv_pose_msg);
+}
+
+void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    uav_pose_msg = *pose;
+
+    Eigen::Translation3d t_(
+        uav_pose_msg.pose.position.x,
+        uav_pose_msg.pose.position.y,
+        uav_pose_msg.pose.position.z
+    );
+
+    Eigen::Quaterniond q_(
+        uav_pose_msg.pose.orientation.w,
+        uav_pose_msg.pose.orientation.x,
+        uav_pose_msg.pose.orientation.y,
+        uav_pose_msg.pose.orientation.z  
+    );
+
+    uav_pose = t_ * q_;
+
+    uav_pose_msg.header.frame_id = "map";
+
+    uavpose_pub.publish(uav_pose_msg);
+}
+
+void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+{
+    // cout<<"relative distance...";
+    // Eigen::Vector2d temp(
+    //     (uav_pose.translation() - cam_pose.translation()).x(),
+    //     (uav_pose.translation() - cam_pose.translation()).y()
+    // );
+    // cout<< temp.norm()<<endl;
+    
+    Eigen::Matrix3d cam_to_body;
+    cam_to_body << 
+        0,0,1,
+        -1,0,0,
+        0,-1,0;
+
+
+    Eigen::Quaterniond q_led = Eigen::Quaterniond(pose.rotationMatrix() );
+    Eigen::Translation3d t_led = Eigen::Translation3d(pose.translation() );
+
+    led_pose = t_led * q_led;//in {c} frame
+
+    // transfer to {w} frame
+    Eigen::Quaterniond q_final = Eigen::Quaterniond(cam_pose.rotation() * cam_to_body * led_pose.rotation());
+    Eigen::Translation3d t_final = Eigen::Translation3d(cam_pose.rotation() * cam_to_body * led_pose.translation() + cam_pose.translation());// Eigen::Translation3d(led_pose.translation());
+
+
+    led_pose_estimated.header.stamp = led_pose_stamp;
+    led_pose_estimated.header.frame_id = "map";
+    
+    led_pose_estimated.pose.position.x = t_final.translation().x();
+    led_pose_estimated.pose.position.y = t_final.translation().y();
+    led_pose_estimated.pose.position.z = t_final.translation().z();
+
+    led_pose_estimated.pose.orientation.w = q_final.w();    
+    led_pose_estimated.pose.orientation.x = q_final.x();
+    led_pose_estimated.pose.orientation.y = q_final.y();
+    led_pose_estimated.pose.orientation.z = q_final.z();
+
+    ledpose_pub.publish(led_pose_estimated);
+}
+
+void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
+{    
     if(!LED_tracker_initiated_or_tracked)        
     {
         LED_tracker_initiated_or_tracked = LED_tracking_initialize(frame, depth);
 
         if(LED_tracker_initiated_or_tracked)
         {
-            cout<<"initialized!"<<endl;
+            printf("\n");
+            ROS_GREEN_STREAM("TRACKER INITIALIZED!");
+            ROS_GREEN_STREAM("SHOULD BE FINE...\n");
 
-            pose_current = pose_global;
-            time_current = time_predicted;
-            global_counter++;
+            if(BA_error > LED_no * 2)
+            {
+                ROS_WARN("REPROJECTION_ERROR OVER %d", LED_no * 2);          
+            }                    
+            map_SE3_to_pose(pose_global_sophus);
         }
         else
         {
-            cout<<"try to initialize tracker..."<<endl;
+            ROS_CYAN_STREAM("WAITING FOR INITIALIZATION...");
         }
 
     }
     else
     {
-        if(global_counter >= 2)
-        {
-            // set_pose_predict();
-            recursive_filtering(frame, depth);
-            //time step >= 2
-            pose_previous = pose_current;
-            pose_current = pose_global;
-            time_previous = time_current;
-            time_current = time_predicted;
-        }
-        else
-        {
-            recursive_filtering(frame, depth);
-            //time step = 0, 1
-            pose_previous = pose_current;
-            pose_current = pose_global;
-            time_previous = time_current;
-            time_current = time_predicted;
+        recursive_filtering(frame, depth);
 
-            global_counter++;
-        }                
+        if(!LED_tracker_initiated_or_tracked)
+        {
+            ROS_RED_STREAM("TRACKER FAIL");
+            detect_no = 0;            
+        }
+        else       
+            map_SE3_to_pose(pose_global_sophus);
+
+        // cout<< q2rpy(Eigen::Quaterniond(pose_global_sophus.rotationMatrix())) / M_PI * 180<<endl; 
+        // cout<<"----------"<<endl;
+
+        // if(BA_error > LED_no * 2)
+        // {
+        //     if(!LED_tracker_initiated_or_tracked)
+        //     {
+        //         ROS_WARN("REPROJECTION_ERROR OVER %d", LED_no * 2);  
+        //         ROS_ERROR("");              
+        //         cv::imwrite("/home/patty/alan_ws/misc/i.png", display);                
+        //     }            
+        // }
         
     }
 }
 
 void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 {
-    // cout<<"recursive_filtering"<<endl;
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
     //what is this for?
     //to extract POI point of interest        
 
     if(!pts_2d_detect.empty())
     {
-        vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
-        //what is this for?
-        //to get 3d coordinates in body frame, so that 
-        //outlier rejection could be performed
+        reject_outlier(pts_2d_detect, depth);
+        //reject some outliers
 
-        reject_outlier(pts_3d_pcl_detect, pts_2d_detect);
-        detect_no = pts_2d_detect.size();
+        bool sufficient_pts = get_final_POI(pts_2d_detect);
+        //the former retrieved POI could be noisy,
+        //so get final POI
 
-        bool stop = false;
-
-        // cout<<"detection pt size:..."<<pts_2d_detect.size()<<endl;
-
-        if(pts_2d_detect.size() >= 4)
-        {            
-            correspondence_search(pts_3d_pcl_detect, pts_2d_detect);
-            // cout<<"correspon"
-
-            vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
-            vector<Eigen::Vector2d> pts_detected_in_corres_order;            
-
-            for(int i = 0; i < corres_global.size(); i++)
-            {            
-                if(corres_global[i].detected_ornot)
-                {                
-                    pts_on_body_frame_in_corres_order.push_back(pts_on_body_frame[i]);
-                    pts_detected_in_corres_order.push_back(corres_global[i].pts_2d_correspond);                    
-                }        
-            }
-
-            detect_no = pts_on_body_frame_in_corres_order.size();
-
-            // cout<<"processed "<<pts_on_body_frame_in_corres_order.size()<<" points this time for pnp"<<endl;
-
-            Eigen::Matrix3d R;
-            Eigen::Vector3d t;           
-
-            solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order, R, t);        
-            
-            pose_global_sophus = Sophus::SE3d(R, t);
-
-            if(pts_on_body_frame_in_corres_order.size() == pts_detected_in_corres_order.size())
-                    optimize(pose_global_sophus, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);//pose, body_frame_pts, pts_2d_detect
-
-            for(auto what : pts_on_body_frame_in_corres_order)
+        if(sufficient_pts)
+        {                        
+            if(!search_corres_and_pose_predict(pts_2d_detect))
             {
-                Eigen::Vector2d reproject = reproject_3D_2D(what, pose_global_sophus);  
-                cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+                if(reinitialization(pts_2d_detect, depth))
+                {
+                    ROS_GREEN_STREAM("REINITIALIZATION SUCCESSFUL");
+                }
+                else
+                {
+                    ROS_RED_STREAM("REINITIALIZATION FAILED");
+                    LED_tracker_initiated_or_tracked = false;
+                }                                
             }
-
-            pose_global.block(0,0,3,3) = pose_global_sophus.rotationMatrix();
-            pose_global(0,3) = pose_global_sophus.translation().x();
-            pose_global(1,3) = pose_global_sophus.translation().y();
-            pose_global(2,3) = pose_global_sophus.translation().z();
-            pose_global(3,3) = 1.0;
-
-            map_SE3_to_pose(pose_global_sophus);
-
-            // pause();
+            else
+            {
+                //perhaps Kalman filtering w/ depth                
+            }            
         }    
         else
         {
-            cout<<"less than 4...!"<<endl;
-            // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/lessthan4" + to_string(i) + ".png", frame_input);
-            // i++;
-            // LED_tracker_initiated_or_tracked = false;
-            // pose_global = pose_predicted;
-            global_counter = 0;
-        }
+            ROS_RED_STREAM("INSUFFICIENT LED DETECTED");
+            LED_tracker_initiated_or_tracked = false;
+        }        
+    }      
+    else
+        LED_tracker_initiated_or_tracked = false;                          
+}
 
+bool alan::LedNodelet::search_corres_and_pose_predict(vector<Eigen::Vector2d> pts_2d_detect)
+{
+    correspondence_search_kmeans(pts_2d_detect);
+
+    vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
+    vector<Eigen::Vector2d> pts_detected_in_corres_order;            
+
+    for(int i = 0; i < corres_global.size(); i++)
+    {            
+        if(corres_global[i].detected_ornot)
+        {   
+            pts_detected_in_corres_order.push_back(corres_global[i].pts_2d_correspond);             
+            pts_on_body_frame_in_corres_order.push_back(pts_on_body_frame[i]);
+            corres_global[i].detected_ornot = false;//reset for next time step
+        }        
     }
-                                
+
+    detect_no = pts_on_body_frame_in_corres_order.size();
+
+    if(detect_no < 4)
+    {
+        return false;
+    }
+    else
+    {          
+        solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order);        
+        pose_global_sophus = pose_epnp_sophus;
+
+        // cout<<"search:"<<endl;
+        // cout<<pose_global_sophus.translation().z()<<endl<<endl;
+
+        optimize(pose_global_sophus, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);//pose, body_frame_pts, pts_2d_detect
+
+        double reproject_error = get_reprojection_error(
+            pts_on_body_frame_in_corres_order,
+            pts_detected_in_corres_order,
+            pose_global_sophus,
+            true
+        );
+
+        // cout<<"reproject_error..."<<endl;
+        // cout<<reproject_error<<endl;      
+
+        BA_error = reproject_error;
+
+        if(BA_error > LED_no * 2)
+            return false;
+        else
+            return true;
+    }    
 }
 
 inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
@@ -181,7 +318,6 @@ inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Soph
     result = cameraMat * (R * P + t); 
 
     Eigen::Vector2d result2d;
-    
 
     result2d <<
         result(0)/result(2), 
@@ -190,10 +326,43 @@ inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Soph
     return result2d;
 }
 
-void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t)
+double alan::LedNodelet::get_reprojection_error(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector2d> pts_2d, Sophus::SE3d pose, bool draw_reproject)
 {
-    cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+    double e = 0;
+
+    Eigen::Vector2d reproject, error;
+
+    for(int i = 0; i < pts_3d.size(); i++)
+    {
+        reproject = reproject_3D_2D(pts_3d[i], pose);
+        error = pts_2d[i] - reproject;
+        e = e + error.norm();
+
+        if(draw_reproject)
+            cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+        
+    }
+
+    return e;
+}
+
+void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> pts_3d)
+{
+    Eigen::Matrix3d R;
+    Eigen::Vector3d t;
+
+    cv::Mat distCoeffs = cv::Mat::zeros(5, 1, CV_64F);
+    // distCoeffs.at<double>(0) = -0.056986890733242035;
+    // distCoeffs.at<double>(1) = 0.06356718391180038;
+    // distCoeffs.at<double>(2) = -0.0012483829632401466;
+    // distCoeffs.at<double>(3) = -0.00018130485841538757;
+    // distCoeffs.at<double>(4) = -0.019809694960713387;
+
+    cv::Mat no_ro_rmat = cv::Mat::eye(3,3,CV_64F);
+    
     cv::Vec3d rvec, tvec;
+    // cv::Rodrigues(no_ro_rmat, rvec);
+
     cv::Mat camMat = cv::Mat::eye(3,3,CV_64F);
     vector<cv::Point3d> pts_3d_;
     vector<cv::Point2d> pts_2d_;
@@ -201,7 +370,7 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
     cv::Point3d temp3d;
     cv::Point2d temp2d;
 
-    for(auto what : body_frame_pts)
+    for(auto what : pts_3d)
     {
         temp3d.x = what(0);
         temp3d.y = what(1);
@@ -213,7 +382,7 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
     for(auto what : pts_2d)
     {
         temp2d.x = what(0);
-        temp2d.y = what(1);
+        temp2d.y = what(1);    
 
         pts_2d_.push_back(temp2d);
     }
@@ -223,8 +392,14 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
     camMat.at<double>(1,1) = cameraMat(1,1);
     camMat.at<double>(1,2) = cameraMat(1,2);
 
+    // cout<<camMat<<endl;
+
     cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);
-    
+    //opt pnp algorithm
+    //, cv::SOLVEPNP_EPNP
+    //, cv::SOLVEPNP_IPPE
+    //, cv::SOLVEPNP_P3P
+
     //return values
     cv::Mat rmat = cv::Mat::eye(3,3,CV_64F);
     cv::Rodrigues(rvec, rmat);
@@ -234,16 +409,40 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
         rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
         rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
 
+    Eigen::Matrix3d reverse_mat;
+    reverse_mat <<
+            1.0000000,  0.0000000,  0.0000000,
+            0.0000000, -1.0000000, -0.0000000,
+            0.0000000,  0.0000000, -1.0000000;
 
-    t <<
-        tvec(0),
-        tvec(1),
-        tvec(2); 
+    
+
+    t =  Eigen::Vector3d(
+          tvec(0),
+          tvec(1),
+          tvec(2)  
+        );
+
+    if(tvec(2) < 0) //sometimes opencv yeilds reversed results, flip it 
+    {
+        R = R * reverse_mat;
+        t = (-1) * t;
+    }
+
+    pose_epnp_sophus = Sophus::SE3d(R, t);
+    
+    // pose_depth_sophus = Sophus::SE3d(R, t);
+
+    // if(LED_tracker_initiated_or_tracked)
+    // {
+    //     // cout<<"depth"<<endl;
+    //     t = led_3d_posi_in_camera_frame_depth;
+    //     pose_depth_sophus = Sophus::SE3d(R, t);
+    // }
 
 }
 
 void alan::LedNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected)
-//converge problem need to be solved //-> fuck you, your Jacobian was wrong
 {
     //execute Gaussian-Newton Method
     // cout<<"Bundle Adjustment Optimization"<<endl;
@@ -265,7 +464,6 @@ void alan::LedNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_
     
     for(i = 0; i < MAX_ITERATION; i++)
     {
-        // cout<<"this is the: "<<i<<" th iteration."<<endl;
         A.setZero();
         b.setZero();
 
@@ -278,9 +476,7 @@ void alan::LedNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_
             solveJacobian(J, pose, pts_3d_exists[i]);
 
             e = pts_2d_detected[i] - reproject_3D_2D(pts_3d_exists[i], pose) ; 
-            //jibai, forget to minus the detected points
-            //you set your Jacobian according to "u-KTP/s", and you messed up the order, you fat fuck
-    
+            
             cost += e.norm();
 
             //form Ax = b
@@ -304,7 +500,6 @@ void alan::LedNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_
             break;
     }
 
-    // cout<<"BA: "<<lastcost<<endl;
     BA_error = lastcost;
 
     // cout<<"gone thru: "<<i<<" th, end optimize"<<endl<<endl;;;
@@ -343,7 +538,6 @@ void alan::LedNodelet::solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus:
         -fy * x_c * y_c / z_c / z_c,
         -fy * x_c / z_c;
     
-    // cout<<"Jacob here: "<<Jacob<<endl;        
 }
 
 vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
@@ -374,13 +568,13 @@ vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Ma
         }
     }
    
-
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     cv::threshold(frame, frame, BINARY_THRES, 255, cv::THRESH_BINARY);
-    //255
+    frame_initial_thresholded = frame.clone();
 
 
-    
+    //detect frame after filter out background
+    cv::bitwise_and(depth_mask_src, frame, frame); //filter out with depth information
 
     // Blob method
     vector<cv::KeyPoint> keypoints_rgb_d, keypoints_rgb;
@@ -392,48 +586,25 @@ vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Ma
 	params.filterByConvexity = false;
 	params.filterByInertia = false;
     params.minDistBetweenBlobs = 0.01;
-    // params.
 
-	cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);   
-    cv::Mat im_with_keypoints;
+	cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
 
-
-    //detect frame after filter out background
-    cv::bitwise_and(depth_mask_src, frame, frame); //filter out with depth information
-
-    vector<cv::Point> nonzeros;
-
-    frame_input = frame.clone();
-    cv::cvtColor(frame_input, frame_input, cv::COLOR_GRAY2RGB);
-
-    // cv::Canny( frame_input, frame_input, 50, 100 );
-    // vector<vector<cv::Point> > contours;
-    // vector<cv::Vec4i> hierarchy;
-    // cv::findContours( frame_input, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE );
-    // cv::Mat drawing = cv::Mat::zeros( frame_input.size(), CV_8UC3 );
-    // for( size_t i = 0; i< contours.size(); i++ )
-    // {
-    //     cv::Scalar color = CV_RGB(0,255,0);
-    //     drawContours( drawing, contours, (int)i, color, 2, cv::LINE_8, hierarchy, 0 );
-    // }
-    // cv::imshow( "Contours", drawing );
-    // cv::waitKey(0);
-    // ros::shutdown();
-
-    
     detector->detect(frame, keypoints_rgb_d);
 	cv::drawKeypoints( frame, keypoints_rgb_d, im_with_keypoints,CV_RGB(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-    cv::imshow("blob", im_with_keypoints);
-    cv::waitKey(10);
-    // cout<<keypoints_rgb_d.size()<<endl;
+
+    // cv::imshow("frame", frame);
+    // cv::waitKey(10);
     
-    detect_no = keypoints_rgb_d.size();
     
     blobs_for_initialize = keypoints_rgb_d;
+
+    min_blob_size = INFINITY;
 
     vector<Eigen::Vector2d> POI;
     for(auto what : keypoints_rgb_d)
     {
+        min_blob_size =(what.size < min_blob_size ? what.size : min_blob_size);
+
         POI.push_back(Eigen::Vector2d(what.pt.x, what.pt.y));
     }
 
@@ -443,7 +614,6 @@ vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Ma
 vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
 {
     //get 9 pixels around the point of interest
-
     int no_pixels = 9;
     int POI_width = (sqrt(9) - 1 ) / 2;
 
@@ -451,8 +621,9 @@ vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(vector<Eigen::Vect
 
     int x_pixel, y_pixel;
     Eigen::Vector3d temp;
+
+    depth_avg_of_all = 0;
     
-    double depth_avg_of_all = 0;
 
     for(int i = 0; i < pts_2d_detected.size(); i++)
     {
@@ -490,24 +661,114 @@ vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(vector<Eigen::Vect
         temp.z() = 1;
 
         temp = z_depth * cameraMat.inverse() * temp;
-
         
         pointclouds.push_back(temp);
     }
 
-    cout<<"average depth:..."<<depth_avg_of_all / pointclouds.size()<<endl;
+    depth_avg_of_all = depth_avg_of_all / pointclouds.size();
+
+    // cout<<"pcl"<<endl;
+    // cout<<depth_avg_of_all<<endl;
 
     return pointclouds;
 }
 
+bool alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
+{
+    double x_min = INFINITY, y_min = INFINITY;
+    double x_max = -INFINITY, y_max = -INFINITY;
+
+    for(auto what : pts_2d_detected)
+    {
+        x_min = (what.x() < x_min ? what.x() : x_min);        
+        y_min = (what.y() < y_min ? what.y() : y_min);        
+        x_max = (what.x() > x_max ? what.x() : x_max);
+        y_max = (what.y() > y_max ? what.y() : y_max);
+
+    }
+    
+    double image_ROI_width = (x_max - x_min) * 1.5;
+    double image_ROI_height = (y_max - y_min) * 1.5;
+
+    cv::Rect rect_ROI(x_min, y_min, image_ROI_width, image_ROI_height);
+
+    cv::Mat ROI_mask = cv::Mat::zeros(
+        frame_initial_thresholded.size(),
+        frame_initial_thresholded.type()
+    );
+
+    cv::rectangle(ROI_mask, rect_ROI, CV_RGB(255, 255, 255), -1, 8, 0);
+
+    cv::Mat final_ROI;
+    frame_initial_thresholded.copyTo(final_ROI, ROI_mask);
+
+    // Blob method
+    vector<cv::KeyPoint> keypoints_rgb_d, keypoints_rgb;
+	cv::SimpleBlobDetector::Params params;
+
+	params.filterByArea = false;
+    params.filterByColor = false;
+	params.filterByCircularity = false;
+	params.filterByConvexity = false;
+	params.filterByInertia = false;
+    params.minDistBetweenBlobs = 0.01;
+
+	cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
+    
+    detector->detect(final_ROI, keypoints_rgb_d);
+	cv::drawKeypoints( final_ROI, keypoints_rgb_d, im_with_keypoints,CV_RGB(0,255,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    
+    // cv::imshow("final_ROI", final_ROI);
+    // cv::waitKey(10);
+        
+    blobs_for_initialize = keypoints_rgb_d;
+
+    vector<cv::Point2f> POI_pts;
+    vector<cv::Point2f> centers;
+    cv::Mat labels;
+
+    for(auto what : keypoints_rgb_d)
+    {
+        POI_pts.emplace_back(cv::Point2f(what.pt.x, what.pt.y));
+    }
+
+    int no_cluster = (POI_pts.size() > LED_no ? LED_no : POI_pts.size());
+
+
+    // if(no_cluster > LED_no)
+    //     no_cluster = LED_no;
+    // else
+    //     no_cluster = no_cluster;
+
+
+    if(no_cluster < 4)
+    {
+        // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/wrong/final_ROI_gan"+ to_string(i)+ ".png", final_ROI);
+        // i++;
+        return false;
+    }
+
+    cv::kmeans(POI_pts, no_cluster, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
+
+    pts_2d_detected.clear();
+    for(int i = 0; i < centers.size(); i++)
+    {
+        pts_2d_detected.emplace_back(centers[i].x, centers[i].y);
+    }
+
+    frame_input = im_with_keypoints.clone();
+    // cout<<"final POI:..."<<pts_2d_detected.size()<<endl;
+    if(pts_2d_detected.size() < 4)
+        return false;
+    else
+        return true;
+}
+
 bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 {
-    cv::Mat hsv = frame.clone();
-
-    double t0 = ros::Time::now().toSec();
+    corres_global.clear();
 
     vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth); 
-      
     vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
 
     //after above, I got:
@@ -520,8 +781,9 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
         norm_of_y_points.push_back(what.y());
         norm_of_z_points.push_back(what.z());
     }
-    
 
+    // cout<<pts_3d_pcl_detect.size()<<endl;
+    // cout<<LED_no<<endl;
 
     if(pts_3d_pcl_detect.size() == LED_no  //we got LED_no
         && calculate_MAD(norm_of_x_points) < MAD_x_threshold //no outlier
@@ -529,18 +791,15 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
         && calculate_MAD(norm_of_z_points) < MAD_z_threshold) 
     {
         Sophus::SE3d pose;
-        // cout<<"can initialize!"<<endl;
 
         int i = 0;
 
-        //hsv detect feature
+        //hsv detect color feature
         cv::cvtColor(hsv, hsv, CV_RGB2HSV);
         vector<bool> g_or_r; //g = true
 
         vector<int> corres_g;
         vector<int> corres_r;
-
-        // cout<<blobs_for_initialize.size()<<endl;
 
         for(int i = 0 ; i < blobs_for_initialize.size(); i++)
         {
@@ -549,13 +808,11 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
             cv::Point hsv_vertice2 = cv::Point(pts_2d_detect[i].x() + 2 * blobs_for_initialize[i].size,
                                                pts_2d_detect[i].y() + 2 * blobs_for_initialize[i].size);
 
-            
             cv::Rect letsgethsv(hsv_vertice1, hsv_vertice2);
 
             cv::Mat ROI(hsv, letsgethsv);
 
             int size = ROI.cols * ROI.rows;
-            // cout<<"size: "<<size<<endl;
             
             double accu = 0;
 
@@ -566,16 +823,13 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
                 for(int j = 0; j < ROI.cols; j++)
                 {
                     hsv_value = ROI.at<cv::Vec3b>(i, j);
-                    // cout<<hsv_value<<endl;
+
                     if(hsv_value[0] == 0)                    
                         size = size - 1;                
                     else
                         accu = accu + hsv_value[0];
                 }
             }
-
-            // cout<<"size: "<<size<<endl;
-            // cout<<"hue: "<<accu/size<<endl;     
 
             if(accu/size < 100)
                 corres_g.push_back(i);
@@ -585,13 +839,11 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 
         vector<int> corres(LED_no);
 
-        // cout<<corres_g.size()<<endl;
-        // cout<<corres_r.size()<<endl;
-        // cout<<"`````````````"<<endl;
-
-        if(corres_g.size() != 3 || corres_r.size() != 3)
+        if(corres_g.size() != LED_g_no || corres_r.size() != LED_r_no)
         {
-            // cout<<"hue not found continue!"<<endl;
+            // cout<<"color"<<endl;
+            // cout<<corres_g.size()<<endl;
+            // cout<<corres_r.size()<<endl;
             return false;
         }
 
@@ -611,36 +863,32 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
                 for(auto what : corres_r)
                     corres.push_back(what);
 
-
                 vector<Eigen::Vector2d> pts_2d_detect_temp;   
-
-                // cout<<endl<<corres.size()<<endl;    
 
                 for(auto what : corres)
                 {
                     pts_2d_detect_temp.push_back(pts_2d_detect[what]);
                 }
+                // cout<<pts_2d_detect_temp.size()<<endl;
+                // cout<<pts_on_body_frame.size()<<endl;
                                                         
-                solve_pnp_initial_pose(pts_2d_detect_temp, pts_on_body_frame, R, t);
+                solve_pnp_initial_pose(pts_2d_detect_temp, pts_on_body_frame);
+                // cout<<"gan"<<endl;
                 
-                pose_global_sophus = Sophus::SE3d(R, t);
+                pose_global_sophus = pose_epnp_sophus;
 
-                Eigen::Vector2d reproject, error; 
-                double e = 0;
-
-                for(int i = 0 ; i < pts_on_body_frame.size(); i++)
-                {
-                    reproject = reproject_3D_2D(pts_on_body_frame[i], pose_global_sophus);  
-                    error = pts_2d_detect_temp[i] - reproject;
-                    e = e + error.norm();
-                }
+                double e = get_reprojection_error(                    
+                    pts_on_body_frame,
+                    pts_2d_detect_temp,
+                    pose_global_sophus,
+                    false
+                );
 
                 if(e < error_total)
                 {                    
                     error_total = e;
                     final_corres = corres;
                     
-
                     if(error_total < 5)
                         break;
                 }                        
@@ -648,10 +896,8 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 
         } while(next_permutation(corres_g.begin(), corres_g.end()));
 
-        
-
-        // cout<<"final error :" <<error_total<<endl;
-
+                
+        BA_error = error_total;
 
         correspondence::matchid corres_temp;
         
@@ -664,132 +910,239 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
             corres_temp.pts_3d_correspond = pts_3d_pcl_detect[what];            
             corres_temp.pts_2d_correspond = pts_2d_detect[what];
 
-            pts_2d_detect_correct_order.push_back(pts_2d_detect[what]);
-            
-            // cout<<corres_temp.pts_2d_correspond<<endl;
-            // cout<<"i :"<< what<<endl;                        
+            pts_2d_detect_correct_order.push_back(pts_2d_detect[what]); 
 
             corres_global.push_back(corres_temp);
         }        
-        double t1 = ros::Time::now().toSec();
 
-        // pose_glo
-        pose_global.block(0,0,3,3) = pose_global_sophus.rotationMatrix();
-        pose_global(0,3) = pose_global_sophus.translation().x();
-        pose_global(1,3) = pose_global_sophus.translation().y();
-        pose_global(2,3) = pose_global_sophus.translation().z();
-        pose_global(3,3) = 1.0;
-
-        // cout<<"initialization time:..."<< 1 / (t1 - t0)<<endl;
+        optimize(pose_global_sophus, pts_on_body_frame, pts_2d_detect_correct_order);
+        detect_no = 6;
 
         return true;
     }
     else
         return false;
-
 }
 
-void alan::LedNodelet::correspondence_search(vector<Eigen::Vector3d> pts_3d_detected, vector<Eigen::Vector2d> pts_2d_detected)
+bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth)
 {
-    vector<Eigen::Vector2d> pts_reproject;
+    corres_global.clear();
+    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
 
-    Eigen::Vector2d reproject_temp;
+    vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
 
-    // cout<<"fix size: "<<pts_on_body_frame.size()<<endl;
-    
+    for(auto what :  pts_3d_pcl_detect)
+    {
+        norm_of_x_points.push_back(what.x());
+        norm_of_y_points.push_back(what.y());
+        norm_of_z_points.push_back(what.z());
+    }
+
+    if(pts_3d_pcl_detect.size() == LED_no  //we got LED_no
+        && calculate_MAD(norm_of_x_points) < MAD_x_threshold //no outlier
+        && calculate_MAD(norm_of_y_points) < MAD_y_threshold 
+        && calculate_MAD(norm_of_z_points) < MAD_z_threshold) 
+    {
+        Sophus::SE3d pose;
+
+        int i = 0;
+
+        //hsv detect feature
+        cv::cvtColor(hsv, hsv, CV_RGB2HSV);
+        vector<bool> g_or_r; //g = true
+
+        vector<int> corres_g;
+        vector<int> corres_r;
+
+        for(int i = 0 ; i < pts_2d_detect.size(); i++)
+        {
+            cv::Point hsv_vertice1 = cv::Point(pts_2d_detect[i].x() - 2 * min_blob_size,
+                                               pts_2d_detect[i].y() - 2 * min_blob_size);
+            cv::Point hsv_vertice2 = cv::Point(pts_2d_detect[i].x() + 2 * min_blob_size,
+                                               pts_2d_detect[i].y() + 2 * min_blob_size);
+
+            cv::Rect letsgethsv(hsv_vertice1, hsv_vertice2);
+
+            cv::Mat ROI(hsv, letsgethsv);
+
+            int size = ROI.cols * ROI.rows;
+            
+            double accu = 0;
+
+            cv::Vec3b hsv_value;
+
+            for(int i = 0; i < ROI.rows; i++)
+            {
+                for(int j = 0; j < ROI.cols; j++)
+                {
+                    hsv_value = ROI.at<cv::Vec3b>(i, j);
+                    
+                    if(hsv_value[0] == 0)                    
+                        size = size - 1;                
+                    else
+                        accu = accu + hsv_value[0];
+                }
+            }  
+
+            if(accu/size < 100)
+                corres_g.push_back(i);
+            else   
+                corres_r.push_back(i);
+        }
+
+        vector<int> corres(LED_no);
+
+        if(corres_g.size() != 3 || corres_r.size() != 3)
+        {
+            return false;
+        }
+
+        vector<int> final_corres;
+        double error_total = INFINITY;
+
+        do
+        {
+            do
+            {
+                corres.clear();
+                for(auto what : corres_g)
+                    corres.push_back(what);
+                for(auto what : corres_r)
+                    corres.push_back(what);
+
+                vector<Eigen::Vector2d> pts_2d_detect_temp;                   
+
+                for(auto what : corres)
+                {
+                    pts_2d_detect_temp.push_back(pts_2d_detect[what]);
+                }
+                                                                        
+                solve_pnp_initial_pose(pts_2d_detect_temp, pts_on_body_frame);
+                
+                pose_global_sophus = pose_epnp_sophus;
+
+                double e = get_reprojection_error(
+                    pts_on_body_frame,
+                    pts_2d_detect_temp,
+                    pose_global_sophus,
+                    false
+                );
+
+                if(e < error_total)
+                {                    
+                    error_total = e;
+                    final_corres = corres;                   
+
+                    if(error_total < 5)
+                        break;
+                }                        
+            } while (next_permutation(corres_r.begin(), corres_r.end()));
+
+        } while(next_permutation(corres_g.begin(), corres_g.end()));
+
+        BA_error = error_total;
+
+        correspondence::matchid corres_temp;
+        
+        vector<Eigen::Vector2d> pts_2d_detect_correct_order;
+        
+        for(auto what : final_corres)
+        {
+            corres_temp.detected_indices = what;
+            corres_temp.detected_ornot = true;
+            corres_temp.pts_3d_correspond = pts_3d_pcl_detect[what];            
+            corres_temp.pts_2d_correspond = pts_2d_detect[what];
+
+            pts_2d_detect_correct_order.push_back(pts_2d_detect[what]);                     
+
+            corres_global.push_back(corres_temp);
+        }        
+
+        optimize(pose_global_sophus, pts_on_body_frame, pts_2d_detect_correct_order);
+        
+        detect_no = 6;
+
+        return true;
+    }
+    else        
+        return false;
+}
+
+void alan::LedNodelet::correspondence_search_kmeans(vector<Eigen::Vector2d> pts_2d_detected)
+{
+    vector<cv::Point2f> pts;
+    Eigen::Vector2d reproject_temp;  
+
     for(auto what : pts_on_body_frame)
     {
-        // cout<<pose_global<<endl;
-        // global_pose_
+
         reproject_temp = reproject_3D_2D(
             what, 
-            Sophus::SE3d(pose_global)
+            pose_global_sophus
         );
-        //pose_global_sophus
-        // cv::circle(display, cv::Point(reproject_temp(0), reproject_temp(1)), 2.5, CV_RGB(0,255,0),-1);
 
-        pts_reproject.push_back(reproject_temp);
+        pts.emplace_back(cv::Point2f(reproject_temp.x(), reproject_temp.y()));
     }
 
-    hungarian.solution(pts_reproject, pts_2d_detected);
+    //first emplace back pts_on_body_frame in 2D at this frame
+    //in preset order
+
+    for(auto what : pts_2d_detected)
+        pts.emplace_back(cv::Point2f(what.x(), what.y()));
     
-    bool stop = false;
-    double xcoord;
-    xcoord = -INFINITY;
 
-    for(int i = 0; i < corres_global.size(); i++)
+    
+    vector<cv::Point2f> centers;
+    cv::Mat labels;
+
+    cv::kmeans(pts, LED_no, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
+
+    int error_count = 0;
+
+    for(int i = 0; i < LED_no; i++)
     {
-        if(hungarian.id_match[i].detected_ornot)
+        int clusterIdx = labels.at<int>(i);
+        for(int k = 0; k < pts.size(); k++)
         {
-            corres_global[i].detected_ornot = hungarian.id_match[i].detected_ornot;
-            corres_global[i].detected_indices = hungarian.id_match[i].detected_indices;
-            corres_global[i].pts_3d_correspond = pts_3d_detected[hungarian.id_match[i].detected_indices];
-            corres_global[i].pts_2d_correspond = pts_2d_detected[hungarian.id_match[i].detected_indices];
-
-
-            if(corres_global[i].pts_2d_correspond.x() < xcoord)
+            if(i == k)
+                continue;
+            int clusterIdx_detected = labels.at<int>(k);
+            if(clusterIdx == clusterIdx_detected)
             {
-                // cout<<corres_global[i].pts_2d_correspond.x()<<endl;
-                // cout<<xcoord<<endl;
-                stop = true;
+                if(k < LED_no)
+                {
+                    error_count++;
+                    break;
+                }  
+                else
+                {
+                    corres_global[i].detected_ornot = true;
+                    corres_global[i].pts_2d_correspond = pts_2d_detected[k - LED_no];
+                }                                                    
+
             }
-            xcoord = corres_global[i].pts_2d_correspond.x();
-
         }
-        else
-        {
-            corres_global[i].detected_ornot = hungarian.id_match[i].detected_ornot;
-        }
-
     }
-
-    if(stop)
-    {
-        // cout<<"wrong correspondencesss!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
-        //use hue again!
-        //also consider points less than 6 points
-        
-        // cout<<pts_reproject.size()<<endl;
-        // cout<<pts_2d_detected.size()<<endl;
-        
-        // for(auto what : pts_reproject)
-        // {
-        //     cout<<what<<endl;
-        // }
-        // cout<<"here!--------------------"<<endl;
-            
-        // for(auto what : pts_2d_detected)
-        // {
-        //     cout<<what<<endl;            
-        // }
-
-        // cout<<"shutdown"<<endl;            
-        // ros::shutdown();
-    }
-
 }
 
-void alan::LedNodelet::set_pose_predict()
-{
-    cout<<"set_pose_predict"<<endl;
-    double delta_time = (time_predicted - time_current) / (time_current - time_previous);
-
-
-    // Eigen::Matrix4d 
-    Eigen::VectorXd delta;
-    delta.resize(6);
-    delta = logarithmMap(pose_previous.inverse() * pose_current);
-    
-    Eigen::VectorXd delta_hat;
-    delta_hat.resize(6);
-    delta_hat = delta * delta_time;
-
-    pose_predicted = pose_current * exponentialMap(delta_hat);
-}
 
 //outlier rejection
-void alan::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, vector<Eigen::Vector2d>& pts_2d_detect)
+    //in outlier rejection, we first calculate the MAD (mean average deviation)
+    //to see whether there exists some outlier or not.
+    //then, we try to do clustering with k-means algorithm.
+    //as we are processing 3D points, at most time, 
+    //the LED blobs should be close enough, 
+    //while others being at some other coordinates that are pretty far away
+    //hence, we set the clustering no. as 2.
+    //we then calcullate the distance between the centroid of the cluster to the
+    //center at previous time step(pcl_center_point_wo_outlier_previous)
+    //and determine which cluster is the one that we want
+void alan::LedNodelet::reject_outlier(vector<Eigen::Vector2d>& pts_2d_detect, cv::Mat depth)
 {
+    vector<Eigen::Vector3d> pts_3d_detect = pointcloud_generate(pts_2d_detect, depth);
+    //what is this for?
+    //to get 3d coordinates in body frame, so that 
+    //outlier rejection could be performed
     int n = pts_3d_detect.size();
 
     vector<cv::Point3f> pts;
@@ -802,49 +1155,31 @@ void alan::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, ve
         norm_of_x_points.push_back(what.x());
         norm_of_y_points.push_back(what.y());
         norm_of_z_points.push_back(what.z());
+
         pts.push_back(cv::Point3f(what.x(), what.y(), what.z()));
     }
-    
-    // double MAD = calculate_MAD(norm_of_points);
-    // cout<<"MAD: "<<MAD<<endl;
 
     cv::Mat labels;
     std::vector<cv::Point3f> centers;
 
-
+    
     if(calculate_MAD(norm_of_x_points) > MAD_x_threshold  
         || calculate_MAD(norm_of_y_points) > MAD_y_threshold
         || calculate_MAD(norm_of_z_points) > MAD_z_threshold)
-    {
-        // ind++;m
-        // cv::imwrite("/home/patty/alan_ws/src/alan/offb/src/alan_state_estimation/test/outliers/outlier" + to_string(ind) + ".png", frame);
-        
+    {   
+        // cout<<"got some rejection to do"<<endl;
         cv::kmeans(pts, 2, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
-
-        // cout<<"center size: "<<centers.size()<<endl;
-
-        // cout<<norm(pcl_center_point_wo_outlier_previous)<<endl;;
-        // cout<<norm(centers[0])<<endl;
-        // cout<<norm(centers[1])<<endl;
 
         double d0 = cv::norm(pcl_center_point_wo_outlier_previous - centers[0]);
         double d1 = cv::norm(pcl_center_point_wo_outlier_previous - centers[1]);
-        
-        // cout<<"distance"<<endl;
-        // cout<<d0<<endl;
-        // cout<<d1<<endl;
-        // cout<<"label: "<<labels<<endl;
-        // cout<<"before erasing: "<<pts_2d_detect.size()<<endl;
 
         vector<Eigen::Vector2d> pts_2d_result;
         vector<Eigen::Vector3d> pts_3d_result;
 
         if(d0 < d1) //then get index with 0
         {           
-            // cout<<"cluster 0 is the right one"<<endl;
             for(int i = 0; i < labels.rows; i++)
             {
-                cout<<labels.at<int>(0,i)<<endl;
                 if(labels.at<int>(0,i) == 0)
                 {
                     pts_2d_result.push_back(pts_2d_detect[i]);
@@ -855,10 +1190,8 @@ void alan::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, ve
         }
         else
         {
-            // cout<<"cluster 1 is the right one"<<endl;
             for(int i = 0; i < labels.rows; i++)
             {
-                cout<<labels.at<int>(0,i)<<endl;
 
                 if(labels.at<int>(0,i) == 1)
                 {                    
@@ -875,8 +1208,6 @@ void alan::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, ve
         pts_3d_detect.clear();
         pts_3d_detect = pts_3d_result;
 
-        // cout<<"after erasing: "<<pts_2d_detect.size()<<endl;
-        // cout<<"after erasing: "<<pts_3d_detect.size()<<endl;
     }
     else
     {
@@ -885,9 +1216,19 @@ void alan::LedNodelet::reject_outlier(vector<Eigen::Vector3d>& pts_3d_detect, ve
         cv::reduce(pts, temp, 01, CV_REDUCE_AVG);
         pcl_center_point_wo_outlier_previous = cv::Point3f(temp.at<float>(0,0), temp.at<float>(0,1), temp.at<float>(0,2));
 
-        // cout<<temp(1)<<endl;
-        // cout<<temp(2)<<endl;
     }
+
+    
+    led_3d_posi_in_camera_frame_depth = Eigen::Vector3d(
+        pcl_center_point_wo_outlier_previous.x,
+        pcl_center_point_wo_outlier_previous.y,
+        pcl_center_point_wo_outlier_previous.z
+    );
+
+    // cout<<"reject outlier"<<endl;
+    // cout<<led_3d_posi_in_camera_frame_depth.z()<<endl;
+
+
 }
 
 inline double alan::LedNodelet::calculate_MAD(vector<double> norm_of_points)
@@ -905,35 +1246,48 @@ inline double alan::LedNodelet::calculate_MAD(vector<double> norm_of_points)
     return MAD;
 }
 
-void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+Eigen::Vector3d alan::LedNodelet::q2rpy(Eigen::Quaterniond q) 
 {
-    uav_pose_estimated.pose.position.x = pose.translation().x();
-    uav_pose_estimated.pose.position.y = pose.translation().y();
-    uav_pose_estimated.pose.position.z = pose.translation().z();
-
-    Eigen::Quaterniond q = Eigen::Quaterniond(pose.rotationMatrix());
-    uav_pose_estimated.pose.orientation.w = q.w();
-    uav_pose_estimated.pose.orientation.x = q.x();
-    uav_pose_estimated.pose.orientation.y = q.y();
-    uav_pose_estimated.pose.orientation.z = q.z();
+    return q.toRotationMatrix().eulerAngles(2,1,0);
 }
 
-void alan::LedNodelet::set_image_to_publish(double t2, double t1, const sensor_msgs::CompressedImageConstPtr & rgbmsg)
+Eigen::Quaterniond alan::LedNodelet::rpy2q(Eigen::Vector3d rpy)
 {
-    
+    Eigen::AngleAxisd rollAngle(rpy(0), Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd pitchAngle(rpy(1), Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd yawAngle(rpy(2), Eigen::Vector3d::UnitZ());
+
+    Eigen::Quaterniond q = yawAngle * pitchAngle * rollAngle;
+
+    return q;
+}
+
+Eigen::Vector3d alan::LedNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v)
+{
+    return q * v;
+}
+
+void alan::LedNodelet::set_image_to_publish(double freq, const sensor_msgs::CompressedImageConstPtr & rgbmsg)
+{    
     char hz[40];
     char fps[10] = " fps";
-    sprintf(hz, "%.2f", 1 / (t2 - t1));
+    sprintf(hz, "%.2f", freq);
     strcat(hz, fps);
 
     char BA[40] = "BA: ";
     char BA_error_display[10];
     sprintf(BA_error_display, "%.2f", BA_error);
     strcat(BA, BA_error_display);
+
+    char depth[40] = "DPTH: ";
+    char depth_display[10];
+    sprintf(depth_display, "%.2f", depth_avg_of_all);
+    strcat(depth, depth_display);
     
     cv::putText(display, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));  
-    cv::putText(display, to_string(detect_no), cv::Point(700,60), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+    cv::putText(display, to_string(detect_no), cv::Point(720,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
     cv::putText(display, BA, cv::Point(720,60), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+    cv::putText(display, depth, cv::Point(20,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
 
     cv::Mat imageoutput = display.clone();
     cv_bridge::CvImage for_visual;
@@ -942,12 +1296,81 @@ void alan::LedNodelet::set_image_to_publish(double t2, double t1, const sensor_m
     for_visual.image = imageoutput;
     this->pubimage.publish(for_visual.toImageMsg());
 
+
     cv_bridge::CvImage for_visual_input;
     for_visual_input.header = rgbmsg->header;
     for_visual_input.encoding = sensor_msgs::image_encodings::BGR8;
     for_visual_input.image = frame_input;
-    this->pubimage_input.publish(for_visual_input.toImageMsg());    
+    this->pubimage_input.publish(for_visual_input.toImageMsg());   
+    // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/in_camera_frame/"+ to_string(i)+ ".png", display); 
+    // i++;
+}
 
+void alan::LedNodelet::terminal_msg_display(double hz)
+{
+    string LED_terminal_display = "DETECT_no: " + to_string(detect_no);
+
+    std::ostringstream out1;
+    out1.precision(2);
+    out1<<fixed<<BA_error;
+    string BA_terminal_display = " || BA_ERROR: " + out1.str();
+
+    std::ostringstream out2;
+    out2.precision(2);
+    out2<<fixed<<depth_avg_of_all;
+    string depth_terminal_display = " || depth: " + out2.str();
+
+    std::ostringstream out3;
+    out3.precision(2);
+    out3<<fixed<<hz;
+    string hz_terminal_display = " || hz: " + out3.str();
+
+    string final_msg = LED_terminal_display 
+        + BA_terminal_display 
+        + depth_terminal_display
+        + hz_terminal_display;
+
+    string LED_tracker_status_display;
+
+    if(LED_tracker_initiated_or_tracked)
+    {
+        final_msg = "LED GOOD || " + final_msg;
+        ROS_GREEN_STREAM(final_msg);
+    }
+    else
+    {
+        final_msg = "LED BAD! || " + final_msg;
+        ROS_RED_STREAM(final_msg);
+    }
+
+}
+
+//below is the courtesy of UZH Faessler et al.
+/*
+    @inproceedings{faessler2014monocular,
+    title={A monocular pose estimation system based on infrared leds},
+    author={Faessler, Matthias and Mueggler, Elias and Schwabe, Karl and Scaramuzza, Davide},
+    booktitle={2014 IEEE international conference on robotics and automation (ICRA)},
+    pages={907--913},
+    year={2014},
+    organization={IEEE}
+    }
+*/
+
+void alan::LedNodelet::set_pose_predict()
+{
+    double delta_time = (time_predicted - time_current) / (time_current - time_previous);
+
+    // Eigen::Matrix4d 
+    Eigen::VectorXd delta;
+    delta.resize(6);
+    delta = logarithmMap(pose_previous.inverse() * pose_current);
+    
+    Eigen::VectorXd delta_hat;
+    delta_hat.resize(6);
+    delta_hat = delta * delta_time;    
+
+    pose_predicted = pose_current * exponentialMap(delta_hat);
 }
 
 Eigen::VectorXd alan::LedNodelet::logarithmMap(Eigen::Matrix4d trans)

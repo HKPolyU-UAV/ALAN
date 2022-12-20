@@ -3,7 +3,7 @@
     do not launch this in VICON!
 */
 
-#include "./include/tools/essential.h"
+#include "../include/tools/essential.h"
 #include <cmath>
 #include <random>
 
@@ -301,9 +301,7 @@ void set_current_traj_wp(Eigen::VectorXd& xyzrpy)
         xyzrpy(3) = 0.0;//r
         xyzrpy(4) = 0.0;//p
         xyzrpy(5) = current_traj_wp(5);//y
-    }
-        
-
+    }        
 
 }
 
@@ -324,7 +322,7 @@ int main(int argc, char** argv)
 
 
     ros::Publisher virtual_car_odom_pub = nh.advertise<nav_msgs::Odometry>
-                        ("/ugv/mavros/local_position/odom", 1, true);
+                        ("/uav/alan_estimation/final_odom", 1, true);
     
     ros::Publisher virtual_car_imu_pub = nh.advertise<sensor_msgs::Imu>
                         ("/camera/imu", 1, true);
