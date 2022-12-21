@@ -39,6 +39,18 @@
 #include <pthread.h>
 
 #include "tools/RosTopicConfigs.h"
+// map definition for convinience
+#define COLOR_SUB_TOPIC CAMERA_SUB_TOPIC_A
+#define DEPTH_SUB_TOPIC CAMERA_SUB_TOPIC_B
+#define UAV_POSE_SUB_TOPIC POSE_SUB_TOPIC_A
+#define UGV_POSE_SUB_TOPIC POSE_SUB_TOPIC_B
+
+#define LED_POSE_PUB_TOPIC POSE_PUB_TOPIC_A
+#define UGV_POSE_PUB_TOPIC POSE_PUB_TOPIC_B
+#define UAV_POSE_PUB_TOPIC POSE_PUB_TOPIC_C
+#define CAM_POSE_PUB_TOPIC POSE_PUB_TOPIC_D
+
+#define LED_ODOM_PUB_TOPIC ODOM_PUB_TOPIC_A
 
 namespace correspondence
 {
@@ -316,16 +328,16 @@ namespace alan
                 LED_no = pts_on_body_frame.size();
                                                                 
             //subscribe
-                subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
-                subdepth.subscribe(nh, "/camera/aligned_depth_to_color/image_raw", 1);                
+                
+                subimage.subscribe(nh, configs.getTopicName(COLOR_SUB_TOPIC), 1);                
+                subdepth.subscribe(nh, configs.getTopicName(DEPTH_SUB_TOPIC), 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
                 
-                #define UAV_POSE_SUB_TOPIC POSE_SUB_TOPIC_A
+                
                 uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
                     (configs.getTopicName(UAV_POSE_SUB_TOPIC), 1, &LedNodelet::uav_pose_callback, this);
-
-                #define UGV_POSE_SUB_TOPIC POSE_SUB_TOPIC_B
+            
                 ugv_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
                     (configs.getTopicName(UGV_POSE_SUB_TOPIC), 1, &LedNodelet::ugv_pose_callback, this);
                 
@@ -336,19 +348,19 @@ namespace alan
                 pubimage = image_transport_.advertise("/processed_image",1);
                 pubimage_input = image_transport_.advertise("/input_image", 1);
 
-                #define LED_POSE_PUB_TOPIC POSE_PUB_TOPIC_A
+                
                 ledpose_pub = nh.advertise<geometry_msgs::PoseStamped>
                                 (configs.getTopicName(LED_POSE_PUB_TOPIC), 1, true);
                 
-                #define UGV_POSE_PUB_TOPIC POSE_PUB_TOPIC_B
+                
                 ugvpose_pub = nh.advertise<geometry_msgs::PoseStamped>
                                 (configs.getTopicName(UGV_POSE_PUB_TOPIC), 1, true); 
                 
-                #define UAV_POSE_PUB_TOPIC POSE_PUB_TOPIC_C
+                
                 uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>
                                 (configs.getTopicName(UAV_POSE_PUB_TOPIC), 1, true);
 
-                #define CAM_POSE_PUB_TOPIC POSE_PUB_TOPIC_D
+                
                 campose_pub = nh.advertise<geometry_msgs::PoseStamped>
                                 (configs.getTopicName(CAM_POSE_PUB_TOPIC), 1, true);                 
             }

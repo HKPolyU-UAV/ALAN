@@ -1,23 +1,24 @@
 #include "include/msgsync.h"
 
-void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const geometry_msgs::TwistStamped::ConstPtr& imu)
+void alan::MsgSyncNodelet::uav_odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
 {
     uav_odom = *odom;
-    uav_imu = *imu;
 
+    //pose
     uav_alan_msg.position.x = uav_odom.pose.pose.position.x;
     uav_alan_msg.position.y = uav_odom.pose.pose.position.y;
     uav_alan_msg.position.z = uav_odom.pose.pose.position.z;
+
+    uav_alan_msg.orientation.ow = uav_odom.pose.pose.orientation.w;
+    uav_alan_msg.orientation.ox = uav_odom.pose.pose.orientation.x;
+    uav_alan_msg.orientation.oy = uav_odom.pose.pose.orientation.y;
+    uav_alan_msg.orientation.oz = uav_odom.pose.pose.orientation.z;
 
     uav_pos_world = Eigen::Vector3d(
         uav_alan_msg.position.x,
         uav_alan_msg.position.y,
         uav_alan_msg.position.z
     );
-
-    uav_alan_msg.velocity.x = uav_odom.twist.twist.linear.x;
-    uav_alan_msg.velocity.y = uav_odom.twist.twist.linear.y;
-    uav_alan_msg.velocity.z = uav_odom.twist.twist.linear.z;
 
     Eigen::Translation3d t_(
         uav_odom.pose.pose.position.x, 
@@ -31,71 +32,59 @@ void alan::MsgSyncNodelet::uav_msg_callback(const nav_msgs::Odometry::ConstPtr& 
         uav_odom.pose.pose.orientation.y,
         uav_odom.pose.pose.orientation.z
         );
-    
+
     uavOdomPose = t_ * q_;
 
-    uav_odom_initiated = true;
+    //twist
+    uav_alan_msg.velocity.x = uav_odom.twist.twist.linear.x;
+    uav_alan_msg.velocity.y = uav_odom.twist.twist.linear.y;
+    uav_alan_msg.velocity.z = uav_odom.twist.twist.linear.z;
+
     
-    uav_acc_body(0) = uav_imu.twist.linear.x;
-    uav_acc_body(1) = uav_imu.twist.linear.y;
-    uav_acc_body(2) = uav_imu.twist.linear.z;
+    uav_odom_initiated = true;
 
-    uav_acc_world = uavOdomPose.rotation() * uav_acc_body;
-    uav_alan_msg.acceleration.x = uav_acc_body(0);
-    uav_alan_msg.acceleration.y = uav_acc_body(1);
-    uav_alan_msg.acceleration.z = uav_acc_body(2) - 9.8066;
+    if(uav_odom_initiated && uav_imu_initiated)
+    {
+        uav_acc_world = uavOdomPose.rotation() * uav_acc_body;
+        uav_alan_msg.acceleration.x = uav_acc_body(0);
+        uav_alan_msg.acceleration.y = uav_acc_body(1);
+        uav_alan_msg.acceleration.z = uav_acc_body(2) - 9.8066;
 
-    uav_alan_msg.orientation.ow = uav_odom.pose.pose.orientation.w;
-    uav_alan_msg.orientation.ox = uav_odom.pose.pose.orientation.x;
-    uav_alan_msg.orientation.oy = uav_odom.pose.pose.orientation.y;
-    uav_alan_msg.orientation.oz = uav_odom.pose.pose.orientation.z;
+        uav_alan_msg.good2fly = true;
+        uav_alan_msg.frame = "map";
 
-    // uav_alan_msg
-    uav_alan_msg.frame = "world";
-
-    uav_pub_AlanPlannerMsg.publish(uav_alan_msg);
-
-    Eigen::Quaterniond q;
-    q.w() = uav_alan_msg.orientation.ow;
-    q.x() = uav_alan_msg.orientation.ox;
-    q.y() = uav_alan_msg.orientation.oy;
-    q.z() = uav_alan_msg.orientation.oz;
-
-    // double yaw = atan2(q.toRotationMatrix()(1,0), q.toRotationMatrix()(0,0));
-
-
-    // Eigen::Vector3d rpy = q2rpy(q);
-
-    // cout<<q._transformVector(Eigen::Vector3d(1,0,0))<<endl;;
-
-//     x = cos(yaw)*cos(pitch)
-// y = sin(yaw)*cos(pitch)
-// z = sin(pitch)
-
-    // cout<<rpy<<endl<<endl;;
-    // cout<<yaw<<endl<<endl<<endl;
-
+        uav_pub_AlanPlannerMsg.publish(uav_alan_msg);
+    }
 }
 
-void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu)
+void alan::MsgSyncNodelet::uav_imu_callback(const sensor_msgs::Imu::ConstPtr& imu)
 {
-    // cout<<1<<endl;
-    ugv_odom = *odom;
-    ugv_imu = *imu;
+    uav_acc_body(0) = imu->linear_acceleration.x; 
+    uav_acc_body(1) = imu->linear_acceleration.y;
+    uav_acc_body(2) = imu->linear_acceleration.z;
 
+    uav_imu_initiated = true;
+}
+
+void alan::MsgSyncNodelet::ugv_odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
+{
+    ugv_odom = *odom;
+
+    //pose
     ugv_alan_msg.position.x = ugv_odom.pose.pose.position.x;
     ugv_alan_msg.position.y = ugv_odom.pose.pose.position.y;
     ugv_alan_msg.position.z = ugv_odom.pose.pose.position.z;
+
+    ugv_alan_msg.orientation.ow = ugv_odom.pose.pose.orientation.w;
+    ugv_alan_msg.orientation.ox = ugv_odom.pose.pose.orientation.x;
+    ugv_alan_msg.orientation.oy = ugv_odom.pose.pose.orientation.y;
+    ugv_alan_msg.orientation.oz = ugv_odom.pose.pose.orientation.z;
 
     ugv_pos_world = Eigen::Vector3d(
         ugv_alan_msg.position.x,
         ugv_alan_msg.position.y,
         ugv_alan_msg.position.z
     );
-
-    ugv_alan_msg.velocity.x = ugv_odom.twist.twist.linear.x;
-    ugv_alan_msg.velocity.y = ugv_odom.twist.twist.linear.y;
-    ugv_alan_msg.velocity.z = ugv_odom.twist.twist.linear.z;
 
     Eigen::Translation3d t_(
         ugv_odom.pose.pose.position.x, 
@@ -109,38 +98,30 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
         ugv_odom.pose.pose.orientation.y,
         ugv_odom.pose.pose.orientation.z
         );
-    
+
     ugvOdomPose = t_ * q_;
 
-    ugv_odom_initiated = true;
+    //twist
+    ugv_alan_msg.velocity.x = ugv_odom.twist.twist.linear.x;
+    ugv_alan_msg.velocity.y = ugv_odom.twist.twist.linear.y;
+    ugv_alan_msg.velocity.z = ugv_odom.twist.twist.linear.z;
+
     
-    ugv_acc_body(0) = ugv_imu.linear_acceleration.z;
-    ugv_acc_body(1) = ugv_imu.linear_acceleration.x * (-1);
-    ugv_acc_body(2) = ugv_imu.linear_acceleration.y * (-1);
+    ugv_odom_initiated = true;
 
-    // ugv_acc_body(0) = ugv_imu.linear_acceleration.x;
-    // ugv_acc_body(1) = ugv_imu.linear_acceleration.y;
-    // ugv_acc_body(2) = ugv_imu.linear_acceleration.z;
-
-    ugv_acc_world = ugvOdomPose.rotation() * ugv_acc_body;
-    ugv_alan_msg.acceleration.x = ugv_acc_world(0);
-    ugv_alan_msg.acceleration.y = ugv_acc_world(1);
-    ugv_alan_msg.acceleration.z = ugv_acc_world(2) - 9.8066;
-
-    ugv_alan_msg.orientation.ow = ugv_odom.pose.pose.orientation.w;
-    ugv_alan_msg.orientation.ox = ugv_odom.pose.pose.orientation.x;
-    ugv_alan_msg.orientation.oy = ugv_odom.pose.pose.orientation.y;
-    ugv_alan_msg.orientation.oz = ugv_odom.pose.pose.orientation.z;
-
-    // ugv_alan_msg
-    ugv_alan_msg.frame = "world";
-
-    ugv_pub_AlanPlannerMsg.publish(ugv_alan_msg);
-
-
-    // cout<<2<<endl;
-    if(uav_odom_initiated && ugv_odom_initiated || true)
+    if(ugv_odom_initiated && ugv_imu_initiated)
     {
+        ugv_acc_world = ugvOdomPose.rotation() * ugv_acc_body;
+        ugv_alan_msg.acceleration.x = ugv_acc_body(0);
+        ugv_alan_msg.acceleration.y = ugv_acc_body(1);
+        ugv_alan_msg.acceleration.z = ugv_acc_body(2) - 9.8066;
+
+        ugv_alan_msg.good2fly = true;
+        ugv_alan_msg.frame = "map";
+
+        ugv_pub_AlanPlannerMsg.publish(ugv_alan_msg);
+
+        
         camPose = ugvOdomPose * body_to_cam_Pose;;
 
         set_total_bound(
@@ -175,9 +156,17 @@ void alan::MsgSyncNodelet::ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& 
         // cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<endl;
 
         alan_all_sfc_pub.publish(polyh_array_pub_object);
-
+        
     }
+}
 
+void alan::MsgSyncNodelet::ugv_imu_callback(const sensor_msgs::Imu::ConstPtr& imu)
+{
+    ugv_acc_body(0) = imu->linear_acceleration.x; 
+    ugv_acc_body(1) = imu->linear_acceleration.y;
+    ugv_acc_body(2) = imu->linear_acceleration.z;
+
+    ugv_imu_initiated = true;
 }
 
 

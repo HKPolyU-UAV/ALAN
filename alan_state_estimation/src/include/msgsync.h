@@ -47,11 +47,14 @@ namespace alan
 
         //subscriber
             //objects
-            message_filters::Subscriber<nav_msgs::Odometry> uav_sub_odom;
-            message_filters::Subscriber<geometry_msgs::TwistStamped> uav_sub_imu;
+            ros::Subscriber UavOdomSub, UavImuSub;
+            ros::Subscriber UgvOdomSub, UgvImuSub;
 
-            message_filters::Subscriber<nav_msgs::Odometry> ugv_sub_odom;
-            message_filters::Subscriber<sensor_msgs::Imu> ugv_sub_imu;
+            // message_filters::Subscriber<nav_msgs::Odometry> uav_sub_odom;
+            // message_filters::Subscriber<geometry_msgs::TwistStamped> uav_sub_imu;
+
+            // message_filters::Subscriber<nav_msgs::Odometry> ugv_sub_odom;
+            // message_filters::Subscriber<sensor_msgs::Imu> ugv_sub_imu;
             ros::Subscriber cam_pose_sub;
             
             typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, geometry_msgs::TwistStamped> uavMySyncPolicy;
@@ -63,11 +66,14 @@ namespace alan
             boost::shared_ptr<ugvsync> ugvsync_;
             
             //functions
-            void uav_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const geometry_msgs::TwistStamped::ConstPtr& imu);
-            void ugv_msg_callback(const nav_msgs::Odometry::ConstPtr& odom, const sensor_msgs::Imu::ConstPtr& imu);
+            void uav_odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
+            void uav_imu_callback(const sensor_msgs::Imu::ConstPtr& imu);
 
-            void cam_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& imu);
-                          
+            void ugv_odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
+            void ugv_imu_callback(const sensor_msgs::Imu::ConstPtr& imu);
+
+
+             
             //private variables 
             nav_msgs::Odometry uav_odom;
             geometry_msgs::TwistStamped uav_imu;  
@@ -196,20 +202,19 @@ namespace alan
                 body_to_cam_Pose = t_c2b * q_c2b;
 
             //subscriber
-                uav_sub_odom.subscribe(nh, "/uav/alan_estimation/final_odom", 1);
-                uav_sub_imu.subscribe(nh, "/vrpn_client_node/gh034_nano/accel", 1);
+                UavOdomSub = nh.subscribe<nav_msgs::Odometry>
+                                ("/uav/alan_estimation/final_odom", 1, &MsgSyncNodelet::uav_odom_callback, this);
+                
+                UavImuSub = nh.subscribe<sensor_msgs::Imu>
+                                ("/uav/mavros/imu/data", 1, &MsgSyncNodelet::uav_imu_callback, this);
 
-                uavsync_.reset(new uavsync( uavMySyncPolicy(10), uav_sub_odom, uav_sub_imu));            
-                uavsync_->registerCallback(boost::bind(&MsgSyncNodelet::uav_msg_callback, this, _1, _2));
 
-                ugv_sub_odom.subscribe(nh, "/ugv/alan_estimation/final_odom", 1);
-                ugv_sub_imu.subscribe(nh, "/ugv/mavros/imu/data", 1);
-                ///ugv/mavros/imu/data
-
-                ugvsync_.reset(new ugvsync( ugvMySyncPolicy(10), ugv_sub_odom, ugv_sub_imu));            
-                ugvsync_->registerCallback(boost::bind(&MsgSyncNodelet::ugv_msg_callback, this, _1, _2));                
-            
-
+                UgvOdomSub = nh.subscribe<nav_msgs::Odometry>
+                                ("/ugv/alan_estimation/final_odom", 1, &MsgSyncNodelet::ugv_odom_callback, this);
+                
+                UgvImuSub = nh.subscribe<sensor_msgs::Imu>
+                                ("/ugv/mavros/imu/data", 1, &MsgSyncNodelet::ugv_imu_callback, this);
+                                            
             //publisher
                 uav_pub_AlanPlannerMsg = nh.advertise<alan_landing_planning::AlanPlannerMsg>
                                     ("/AlanPlannerMsg/uav/data", 1);

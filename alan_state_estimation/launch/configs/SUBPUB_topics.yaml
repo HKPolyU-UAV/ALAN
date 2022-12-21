@@ -3,7 +3,7 @@ TOPICLIST:
     TOPICNAME: "/camera/color/image_raw/compressed"
     SUBORPUB:  0
 
-  - TOPICTYPE: "DEPTH_SUB_TOPIC_A"
+  - TOPICTYPE: "CAMERA_SUB_TOPIC_B"
     TOPICNAME: "/camera/aligned_depth_to_color/image_raw"
     SUBORPUB:  0
 
@@ -16,6 +16,11 @@ TOPICLIST:
     TOPICNAME: "/vrpn_client_node/gh034_car/pose" 
     #/vrpn_client_node/gh034_car/pose #/imu_pose
     SUBORPUB:  0
+
+  - TOPICTYPE: "ODOM_PUB_TOPIC_A"
+    TOPICNAME: "/alan_state_estimation/LED/odom"
+     #/alan_pose/aruco_pose #/alan_state_estimation/LED/pose
+    SUBORPUB:  1
 
   - TOPICTYPE: "POSE_PUB_TOPIC_A"
     TOPICNAME: "/alan_state_estimation/LED/pose"

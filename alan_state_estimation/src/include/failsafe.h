@@ -12,8 +12,8 @@
  * \remark //this aruco library is used for baseline validations as well as trial and error of algorithms
  */
 
-#ifndef ARUCO_H
-#define ARUCO_H
+#ifndef FAILSAFE_H
+#define FAILSAFE_H
 
 #include "tools/essential.h"
 
@@ -41,6 +41,19 @@
 
 #include <pthread.h>
 
+#include "tools/RosTopicConfigs.h"
+#define COLOR_SUB_TOPIC CAMERA_SUB_TOPIC_A
+#define DEPTH_SUB_TOPIC CAMERA_SUB_TOPIC_B
+#define UAV_POSE_SUB_TOPIC POSE_SUB_TOPIC_A
+#define UGV_POSE_SUB_TOPIC POSE_SUB_TOPIC_B
+
+#define LED_POSE_PUB_TOPIC POSE_PUB_TOPIC_A
+#define UGV_POSE_PUB_TOPIC POSE_PUB_TOPIC_B
+#define UAV_POSE_PUB_TOPIC POSE_PUB_TOPIC_C
+#define CAM_POSE_PUB_TOPIC POSE_PUB_TOPIC_D
+
+#define LED_ODOM_PUB_TOPIC ODOM_PUB_TOPIC_A
+
 
 namespace alan
 {
@@ -65,30 +78,39 @@ namespace alan
             bool ugv_vrpn_pose_initiated = false;
             geometry_msgs::TwistStamped ugv_vrpn_twist;
             bool ugv_vrpn_twist_initiated = false;
-            
-            message_filters::Subscriber<geometry_msgs::PoseStamped>vrpn_uavpose_sub;
-            message_filters::Subscriber<geometry_msgs::TwistStamped>vrpn_uavtwist_sub;
-            message_filters::Subscriber<geometry_msgs::PoseStamped>vrpn_ugvpose_sub;
-            message_filters::Subscriber<geometry_msgs::TwistStamped>vrpn_ugvtwist_sub;
 
-            typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, geometry_msgs::TwistStamped> uavMySyncPolicy;
-            typedef message_filters::Synchronizer<uavMySyncPolicy> uavsync;//(MySyncPolicy(10), subimage, subdepth);
-            boost::shared_ptr<uavsync> uavsync_;     
+            ros::Subscriber UavVrpnPoseSub, UavVrpnTwistSub;
+            ros::Subscriber UgvVrpnPoseSub, UgvVrpnTwistSub;
+            ros::Subscriber LedOdomSub;
 
-            typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, geometry_msgs::TwistStamped> ugvMySyncPolicy;
-            typedef message_filters::Synchronizer<ugvMySyncPolicy> ugvsync;//(MySyncPolicy(10), subimage, subdepth);
-            boost::shared_ptr<ugvsync> ugvsync_;
-            
-            //functions
-            void uav_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& pose, const geometry_msgs::TwistStamped::ConstPtr& twist);
 
-            void ugv_msg_callback(const geometry_msgs::PoseStamped::ConstPtr& pose, const geometry_msgs::TwistStamped::ConstPtr& twist);
-            
+            //functions            
+            void uav_vrpn_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
+            void uav_vrpn_twist_callback(const geometry_msgs::TwistStamped::ConstPtr& twist);
+
+            void ugv_vrpn_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
+            void ugv_vrpn_twist_callback(const geometry_msgs::TwistStamped::ConstPtr& twist);
+
+            void led_odom_callback(const nav_msgs::Odometry::ConstPtr& pose);
 
             virtual void onInit() 
             {
                 ros::NodeHandle& nh = getMTNodeHandle();
+                ROS_INFO("FailSafe Nodelet Initiated...");
+
+                RosTopicConfigs configs(nh, "/alan_master");
                     
+                UavVrpnPoseSub = nh.subscribe<geometry_msgs::PoseStamped>
+                                ("/uav/mavros/vision_pose/pose", 1, &FailSafeNodelet::uav_vrpn_pose_callback, this);
+                
+                UavVrpnTwistSub = nh.subscribe<geometry_msgs::TwistStamped>
+                                ("/vrpn_client_node", 1, &FailSafeNodelet::uav_vrpn_twist_callback, this);
+
+                
+                // LedPoseSub = nh.subscribe<geometry_msgs::PoseSta
+                LedOdomSub = nh.subscribe<nav_msgs::Odometry>
+                                (configs.getTopicName(LED_ODOM_PUB_TOPIC), 1, &FailSafeNodelet::led_odom_callback, this);
+
                 vrpn_uavpose_sub.subscribe(nh, "/uav/mavros/vision_pose/pose", 1);
                 vrpn_uavtwist_sub.subscribe(nh, "/vrpn_client_node/gh034_nano/twist", 1);
                 
@@ -107,7 +129,6 @@ namespace alan
                 ugv_odom_final_pub = nh.advertise<nav_msgs::Odometry>
                         ("/ugv/alan_estimation/final_odom", 1, true);
 
-                ROS_INFO("FailSafe Nodelet Initiated...");
             }     
 
             public:

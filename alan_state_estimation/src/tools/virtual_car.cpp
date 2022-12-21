@@ -350,6 +350,9 @@ int main(int argc, char** argv)
         set_current_traj_wp(current_traj_wp);
         set_virtual_pose_twist_imu(current_traj_wp);
 
+        // cout<<"hi"<<endl;
+        // cout<<ugvpaths.size()<<endl;
+
         virtual_car_odom_pub.publish(virtual_car_odom);
         virtual_car_imu_pub.publish(virtual_car_imu);
                   

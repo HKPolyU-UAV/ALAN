@@ -44,316 +44,101 @@ void RosTopicConfigs::setupTOPICLIST()
         topic_type = static_cast<string>(TOPICLIST[i][TOPICTYPE]).c_str();
         static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
 
-        if(topic_type == CAMERA_SUB_TOPIC_A)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == CAMERA_SUB_TOPIC_B)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == CAMERA_SUB_TOPIC_C)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == CAMERA_SUB_TOPIC_D)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == CAMERA_SUB_TOPIC_E)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == CAMERA_SUB_TOPIC_F)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == CAMERA_SUB_TOPIC_G)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == CAMERA_SUB_TOPIC_H)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == CAMERA_SUB_TOPIC_I)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == CAMERA_SUB_TOPIC_J)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
+        if(
+            topic_type != CAMERA_SUB_TOPIC_A ||
+            topic_type != CAMERA_SUB_TOPIC_B ||
+            topic_type != CAMERA_SUB_TOPIC_C ||
+            topic_type != CAMERA_SUB_TOPIC_D ||
+            topic_type != CAMERA_SUB_TOPIC_E ||
+            topic_type != CAMERA_SUB_TOPIC_F ||
+            topic_type != CAMERA_SUB_TOPIC_G ||
+            topic_type != CAMERA_SUB_TOPIC_H ||
+            topic_type != CAMERA_SUB_TOPIC_I ||
+            topic_type != CAMERA_SUB_TOPIC_J ||
 
+            topic_type != IMAGE_PUB_TOPIC_A ||
+            topic_type != IMAGE_PUB_TOPIC_B ||
+            topic_type != IMAGE_PUB_TOPIC_C ||
+            topic_type != IMAGE_PUB_TOPIC_D ||
+            topic_type != IMAGE_PUB_TOPIC_E ||
+            topic_type != IMAGE_PUB_TOPIC_F ||
+            topic_type != IMAGE_PUB_TOPIC_G ||
+            topic_type != IMAGE_PUB_TOPIC_H ||
+            topic_type != IMAGE_PUB_TOPIC_I ||
+            topic_type != IMAGE_PUB_TOPIC_J ||
 
-        else if(topic_type == DEPTH_SUB_TOPIC_A)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == DEPTH_SUB_TOPIC_B)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == DEPTH_SUB_TOPIC_C)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == DEPTH_SUB_TOPIC_D)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == DEPTH_SUB_TOPIC_E)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == DEPTH_SUB_TOPIC_F)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == DEPTH_SUB_TOPIC_G)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == DEPTH_SUB_TOPIC_H)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == DEPTH_SUB_TOPIC_I)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == DEPTH_SUB_TOPIC_J)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
+            topic_type != POSE_SUB_TOPIC_A ||
+            topic_type != POSE_SUB_TOPIC_B ||
+            topic_type != POSE_SUB_TOPIC_C ||
+            topic_type != POSE_SUB_TOPIC_D ||
+            topic_type != POSE_SUB_TOPIC_E ||
+            topic_type != POSE_SUB_TOPIC_F ||
+            topic_type != POSE_SUB_TOPIC_G ||
+            topic_type != POSE_SUB_TOPIC_H ||
+            topic_type != POSE_SUB_TOPIC_I ||
+            topic_type != POSE_SUB_TOPIC_J ||
 
+            topic_type != POSE_PUB_TOPIC_A ||
+            topic_type != POSE_PUB_TOPIC_B ||
+            topic_type != POSE_PUB_TOPIC_C ||
+            topic_type != POSE_PUB_TOPIC_D ||
+            topic_type != POSE_PUB_TOPIC_E ||
+            topic_type != POSE_PUB_TOPIC_F ||
+            topic_type != POSE_PUB_TOPIC_G ||
+            topic_type != POSE_PUB_TOPIC_H ||
+            topic_type != POSE_PUB_TOPIC_I ||
+            topic_type != POSE_PUB_TOPIC_J ||
 
-        else if(topic_type == POSE_SUB_TOPIC_A)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_SUB_TOPIC_B)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_SUB_TOPIC_C)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_SUB_TOPIC_D)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_SUB_TOPIC_E)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_SUB_TOPIC_F)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_SUB_TOPIC_G)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_SUB_TOPIC_H)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_SUB_TOPIC_I)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_SUB_TOPIC_J)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
+            topic_type != ODOM_SUB_TOPIC_A ||
+            topic_type != ODOM_SUB_TOPIC_B ||
+            topic_type != ODOM_SUB_TOPIC_C ||
+            topic_type != ODOM_SUB_TOPIC_D ||
+            topic_type != ODOM_SUB_TOPIC_E ||
+            topic_type != ODOM_SUB_TOPIC_F ||
+            topic_type != ODOM_SUB_TOPIC_G ||
+            topic_type != ODOM_SUB_TOPIC_H ||
+            topic_type != ODOM_SUB_TOPIC_I ||
+            topic_type != ODOM_SUB_TOPIC_J ||
 
+            topic_type != ODOM_PUB_TOPIC_A ||
+            topic_type != ODOM_PUB_TOPIC_B ||
+            topic_type != ODOM_PUB_TOPIC_C ||
+            topic_type != ODOM_PUB_TOPIC_D ||
+            topic_type != ODOM_PUB_TOPIC_E ||
+            topic_type != ODOM_PUB_TOPIC_F ||
+            topic_type != ODOM_PUB_TOPIC_G ||
+            topic_type != ODOM_PUB_TOPIC_H ||
+            topic_type != ODOM_PUB_TOPIC_I ||
+            topic_type != ODOM_PUB_TOPIC_J ||
 
-        else if(topic_type == POSE_PUB_TOPIC_A)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_PUB_TOPIC_B)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_PUB_TOPIC_C)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_PUB_TOPIC_D)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_PUB_TOPIC_E)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_PUB_TOPIC_F)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_PUB_TOPIC_G)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_PUB_TOPIC_H)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_PUB_TOPIC_I)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == POSE_PUB_TOPIC_J)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
+            topic_type != IMU_SUB_TOPIC_A ||
+            topic_type != IMU_SUB_TOPIC_B ||
+            topic_type != IMU_SUB_TOPIC_C ||
+            topic_type != IMU_SUB_TOPIC_D ||
+            topic_type != IMU_SUB_TOPIC_E ||
+            topic_type != IMU_SUB_TOPIC_F ||
+            topic_type != IMU_SUB_TOPIC_G ||
+            topic_type != IMU_SUB_TOPIC_H ||
+            topic_type != IMU_SUB_TOPIC_I ||
+            topic_type != IMU_SUB_TOPIC_J ||
 
+            topic_type != IMU_PUB_TOPIC_A ||
+            topic_type != IMU_PUB_TOPIC_B ||
+            topic_type != IMU_PUB_TOPIC_C ||
+            topic_type != IMU_PUB_TOPIC_D ||
+            topic_type != IMU_PUB_TOPIC_E ||
+            topic_type != IMU_PUB_TOPIC_F ||
+            topic_type != IMU_PUB_TOPIC_G ||
+            topic_type != IMU_PUB_TOPIC_H ||
+            topic_type != IMU_PUB_TOPIC_I ||
+            topic_type != IMU_PUB_TOPIC_J
+        )
+        {
+            config_setup_temp.topictypes = topic_type;
+            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
+            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
 
-        else if(topic_type == IMAGE_PUB_TOPIC_A)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
         }
-        else if(topic_type == IMAGE_PUB_TOPIC_B)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == IMAGE_PUB_TOPIC_C)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == IMAGE_PUB_TOPIC_D)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == IMAGE_PUB_TOPIC_E)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == IMAGE_PUB_TOPIC_F)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == IMAGE_PUB_TOPIC_G)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == IMAGE_PUB_TOPIC_H)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == IMAGE_PUB_TOPIC_I)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-        else if(topic_type == IMAGE_PUB_TOPIC_J)
-        {
-            config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
-            config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
-        }
-
-
         else
         {
             ROS_ERROR("PLEASE CHECK ROSPARAM .yaml FILE...");
