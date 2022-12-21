@@ -129,6 +129,11 @@ frame_height:
 failsafe_threshold:
  0.20
 
+failsafe_on:
+ 1 
+ #1 on, 
+ #2 off
+
 
 
 

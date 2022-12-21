@@ -60,15 +60,20 @@ namespace alan
     class FailSafeNodelet : public nodelet::Nodelet
     {
         private:
+        //general 
+            bool failsafe_on = false;
 
         //publisher
             ros::Publisher uav_odom_final_pub;
             ros::Publisher ugv_odom_final_pub;
             nav_msgs::Odometry uav_final_odom;
-            nav_msgs::Odometry ugv_final_odom;
+            nav_msgs::Odometry ugv_final_odom;                                    
             
         //subscriber
             //objects
+            nav_msgs::Odometry led_odom;
+            bool led_odom_initiated = false;
+            
             geometry_msgs::PoseStamped uav_vrpn_pose;  
             bool uav_vrpn_pose_initiated = false;
             geometry_msgs::TwistStamped uav_vrpn_twist;
@@ -91,12 +96,14 @@ namespace alan
             void ugv_vrpn_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
             void ugv_vrpn_twist_callback(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
-            void led_odom_callback(const nav_msgs::Odometry::ConstPtr& pose);
+            void led_odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
 
             virtual void onInit() 
             {
                 ros::NodeHandle& nh = getMTNodeHandle();
                 ROS_INFO("FailSafe Nodelet Initiated...");
+
+                nh.getParam("/alan_master/failsafe_on", failsafe_on);
 
                 RosTopicConfigs configs(nh, "/alan_master");
                     
@@ -106,33 +113,18 @@ namespace alan
                 UavVrpnTwistSub = nh.subscribe<geometry_msgs::TwistStamped>
                                 ("/vrpn_client_node", 1, &FailSafeNodelet::uav_vrpn_twist_callback, this);
 
-                
+            
                 // LedPoseSub = nh.subscribe<geometry_msgs::PoseSta
                 LedOdomSub = nh.subscribe<nav_msgs::Odometry>
                                 (configs.getTopicName(LED_ODOM_PUB_TOPIC), 1, &FailSafeNodelet::led_odom_callback, this);
 
-                vrpn_uavpose_sub.subscribe(nh, "/uav/mavros/vision_pose/pose", 1);
-                vrpn_uavtwist_sub.subscribe(nh, "/vrpn_client_node/gh034_nano/twist", 1);
                 
-                uavsync_.reset(new uavsync( uavMySyncPolicy(10), vrpn_uavpose_sub, vrpn_uavtwist_sub));            
-                uavsync_->registerCallback(boost::bind(&FailSafeNodelet::uav_msg_callback, this, _1, _2));
-
-                vrpn_ugvpose_sub.subscribe(nh, "/vrpn_client_node/gh034_car/pose", 1);
-                vrpn_ugvtwist_sub.subscribe(nh, "/vrpn_client_node/gh034_car/twist", 1);
-
-                ugvsync_.reset(new ugvsync( ugvMySyncPolicy(10), vrpn_ugvpose_sub, vrpn_ugvtwist_sub));            
-                ugvsync_->registerCallback(boost::bind(&FailSafeNodelet::ugv_msg_callback, this, _1, _2));                
-
-
                 uav_odom_final_pub = nh.advertise<nav_msgs::Odometry>
                         ("/uav/alan_estimation/final_odom", 1, true);
                 ugv_odom_final_pub = nh.advertise<nav_msgs::Odometry>
                         ("/ugv/alan_estimation/final_odom", 1, true);
 
             }     
-
-            public:
-                static void* PubMainLoop(void* tmp);   
 
     };
     

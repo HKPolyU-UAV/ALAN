@@ -243,7 +243,7 @@ namespace alan
                 //initialize subscribe
                 // subimage = nh.subscribe("/camera/color/image_raw/compressed", 1, &ArucoNodelet::camera_callback, this);
                 subimage.subscribe(nh, configs.getTopicName(CAMERA_SUB_TOPIC_A), 1);
-                subdepth.subscribe(nh, configs.getTopicName(DEPTH_SUB_TOPIC_A), 1);                
+                subdepth.subscribe(nh, configs.getTopicName(CAMERA_SUB_TOPIC_B), 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&ArucoNodelet::camera_callback, this, _1, _2));
                 
