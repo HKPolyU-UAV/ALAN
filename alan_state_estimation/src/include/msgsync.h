@@ -137,7 +137,6 @@ namespace alan
             alan_visualization::Tangent construct_tangent_plane(Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector3d pt);
             alan_visualization::Tangent set_plane_bound(Eigen::Vector3d v, Eigen::Vector3d pt);
 
-            void construct_sfc();
             Eigen::Vector3d get_outer_product(Eigen::Vector3d v1, Eigen::Vector3d v2);          
                     
 

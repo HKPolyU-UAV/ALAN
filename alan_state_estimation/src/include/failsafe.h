@@ -113,7 +113,9 @@ namespace alan
                 UavVrpnTwistSub = nh.subscribe<geometry_msgs::TwistStamped>
                                 ("/vrpn_client_node", 1, &FailSafeNodelet::uav_vrpn_twist_callback, this);
 
-            
+                UgvVrpnPoseSub = nh.subscribe<geometry_msgs::PoseStamped>
+                                ("", 1, &FailSafeNodelet::ugv_vrpn_pose_callback, this);
+
                 // LedPoseSub = nh.subscribe<geometry_msgs::PoseSta
                 LedOdomSub = nh.subscribe<nav_msgs::Odometry>
                                 (configs.getTopicName(LED_ODOM_PUB_TOPIC), 1, &FailSafeNodelet::led_odom_callback, this);

@@ -1,4 +1,7 @@
 TOPICLIST: 
+
+#led.cpp
+  #sub
   - TOPICTYPE: "CAMERA_SUB_TOPIC_A"
     TOPICNAME: "/camera/color/image_raw/compressed"
     SUBORPUB:  0
@@ -6,12 +9,56 @@ TOPICLIST:
   - TOPICTYPE: "CAMERA_SUB_TOPIC_B"
     TOPICNAME: "/camera/aligned_depth_to_color/image_raw"
     SUBORPUB:  0
+  
+  - TOPICTYPE: "POSE_SUB_TOPIC_A"
+    TOPICNAME: "/vrpn_client_node/gh034_car/pose" 
+    SUBORPUB: 0
+  
+  #pub
+  - TOPICTYPE: "POSE_PUB_TOPIC_A"
+    TOPICNAME: "/alan_state_estimation/led/uav/pose"
+    SUBORPUB: 1
 
+  - TOPICTYPE: "ODOM_PUB_TOPIC_A"
+    TOPICNAME: "/alan_state_estimation/led/uav/odom"
+    SUBORPUB: 1
+
+#failsafe.cpp
+  #sub
+  - TOPICTYPE: "ODOM_SUB_TOPIC_A"
+    TOPICNAME: "/alan_state_estimation/led/uav/odom"
+    SUBORPUB: 0
+
+  - TOPICTYPE: "POSE_SUB_TOPIC_B"
+    TOPICNAME: "/uav/mavros/vision_pose/pose" #/vrpn_client_node/gh034_nano_pose
+    SUBORPUB: 0
+  
+  - TOPICTYPE: "TWIST_SUB_TOPIC_A"
+    TOPICNAME: "/vrpn_client_node/gh034_nano/twist" #/uav/mavros/local_position/velocity_local
+    SUBORPUB: 0
+  
+  - TOPICTYPE: "POSE_SUB_TOPIC_C"
+    TOPICNAME: "/vrpn_client_node/gh034_car/pose" #/imu_pose (remember extrinsic parameters)
+    SUBORPUB: 0
+  
+  - TOPICTYPE: "TWIST_SUB_TOPIC_B"
+    TOPICNAME: "/vrpn_client_node/gh034_car/twist" #/imu_pose
+    SUBORPUB: 0
+
+  #pub  
+  - TOPICTYPE: "ODOM_PUB_TOPIC_A"
+    TOPICNAME: "/alan_state_estimation/failsafe/uav/odom_final"
+    SUBORPUB: 1
+  - TOPICTYPE: ""
+  
+
+#uav (from the perspective of controller)
+  #sub
   - TOPICTYPE: "POSE_SUB_TOPIC_A"
     TOPICNAME: "/uav/mavros/vision_pose/pose"
     #/uav/mavros/vision_pose/pose #/mavros/local_position/pose
     SUBORPUB:  0
-
+  
   - TOPICTYPE: "POSE_SUB_TOPIC_B"
     TOPICNAME: "/vrpn_client_node/gh034_car/pose" 
     #/vrpn_client_node/gh034_car/pose #/imu_pose

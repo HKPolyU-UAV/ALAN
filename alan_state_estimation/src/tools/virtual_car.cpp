@@ -13,6 +13,9 @@
 static Eigen::VectorXd current_traj_wp;
 
 static nav_msgs::Odometry virtual_car_odom;
+
+static geometry_msgs::PoseStamped virtual_car_pose;
+static geometry_msgs::TwistStamped virtual_car_twist;
 static sensor_msgs::Imu virtual_car_imu;
 static geometry_msgs::PoseStamped virual_pose;
 
@@ -71,7 +74,6 @@ Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy){
     Eigen::Quaterniond q = yawAngle * pitchAngle * rollAngle;
 
     return q;
-
 };
 
 Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v){
@@ -102,7 +104,48 @@ void set_virtual_car_odom(Eigen::VectorXd xyzrpy)
     virtual_car_odom.pose.pose.orientation.x = attitude.x();
     virtual_car_odom.pose.pose.orientation.y = attitude.y();
     virtual_car_odom.pose.pose.orientation.z = attitude.z();
+}
 
+void set_virtual_car_pose(Eigen::VectorXd xyzrpy)
+{
+    std::default_random_engine generator;
+    std::normal_distribution<double> dist(0, 0.0001);
+
+    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+
+
+    virtual_car_pose.pose.position.x = xyzrpy(0) + dist(generator);
+    virtual_car_pose.pose.position.y = xyzrpy(1) + dist(generator);
+    virtual_car_pose.pose.position.z = xyzrpy(2) + dist(generator);
+
+    Eigen::Quaterniond attitude = rpy2q(
+        Eigen::Vector3d(
+            xyzrpy(3)  / 180.0 * M_PI + dist(generator),
+            xyzrpy(4)  / 180.0 * M_PI + dist(generator),
+            xyzrpy(5)  / 180.0 * M_PI + dist(generator))
+    ) ;
+    
+    virtual_car_pose.pose.orientation.w = attitude.w();
+    virtual_car_pose.pose.orientation.x = attitude.x();
+    virtual_car_pose.pose.orientation.y = attitude.y();
+    virtual_car_pose.pose.orientation.z = attitude.z();
+
+}
+
+void set_virtual_car_twist(Eigen::VectorXd xyzrpy)
+{
+    std::default_random_engine generator;
+    std::normal_distribution<double> dist(0, 0.0001);
+
+    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+
+    virtual_car_twist.twist.linear.x = 0 + dist(generator);
+    virtual_car_twist.twist.linear.y = 0 + dist(generator);
+    virtual_car_twist.twist.linear.z = 0 + dist(generator);
+    
+    virtual_car_twist.twist.angular.x = 0 + dist(generator);
+    virtual_car_twist.twist.angular.y = 0 + dist(generator);
+    virtual_car_twist.twist.angular.z = 0 + dist(generator);
 }
 
 void set_virtual_car_imu(Eigen::VectorXd xyzrpy)
@@ -129,31 +172,9 @@ void set_virtual_car_imu(Eigen::VectorXd xyzrpy)
 
 void set_virtual_pose_twist_imu(Eigen::VectorXd xyzrpy)
 {        
-    std::default_random_engine generator;
-    std::normal_distribution<double> dist(0, 0.0001);
-
-    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-
-    virual_pose.pose.position.x = xyzrpy(0) + dist(generator);
-    virual_pose.pose.position.y = xyzrpy(1) + dist(generator);
-    virual_pose.pose.position.z = xyzrpy(2) + dist(generator);
-
-    Eigen::Quaterniond attitude = rpy2q(
-        Eigen::Vector3d(
-            xyzrpy(3)  / 180.0 * M_PI + dist(generator),
-            xyzrpy(4)  / 180.0 * M_PI + dist(generator),
-            xyzrpy(5)  / 180.0 * M_PI + dist(generator))
-    ) ;
-    
-    virual_pose.pose.orientation.w = attitude.w();
-    virual_pose.pose.orientation.x = attitude.x();
-    virual_pose.pose.orientation.y = attitude.y();
-    virual_pose.pose.orientation.z = attitude.z();
-
-
-    set_virtual_car_odom(xyzrpy);
+    set_virtual_car_pose(xyzrpy);
+    set_virtual_car_twist(xyzrpy);
     set_virtual_car_imu(xyzrpy);
-
 }
 
 void calculate_heading_traj(double start_yaw, double end_yaw, vector<double>& yaw_traj)
@@ -320,14 +341,18 @@ int main(int argc, char** argv)
     ugvpaths = parseCSV(csv_file_location);    
     notyetfinish = true;
 
+    // ros::Publisher virtual_car_odom_pub = nh.advertise<nav_msgs::Odometry>
+    //                     ("/uav/alan_estimation/final_odom", 1, true);
+    
+    ros::Publisher virtual_car_pose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                        ("/vrpn_client_node/gh034_car/pose", 1, true);
 
-    ros::Publisher virtual_car_odom_pub = nh.advertise<nav_msgs::Odometry>
-                        ("/uav/alan_estimation/final_odom", 1, true);
+    ros::Publisher virtual_car_twist_pub = nh.advertise<geometry_msgs::TwistStamped>
+                        ("/vrpn_client_node/gh034_car/twist", 1, true);
     
     ros::Publisher virtual_car_imu_pub = nh.advertise<sensor_msgs::Imu>
-                        ("/camera/imu", 1, true);
+                        ("/uav/mavros/imu/data", 1, true);
     
-
 
     ros::Rate virtual_car_rate(pub_freq);
     
@@ -346,14 +371,11 @@ int main(int argc, char** argv)
 
     while (ros::ok())    
     {         
-
         set_current_traj_wp(current_traj_wp);
         set_virtual_pose_twist_imu(current_traj_wp);
 
-        // cout<<"hi"<<endl;
-        // cout<<ugvpaths.size()<<endl;
-
-        virtual_car_odom_pub.publish(virtual_car_odom);
+        virtual_car_pose_pub.publish(virtual_car_pose);
+        virtual_car_twist_pub.publish(virtual_car_twist);
         virtual_car_imu_pub.publish(virtual_car_imu);
                   
         

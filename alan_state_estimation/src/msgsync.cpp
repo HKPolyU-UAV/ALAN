@@ -118,6 +118,7 @@ void alan::MsgSyncNodelet::ugv_odom_callback(const nav_msgs::Odometry::ConstPtr&
 
         ugv_alan_msg.good2fly = true;
         ugv_alan_msg.frame = "map";
+        cout<<"?"<<endl;
 
         ugv_pub_AlanPlannerMsg.publish(ugv_alan_msg);
 

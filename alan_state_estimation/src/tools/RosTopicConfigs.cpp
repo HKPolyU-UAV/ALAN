@@ -89,27 +89,27 @@ void RosTopicConfigs::setupTOPICLIST()
             topic_type != POSE_PUB_TOPIC_I ||
             topic_type != POSE_PUB_TOPIC_J ||
 
-            topic_type != ODOM_SUB_TOPIC_A ||
-            topic_type != ODOM_SUB_TOPIC_B ||
-            topic_type != ODOM_SUB_TOPIC_C ||
-            topic_type != ODOM_SUB_TOPIC_D ||
-            topic_type != ODOM_SUB_TOPIC_E ||
-            topic_type != ODOM_SUB_TOPIC_F ||
-            topic_type != ODOM_SUB_TOPIC_G ||
-            topic_type != ODOM_SUB_TOPIC_H ||
-            topic_type != ODOM_SUB_TOPIC_I ||
-            topic_type != ODOM_SUB_TOPIC_J ||
+            topic_type != TWIST_SUB_TOPIC_A ||
+            topic_type != TWIST_SUB_TOPIC_B ||
+            topic_type != TWIST_SUB_TOPIC_C ||
+            topic_type != TWIST_SUB_TOPIC_D ||
+            topic_type != TWIST_SUB_TOPIC_E ||
+            topic_type != TWIST_SUB_TOPIC_F ||
+            topic_type != TWIST_SUB_TOPIC_G ||
+            topic_type != TWIST_SUB_TOPIC_H ||
+            topic_type != TWIST_SUB_TOPIC_I ||
+            topic_type != TWIST_SUB_TOPIC_J ||
 
-            topic_type != ODOM_PUB_TOPIC_A ||
-            topic_type != ODOM_PUB_TOPIC_B ||
-            topic_type != ODOM_PUB_TOPIC_C ||
-            topic_type != ODOM_PUB_TOPIC_D ||
-            topic_type != ODOM_PUB_TOPIC_E ||
-            topic_type != ODOM_PUB_TOPIC_F ||
-            topic_type != ODOM_PUB_TOPIC_G ||
-            topic_type != ODOM_PUB_TOPIC_H ||
-            topic_type != ODOM_PUB_TOPIC_I ||
-            topic_type != ODOM_PUB_TOPIC_J ||
+            topic_type != TWIST_PUB_TOPIC_A ||
+            topic_type != TWIST_PUB_TOPIC_B ||
+            topic_type != TWIST_PUB_TOPIC_C ||
+            topic_type != TWIST_PUB_TOPIC_D ||
+            topic_type != TWIST_PUB_TOPIC_E ||
+            topic_type != TWIST_PUB_TOPIC_F ||
+            topic_type != TWIST_PUB_TOPIC_G ||
+            topic_type != TWIST_PUB_TOPIC_H ||
+            topic_type != TWIST_PUB_TOPIC_I ||
+            topic_type != TWIST_PUB_TOPIC_J ||
 
             topic_type != IMU_SUB_TOPIC_A ||
             topic_type != IMU_SUB_TOPIC_B ||
@@ -131,7 +131,30 @@ void RosTopicConfigs::setupTOPICLIST()
             topic_type != IMU_PUB_TOPIC_G ||
             topic_type != IMU_PUB_TOPIC_H ||
             topic_type != IMU_PUB_TOPIC_I ||
-            topic_type != IMU_PUB_TOPIC_J
+            topic_type != IMU_PUB_TOPIC_J ||
+
+            topic_type != ODOM_SUB_TOPIC_A ||
+            topic_type != ODOM_SUB_TOPIC_B ||
+            topic_type != ODOM_SUB_TOPIC_C ||
+            topic_type != ODOM_SUB_TOPIC_D ||
+            topic_type != ODOM_SUB_TOPIC_E ||
+            topic_type != ODOM_SUB_TOPIC_F ||
+            topic_type != ODOM_SUB_TOPIC_G ||
+            topic_type != ODOM_SUB_TOPIC_H ||
+            topic_type != ODOM_SUB_TOPIC_I ||
+            topic_type != ODOM_SUB_TOPIC_J ||
+
+            topic_type != ODOM_PUB_TOPIC_A ||
+            topic_type != ODOM_PUB_TOPIC_B ||
+            topic_type != ODOM_PUB_TOPIC_C ||
+            topic_type != ODOM_PUB_TOPIC_D ||
+            topic_type != ODOM_PUB_TOPIC_E ||
+            topic_type != ODOM_PUB_TOPIC_F ||
+            topic_type != ODOM_PUB_TOPIC_G ||
+            topic_type != ODOM_PUB_TOPIC_H ||
+            topic_type != ODOM_PUB_TOPIC_I ||
+            topic_type != ODOM_PUB_TOPIC_J 
+            
         )
         {
             config_setup_temp.topictypes = topic_type;
