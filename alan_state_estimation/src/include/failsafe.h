@@ -42,18 +42,14 @@
 #include <pthread.h>
 
 #include "tools/RosTopicConfigs.h"
-#define COLOR_SUB_TOPIC CAMERA_SUB_TOPIC_A
-#define DEPTH_SUB_TOPIC CAMERA_SUB_TOPIC_B
-#define UAV_POSE_SUB_TOPIC POSE_SUB_TOPIC_A
-#define UGV_POSE_SUB_TOPIC POSE_SUB_TOPIC_B
+#define LED_ODOM_SUB_TOPIC ODOM_SUB_TOPIC_A
+#define UAV_POSE_SUB_TOPIC POSE_SUB_TOPIC_B
+#define UAV_TWIST_SUB_TOPIC TWIST_SUB_TOPIC_A
+#define UGV_POSE_SUB_TOPIC POSE_SUB_TOPIC_C
+#define UGV_TWIST_SUB_TOPIC TWIST_SUB_TOPIC_B
 
-#define LED_POSE_PUB_TOPIC POSE_PUB_TOPIC_A
-#define UGV_POSE_PUB_TOPIC POSE_PUB_TOPIC_B
-#define UAV_POSE_PUB_TOPIC POSE_PUB_TOPIC_C
-#define CAM_POSE_PUB_TOPIC POSE_PUB_TOPIC_D
-
-#define LED_ODOM_PUB_TOPIC ODOM_PUB_TOPIC_A
-
+#define UAV_ODOM_PUB_TOPIC ODOM_PUB_TOPIC_B
+#define UGV_ODOM_PUB_TOPIC ODOM_PUB_TOPIC_C
 
 namespace alan
 {
@@ -106,25 +102,27 @@ namespace alan
                 nh.getParam("/alan_master/failsafe_on", failsafe_on);
 
                 RosTopicConfigs configs(nh, "/alan_master");
-                    
+                
+                LedOdomSub = nh.subscribe<nav_msgs::Odometry>
+                        (configs.getTopicName(LED_ODOM_SUB_TOPIC), 1, &FailSafeNodelet::led_odom_callback, this);
+
                 UavVrpnPoseSub = nh.subscribe<geometry_msgs::PoseStamped>
-                                ("/uav/mavros/vision_pose/pose", 1, &FailSafeNodelet::uav_vrpn_pose_callback, this);
+                        (configs.getTopicName(UAV_POSE_SUB_TOPIC), 1, &FailSafeNodelet::uav_vrpn_pose_callback, this);
                 
                 UavVrpnTwistSub = nh.subscribe<geometry_msgs::TwistStamped>
-                                ("/vrpn_client_node", 1, &FailSafeNodelet::uav_vrpn_twist_callback, this);
+                        (configs.getTopicName(UAV_TWIST_SUB_TOPIC), 1, &FailSafeNodelet::uav_vrpn_twist_callback, this);
 
                 UgvVrpnPoseSub = nh.subscribe<geometry_msgs::PoseStamped>
-                                ("", 1, &FailSafeNodelet::ugv_vrpn_pose_callback, this);
-
-                // LedPoseSub = nh.subscribe<geometry_msgs::PoseSta
-                LedOdomSub = nh.subscribe<nav_msgs::Odometry>
-                                (configs.getTopicName(LED_ODOM_PUB_TOPIC), 1, &FailSafeNodelet::led_odom_callback, this);
-
+                        (configs.getTopicName(UGV_POSE_SUB_TOPIC), 1, &FailSafeNodelet::ugv_vrpn_pose_callback, this);
+                
+                UgvVrpnTwistSub = nh.subscribe<geometry_msgs::TwistStamped>
+                        (configs.getTopicName(UGV_TWIST_SUB_TOPIC), 1, &FailSafeNodelet::ugv_vrpn_twist_callback, this);
+            
                 
                 uav_odom_final_pub = nh.advertise<nav_msgs::Odometry>
-                        ("/uav/alan_estimation/final_odom", 1, true);
+                        (configs.getTopicName(UAV_ODOM_PUB_TOPIC), 1, true);
                 ugv_odom_final_pub = nh.advertise<nav_msgs::Odometry>
-                        ("/ugv/alan_estimation/final_odom", 1, true);
+                        (configs.getTopicName(UGV_ODOM_PUB_TOPIC), 1, true);
 
             }     
 

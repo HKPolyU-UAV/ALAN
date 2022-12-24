@@ -74,4 +74,3 @@ void alan::FailSafeNodelet::ugv_vrpn_twist_callback(const geometry_msgs::TwistSt
     ugv_vrpn_twist_initiated = true;
 }
 
-

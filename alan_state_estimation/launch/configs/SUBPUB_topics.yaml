@@ -46,10 +46,12 @@ TOPICLIST:
     SUBORPUB: 0
 
   #pub  
-  - TOPICTYPE: "ODOM_PUB_TOPIC_A"
+  - TOPICTYPE: "ODOM_PUB_TOPIC_B"
     TOPICNAME: "/alan_state_estimation/failsafe/uav/odom_final"
     SUBORPUB: 1
-  - TOPICTYPE: ""
+  - TOPICTYPE: "ODOM_PUB_TOPIC_C"
+    TOPICNAME: "/alan_state_estimation/failsafe/ugv/odom_final"
+    SUBORPUB: 1
   
 
 #uav (from the perspective of controller)
