@@ -176,10 +176,25 @@ target_link_libraries(calibrate
  # qpOASES
  osqp::osqp
  OsqpEigen#::OsqpEigen
- 
- 
+
  )
 
+
+#  add_executable(lrgb
+#  src/lrgb.cpp
+# )
+
+# target_link_libraries(lrgb
+# ${OpenCV_LIBRARIES}
+# ${catkin_LIBRARIES}
+# ${PCL_LIBRARIES}
+# ${OSQP_LIBRARIES}
+# # mosek64
+# # qpOASES
+# osqp::osqp
+# OsqpEigen#::OsqpEigen
+
+# )
 
 #   add_executable(failsafe
 #    src/failsafe.cpp

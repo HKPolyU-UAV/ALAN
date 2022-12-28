@@ -121,6 +121,7 @@ namespace alan
                 
                 uav_odom_final_pub = nh.advertise<nav_msgs::Odometry>
                         (configs.getTopicName(UAV_ODOM_PUB_TOPIC), 1, true);
+                        
                 ugv_odom_final_pub = nh.advertise<nav_msgs::Odometry>
                         (configs.getTopicName(UGV_ODOM_PUB_TOPIC), 1, true);
 
