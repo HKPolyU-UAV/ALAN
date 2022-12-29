@@ -6,7 +6,7 @@
     <!-- ROS Nodelet manager -->
     <node pkg="nodelet" type="nodelet" name="alan_master" args="manager" output="screen">
             <rosparam command="load" file="$(find alan_state_estimation)/launch/configs/alan_pose_estimation.yaml" />
-            <rosparam command="load" file="$(find alan_state_estimation)/launch/configs/SUBPUB_topics.yaml" />
+            
     </node> 
 
 
@@ -25,19 +25,18 @@
 
     <!-- LedNodelet -->
     <!-- <node pkg="nodelet" type="nodelet" name="led" args="load alan/LedNodelet alan_master" output="screen">
+        <rosparam command="load" file="$(find alan_state_estimation)/launch/configs/LED_SUBPUB_topics.yaml" />
     </node>  -->
 
 
     <!-- MsgSyncNodelet -->
     <node pkg="nodelet" type="nodelet" name="msgsync" args="load alan/MsgSyncNodelet alan_master" output="screen">
+        <rosparam command="load" file="$(find alan_state_estimation)/launch/configs/MSGSYNC_SUBPUB_topics.yaml" />
     </node> 
 
 
-    <!-- <node name="failsafe" pkg="alan_state_estimation" type="failsafe" output="screen">            
-        <remap from="/uav/alan_estimation/final_pose" to="/mavros/vision_pose/pose" />
-    </node> -->
-
     <node name="virtual_car" pkg="alan_state_estimation" type="virtual_car" output="screen">
+        <rosparam command="load" file="$(find alan_state_estimation)/launch/configs/VIRTUAL_CAR_SUBPUB_topics.yaml" />
         <param name="/pathcsv" type="string" value="$(find alan_state_estimation)/launch/configs/virtual_car_path/ugv_still_path.csv"/>
         <param name="/max_vel_lin" type="double" value="0.75"/>
         <param name="/max_vel_ang" type="double" value="15"/>

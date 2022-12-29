@@ -4,6 +4,7 @@
 */
 
 #include "../include/tools/essential.h"
+#include "../include/tools/RosTopicConfigs.h"
 #include <cmath>
 #include <random>
 
@@ -129,6 +130,8 @@ void set_virtual_car_pose(Eigen::VectorXd xyzrpy)
     virtual_car_pose.pose.orientation.x = attitude.x();
     virtual_car_pose.pose.orientation.y = attitude.y();
     virtual_car_pose.pose.orientation.z = attitude.z();
+
+    virtual_car_pose.header.stamp = ros::Time::now();
 
 }
 
@@ -331,6 +334,8 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "virtual_car");
     ros::NodeHandle nh;
 
+    RosTopicConfigs configs(nh, "/virtual_car");
+
     string csv_file_location;
     nh.getParam("/virtual_car/pathcsv", csv_file_location);
 
@@ -345,13 +350,13 @@ int main(int argc, char** argv)
     //                     ("/uav/alan_estimation/final_odom", 1, true);
     
     ros::Publisher virtual_car_pose_pub = nh.advertise<geometry_msgs::PoseStamped>
-                        ("/vrpn_client_node/gh034_car/pose", 1, true);
+                        (configs.getTopicName(POSE_PUB_TOPIC_A), 1, true);
 
     ros::Publisher virtual_car_twist_pub = nh.advertise<geometry_msgs::TwistStamped>
-                        ("/vrpn_client_node/gh034_car/twist", 1, true);
+                        (configs.getTopicName(TWIST_PUB_TOPIC_A), 1, true);
     
     ros::Publisher virtual_car_imu_pub = nh.advertise<sensor_msgs::Imu>
-                        ("/uav/mavros/imu/data", 1, true);
+                        (configs.getTopicName(IMU_PUB_TOPIC_A), 1, true);
     
 
     ros::Rate virtual_car_rate(pub_freq);

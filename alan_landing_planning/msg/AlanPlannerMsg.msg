@@ -1,5 +1,6 @@
-string fsm
 string frame
+time time_stamp
+string fsm
 bool good2fly
 vector3D position
 vector3D velocity

@@ -132,7 +132,7 @@ failsafe_threshold:
 failsafe_on:
  1 
  #1 on, 
- #2 off
+ #0 off
 
 
 

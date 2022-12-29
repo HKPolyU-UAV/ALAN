@@ -48,6 +48,7 @@ namespace alan
     class MsgSyncNodelet : public nodelet::Nodelet
     {
         private:
+            int failsafe_indicator = 0;
             bool failsafe_on = false;
 
         //publish
@@ -155,11 +156,18 @@ namespace alan
             virtual void onInit() 
             {
                 ros::NodeHandle& nh = getMTNodeHandle();    
-                ROS_INFO("MSGSYNC Nodelet Initiated...");   
+                ROS_INFO("MSGSYNC Nodelet Initiated..."); 
 
+
+                nh.getParam("/alan_master/failsafe_on", failsafe_indicator);
+                if(failsafe_indicator == 1)
+                    failsafe_on = true;
+                else
+                    failsafe_on = false;
+                
                 setup_camera_config(nh);
 
-                RosTopicConfigs configs(nh, "/alan_master");
+                RosTopicConfigs configs(nh, "/msgsync");
 
             //subscriber
                 UavVrpnPoseSub = nh.subscribe<geometry_msgs::PoseStamped>
@@ -170,19 +178,23 @@ namespace alan
 
                 UavImuSub = nh.subscribe<sensor_msgs::Imu>
                         (configs.getTopicName(UAV_IMU_SUB_TOPIC), 1, &MsgSyncNodelet::uav_imu_callback, this);
-                
+
                 UgvVrpnPoseSub = nh.subscribe<geometry_msgs::PoseStamped>
                         (configs.getTopicName(UGV_VRPN_POSE_SUB_TOPIC), 1, &MsgSyncNodelet::ugv_vrpn_pose_callback, this);
 
                 UgvVrpnTwistSub = nh.subscribe<geometry_msgs::TwistStamped>
                         (configs.getTopicName(UGV_VRPN_TWIST_SUB_TOPIC), 1, &MsgSyncNodelet::ugv_vrpn_twist_callback, this);
-            
+
                 UgvImuSub = nh.subscribe<sensor_msgs::Imu>
                         (configs.getTopicName(UGV_IMU_SUB_TOPIC), 1, &MsgSyncNodelet::ugv_imu_callback, this);
 
+                led_odom.pose.pose.position.x = -10000000;
+                led_odom.pose.pose.position.y = -10000000;
+                led_odom.pose.pose.position.z = -10000000;
+                
                 LedOdomSub = nh.subscribe<nav_msgs::Odometry>
                         (configs.getTopicName(LED_ODOM_SUB_TOPIC), 1, &MsgSyncNodelet::led_odom_callback, this);
-
+                
                                            
             //publisher
                 uav_pub_AlanPlannerMsg = nh.advertise<alan_landing_planning::AlanPlannerMsg>

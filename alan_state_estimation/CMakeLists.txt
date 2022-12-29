@@ -58,12 +58,12 @@ roslaunch_add_file_check(launch)
 
 add_message_files(
  FILES
- Object.msg
- AlanPlannerMsg.msg 
- StateMachine.msg
- Target.msg
- vector3D.msg
- vector4D.msg
+ blank.msg
+#  AlanPlannerMsg.msg 
+#  StateMachine.msg
+#  Target.msg
+#  vector3D.msg
+#  vector4D.msg
 )
 
 
@@ -130,6 +130,7 @@ target_link_libraries(
 
 add_executable(virtual_car
    src/tools/virtual_car.cpp
+   src/tools/RosTopicConfigs.cpp
 )
 
 target_link_libraries(virtual_car

@@ -1,5 +1,4 @@
 TOPICLIST: 
-
 #led.cpp
   #sub
   - TOPICTYPE: "CAMERA_SUB_TOPIC_A"
@@ -21,44 +20,7 @@ TOPICLIST:
 
   - TOPICTYPE: "ODOM_PUB_TOPIC_A"
     TOPICNAME: "/alan_state_estimation/led/uav/odom"
-    SUBORPUB: 1
-
-
-#msgsync.cpp
-  #sub
-  - TOPICTYPE: "POSE_SUB_TOPIC_A"
-    TOPICNAME: "/uav/mavros/vision_pose/pose"
-    #/uav/mavros/vision_pose/pose #/mavros/local_position/pose
-    SUBORPUB:  0
-  
-  - TOPICTYPE: "TWIST_SUB_TOPIC_A"
-    TOPICNAME: "/vrpn_client_node/gh034_nano/twist" 
-    #/vrpn_client_node/gh034_car/pose #/imu_pose
-    SUBORPUB:  0
-  
-  - TOPICTYPE: "IMU_SUB_TOPIC_A"
-    TOPICNAME: "/uav/mavros/imu/data" 
-    #/vrpn_client_node/gh034_car/pose #/imu_pose
-    SUBORPUB:  0
-
-  - TOPICTYPE: "POSE_SUB_TOPIC_B"
-    TOPICNAME: "/vrpn_client_node/gh034_car/pose"
-     #/alan_pose/aruco_pose #/alan_state_estimation/LED/pose
-    SUBORPUB:  0
-  
-  - TOPICTYPE: "TWIST_SUB_TOPIC_B"
-    TOPICNAME: "/vrpn_client_node/gh034_car/twist"
-     #/alan_pose/aruco_pose #/alan_state_estimation/LED/pose
-    SUBORPUB:  0
-
-  - TOPICTYPE: "IMU_SUB_TOPIC_B"
-    TOPICNAME: "/ugv/mavros/imu/data" 
-    SUBORPUB:  0
-
-  - TOPICTYPE: "ODOM_SUB_TOPIC_A"
-    TOPICNAME: "/alan_state_estimation/led/uav/odom"    
-    SUBORPUB:  0
-  
+    SUBORPUB: 1  
 
 # Remark: 
 # these are the topic type for rosconfigs.hpp
