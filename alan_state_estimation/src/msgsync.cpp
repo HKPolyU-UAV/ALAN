@@ -1,129 +1,268 @@
 #include "include/msgsync.h"
 
-void alan::MsgSyncNodelet::uav_odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
+void alan::MsgSyncNodelet::led_odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
 {
-    uav_odom = *odom;
+    led_odom = *odom;
+    led_odom_inititated = true;
 
-    //pose
-    uav_alan_msg.position.x = uav_odom.pose.pose.position.x;
-    uav_alan_msg.position.y = uav_odom.pose.pose.position.y;
-    uav_alan_msg.position.z = uav_odom.pose.pose.position.z;
 
-    uav_alan_msg.orientation.ow = uav_odom.pose.pose.orientation.w;
-    uav_alan_msg.orientation.ox = uav_odom.pose.pose.orientation.x;
-    uav_alan_msg.orientation.oy = uav_odom.pose.pose.orientation.y;
-    uav_alan_msg.orientation.oz = uav_odom.pose.pose.orientation.z;
-
-    uav_pos_world = Eigen::Vector3d(
-        uav_alan_msg.position.x,
-        uav_alan_msg.position.y,
-        uav_alan_msg.position.z
-    );
-
-    Eigen::Translation3d t_(
-        uav_odom.pose.pose.position.x, 
-        uav_odom.pose.pose.position.y, 
-        uav_odom.pose.pose.position.z
-        );
-
-    Eigen::Quaterniond q_(
-        uav_odom.pose.pose.orientation.w,
-        uav_odom.pose.pose.orientation.x,
-        uav_odom.pose.pose.orientation.y,
-        uav_odom.pose.pose.orientation.z
-        );
-
-    uavOdomPose = t_ * q_;
-
-    //twist
-    uav_alan_msg.velocity.x = uav_odom.twist.twist.linear.x;
-    uav_alan_msg.velocity.y = uav_odom.twist.twist.linear.y;
-    uav_alan_msg.velocity.z = uav_odom.twist.twist.linear.z;
-
-    
-    uav_odom_initiated = true;
-
-    if(uav_odom_initiated && uav_imu_initiated)
+    if(!failsafe_on)
+    //if no failsafe,
+    //no need to go through uav_vrpn 
     {
-        uav_acc_world = uavOdomPose.rotation() * uav_acc_body;
-        uav_alan_msg.acceleration.x = uav_acc_body(0);
-        uav_alan_msg.acceleration.y = uav_acc_body(1);
-        uav_alan_msg.acceleration.z = uav_acc_body(2) - 9.8066;
+        uav_pos_world = Eigen::Vector3d(
+            led_odom.pose.pose.position.x,
+            led_odom.pose.pose.position.y,
+            led_odom.pose.pose.position.z
+        );
 
-        uav_alan_msg.good2fly = true;
-        uav_alan_msg.frame = "map";
+        uavOdomPose =
+            Eigen::Translation3d(uav_pos_world) * 
+            Eigen::Quaterniond(
+                led_odom.pose.pose.orientation.w,
+                led_odom.pose.pose.orientation.x,
+                led_odom.pose.pose.orientation.y,
+                led_odom.pose.pose.orientation.z
+        );
+        
+        if(
+            led_odom_inititated &&
+            uav_imu_initiated
+        )
+        {
+            uav_alan_msg.position.x = led_odom.pose.pose.position.x;
+            uav_alan_msg.position.y = led_odom.pose.pose.position.y;
+            uav_alan_msg.position.z = led_odom.pose.pose.position.z;
 
-        uav_pub_AlanPlannerMsg.publish(uav_alan_msg);
+            uav_alan_msg.velocity.x = led_odom.twist.twist.linear.x;
+            uav_alan_msg.velocity.y = led_odom.twist.twist.linear.y;
+            uav_alan_msg.velocity.z = led_odom.twist.twist.linear.z;
+
+            uav_acc_world = uavOdomPose.rotation() * uav_acc_body;
+
+            uav_alan_msg.acceleration.x = uav_acc_world.x();
+            uav_alan_msg.acceleration.y = uav_acc_world.y();
+            uav_alan_msg.acceleration.z = uav_acc_world.z() - 9.8066;
+
+            uav_alan_msg.good2fly = true;
+            uav_alan_msg.frame = "world";
+
+            uav_pub_AlanPlannerMsg.publish(uav_alan_msg);
+        }
     }
+}
+
+void alan::MsgSyncNodelet::uav_vrpn_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    uav_vrpn_pose = *pose;
+    uav_vrpn_pose_initiated = true;
+
+    if(failsafe_on)
+    {
+        if(
+            uav_vrpn_pose_initiated &&
+            uav_vrpn_twist_initiated &&
+            uav_imu_initiated
+        )
+        {
+            if(led_odom_inititated)
+            {
+                double delta = 
+                    pow(
+                        led_odom.pose.pose.position.x - uav_vrpn_pose.pose.position.x, 2
+                    )
+                + pow(
+                        led_odom.pose.pose.position.y - uav_vrpn_pose.pose.position.y, 2
+                    )
+                + pow(
+                        led_odom.pose.pose.position.z - uav_vrpn_pose.pose.position.z, 2
+                    );
+
+                delta = sqrt(delta);
+
+                if(delta < 0.14)
+                {
+                    uav_pos_world = Eigen::Vector3d(
+                        led_odom.pose.pose.position.x,
+                        led_odom.pose.pose.position.y,
+                        led_odom.pose.pose.position.z
+                    );
+
+                    uavOdomPose =
+                        Eigen::Translation3d(uav_pos_world) * 
+                        Eigen::Quaterniond(
+                            led_odom.pose.pose.orientation.w,
+                            led_odom.pose.pose.orientation.x,
+                            led_odom.pose.pose.orientation.y,
+                            led_odom.pose.pose.orientation.z
+                    );
+
+
+                    uav_alan_msg.position.x = led_odom.pose.pose.position.x;
+                    uav_alan_msg.position.y = led_odom.pose.pose.position.y;
+                    uav_alan_msg.position.z = led_odom.pose.pose.position.z;
+
+                    uav_alan_msg.velocity.x = led_odom.twist.twist.linear.x;
+                    uav_alan_msg.velocity.y = led_odom.twist.twist.linear.y;
+                    uav_alan_msg.velocity.z = led_odom.twist.twist.linear.z;
+
+                    uav_acc_world = uavOdomPose.rotation() * uav_acc_body;
+
+                    uav_alan_msg.acceleration.x = uav_acc_world.x();
+                    uav_alan_msg.acceleration.y = uav_acc_world.y();
+                    uav_alan_msg.acceleration.z = uav_acc_world.z() - 9.8066;
+
+                    uav_alan_msg.good2fly = true;
+                    uav_alan_msg.frame = "world";
+                }
+                else
+                {
+                    uav_pos_world = Eigen::Vector3d(
+                        uav_vrpn_pose.pose.position.x,
+                        uav_vrpn_pose.pose.position.y,
+                        uav_vrpn_pose.pose.position.z
+                    );
+
+                    uavOdomPose =
+                        Eigen::Translation3d(uav_pos_world) * 
+                        Eigen::Quaterniond(
+                            uav_vrpn_pose.pose.orientation.w,
+                            uav_vrpn_pose.pose.orientation.x,
+                            uav_vrpn_pose.pose.orientation.y,
+                            uav_vrpn_pose.pose.orientation.z
+                    );
+
+                    uav_alan_msg.position.x = uav_vrpn_pose.pose.position.x;
+                    uav_alan_msg.position.y = uav_vrpn_pose.pose.position.y;
+                    uav_alan_msg.position.z = uav_vrpn_pose.pose.position.z;
+
+                    uav_alan_msg.velocity.x = uav_vrpn_twist.twist.linear.x;
+                    uav_alan_msg.velocity.y = uav_vrpn_twist.twist.linear.y;
+                    uav_alan_msg.velocity.z = uav_vrpn_twist.twist.linear.z;
+
+                    uav_acc_world = uavOdomPose.rotation() * uav_acc_body;
+
+                    uav_alan_msg.acceleration.x = uav_acc_world.x();
+                    uav_alan_msg.acceleration.y = uav_acc_world.y();
+                    uav_alan_msg.acceleration.z = uav_acc_world.z() - 9.8066;
+
+                    uav_alan_msg.good2fly = true;
+                    uav_alan_msg.frame = "world";
+                }                
+
+                uav_pub_AlanPlannerMsg.publish(uav_alan_msg);
+
+            }
+            else
+            {
+                uav_pos_world = Eigen::Vector3d(
+                    uav_vrpn_pose.pose.position.x,
+                    uav_vrpn_pose.pose.position.y,
+                    uav_vrpn_pose.pose.position.z
+                );
+
+                uavOdomPose =
+                    Eigen::Translation3d(uav_pos_world) * 
+                    Eigen::Quaterniond(
+                        uav_vrpn_pose.pose.orientation.w,
+                        uav_vrpn_pose.pose.orientation.x,
+                        uav_vrpn_pose.pose.orientation.y,
+                        uav_vrpn_pose.pose.orientation.z
+                );
+
+
+                uav_alan_msg.position.x = uav_vrpn_pose.pose.position.x;
+                uav_alan_msg.position.y = uav_vrpn_pose.pose.position.y;
+                uav_alan_msg.position.z = uav_vrpn_pose.pose.position.z;
+
+                uav_alan_msg.velocity.x = uav_vrpn_twist.twist.linear.x;
+                uav_alan_msg.velocity.y = uav_vrpn_twist.twist.linear.y;
+                uav_alan_msg.velocity.z = uav_vrpn_twist.twist.linear.z;
+
+                uav_acc_world = uavOdomPose.rotation() * uav_acc_body;
+
+                uav_alan_msg.acceleration.x = uav_acc_world.x();
+                uav_alan_msg.acceleration.y = uav_acc_world.y();
+                uav_alan_msg.acceleration.z = uav_acc_world.z() - 9.8066;
+
+                uav_alan_msg.good2fly = true;
+                uav_alan_msg.frame = "world";
+
+                uav_pub_AlanPlannerMsg.publish(uav_alan_msg);
+
+            }
+        }
+    }
+}
+
+void alan::MsgSyncNodelet::uav_vrpn_twist_callback(const geometry_msgs::TwistStamped::ConstPtr& twist)
+{
+    uav_vrpn_twist = *twist;
+    uav_vrpn_twist_initiated = true;
 }
 
 void alan::MsgSyncNodelet::uav_imu_callback(const sensor_msgs::Imu::ConstPtr& imu)
 {
-    uav_acc_body(0) = imu->linear_acceleration.x; 
-    uav_acc_body(1) = imu->linear_acceleration.y;
-    uav_acc_body(2) = imu->linear_acceleration.z;
+    uav_imu = *imu;
+    uav_acc_body(0) = uav_imu.linear_acceleration.x; 
+    uav_acc_body(1) = uav_imu.linear_acceleration.y;
+    uav_acc_body(2) = uav_imu.linear_acceleration.z;
 
     uav_imu_initiated = true;
 }
 
-void alan::MsgSyncNodelet::ugv_odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
+void alan::MsgSyncNodelet::ugv_vrpn_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
-    ugv_odom = *odom;
+    ugv_vrpn_pose = *pose;
+    ugv_vrpn_pose_initiated = true;
 
-    //pose
-    ugv_alan_msg.position.x = ugv_odom.pose.pose.position.x;
-    ugv_alan_msg.position.y = ugv_odom.pose.pose.position.y;
-    ugv_alan_msg.position.z = ugv_odom.pose.pose.position.z;
-
-    ugv_alan_msg.orientation.ow = ugv_odom.pose.pose.orientation.w;
-    ugv_alan_msg.orientation.ox = ugv_odom.pose.pose.orientation.x;
-    ugv_alan_msg.orientation.oy = ugv_odom.pose.pose.orientation.y;
-    ugv_alan_msg.orientation.oz = ugv_odom.pose.pose.orientation.z;
-
-    ugv_pos_world = Eigen::Vector3d(
-        ugv_alan_msg.position.x,
-        ugv_alan_msg.position.y,
-        ugv_alan_msg.position.z
-    );
-
-    Eigen::Translation3d t_(
-        ugv_odom.pose.pose.position.x, 
-        ugv_odom.pose.pose.position.y, 
-        ugv_odom.pose.pose.position.z
-        );
-
-    Eigen::Quaterniond q_(
-        ugv_odom.pose.pose.orientation.w,
-        ugv_odom.pose.pose.orientation.x,
-        ugv_odom.pose.pose.orientation.y,
-        ugv_odom.pose.pose.orientation.z
-        );
-
-    ugvOdomPose = t_ * q_;
-
-    //twist
-    ugv_alan_msg.velocity.x = ugv_odom.twist.twist.linear.x;
-    ugv_alan_msg.velocity.y = ugv_odom.twist.twist.linear.y;
-    ugv_alan_msg.velocity.z = ugv_odom.twist.twist.linear.z;
-
-    
-    ugv_odom_initiated = true;
-
-    if(ugv_odom_initiated && ugv_imu_initiated)
+    if(
+        ugv_vrpn_pose_initiated &&
+        ugv_vrpn_twist_initiated &&
+        ugv_imu_initiated
+    )
     {
+        ugv_pos_world = Eigen::Vector3d(
+            ugv_vrpn_pose.pose.position.x,
+            ugv_vrpn_pose.pose.position.y,
+            ugv_vrpn_pose.pose.position.z
+        );
+
+        ugvOdomPose = 
+            Eigen::Translation3d(ugv_pos_world) *
+            Eigen::Quaterniond(
+                ugv_vrpn_pose.pose.orientation.w,
+                ugv_vrpn_pose.pose.orientation.x,
+                ugv_vrpn_pose.pose.orientation.y,
+                ugv_vrpn_pose.pose.orientation.z
+        );
+
+        ugv_alan_msg.position.x = ugv_vrpn_pose.pose.position.x;
+        ugv_alan_msg.position.y = ugv_vrpn_pose.pose.position.y;
+        ugv_alan_msg.position.z = ugv_vrpn_pose.pose.position.z;
+
+        ugv_alan_msg.velocity.x = ugv_vrpn_twist.twist.linear.x;
+        ugv_alan_msg.velocity.y = ugv_vrpn_twist.twist.linear.y;
+        ugv_alan_msg.velocity.z = ugv_vrpn_twist.twist.linear.z;
+
         ugv_acc_world = ugvOdomPose.rotation() * ugv_acc_body;
-        ugv_alan_msg.acceleration.x = ugv_acc_body(0);
-        ugv_alan_msg.acceleration.y = ugv_acc_body(1);
-        ugv_alan_msg.acceleration.z = ugv_acc_body(2) - 9.8066;
+
+        ugv_alan_msg.acceleration.x = ugv_acc_world.x();
+        ugv_alan_msg.acceleration.y = ugv_acc_world.y();
+        ugv_alan_msg.acceleration.z = ugv_acc_world.z() - 9.8066;
 
         ugv_alan_msg.good2fly = true;
-        ugv_alan_msg.frame = "map";
-        cout<<"?"<<endl;
+        ugv_alan_msg.frame = "world";
 
         ugv_pub_AlanPlannerMsg.publish(ugv_alan_msg);
 
-        
-        camPose = ugvOdomPose * body_to_cam_Pose;;
+
+
+
+
+
+
+        camPose = ugvOdomPose * body_to_cam_Pose;
 
         set_total_bound(
             Eigen::Translation3d(
@@ -157,8 +296,14 @@ void alan::MsgSyncNodelet::ugv_odom_callback(const nav_msgs::Odometry::ConstPtr&
         // cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<endl;
 
         alan_all_sfc_pub.publish(polyh_array_pub_object);
-        
+
     }
+}
+
+void alan::MsgSyncNodelet::ugv_vrpn_twist_callback(const geometry_msgs::TwistStamped::ConstPtr& twist)
+{
+    ugv_vrpn_twist = *twist;
+    ugv_vrpn_twist_initiated = true;
 }
 
 void alan::MsgSyncNodelet::ugv_imu_callback(const sensor_msgs::Imu::ConstPtr& imu)
@@ -170,6 +315,7 @@ void alan::MsgSyncNodelet::ugv_imu_callback(const sensor_msgs::Imu::ConstPtr& im
     ugv_imu_initiated = true;
 }
 
+//////////////////below defines sfc////////////////////////
 
 Eigen::Vector3d alan::MsgSyncNodelet::q2rpy(Eigen::Quaterniond q)
 {
@@ -428,5 +574,66 @@ void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Qua
     polyhedron_temp.PolyhedronTangentArray.push_back(temp_tangent);
 
     polyh_array_pub_object.a_series_of_Corridor.push_back(polyhedron_temp);
+
+}
+
+void alan::MsgSyncNodelet::setup_camera_config(ros::NodeHandle& nh)
+{
+//param
+    nh.getParam("/alan_master/failsafe_on", failsafe_on);
+
+    nh.getParam("/alan_master/cam_FOV_H", FOV_H);     
+    nh.getParam("/alan_master/cam_FOV_V", FOV_V);   
+
+    nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
+    nh.getParam("/alan_master/final_corridor_length", final_corridor_length);                          
+
+//set sfc visualization
+    FOV_H = FOV_H / 180 * M_PI * 0.75;
+    FOV_V = FOV_V / 180 * M_PI * 0.75;        
+
+    Eigen::Vector3d rpy_temp;
+
+    rpy_temp = Eigen::Vector3d(0, -FOV_V/2, -FOV_H/2);                
+    q1 = rpy2q(rpy_temp);
+    cam_1axis_vector = q_rotate_vector(q1, cam_center_vector);
+
+    rpy_temp = Eigen::Vector3d(0, -FOV_V/2, FOV_H/2);                
+    q2 = rpy2q(rpy_temp);
+    cam_2axis_vector = q_rotate_vector(q2, cam_center_vector);
+
+    rpy_temp = Eigen::Vector3d(0, FOV_V/2, FOV_H/2);                
+    q3 = rpy2q(rpy_temp); 
+    cam_3axis_vector = q_rotate_vector(q3, cam_center_vector);
+
+    rpy_temp = Eigen::Vector3d(0, FOV_V/2, -FOV_H/2);                
+    q4 = rpy2q(rpy_temp);
+    cam_4axis_vector = q_rotate_vector(q4, cam_center_vector);
+
+    c2b_ugv.resize(6);
+
+    c2b_ugv(0) = 0.38;
+    c2b_ugv(1) = 0.0;
+    c2b_ugv(2) = 0.12;
+
+    c2b_ugv(3) = 0;//r
+    c2b_ugv(4) = (-20.0) / 180.0 * M_PI;//p
+    c2b_ugv(5) = M_PI;//y
+
+    q_c2b = rpy2q(
+        Eigen::Vector3d(
+            c2b_ugv(3),
+            c2b_ugv(4),
+            c2b_ugv(5)
+        )
+    );
+
+    t_c2b = Eigen::Translation3d(
+        c2b_ugv(0),
+        c2b_ugv(1),
+        c2b_ugv(2)
+    );
+
+    body_to_cam_Pose = t_c2b * q_c2b;
 
 }

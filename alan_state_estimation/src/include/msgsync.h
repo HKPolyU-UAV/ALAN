@@ -31,12 +31,24 @@
 #include "alan_landing_planning/AlanPlannerMsg.h"
 #include "alan_visualization/PolyhedronArray.h"
 
+#include "tools/RosTopicConfigs.h"
+
+#define UAV_VRPN_POSE_SUB_TOPIC POSE_SUB_TOPIC_A
+#define UAV_VRPN_TWIST_SUB_TOPIC TWIST_SUB_TOPIC_A
+#define UAV_IMU_SUB_TOPIC IMU_SUB_TOPIC_A
+
+#define UGV_VRPN_POSE_SUB_TOPIC POSE_SUB_TOPIC_B
+#define UGV_VRPN_TWIST_SUB_TOPIC TWIST_SUB_TOPIC_B
+#define UGV_IMU_SUB_TOPIC IMU_SUB_TOPIC_B
+
+#define LED_ODOM_SUB_TOPIC ODOM_SUB_TOPIC_A
+
 namespace alan
 {
     class MsgSyncNodelet : public nodelet::Nodelet
     {
         private:
-            pthread_t tid;
+            bool failsafe_on = false;
 
         //publish
             //objects
@@ -47,49 +59,47 @@ namespace alan
 
         //subscriber
             //objects
-            ros::Subscriber UavOdomSub, UavImuSub;
-            ros::Subscriber UgvOdomSub, UgvImuSub;
-
-            // message_filters::Subscriber<nav_msgs::Odometry> uav_sub_odom;
-            // message_filters::Subscriber<geometry_msgs::TwistStamped> uav_sub_imu;
-
-            // message_filters::Subscriber<nav_msgs::Odometry> ugv_sub_odom;
-            // message_filters::Subscriber<sensor_msgs::Imu> ugv_sub_imu;
-            ros::Subscriber cam_pose_sub;
+            ros::Subscriber UavVrpnPoseSub, UavVrpnTwistSub, UavImuSub;
+            ros::Subscriber UgvVrpnPoseSub, UgvVrpnTwistSub, UgvImuSub;
+            ros::Subscriber LedOdomSub;      
+            geometry_msgs::PoseStamped uav_vrpn_pose;
+            bool uav_vrpn_pose_initiated = false;
+            geometry_msgs::TwistStamped uav_vrpn_twist;
+            bool uav_vrpn_twist_initiated = false;
+            sensor_msgs::Imu uav_imu;
+            bool uav_imu_initiated = false;
             
-            typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, geometry_msgs::TwistStamped> uavMySyncPolicy;
-            typedef message_filters::Synchronizer<uavMySyncPolicy> uavsync;//(MySyncPolicy(10), subimage, subdepth);
-            boost::shared_ptr<uavsync> uavsync_;     
+            geometry_msgs::PoseStamped ugv_vrpn_pose;
+            bool ugv_vrpn_pose_initiated = false;
+            geometry_msgs::TwistStamped ugv_vrpn_twist;
+            bool ugv_vrpn_twist_initiated = false;
+            sensor_msgs::Imu ugv_imu;     
+            bool ugv_imu_initiated = false;
 
-            typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Imu> ugvMySyncPolicy;
-            typedef message_filters::Synchronizer<ugvMySyncPolicy> ugvsync;//(MySyncPolicy(10), subimage, subdepth);
-            boost::shared_ptr<ugvsync> ugvsync_;
-            
-            //functions
-            void uav_odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
+            nav_msgs::Odometry led_odom;             
+            bool led_odom_inititated = false;
+
+            //functions                    
+            void uav_vrpn_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
+            void uav_vrpn_twist_callback(const geometry_msgs::TwistStamped::ConstPtr& twist);
             void uav_imu_callback(const sensor_msgs::Imu::ConstPtr& imu);
 
-            void ugv_odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
+            void ugv_vrpn_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
+            void ugv_vrpn_twist_callback(const geometry_msgs::TwistStamped::ConstPtr& twist);
             void ugv_imu_callback(const sensor_msgs::Imu::ConstPtr& imu);
 
-
+            void led_odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
+        
              
             //private variables 
-            nav_msgs::Odometry uav_odom;
-            geometry_msgs::TwistStamped uav_imu;  
+            // nav_msgs::Odometry uav_odom;
+            // geometry_msgs::TwistStamped uav_imu;  
 
-            nav_msgs::Odometry ugv_odom;
-            sensor_msgs::Imu ugv_imu; 
+            // nav_msgs::Odometry ugv_odom;
+            // sensor_msgs::Imu ugv_imu; 
 
             alan_landing_planning::AlanPlannerMsg uav_alan_msg;
             alan_landing_planning::AlanPlannerMsg ugv_alan_msg;
-
-
-            bool uav_odom_initiated;
-            bool uav_imu_initiated;
-
-            bool ugv_odom_initiated;
-            bool ugv_imu_initiated;
 
             Eigen::Isometry3d uavOdomPose;
             Eigen::Vector3d uav_pos_world;
@@ -137,83 +147,43 @@ namespace alan
             alan_visualization::Tangent construct_tangent_plane(Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector3d pt);
             alan_visualization::Tangent set_plane_bound(Eigen::Vector3d v, Eigen::Vector3d pt);
 
-            Eigen::Vector3d get_outer_product(Eigen::Vector3d v1, Eigen::Vector3d v2);          
+            Eigen::Vector3d get_outer_product(Eigen::Vector3d v1, Eigen::Vector3d v2);   
+
+            void setup_camera_config(ros::NodeHandle& nh);       
                     
 
             virtual void onInit() 
             {
                 ros::NodeHandle& nh = getMTNodeHandle();    
-                ROS_INFO("MSGSYNC Nodelet Initiated...");
+                ROS_INFO("MSGSYNC Nodelet Initiated...");   
 
-            //param
-                nh.getParam("/alan_master/cam_FOV_H", FOV_H);     
-                nh.getParam("/alan_master/cam_FOV_V", FOV_V);   
+                setup_camera_config(nh);
 
-                nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
-                nh.getParam("/alan_master/final_corridor_length", final_corridor_length);                          
-            
-            //set sfc visualization
-                FOV_H = FOV_H / 180 * M_PI * 0.75;
-                FOV_V = FOV_V / 180 * M_PI * 0.75;        
-
-                Eigen::Vector3d rpy_temp;
-
-                rpy_temp = Eigen::Vector3d(0, -FOV_V/2, -FOV_H/2);                
-                q1 = rpy2q(rpy_temp);
-                cam_1axis_vector = q_rotate_vector(q1, cam_center_vector);
-
-                rpy_temp = Eigen::Vector3d(0, -FOV_V/2, FOV_H/2);                
-                q2 = rpy2q(rpy_temp);
-                cam_2axis_vector = q_rotate_vector(q2, cam_center_vector);
-
-                rpy_temp = Eigen::Vector3d(0, FOV_V/2, FOV_H/2);                
-                q3 = rpy2q(rpy_temp); 
-                cam_3axis_vector = q_rotate_vector(q3, cam_center_vector);
-
-                rpy_temp = Eigen::Vector3d(0, FOV_V/2, -FOV_H/2);                
-                q4 = rpy2q(rpy_temp);
-                cam_4axis_vector = q_rotate_vector(q4, cam_center_vector);
-
-                c2b_ugv.resize(6);
-    
-                c2b_ugv(0) = 0.38;
-                c2b_ugv(1) = 0.0;
-                c2b_ugv(2) = 0.12;
-
-                c2b_ugv(3) = 0;//r
-                c2b_ugv(4) = (-20.0) / 180.0 * M_PI;//p
-                c2b_ugv(5) = M_PI;//y
-
-                q_c2b = rpy2q(
-                    Eigen::Vector3d(
-                        c2b_ugv(3),
-                        c2b_ugv(4),
-                        c2b_ugv(5)
-                    )
-                );
-
-                t_c2b = Eigen::Translation3d(
-                    c2b_ugv(0),
-                    c2b_ugv(1),
-                    c2b_ugv(2)
-                );
-
-                body_to_cam_Pose = t_c2b * q_c2b;
+                RosTopicConfigs configs(nh, "/alan_master");
 
             //subscriber
-                UavOdomSub = nh.subscribe<nav_msgs::Odometry>
-                                ("/uav/alan_estimation/final_odom", 1, &MsgSyncNodelet::uav_odom_callback, this);
-                
+                UavVrpnPoseSub = nh.subscribe<geometry_msgs::PoseStamped>
+                        (configs.getTopicName(UAV_VRPN_POSE_SUB_TOPIC), 1, &MsgSyncNodelet::uav_vrpn_pose_callback, this);
+
+                UavVrpnTwistSub = nh.subscribe<geometry_msgs::TwistStamped>
+                        (configs.getTopicName(UAV_VRPN_TWIST_SUB_TOPIC), 1, &MsgSyncNodelet::uav_vrpn_twist_callback, this);
+
                 UavImuSub = nh.subscribe<sensor_msgs::Imu>
-                                ("/uav/mavros/imu/data", 1, &MsgSyncNodelet::uav_imu_callback, this);
-
-
-                UgvOdomSub = nh.subscribe<nav_msgs::Odometry>
-                                ("/ugv/alan_estimation/final_odom", 1, &MsgSyncNodelet::ugv_odom_callback, this);
+                        (configs.getTopicName(UAV_IMU_SUB_TOPIC), 1, &MsgSyncNodelet::uav_imu_callback, this);
                 
+                UgvVrpnPoseSub = nh.subscribe<geometry_msgs::PoseStamped>
+                        (configs.getTopicName(UGV_VRPN_POSE_SUB_TOPIC), 1, &MsgSyncNodelet::ugv_vrpn_pose_callback, this);
+
+                UgvVrpnTwistSub = nh.subscribe<geometry_msgs::TwistStamped>
+                        (configs.getTopicName(UGV_VRPN_TWIST_SUB_TOPIC), 1, &MsgSyncNodelet::ugv_vrpn_twist_callback, this);
+            
                 UgvImuSub = nh.subscribe<sensor_msgs::Imu>
-                                ("/ugv/mavros/imu/data", 1, &MsgSyncNodelet::ugv_imu_callback, this);
-                                            
+                        (configs.getTopicName(UGV_IMU_SUB_TOPIC), 1, &MsgSyncNodelet::ugv_imu_callback, this);
+
+                LedOdomSub = nh.subscribe<nav_msgs::Odometry>
+                        (configs.getTopicName(LED_ODOM_SUB_TOPIC), 1, &MsgSyncNodelet::led_odom_callback, this);
+
+                                           
             //publisher
                 uav_pub_AlanPlannerMsg = nh.advertise<alan_landing_planning::AlanPlannerMsg>
                                     ("/AlanPlannerMsg/uav/data", 1);

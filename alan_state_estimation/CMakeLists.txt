@@ -113,7 +113,7 @@ add_library(alan
     src/yolo.cpp
     src/led.cpp
     src/msgsync.cpp
-    src/failsafe.cpp
+    # src/failsafe.cpp
     src/tools/RosTopicConfigs.cpp
     )
 
