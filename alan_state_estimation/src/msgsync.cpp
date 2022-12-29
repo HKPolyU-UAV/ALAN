@@ -639,15 +639,33 @@ void alan::MsgSyncNodelet::setup_camera_config(ros::NodeHandle& nh)
     q4 = rpy2q(rpy_temp);
     cam_4axis_vector = q_rotate_vector(q4, cam_center_vector);
 
+
+
+    Eigen::VectorXd cameraEX;
+
+    cameraEX.resize(6);
+    XmlRpc::XmlRpcValue extrinsics_list;
+    
+    nh.getParam("/alan_master/cam_ugv_extrinsics_d455", extrinsics_list);                
+    
+    for(int i = 0; i < 6; i++)
+    {                    
+        cameraEX(i) = extrinsics_list[i];                    
+    }
+    
+    //x, y, z
+    //r, p, y
     c2b_ugv.resize(6);
 
-    c2b_ugv(0) = 0.38;
-    c2b_ugv(1) = 0.0;
-    c2b_ugv(2) = 0.12;
+    c2b_ugv(0) = cameraEX(0);
+    c2b_ugv(1) = cameraEX(1);
+    c2b_ugv(2) = cameraEX(2);
 
-    c2b_ugv(3) = 0;//r
-    c2b_ugv(4) = (-20.0) / 180.0 * M_PI;//p
-    c2b_ugv(5) = M_PI;//y
+    c2b_ugv(3) = cameraEX(3) / 180.0 * M_PI;;//r
+    c2b_ugv(4) = cameraEX(4) / 180.0 * M_PI;//p
+    c2b_ugv(5) = cameraEX(5) / 180.0 * M_PI;//y
+
+
 
     q_c2b = rpy2q(
         Eigen::Vector3d(

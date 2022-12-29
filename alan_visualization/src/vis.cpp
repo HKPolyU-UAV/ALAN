@@ -176,7 +176,6 @@ int main(int argc, char** argv)
 {    
 	ros::init(argc, argv, "alan_rviz");
     ros::NodeHandle nh;
-
     
     ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>("/alan/sfc/all_corridors", 1, &sfc_msg_callback);
     ros::Subscriber traj_sub = nh.subscribe<alan_landing_planning::Traj>("/alan_visualization/traj", 1, &traj_msg_callback);
@@ -202,19 +201,32 @@ int main(int argc, char** argv)
     traj_points.color.b=0;
 
     rviz_vehicle uav_rviz = rviz_vehicle(nh, UAV, false);
+
+
+
+    Eigen::VectorXd cameraEX;
+
+    cameraEX.resize(6);
+    XmlRpc::XmlRpcValue extrinsics_list;
     
+    nh.getParam("/alan_master/cam_ugv_extrinsics_d455", extrinsics_list);                
+    
+    for(int i = 0; i < 6; i++)
+    {                    
+        cameraEX(i) = extrinsics_list[i];                    
+    }
     
     //x, y, z
     //r, p, y
     c2b_ugv.resize(6);
 
-    c2b_ugv(0) = 0.57;
-    c2b_ugv(1) = 0.0;
-    c2b_ugv(2) = 0.025;
+    c2b_ugv(0) = cameraEX(0);
+    c2b_ugv(1) = cameraEX(1);
+    c2b_ugv(2) = cameraEX(2);
 
-    c2b_ugv(3) = 0;//r
-    c2b_ugv(4) = (-20.0) / 180.0 * M_PI;//p
-    c2b_ugv(5) = M_PI;//y
+    c2b_ugv(3) = cameraEX(3) / 180.0 * M_PI;;//r
+    c2b_ugv(4) = cameraEX(4) / 180.0 * M_PI;//p
+    c2b_ugv(5) = cameraEX(5) / 180.0 * M_PI;//y
 
     // cout<<c2b_ugv<<endl;
     ROS_INFO("RVIZ for ALan...\n");
