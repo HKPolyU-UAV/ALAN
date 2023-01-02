@@ -139,7 +139,6 @@ namespace alan
             //functions
             Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
-
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
 
             void set_total_bound(Eigen::Translation3d t_current, Eigen::Quaterniond q_current);
