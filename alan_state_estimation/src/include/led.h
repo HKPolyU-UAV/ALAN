@@ -188,6 +188,8 @@ namespace alan
         //publish
             //objects
             geometry_msgs::PoseStamped led_pose_estimated;
+            geometry_msgs::TwistStamped led_twist_estimated;
+            nav_msgs::Odometry led_odom_estimated;            
             //functions
             void map_SE3_to_pose(Sophus::SE3d pose);
             void set_image_to_publish(
@@ -199,7 +201,45 @@ namespace alan
             Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
-            
+
+        //below is the courtesy of UZH Faessler et al.
+            //which was used for calculation of the twists in this project
+            /*
+                @inproceedings{faessler2014monocular,
+                title={A monocular pose estimation system based on infrared leds},
+                author={Faessler, Matthias and Mueggler, Elias and Schwabe, Karl and Scaramuzza, Davide},
+                booktitle={2014 IEEE international conference on robotics and automation (ICRA)},
+                pages={907--913},
+                year={2014},
+                organization={IEEE}
+                }
+            */
+
+            //twist for correspondence search
+            //objects
+            Eigen::Matrix4d pose_previous;
+            Eigen::Matrix4d pose_current;
+            Eigen::Matrix4d pose_predicted;   
+                /*------------------------*/
+            Eigen::Matrix4d led_pose_current;
+            Eigen::Matrix4d led_pose_previous;   
+            Eigen::Matrix4d led_twist_current;    
+                /*------------------------*/
+            double time_previous = 0;
+            double time_current = 0;
+            double time_predicted = 0;
+            int global_counter = 0;
+
+            //functions
+            void set_pose_predict();
+            void set_twist_predict(
+                Eigen::Matrix4d led_pose_current, 
+                Eigen::MatrixXd led_pose_previous
+            );
+
+            Eigen::VectorXd logarithmMap(Eigen::Matrix4d trans);
+            Eigen::Matrix4d exponentialMap(Eigen::VectorXd& twist);
+            Eigen::Matrix3d skewSymmetricMatrix(Eigen::Vector3d w);
 
 //---------------------------------------------------------------------------------------
             virtual void onInit()
@@ -235,6 +275,8 @@ namespace alan
                     intrinsics_value[0], 0, intrinsics_value[2], 
                     0, intrinsics_value[1], intrinsics_value[3],
                     0, 0,  1; 
+
+                cout<<cameraMat<<endl;
 
                 cameraEX.resize(6);
                 XmlRpc::XmlRpcValue extrinsics_list;
@@ -373,33 +415,7 @@ namespace alan
             }
 
 
-            //below is the courtesy of UZH Faessler et al.
-            //which was used for calculation of the twists in this project
-            /*
-                @inproceedings{faessler2014monocular,
-                title={A monocular pose estimation system based on infrared leds},
-                author={Faessler, Matthias and Mueggler, Elias and Schwabe, Karl and Scaramuzza, Davide},
-                booktitle={2014 IEEE international conference on robotics and automation (ICRA)},
-                pages={907--913},
-                year={2014},
-                organization={IEEE}
-                }
-            */
-
-            //twist for correspondence search
-            //objects
-            Eigen::Matrix4d pose_previous;
-            Eigen::Matrix4d pose_current;
-            Eigen::Matrix4d pose_predicted;            
-            double time_previous = 0;
-            double time_current = 0;
-            double time_predicted = 0;
-            int global_counter = 0;
-            //functions
-            void set_pose_predict();
-            Eigen::VectorXd logarithmMap(Eigen::Matrix4d trans);
-            Eigen::Matrix4d exponentialMap(Eigen::VectorXd& twist);
-            Eigen::Matrix3d skewSymmetricMatrix(Eigen::Vector3d w);  
+              
     };
 
     PLUGINLIB_EXPORT_CLASS(alan::LedNodelet, nodelet::Nodelet)
