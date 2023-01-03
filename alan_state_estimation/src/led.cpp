@@ -50,6 +50,8 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
     if(!nodelet_activated)
         nodelet_activated = true;
 
+    led_pose_stamp_previous = led_pose_stamp;
+
 } 
 
 
@@ -145,19 +147,14 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     Eigen::Quaterniond q_final = Eigen::Quaterniond(cam_pose.rotation() * cam_to_body * led_pose.rotation());
     Eigen::Translation3d t_final = Eigen::Translation3d(cam_pose.rotation() * cam_to_body * led_pose.translation() + cam_pose.translation());// Eigen::Translation3d(led_pose.translation());
 
-    // led_pose = t_final * q_final;
+    led_pose = t_final * q_final;
 
-    // Eigen::Matrix4d led_pose_transformation;
-    // led_pose_transformation.setIdentity();
-    // led_pose_transformation.block(0,0,3,3) = led_pose.rotation();
-    // led_pose_transformation.block(0,3,3,1) = led_pose.translation();
-    // cout<<led_pose_transformation<<endl;
-
-    // led_pose_estimated.header.stamp = led_pose_stamp;
-    // led_pose_estimated.header.frame_id = "map";
-
-    // set_twist_predict(led_pose_transformation, led_pose_previous);
+    set_twist_estimate(led_pose);
     
+    //pose publish
+    led_pose_estimated.header.stamp = led_pose_stamp;
+    led_pose_estimated.header.frame_id = "map";
+
     led_pose_estimated.pose.position.x = t_final.translation().x();
     led_pose_estimated.pose.position.y = t_final.translation().y();
     led_pose_estimated.pose.position.z = t_final.translation().z();
@@ -167,12 +164,33 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     led_pose_estimated.pose.orientation.y = q_final.y();
     led_pose_estimated.pose.orientation.z = q_final.z();
 
-    // Sophus::SE3d led_twist_sophus = Sophus::SE3d(led_twist_current);
-    // led_twist_estimated.twist.linear.x = led_twist_sophus.ro
-
     ledpose_pub.publish(led_pose_estimated);
 
-    // led_pose_previous = led_pose_transformation;
+    //odom publish
+    led_odom_estimated.header.stamp = led_pose_stamp;
+    led_odom_estimated.header.frame_id = "map";
+
+    led_odom_estimated.pose.pose.position.x = t_final.translation().x();
+    led_odom_estimated.pose.pose.position.y = t_final.translation().y();
+    led_odom_estimated.pose.pose.position.z = t_final.translation().z();
+
+    led_odom_estimated.pose.pose.orientation.w = q_final.w();
+    led_odom_estimated.pose.pose.orientation.x = q_final.x();
+    led_odom_estimated.pose.pose.orientation.y = q_final.y();
+    led_odom_estimated.pose.pose.orientation.z = q_final.z();
+
+    led_odom_estimated.twist.twist.linear.x = led_twist_current(0);
+    led_odom_estimated.twist.twist.linear.y = led_twist_current(1);
+    led_odom_estimated.twist.twist.linear.z = led_twist_current(2);
+
+    led_odom_estimated.twist.twist.angular.x = led_twist_current(3);
+    led_odom_estimated.twist.twist.angular.y = led_twist_current(4);
+    led_odom_estimated.twist.twist.angular.z = led_twist_current(5);
+    
+    ledodom_pub.publish(led_odom_estimated);
+
+    // Sophus::SE3d led_twist_sophus = Sophus::SE3d(led_twist_current);
+    // led_twist_estimated.twist.linear.x = led_twist_sophus.ro        
 }
 
 void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
@@ -1388,20 +1406,55 @@ void alan::LedNodelet::set_pose_predict()
     pose_predicted = pose_current * exponentialMap(delta_hat);
 }
 
-void alan::LedNodelet::set_twist_predict(Eigen::Matrix4d led_pose_current, Eigen::MatrixXd led_pose_previous)
+void alan::LedNodelet::set_twist_estimate(Eigen::Isometry3d led_pose_current)
 {
-    double delta_time = 1 / 60;
+    double delta_time = led_pose_stamp.toSec() - led_pose_stamp_previous.toSec();
 
-    Eigen::VectorXd delta;
-    delta.resize(6);
-    delta = logarithmMap(pose_previous.inverse() * pose_current);
+    //settle angular
+    Eigen::Matrix3d R_delta = led_pose_previous.rotation().inverse()
+                                * led_pose_current.rotation();
 
-    delta = delta / delta_time;
+    Eigen::Matrix3d omegaX;
+    double phi = 0;
 
-    cout<<"here!\n"<<delta<<endl<<endl;
+    if (R_delta.isApprox(Eigen::Matrix3d::Identity(), 1e-10) == 1)
+    {
+        // phi has already been set to 0;
+        omegaX.setZero();
+    }
+    else
+    {
+        double temp = (R_delta.trace() - 1) / 2;
+        // Force phi to be either 1 or -1 if necessary. Floating point errors can cause problems resulting in this not happening
+        if (temp > 1)
+        {
+            temp = 1;
+        }
+        else if (temp < -1)
+        {
+            temp = -1;
+        }
 
+        phi = acos(temp);
+        if (phi == 0)
+        {
+            omegaX.setZero();
+        }
+        else
+        {
+            omegaX = (R_delta - R_delta.transpose()) / (2 * sin(phi)) * phi;
+        }
+    }
 
-    // led_twist_current = exponentialMap(delta);
+    led_twist_current.head<3>() = led_pose_current.translation() - led_pose_previous.translation();
+    
+    //settle linear
+    led_twist_current.tail<3>() << omegaX(2, 1), omegaX(0, 2), omegaX(1, 0);
+
+    led_twist_current = led_twist_current / delta_time;
+
+    led_pose_previous = led_pose_current;
+
 }
 
 Eigen::VectorXd alan::LedNodelet::logarithmMap(Eigen::Matrix4d trans)
@@ -1412,8 +1465,11 @@ Eigen::VectorXd alan::LedNodelet::logarithmMap(Eigen::Matrix4d trans)
     Eigen::Matrix3d R = trans.block<3, 3>(0, 0);
     Eigen::Vector3d t = trans.block<3, 1>(0, 3);
     Eigen::Vector3d w, upsilon;
-    Eigen::Matrix3d w_hat;
+
+    
     Eigen::Matrix3d A_inv;
+
+    Eigen::Matrix3d w_hat;
     double phi = 0;
     double w_norm;
 
@@ -1463,6 +1519,7 @@ Eigen::VectorXd alan::LedNodelet::logarithmMap(Eigen::Matrix4d trans)
     }
     else
     {
+        //
         A_inv = Eigen::Matrix3d::Identity() - w_hat / 2
             + (2 * sin(w_norm) - w_norm * (1 + cos(w_norm))) / (2 * w_norm * w_norm * sin(w_norm)) * w_hat * w_hat;
     }

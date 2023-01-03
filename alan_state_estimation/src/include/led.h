@@ -75,7 +75,7 @@ namespace alan
             cv::Mat frame_initial_thresholded;
             
             //time related
-            ros::Time led_pose_stamp;
+            ros::Time led_pose_stamp, led_pose_stamp_previous;
             double last_request = 0;
 
             //camera related
@@ -203,7 +203,7 @@ namespace alan
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
 
         //below is the courtesy of UZH Faessler et al.
-            //which was used for calculation of the twists in this project
+        //which was used for calculation of the twists in this project
             /*
                 @inproceedings{faessler2014monocular,
                 title={A monocular pose estimation system based on infrared leds},
@@ -221,9 +221,8 @@ namespace alan
             Eigen::Matrix4d pose_current;
             Eigen::Matrix4d pose_predicted;   
                 /*------------------------*/
-            Eigen::Matrix4d led_pose_current;
-            Eigen::Matrix4d led_pose_previous;   
-            Eigen::Matrix4d led_twist_current;    
+            Eigen::Isometry3d led_pose_previous;   
+            Eigen::VectorXd led_twist_current;    
                 /*------------------------*/
             double time_previous = 0;
             double time_current = 0;
@@ -232,10 +231,7 @@ namespace alan
 
             //functions
             void set_pose_predict();
-            void set_twist_predict(
-                Eigen::Matrix4d led_pose_current, 
-                Eigen::MatrixXd led_pose_previous
-            );
+            void set_twist_estimate(Eigen::Isometry3d led_pose_current);
 
             Eigen::VectorXd logarithmMap(Eigen::Matrix4d trans);
             Eigen::Matrix4d exponentialMap(Eigen::VectorXd& twist);
@@ -316,6 +312,9 @@ namespace alan
                     0,0,0,1;
                 led_cambody_pose = Eigen::Isometry3d(cam_to_body);
                 q_led_cambody = Eigen::Quaterniond(led_cambody_pose.rotation());
+
+
+                led_twist_current.resize(6);
                 // t_led_cambody = Eigen::
                 // cam_origin_in_body_frame = ugv_cam_pose.rotation() * Eigen::Vector3d(0.0,0.0,0.0) + ugv_cam_pose.translation();
                 // cam_origin = cam_origin_in_body_frame;
