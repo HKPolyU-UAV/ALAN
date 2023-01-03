@@ -24,9 +24,9 @@
     </node> -->
 
     <!-- LedNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="led" args="load alan/LedNodelet alan_master" output="screen">
+    <node pkg="nodelet" type="nodelet" name="led" args="load alan/LedNodelet alan_master" output="screen">
         <rosparam command="load" file="$(find alan_state_estimation)/launch/configs/LED_SUBPUB_topics.yaml" />
-    </node>  -->
+    </node> 
 
 
     <!-- MsgSyncNodelet -->

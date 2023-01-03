@@ -130,7 +130,7 @@ namespace alan
         
         //publisher 
             //objects
-            ros::Publisher ledpose_pub, campose_pub, ugvpose_pub, uavpose_pub;
+            ros::Publisher ledpose_pub, ledodom_pub, campose_pub, ugvpose_pub, uavpose_pub;
             image_transport::Publisher pubimage;
             image_transport::Publisher pubimage_input;
             //functions
@@ -207,7 +207,7 @@ namespace alan
                 ros::NodeHandle& nh = getMTNodeHandle();
                 ROS_INFO("LED Nodelet Initiated...");
 
-                RosTopicConfigs configs(nh, "/alan_master");
+                RosTopicConfigs configs(nh, "/led");
                                 
             //load POI_extract config
                 nh.getParam("/alan_master/LANDING_DISTANCE", LANDING_DISTANCE);     
@@ -321,9 +321,9 @@ namespace alan
                 MAD_y_threshold = (calculate_MAD(norm_of_y_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_y_points) * MAD_dilate);
                 MAD_z_threshold = (calculate_MAD(norm_of_z_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_z_points) * MAD_dilate);
 
-                cout<<MAD_x_threshold<<endl;
-                cout<<MAD_y_threshold<<endl;
-                cout<<MAD_z_threshold<<endl;
+                // cout<<MAD_x_threshold<<endl;
+                // cout<<MAD_y_threshold<<endl;
+                // cout<<MAD_z_threshold<<endl;
 
                 LED_no = pts_on_body_frame.size();
                                                                 
@@ -332,15 +332,15 @@ namespace alan
                 subimage.subscribe(nh, configs.getTopicName(COLOR_SUB_TOPIC), 1);                
                 subdepth.subscribe(nh, configs.getTopicName(DEPTH_SUB_TOPIC), 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
-                sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));
-                
+                sync_->registerCallback(boost::bind(&LedNodelet::camera_callback, this, _1, _2));                                
+
                 
                 uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
+                //only used for validation stage
                     (configs.getTopicName(UAV_POSE_SUB_TOPIC), 1, &LedNodelet::uav_pose_callback, this);
             
                 ugv_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
                     (configs.getTopicName(UGV_POSE_SUB_TOPIC), 1, &LedNodelet::ugv_pose_callback, this);
-                
 
             //publish
                 image_transport::ImageTransport image_transport_(nh);
@@ -350,24 +350,31 @@ namespace alan
 
                 
                 ledpose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                //only used for validation stage
                                 (configs.getTopicName(LED_POSE_PUB_TOPIC), 1, true);
                 
+                ledodom_pub = nh.advertise<nav_msgs::Odometry>
+                                (configs.getTopicName(LED_ODOM_PUB_TOPIC),1 , true);
                 
                 ugvpose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                //only used for validation stage
                                 (configs.getTopicName(UGV_POSE_PUB_TOPIC), 1, true); 
                 
                 
                 uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                //only used for validation stage
                                 (configs.getTopicName(UAV_POSE_PUB_TOPIC), 1, true);
 
                 
                 campose_pub = nh.advertise<geometry_msgs::PoseStamped>
-                                (configs.getTopicName(CAM_POSE_PUB_TOPIC), 1, true);                 
+                //only used for validation stage
+                                (configs.getTopicName(CAM_POSE_PUB_TOPIC), 1, true);    
+                
             }
 
 
             //below is the courtesy of UZH Faessler et al.
-            //which was tested but NOT used in this project
+            //which was used for calculation of the twists in this project
             /*
                 @inproceedings{faessler2014monocular,
                 title={A monocular pose estimation system based on infrared leds},

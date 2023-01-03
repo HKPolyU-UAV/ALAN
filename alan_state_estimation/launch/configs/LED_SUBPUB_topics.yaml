@@ -10,6 +10,10 @@ TOPICLIST:
     SUBORPUB: 0
   
   - TOPICTYPE: "POSE_SUB_TOPIC_A"
+    TOPICNAME: "/uav/mavros/vision_pose/pose" 
+    SUBORPUB: 0
+
+  - TOPICTYPE: "POSE_SUB_TOPIC_B"
     TOPICNAME: "/vrpn_client_node/gh034_car/pose" 
     SUBORPUB: 0
   
@@ -17,10 +21,22 @@ TOPICLIST:
   - TOPICTYPE: "POSE_PUB_TOPIC_A"
     TOPICNAME: "/alan_state_estimation/led/uav/pose"
     SUBORPUB: 1
-
+  
   - TOPICTYPE: "ODOM_PUB_TOPIC_A"
     TOPICNAME: "/alan_state_estimation/led/uav/odom"
-    SUBORPUB: 1  
+    SUBORPUB: 1
+
+  - TOPICTYPE: "POSE_PUB_TOPIC_B"
+    TOPICNAME: "/alan_state_estimation/UGV/pose"
+    SUBORPUB: 1
+  
+  - TOPICTYPE: "POSE_PUB_TOPIC_C"
+    TOPICNAME: "/alan_state_estimation/UAV/pose"
+    SUBORPUB: 1
+
+  - TOPICTYPE: "POSE_PUB_TOPIC_D"
+    TOPICNAME: "/alan_state_estimation/CAM/pose"
+    SUBORPUB:  1
 
 # Remark: 
 # these are the topic type for rosconfigs.hpp
