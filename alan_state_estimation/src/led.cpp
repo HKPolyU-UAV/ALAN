@@ -144,13 +144,14 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 
     
 
-    cout<<"relative distance...";
+    
     Eigen::Vector3d temp(
         (uav_pose.translation() - led_pose.translation()).x(),
         (uav_pose.translation() - led_pose.translation()).y(),
         (uav_pose.translation() - led_pose.translation()).z()
     );
-    cout<< temp.norm()<<endl;
+    // cout<<"relative distance...";
+    // cout<< temp.norm()<<endl;
 
     set_twist_estimate(led_pose);
     

@@ -117,7 +117,7 @@ void set_virtual_car_pose(Eigen::VectorXd xyzrpy)
 
     virtual_car_pose.pose.position.x = xyzrpy(0) + dist(generator);
     virtual_car_pose.pose.position.y = xyzrpy(1) + dist(generator);
-    virtual_car_pose.pose.position.z = xyzrpy(2) + dist(generator);
+    virtual_car_pose.pose.position.z = xyzrpy(2) + dist(generator) + 0.259;
 
     Eigen::Quaterniond attitude = rpy2q(
         Eigen::Vector3d(

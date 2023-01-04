@@ -70,6 +70,8 @@ private:
 
     bool go_to_rendezvous_pt_and_follow();
 
+    bool hover();
+
     bool land();
 
     bool shutdown();
@@ -102,8 +104,10 @@ private:
     mavros_msgs::SetMode uav_set_mode;
     mavros_msgs::CommandBool arm_cmd;
     mavros_msgs::State uav_current_state;
+    bool uav_current_state_inititaed = false;
 
     alan_visualization::PolyhedronArray land_traj_constraint;
+    bool land_traj_constraint_initiated;
 
     // sensor_msgs::Imu cam_pose;
     // Eigen::Quaterniond cam_pose;
@@ -119,7 +123,9 @@ private:
     Eigen::Vector4d pid_controller(Eigen::Vector4d pose, Eigen::Vector4d setpoint);    
 
     Eigen::Vector4d uav_traj_pose, ugv_traj_pose, target_traj_pose, ugv_target_traj_pose;
-    
+    bool uav_traj_pose_initiated = false;
+    bool ugv_traj_pose_initiated = false;
+
     double last_request;
 
     double pid_last_request = 0;

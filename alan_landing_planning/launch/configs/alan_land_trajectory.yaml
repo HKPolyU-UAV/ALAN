@@ -4,7 +4,7 @@ m: 3
 
 d_order: 4 # p v a j
 
-take_off_height: 0.2
+take_off_height: 0.8
 ugv_height: 0.259
 
 

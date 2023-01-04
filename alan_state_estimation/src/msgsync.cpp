@@ -62,6 +62,8 @@ void alan::MsgSyncNodelet::uav_vrpn_pose_callback(const geometry_msgs::PoseStamp
 {
     uav_vrpn_pose = *pose;
     uav_vrpn_pose_initiated = true;
+
+    bool use_led = false;
     // cout<<"hi"<<endl;
     // cout<<failsafe_on<<endl;
 
@@ -88,7 +90,7 @@ void alan::MsgSyncNodelet::uav_vrpn_pose_callback(const geometry_msgs::PoseStamp
 
                 delta = sqrt(delta);
 
-                cout<<delta<<endl;
+                // cout<<delta<<endl;
 
                 if(delta < 0.14)
                 {
@@ -106,7 +108,6 @@ void alan::MsgSyncNodelet::uav_vrpn_pose_callback(const geometry_msgs::PoseStamp
                             led_odom.pose.pose.orientation.y,
                             led_odom.pose.pose.orientation.z
                     );
-
 
                     uav_alan_msg.position.x = led_odom.pose.pose.position.x;
                     uav_alan_msg.position.y = led_odom.pose.pose.position.y;
@@ -129,9 +130,7 @@ void alan::MsgSyncNodelet::uav_vrpn_pose_callback(const geometry_msgs::PoseStamp
 
                     uav_alan_msg.time_stamp = led_odom.header.stamp;
                     uav_alan_msg.good2fly = true;
-                    uav_alan_msg.frame = "world";
-
-                    uav_pub_AlanPlannerMsg.publish(uav_alan_msg);
+                    uav_alan_msg.frame = "world";                    
                 }
                 else
                 {
@@ -171,11 +170,8 @@ void alan::MsgSyncNodelet::uav_vrpn_pose_callback(const geometry_msgs::PoseStamp
 
                     uav_alan_msg.time_stamp = uav_vrpn_pose.header.stamp;
                     uav_alan_msg.good2fly = true;
-                    uav_alan_msg.frame = "world";
-
-                    uav_pub_AlanPlannerMsg.publish(uav_alan_msg);
+                    uav_alan_msg.frame = "world";                    
                 }                
-
             }
             else
             {
@@ -216,10 +212,21 @@ void alan::MsgSyncNodelet::uav_vrpn_pose_callback(const geometry_msgs::PoseStamp
 
                 uav_alan_msg.time_stamp = uav_vrpn_pose.header.stamp;
                 uav_alan_msg.good2fly = true;
-                uav_alan_msg.frame = "world";
-
-                uav_pub_AlanPlannerMsg.publish(uav_alan_msg);
+                uav_alan_msg.frame = "world";                
             }
+
+            Eigen::Vector2d cam2uav_vector = 
+                Eigen::Vector2d(
+                    uav_alan_msg.position.x - cam_pos_world.x(),
+                    uav_alan_msg.position.y - cam_pos_world.y()
+            );
+
+            if(cam2uav_vector.norm() > 2.5)
+                uav_alan_msg.good2fly = false;
+            else
+                uav_alan_msg.good2fly = true;
+            
+            uav_pub_AlanPlannerMsg.publish(uav_alan_msg);
         }
     }
 }

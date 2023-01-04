@@ -55,18 +55,13 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 
     uav_set_mode.request.custom_mode = "OFFBOARD";
     arm_cmd.request.value = true;
-
     alan_fsm_object.finite_state_machine = IDLE;
-
-    
 
     set_btraj_info();
     set_btraj_inequality_dynamic();
 
     //block traj temp
     set_block_traj = true;
-
-
 }
 
 planner_server::~planner_server()
@@ -80,9 +75,16 @@ void planner_server::mainserver()
 
     while(ros::ok())
     {
-        fsm_manager();
-
-        planner_pub();
+        if(
+            uav_current_state_inititaed     &&
+            uav_traj_pose_initiated         &&
+            ugv_traj_pose_initiated         &&
+            land_traj_constraint_initiated
+        )
+        {        
+            fsm_manager();
+            planner_pub();            
+        }
         
         ros::spinOnce();
         rate.sleep();
@@ -92,6 +94,7 @@ void planner_server::mainserver()
 void planner_server::uavStateCallback(const mavros_msgs::State::ConstPtr& msg)
 {
     uav_current_state = *msg;
+    uav_current_state_inititaed = true;
 }
 
 void planner_server::uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg)
@@ -113,40 +116,15 @@ void planner_server::uavAlanMsgCallback(const alan_landing_planning::AlanPlanner
     
     uavOdomPose = t_ * q_;
 
-    uav_traj_pose(0) = uav_current_AlanPlannerMsg.position.x;
-    uav_traj_pose(1) = uav_current_AlanPlannerMsg.position.y;
-    uav_traj_pose(2) = uav_current_AlanPlannerMsg.position.z;
+    uav_traj_pose.head<3>() = t_.translation();
+    uav_traj_pose(3) = atan2(q_.toRotationMatrix()(1,0), q_.toRotationMatrix()(0,0));
 
-    Eigen::Quaterniond q(
-        uav_current_AlanPlannerMsg.orientation.ow,
-        uav_current_AlanPlannerMsg.orientation.ox,
-        uav_current_AlanPlannerMsg.orientation.oy,
-        uav_current_AlanPlannerMsg.orientation.oz
-        );
-    
-    // uav_traj_pose(3) = q.toRotationMatrix().eulerAngles(2);
-
-    double yaw = atan2(q.toRotationMatrix()(1,0), q.toRotationMatrix()(0,0));
-
-    uav_traj_pose(3) = yaw;
-
-    // cout<<"yaw: "<<uav_traj_pose(3)<<endl;
-
-    // cout<<euler(0)<<endl;;
-    // cout<<euler(1)<<endl;;
-    // cout<<euler(2)<<endl<<endl;;;
-
-    // cout<<uavOdomPose.matrix()<<endl;
-
-    // cout<<uav_current_AlanPlannerMsg.frame<<endl;
-
-    // cout<<"im here"<<uav_current_AlanPlannerMsg.position.x<<endl;
+    uav_traj_pose_initiated = true;
 }
 
 void planner_server::ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg)
 {
     ugv_current_AlanPlannerMsg = *msg;
-    // ugv_current_AlanPlannerMsg.position.x;
 
     Eigen::Translation3d t_(
         ugv_current_AlanPlannerMsg.position.x,
@@ -163,29 +141,19 @@ void planner_server::ugvAlanMsgCallback(const alan_landing_planning::AlanPlanner
     
     ugvOdomPose = t_ * q_;
 
-    ugv_traj_pose(0) = ugv_current_AlanPlannerMsg.position.x;
-    ugv_traj_pose(1) = ugv_current_AlanPlannerMsg.position.y;
-    ugv_traj_pose(2) = ugv_current_AlanPlannerMsg.position.z;  
+    ugv_traj_pose.head<3>() = t_.translation();
+    ugv_traj_pose(3) = atan2(q_.toRotationMatrix()(1,0), q_.toRotationMatrix()(0,0));
 
-    double yaw = atan2(q_.toRotationMatrix()(1,0), q_.toRotationMatrix()(0,0));
-
-    ugv_traj_pose(3) = yaw;  
-
-    // cout<<target_traj_pose<<endl;
-
-    // cout<<uavOdomPose.matrix()<<endl;
-
-    // cout<<uav_current_AlanPlannerMsg.frame<<endl;
-
-    // cout<<"im here"<<uav_current_AlanPlannerMsg.position.x<<endl;
+    ugv_traj_pose_initiated = true;
 }
 
 void planner_server::sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& msg)
 {
     land_traj_constraint.a_series_of_Corridor.clear();
     land_traj_constraint = *msg;
-}
 
+    land_traj_constraint_initiated = true;
+}
 
 void planner_server::fsm_manager()
 {
@@ -201,18 +169,16 @@ void planner_server::fsm_manager()
             fsm_state = ARMED;
             print_or_not = true;
 
-            takeoff_hover_pt.x = uav_current_AlanPlannerMsg.position.x;
-            takeoff_hover_pt.y = uav_current_AlanPlannerMsg.position.y;
+            takeoff_hover_pt.x = uav_traj_pose(0);
+            takeoff_hover_pt.y = uav_traj_pose(1);
             takeoff_hover_pt.z = take_off_height + ugv_height;
 
-            uav_traj_pose_desired.pose.position.x = takeoff_hover_pt.x;
-            uav_traj_pose_desired.pose.position.y = takeoff_hover_pt.y;
-            uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
+            target_traj_pose(0) = takeoff_hover_pt.x;
+            target_traj_pose(1) = takeoff_hover_pt.y;
+            target_traj_pose(2) = takeoff_hover_pt.z;
+            target_traj_pose(3) = uav_traj_pose(3);
 
-            cout<<"target takeoff position\n";
-            cout<<uav_traj_pose_desired.pose.position.x<<endl;
-            cout<<uav_traj_pose_desired.pose.position.y<<endl;
-            cout<<uav_traj_pose_desired.pose.position.z<<endl;
+            cout<<"target takeoff position\n"<<target_traj_pose<<endl<<endl;
         }
     }
     else if(fsm_state == ARMED)
@@ -360,62 +326,46 @@ bool planner_server::taking_off()
 
 bool planner_server::go_to_rendezvous_pt_and_follow()
 {
-    // uav_traj_pose_desired.pose.position.x = 2;
-    // uav_traj_pose_desired.pose.position.y = 2;
-    // uav_traj_pose_desired.pose.position.z = takeoff_hover_pt.z;
-
-
+    //follow dynamic
     target_traj_pose = set_following_target_pose();
+    
+    //perform block traj
     // target_traj_pose = set_uav_block_pose();
-    // target_traj_pose(0) = 2.2;
-    // target_traj_pose(1) = 0;
-    // target_traj_pose(2) = 1.5;
-    // target_traj_pose(3) = M_PI;
-    //enter ugv and uav rendezvous point here
-
-    Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
-
-    // Eigen::Quaterniond q = yaw2q(twist_result(3) / 2);
-
-    // uav_traj_pose_desired.pose.orientation.w = q.w();
-    // uav_traj_pose_desired.pose.orientation.x = q.x();
-    // uav_traj_pose_desired.pose.orientation.y = q.y();
-    // uav_traj_pose_desired.pose.orientation.z = q.z();
-
-    uav_traj_twist_desired.linear.x = twist_result(0);
-    uav_traj_twist_desired.linear.y = twist_result(1);
-    uav_traj_twist_desired.linear.z = twist_result(2);
-    uav_traj_twist_desired.angular.z = twist_result(3);
 
     //should be time and following quality
-    // if(ros::Time::now().toSec() - last_request > ros::Duration(60.0).toSec())
-    //     return true;
-    // else 
-    //     return false;
-
-    return false;
-
+    if(
+        uav_current_AlanPlannerMsg.good2fly && 
+        (ros::Time::now().toSec() - last_request) > ros::Duration(2.0).toSec()
+    )
+    {
+        // cout<<"good to fly"<<endl;
+        return true;
+    }
+    else
+    {
+        // cout<<"not good to fly"<<endl;
+        return false;
+    }
 }
 
-bool planner_server::land()
-{    
+bool planner_server::hover()
+{
     target_traj_pose(0) = 0.0;
     target_traj_pose(1) = 0.0;
     target_traj_pose(2) = 1.5;
     target_traj_pose(3) = M_PI;
 
-    Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
+    return false;
+}
 
-    uav_traj_twist_desired.linear.x = twist_result(0);
-    uav_traj_twist_desired.linear.y = twist_result(1);
-    uav_traj_twist_desired.linear.z = twist_result(2);
-    uav_traj_twist_desired.angular.z = twist_result(3);
-
-    // if(plan_traj)
-    // {        
-    //     set_alan_b_traj();
-    //     plan_traj = false;
-    // }
+bool planner_server::land()
+{    
+    
+    if(plan_traj)
+    {        
+        set_alan_b_traj();
+        plan_traj = false;
+    }
 
 
 
@@ -430,6 +380,16 @@ bool planner_server::shutdown()
 void planner_server::planner_pub()
 {
     // cout<<uav_traj_desired.pose.position.x<<endl;
+
+    Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
+
+    uav_traj_twist_desired.linear.x = twist_result(0);
+    uav_traj_twist_desired.linear.y = twist_result(1);
+    uav_traj_twist_desired.linear.z = twist_result(2);
+    uav_traj_twist_desired.angular.z = twist_result(3);
+
+    // cout<<target_traj_pose<<endl;
+    // cout<<twist_result<<endl<<endl;
 
     local_vel_pub.publish(uav_traj_twist_desired);
 
@@ -518,7 +478,7 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
 
 Eigen::Vector4d planner_server::set_following_target_pose()
 {
-    Eigen::Vector3d uav_following_pt = Eigen::Vector3d(-0.0, 0, take_off_height);    
+    Eigen::Vector3d uav_following_pt = Eigen::Vector3d(-1.6, 0.0, take_off_height);    
     uav_following_pt =  ugvOdomPose.rotation() * uav_following_pt 
         + Eigen::Vector3d(
             ugvOdomPose.translation().x(),
