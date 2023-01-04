@@ -1300,6 +1300,58 @@ Eigen::Vector3d alan::LedNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::V
     return q * v;
 }
 
+void alan::LedNodelet::set_twist_estimate(Eigen::Isometry3d led_pose_current)
+{
+    double delta_time = led_pose_stamp.toSec() - led_pose_stamp_previous.toSec();
+
+    //settle angular
+    Eigen::Matrix3d R_delta = led_pose_previous.rotation().inverse()
+                                * led_pose_current.rotation();
+
+    Eigen::Matrix3d omegaX;
+    double phi = 0;
+
+    if (R_delta.isApprox(Eigen::Matrix3d::Identity(), 1e-10) == 1)
+    {
+        // phi has already been set to 0;
+        omegaX.setZero();
+    }
+    else
+    {
+        double temp = (R_delta.trace() - 1) / 2;
+        // Force phi to be either 1 or -1 if necessary. 
+        //Floating point errors can cause problems resulting in this not happening
+        if (temp > 1)
+        {
+            temp = 1;
+        }
+        else if (temp < -1)
+        {
+            temp = -1;
+        }
+
+        phi = acos(temp);
+        if (phi == 0)
+        {
+            omegaX.setZero();
+        }
+        else
+        {
+            omegaX = (R_delta - R_delta.transpose()) / (2 * sin(phi)) * phi;
+        }
+    }
+
+    led_twist_current.head<3>() = led_pose_current.translation() - led_pose_previous.translation();
+    
+    //settle linear
+    led_twist_current.tail<3>() << omegaX(2, 1), omegaX(0, 2), omegaX(1, 0);
+
+    led_twist_current = led_twist_current / delta_time;
+
+    led_pose_previous = led_pose_current;
+
+}
+
 void alan::LedNodelet::set_image_to_publish(double freq, const sensor_msgs::CompressedImageConstPtr & rgbmsg)
 {    
     char hz[40];
@@ -1404,57 +1456,6 @@ void alan::LedNodelet::set_pose_predict()
     delta_hat = delta * delta_time;    
 
     pose_predicted = pose_current * exponentialMap(delta_hat);
-}
-
-void alan::LedNodelet::set_twist_estimate(Eigen::Isometry3d led_pose_current)
-{
-    double delta_time = led_pose_stamp.toSec() - led_pose_stamp_previous.toSec();
-
-    //settle angular
-    Eigen::Matrix3d R_delta = led_pose_previous.rotation().inverse()
-                                * led_pose_current.rotation();
-
-    Eigen::Matrix3d omegaX;
-    double phi = 0;
-
-    if (R_delta.isApprox(Eigen::Matrix3d::Identity(), 1e-10) == 1)
-    {
-        // phi has already been set to 0;
-        omegaX.setZero();
-    }
-    else
-    {
-        double temp = (R_delta.trace() - 1) / 2;
-        // Force phi to be either 1 or -1 if necessary. Floating point errors can cause problems resulting in this not happening
-        if (temp > 1)
-        {
-            temp = 1;
-        }
-        else if (temp < -1)
-        {
-            temp = -1;
-        }
-
-        phi = acos(temp);
-        if (phi == 0)
-        {
-            omegaX.setZero();
-        }
-        else
-        {
-            omegaX = (R_delta - R_delta.transpose()) / (2 * sin(phi)) * phi;
-        }
-    }
-
-    led_twist_current.head<3>() = led_pose_current.translation() - led_pose_previous.translation();
-    
-    //settle linear
-    led_twist_current.tail<3>() << omegaX(2, 1), omegaX(0, 2), omegaX(1, 0);
-
-    led_twist_current = led_twist_current / delta_time;
-
-    led_pose_previous = led_pose_current;
-
 }
 
 Eigen::VectorXd alan::LedNodelet::logarithmMap(Eigen::Matrix4d trans)
