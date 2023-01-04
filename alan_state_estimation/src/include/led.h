@@ -272,7 +272,7 @@ namespace alan
                     0, intrinsics_value[1], intrinsics_value[3],
                     0, 0,  1; 
 
-                cout<<cameraMat<<endl;
+                // cout<<cameraMat<<endl;
 
                 cameraEX.resize(6);
                 XmlRpc::XmlRpcValue extrinsics_list;

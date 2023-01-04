@@ -123,14 +123,7 @@ void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::Const
 }
 
 void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
-{
-    // cout<<"relative distance...";
-    // Eigen::Vector2d temp(
-    //     (uav_pose.translation() - cam_pose.translation()).x(),
-    //     (uav_pose.translation() - cam_pose.translation()).y()
-    // );
-    // cout<< temp.norm()<<endl;
-    
+{   
     Eigen::Matrix3d cam_to_body;
     cam_to_body << 
         0,0,1,
@@ -148,6 +141,16 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     Eigen::Translation3d t_final = Eigen::Translation3d(cam_pose.rotation() * cam_to_body * led_pose.translation() + cam_pose.translation());// Eigen::Translation3d(led_pose.translation());
 
     led_pose = t_final * q_final;
+
+    
+
+    cout<<"relative distance...";
+    Eigen::Vector3d temp(
+        (uav_pose.translation() - led_pose.translation()).x(),
+        (uav_pose.translation() - led_pose.translation()).y(),
+        (uav_pose.translation() - led_pose.translation()).z()
+    );
+    cout<< temp.norm()<<endl;
 
     set_twist_estimate(led_pose);
     

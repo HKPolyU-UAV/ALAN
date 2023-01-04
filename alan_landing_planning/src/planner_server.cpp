@@ -74,6 +74,21 @@ planner_server::~planner_server()
 
 }
 
+void planner_server::mainserver()
+{
+    ros::Rate rate(_pub_freq);
+
+    while(ros::ok())
+    {
+        fsm_manager();
+
+        planner_pub();
+        
+        ros::spinOnce();
+        rate.sleep();
+    }
+}
+
 void planner_server::uavStateCallback(const mavros_msgs::State::ConstPtr& msg)
 {
     uav_current_state = *msg;
@@ -171,23 +186,6 @@ void planner_server::sfcMsgCallback(const alan_visualization::PolyhedronArray::C
     land_traj_constraint = *msg;
 }
 
-
-void planner_server::mainserver()
-{
-    ros::Rate rate(_pub_freq);
-
-    while(ros::ok())
-    {
-        fsm_manager();
-
-        planner_pub();
-        
-        ros::spinOnce();
-        rate.sleep();
-
-    }
-
-}
 
 void planner_server::fsm_manager()
 {
@@ -433,10 +431,12 @@ void planner_server::planner_pub()
 {
     // cout<<uav_traj_desired.pose.position.x<<endl;
 
-    if(fsm_state == FOLLOW || fsm_state == LAND)
-        local_vel_pub.publish(uav_traj_twist_desired);
-    else
-        local_pos_pub.publish(uav_traj_pose_desired);
+    local_vel_pub.publish(uav_traj_twist_desired);
+
+    // if(fsm_state == FOLLOW || fsm_state == LAND)
+    //     local_vel_pub.publish(uav_traj_twist_desired);
+    // else
+    //     local_pos_pub.publish(uav_traj_pose_desired);
 
     alan_fsm_object.finite_state_machine = fsm_state;
     pub_fsm.publish(alan_fsm_object);

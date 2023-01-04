@@ -5,22 +5,24 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Status1
-        - /Grid1
-        - /PolyhedronArray1
-        - /Marker1
-        - /Marker1/Namespaces1
-        - /Axes1
-        - /MarkerArray1
-        - /MarkerArray1/Namespaces1
-        - /Pose1
-        - /MarkerArray2
-        - /Pose2
-        - /Marker2
-        - /Pose3
-        - /Pose4
+        - /basics1
+        - /basics1/Axes1
+        - /alan_traj1
+        - /alan_traj1/PolyhedronArray1
+        - /UAV1
+        - /UAV1/MarkerArray1
+        - /UAV1/MarkerArray1/Status1
+        - /UAV1/Pose1
+        - /UGV1
+        - /ledcpp_output1/Odometry1
+        - /ledcpp_output1/Odometry1/Status1
+        - /ledcpp_output1/Odometry1/Shape1
+        - /ledcpp_output1/Pose1
+        - /ledcpp_output1/UAVPose1
+        - /ledcpp_output1/UGVPose1
+        - /ledcpp_output1/CAMPose1
       Splitter Ratio: 0.5
-    Tree Height: 737
+    Tree Height: 1024
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -46,143 +48,246 @@ Toolbars:
 Visualization Manager:
   Class: ""
   Displays:
-    - Alpha: 0.5
-      Cell Size: 1
-      Class: rviz/Grid
-      Color: 160; 160; 164
+    - Class: rviz/Group
+      Displays:
+        - Alpha: 0.5
+          Cell Size: 1
+          Class: rviz/Grid
+          Color: 160; 160; 164
+          Enabled: true
+          Line Style:
+            Line Width: 0.029999999329447746
+            Value: Lines
+          Name: Grid
+          Normal Cell Count: 0
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Plane: XY
+          Plane Cell Count: 50
+          Reference Frame: <Fixed Frame>
+          Value: true
+        - Alpha: 1
+          Class: rviz/Axes
+          Enabled: true
+          Length: 5
+          Name: Axes
+          Radius: 0.009999999776482582
+          Reference Frame: <Fixed Frame>
+          Show Trail: false
+          Value: true
       Enabled: true
-      Line Style:
-        Line Width: 0.029999999329447746
-        Value: Lines
-      Name: Grid
-      Normal Cell Count: 0
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Plane: XY
-      Plane Cell Count: 50
-      Reference Frame: <Fixed Frame>
-      Value: true
-    - Alpha: 0.10000000149011612
-      BoundColor: 255; 0; 0
-      Class: decomp_rviz_plugins/PolyhedronArray
+      Name: basics
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/Marker
+          Enabled: true
+          Marker Topic: /gt_points
+          Name: Marker
+          Namespaces:
+            {}
+          Queue Size: 500
+          Value: true
+        - Alpha: 0.10000000149011612
+          BoundColor: 255; 0; 0
+          Class: decomp_rviz_plugins/PolyhedronArray
+          Enabled: true
+          MeshColor: 46; 52; 54
+          Name: PolyhedronArray
+          Queue Size: 10
+          Scale: 0.10000000149011612
+          State: Both
+          Topic: /polyhedron_array
+          Unreliable: false
+          Value: true
+          VsColor: 0; 255; 0
+          VsScale: 10
       Enabled: true
-      MeshColor: 46; 52; 54
-      Name: PolyhedronArray
-      Queue Size: 10
-      Scale: 0.10000000149011612
-      State: Both
-      Topic: /polyhedron_array
-      Unreliable: false
-      Value: true
-      VsColor: 0; 255; 0
-      VsScale: 10
-    - Class: rviz/Marker
+      Name: alan_traj
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/MarkerArray
+          Enabled: true
+          Marker Topic: /rviz_vehicle/UAV
+          Name: MarkerArray
+          Namespaces:
+            UAV: true
+          Queue Size: 100
+          Value: true
+        - Alpha: 1
+          Axes Length: 0.1599999964237213
+          Axes Radius: 0.02500000037252903
+          Class: rviz/Pose
+          Color: 255; 25; 0
+          Enabled: true
+          Head Length: 0.30000001192092896
+          Head Radius: 0.10000000149011612
+          Name: Pose
+          Queue Size: 10
+          Shaft Length: 1
+          Shaft Radius: 0.05000000074505806
+          Shape: Axes
+          Topic: /rviz_vehicle/UAV/pose
+          Unreliable: true
+          Value: true
       Enabled: true
-      Marker Topic: /gt_points
-      Name: Marker
-      Namespaces:
-        {}
-      Queue Size: 500
-      Value: true
-    - Alpha: 1
-      Class: rviz/Axes
+      Name: UAV
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/MarkerArray
+          Enabled: true
+          Marker Topic: /rviz_vehicle/UGV
+          Name: MarkerArray
+          Namespaces:
+            UGV: true
+          Queue Size: 100
+          Value: true
+        - Alpha: 1
+          Axes Length: 0.4000000059604645
+          Axes Radius: 0.02500000037252903
+          Class: rviz/Pose
+          Color: 255; 25; 0
+          Enabled: true
+          Head Length: 0.30000001192092896
+          Head Radius: 0.10000000149011612
+          Name: Pose
+          Queue Size: 10
+          Shaft Length: 1
+          Shaft Radius: 0.05000000074505806
+          Shape: Axes
+          Topic: /rviz_vehicle/UGV/pose
+          Unreliable: false
+          Value: true
+        - Class: rviz/Marker
+          Enabled: true
+          Marker Topic: /rviz_vehicle/UGV/camera
+          Name: cam_Marker
+          Namespaces:
+            camera_pyramid: true
+          Queue Size: 100
+          Value: true
+        - Alpha: 1
+          Axes Length: 0.25
+          Axes Radius: 0.019999999552965164
+          Class: rviz/Pose
+          Color: 255; 25; 0
+          Enabled: false
+          Head Length: 0.30000001192092896
+          Head Radius: 0.10000000149011612
+          Name: cam_Pose
+          Queue Size: 10
+          Shaft Length: 1
+          Shaft Radius: 0.05000000074505806
+          Shape: Axes
+          Topic: /alan_state_estimation/CAM/pose
+          Unreliable: false
+          Value: false
       Enabled: true
-      Length: 10
-      Name: Axes
-      Radius: 0.03999999910593033
-      Reference Frame: <Fixed Frame>
-      Show Trail: false
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /rviz_vehicle/UAV
-      Name: MarkerArray
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Alpha: 1
-      Axes Length: 0.1599999964237213
-      Axes Radius: 0.02500000037252903
-      Class: rviz/Pose
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Queue Size: 10
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Axes
-      Topic: /rviz_vehicle/UAV/pose
-      Unreliable: true
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /rviz_vehicle/UGV
-      Name: MarkerArray
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Alpha: 1
-      Axes Length: 0.4000000059604645
-      Axes Radius: 0.02500000037252903
-      Class: rviz/Pose
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Queue Size: 10
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Axes
-      Topic: /rviz_vehicle/UGV/pose
-      Unreliable: false
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /rviz_vehicle/UGV/camera
-      Name: Marker
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz/Pose
-      Color: 255; 25; 0
+      Name: UGV
+    - Class: rviz/Group
+      Displays:
+        - Angle Tolerance: 0.10000000149011612
+          Class: rviz/Odometry
+          Covariance:
+            Orientation:
+              Alpha: 0.5
+              Color: 255; 255; 127
+              Color Style: Unique
+              Frame: Local
+              Offset: 1
+              Scale: 1
+              Value: true
+            Position:
+              Alpha: 0.30000001192092896
+              Color: 204; 51; 204
+              Scale: 1
+              Value: true
+            Value: false
+          Enabled: true
+          Keep: 100
+          Name: Odometry
+          Position Tolerance: 0.10000000149011612
+          Queue Size: 10
+          Shape:
+            Alpha: 1
+            Axes Length: 1
+            Axes Radius: 0.10000000149011612
+            Color: 255; 25; 0
+            Head Length: 0.30000001192092896
+            Head Radius: 0.10000000149011612
+            Shaft Length: 1
+            Shaft Radius: 0.05000000074505806
+            Value: Axes
+          Topic: /alan_state_estimation/led/uav/odom
+          Unreliable: false
+          Value: true
+        - Alpha: 1
+          Axes Length: 1
+          Axes Radius: 0.10000000149011612
+          Class: rviz/Pose
+          Color: 255; 25; 0
+          Enabled: true
+          Head Length: 0.30000001192092896
+          Head Radius: 0.10000000149011612
+          Name: Pose
+          Queue Size: 10
+          Shaft Length: 1
+          Shaft Radius: 0.05000000074505806
+          Shape: Axes
+          Topic: /alan_state_estimation/LED/pose
+          Unreliable: false
+          Value: true
+        - Alpha: 1
+          Axes Length: 1
+          Axes Radius: 0.10000000149011612
+          Class: rviz/Pose
+          Color: 255; 25; 0
+          Enabled: true
+          Head Length: 0.30000001192092896
+          Head Radius: 0.10000000149011612
+          Name: UAVPose
+          Queue Size: 10
+          Shaft Length: 1
+          Shaft Radius: 0.05000000074505806
+          Shape: Axes
+          Topic: /alan_state_estimation/UAV/pose
+          Unreliable: false
+          Value: true
+        - Alpha: 1
+          Axes Length: 1
+          Axes Radius: 0.10000000149011612
+          Class: rviz/Pose
+          Color: 255; 25; 0
+          Enabled: true
+          Head Length: 0.30000001192092896
+          Head Radius: 0.10000000149011612
+          Name: UGVPose
+          Queue Size: 10
+          Shaft Length: 1
+          Shaft Radius: 0.05000000074505806
+          Shape: Axes
+          Topic: /alan_state_estimation/UGV/pose
+          Unreliable: false
+          Value: true
+        - Alpha: 1
+          Axes Length: 1
+          Axes Radius: 0.10000000149011612
+          Class: rviz/Pose
+          Color: 255; 25; 0
+          Enabled: true
+          Head Length: 0.30000001192092896
+          Head Radius: 0.10000000149011612
+          Name: CAMPose
+          Queue Size: 10
+          Shaft Length: 1
+          Shaft Radius: 0.05000000074505806
+          Shape: Axes
+          Topic: /alan_state_estimation/CAM/pose
+          Unreliable: false
+          Value: true
       Enabled: false
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Queue Size: 10
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Axes
-      Topic: /alan_state_estimation/UGV/pose
-      Unreliable: false
-      Value: false
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz/Pose
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Queue Size: 10
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Axes
-      Topic: /alan_state_estimation/CAM/pose
-      Unreliable: false
-      Value: true
+      Name: ledcpp_output
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -211,7 +316,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.619959831237793
+      Distance: 19.586559295654297
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -219,25 +324,45 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.3245623707771301
-        Y: 0.7011852264404297
-        Z: 0.018898755311965942
+        X: -0.17128542065620422
+        Y: 2.0930676460266113
+        Z: -0.26421067118644714
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4297969937324524
+      Pitch: 0.4447975158691406
       Target Frame: <Fixed Frame>
-      Yaw: 1.7345569133758545
-    Saved: ~
+      Yaw: 4.932746887207031
+    Saved:
+      - Class: rviz/Orbit
+        Distance: 19.586559295654297
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.05999999865889549
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Field of View: 0.7853981852531433
+        Focal Point:
+          X: -0.17128542065620422
+          Y: 2.0930676460266113
+          Z: -0.26421067118644714
+        Focal Shape Fixed Size: true
+        Focal Shape Size: 0.05000000074505806
+        Invert Z Axis: false
+        Name: Orbit
+        Near Clip Distance: 0.009999999776482582
+        Pitch: 0.6747969388961792
+        Target Frame: map
+        Yaw: 5.697750091552734
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1089
+  Height: 1376
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001a6000003a3fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000003a3000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c0000026100000001000001ce000003a3fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d000003a3000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000008000000003efc0100000002fb0000000800540069006d0065010000000000000800000003bc00fffffffb0000000800540069006d0065010000000000000450000000000000000000000480000003a300000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001e7000004c2fc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afc0000003d000004c2000000c900fffffffa000000010100000002fb0000000c00430061006d0065007200610000000000ffffffff0000000000000000fb000000100044006900730070006c0061007900730100000000000001e70000015600fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d006500720061000000025c000002a3000000000000000000000001000001ce000004c2fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d000004c2000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000009b80000003efc0100000002fb0000000800540069006d00650100000000000009b8000003bc00fffffffb0000000800540069006d00650100000000000004500000000000000000000005f7000004c200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -246,6 +371,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 2048
+  Width: 2488
   X: 72
   Y: 27
