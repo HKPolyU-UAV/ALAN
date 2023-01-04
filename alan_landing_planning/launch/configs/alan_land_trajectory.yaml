@@ -17,12 +17,6 @@ v_max: 2.0
 a_max: 4.0
 
 
-
-LED_positions:
-  - x: 0.085
-    y: -0.075
-    z: -0.030 #
-
 PID_gain:
   - kp:
     - x: 0

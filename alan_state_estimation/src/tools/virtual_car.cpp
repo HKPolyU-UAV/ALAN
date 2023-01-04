@@ -167,9 +167,9 @@ void set_virtual_car_imu(Eigen::VectorXd xyzrpy)
     virtual_car_imu.angular_velocity.y = 0.0;
     virtual_car_imu.angular_velocity.z = 0.0;
 
-    virtual_car_imu.linear_acceleration.x = 0.08603277722031888 + dist(generator);
-    virtual_car_imu.linear_acceleration.y = -8.430162922124731 + dist(generator);
-    virtual_car_imu.linear_acceleration.z = 3.920432808594682 + dist(generator);
+    virtual_car_imu.linear_acceleration.x = 0.0 + dist(generator);
+    virtual_car_imu.linear_acceleration.y = 0.0 + dist(generator);
+    virtual_car_imu.linear_acceleration.z = 9.8 + dist(generator);
 
 }
 

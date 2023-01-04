@@ -89,7 +89,9 @@ private:
     vector<alan_landing_planning::AlanPlannerMsg> traj_optimized;
 
     //other functions
-    void planner_pub();     
+    void planner_pub();   
+
+    void planner_display();  
 
     //server
 

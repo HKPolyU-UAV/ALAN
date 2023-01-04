@@ -49,7 +49,7 @@ namespace alan_traj
         {
             //all axis matrices set here
 
-            printf("POLYH constraints...");
+            printf("POLYH constraints...\n");
 
             bernstein bezier_base(
                 _axis_dim,

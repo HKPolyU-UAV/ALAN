@@ -11,7 +11,7 @@
 #include <decomp_ros_msgs/PolyhedronArray.h>
 #include <decomp_geometry/polyhedron.h> 
 
-#include "alan_visualization/Polyhedron.h"
+#include "alan_visualization/PolyhedronArray.h"
 #include "alan_visualization/Tangent.h"
 #include <mavros_msgs/AttitudeTarget.h>
 
@@ -19,325 +19,177 @@
 // decomp_ros_msg
 using namespace std;
 
+static alan_visualization::PolyhedronArray land_traj_constraint;
+static bool land_traj_constraint_initiated = false;
+static vector<alan_visualization::Polyhedron> corridors;
+
+
+void set_btraj_inequality_kinematic()
+{
+    int temp_size_i = 0;
+
+    // cout<<"we got this many corridor:..."<<land_traj_constraint.a_series_of_Corridor.size()<<endl;    
+    corridors.clear();
+
+    alan_visualization::Polyhedron temp_poly;
+
+
+    for(int i = 0; i < land_traj_constraint.a_series_of_Corridor.size(); i++)
+    {
+        temp_size_i = land_traj_constraint.a_series_of_Corridor[i].PolyhedronTangentArray.size();
+        
+        temp_poly.PolyhedronTangentArray.clear();
+
+        for(int j = 0; j < temp_size_i; j++)
+        {
+            temp_poly.PolyhedronTangentArray.emplace_back(
+                land_traj_constraint.a_series_of_Corridor[i].PolyhedronTangentArray[j]
+            );
+        }
+
+        corridors.emplace_back(temp_poly);
+    }
+
+    // btraj_constraints.sfc_list = corridors;
+    // btraj_constraints.corridor_type = "POLYH";
+
+}
+
+void sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& sfc)
+{
+    land_traj_constraint.a_series_of_Corridor.clear();
+    land_traj_constraint = *sfc;
+    
+    land_traj_constraint_initiated = true;
+    // cout<<"hiii"<<endl;
+    
+}
 
 int main(int argc, char** argv)
 {
-    Polyhedron3D polyh_msg;
-    // polyh_msg.
-
-    // mavros_msgs::AttitudeTarget lala;
-    // lala.orientation.
-    
-
     ros::init(argc, argv, "lala");
     ros::NodeHandle nh;
 
-    ros::Publisher poly_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
-    ros::Publisher polyh_pub = nh.advertise<alan_visualization::Polyhedron>("/alan_visualization/polyhedron", 1, true);
+    // ros::Publisher poly_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
+    // ros::Publisher polyh_pub = nh.advertise<alan_visualization::Polyhedron>("/alan_visualization/polyhedron", 1, true);
 
     ros::Publisher traj_pub = nh.advertise<alan_landing_planning::Traj>("/alan_visualization/traj", 1, true);
 
+    ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>
+            ("/alan/sfc/all_corridors", 1, sfcMsgCallback);
+
+    ros::Rate rosrate(50);
+
+    int i = 0;
+
+    while(ros::ok())
+    {
+        // traj_pub.publish(optiTraj);
+        ros::spinOnce();
+        rosrate.sleep();
+
+        // cout<<i<<endl;
+
+        i++;
+        if(land_traj_constraint_initiated && i > 10)
+        {
+            break;
+        }
+    }
+
+    // cout<<"hey we got these..."<<corridors.size()<<endl;
+    // cout<<"we are out"<<endl;
+
+
+
 
     double t00 = ros::Time::now().toSec();
-    // test.n.X
-
-    decomp_ros_msgs::PolyhedronArray poly_msg;
-    
-    poly_msg.header.frame_id = "map";
-    poly_pub.publish(poly_msg);
-
-
-
 
     alan_traj::bezier_info b_info;
     
-    b_info.axis_dim = 2;
+    b_info.axis_dim = 3;
     b_info.n_order = 7;
-    b_info.m = 5;
-    b_info.d_order = 4;
+    b_info.m = 2;
+    b_info.d_order = 3;
 
-    for(int i = 0; i < b_info.m; i++)
-        b_info.s.push_back(1);
+    b_info.s.push_back(0.265229);
+    b_info.s.push_back(1.00022);
 
     //
 
     //equality constraint:
-    alan_traj::endpt start_2d;
-    start_2d.posi(0) = 50;
-    start_2d.velo(0) = 0;
-    start_2d.accl(0) = 0;
-    start_2d.jerk(0) = 0;
-
-    start_2d.posi(1) = 50;
-    start_2d.velo(1) = 0;
-    start_2d.accl(1)= 0;
-    start_2d.jerk(1) = 0;
-
-    alan_traj::endpt end_2d;
-    end_2d.posi(0) = 280;
-    end_2d.velo(0) = 0;
-    end_2d.accl(0) = 0;
-    end_2d.jerk(0) = 0;
-
-    end_2d.posi(1) = 0;
-    end_2d.velo(1) = 0;
-    end_2d.accl(1) = 0;
-    end_2d.jerk(1) = 0;
+    alan_traj::endpt start_3d;
+    start_3d.posi(0) = -1.05876;
+    start_3d.posi(1) = -1.02592;
+    start_3d.posi(2) = 1.02041;
 
 
+    start_3d.velo(0) = 0.00276129;
+    start_3d.velo(1) = -0.0477533;
+    start_3d.velo(2) = 0.0954305;
 
-    //inequality constraints:
+
+    start_3d.accl(0) = -0.0239425;
+    start_3d.accl(1) = 0.0421186;
+    start_3d.accl(2) = 0.0450449;
+
+
+    alan_traj::endpt end_3d;
+    end_3d.posi(0) = -2.2;
+    end_3d.posi(1) = -2.1999;
+    end_3d.posi(2) = 0.259144;
+
+
+    end_3d.velo(0) = -2.25129e-05;
+    end_3d.velo(0) = 2.7078e-05;
+    end_3d.velo(0) = -6.78842e-08;
+
+
+    end_3d.accl(0) = -0.000801816;
+    end_3d.accl(0) = -0.000547266;
+    end_3d.accl(0) = -0.00614635;
+
+
+//inequality constraints:
+    
 
     //kinematic constraints
+    set_btraj_inequality_kinematic();
 
-    vector<alan_visualization::Polyhedron> corridor;
-
-    alan_visualization::Polyhedron temp_polyh;
-    alan_visualization::Tangent temp_tangent;
-
-
-
-    //1st corridor: 4 plane
-    temp_polyh.PolyhedronTangentArray.clear();
-
-    temp_tangent.pt.X = 50;
-    temp_tangent.pt.Y = 150;
-
-    temp_tangent.n.X = 1;
-    temp_tangent.n.Y = 1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-    
-    temp_tangent.pt.X = 50;
-    temp_tangent.pt.Y = -50;
-
-    temp_tangent.n.X = -1;
-    temp_tangent.n.Y = -1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-
-    temp_tangent.pt.X = 150;
-    temp_tangent.pt.Y = 50;
-
-    temp_tangent.n.X = 1;
-    temp_tangent.n.Y = -1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-
-    temp_tangent.pt.X = -50;
-    temp_tangent.pt.Y = 50;
-
-    temp_tangent.n.X = -1;
-    temp_tangent.n.Y = 1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-    corridor.push_back(temp_polyh);
-
-    //2nd corridor: 4 plane
-
-    temp_polyh.PolyhedronTangentArray.clear();
-    
-    temp_tangent.pt.X = 100;
-    temp_tangent.pt.Y = 220;
-
-    temp_tangent.n.X = 1;
-    temp_tangent.n.Y = 1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-    
-    temp_tangent.pt.X = 100;
-    temp_tangent.pt.Y = 20;
-
-    temp_tangent.n.X = -1;
-    temp_tangent.n.Y = -1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-
-    temp_tangent.pt.X = 200;
-    temp_tangent.pt.Y = 120;
-
-    temp_tangent.n.X = 1;
-    temp_tangent.n.Y = -1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-
-    temp_tangent.pt.X = 0;
-    temp_tangent.pt.Y = 120;
-
-    temp_tangent.n.X = -1;
-    temp_tangent.n.Y = 1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-    corridor.push_back(temp_polyh);
-
-    //3rd corridor: 4 plane
-
-    temp_polyh.PolyhedronTangentArray.clear();
-    
-    temp_tangent.pt.X = 180;
-    temp_tangent.pt.Y = 250;
-
-    temp_tangent.n.X = 1;
-    temp_tangent.n.Y = 1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-    
-    temp_tangent.pt.X = 180;
-    temp_tangent.pt.Y = 50;
-
-    temp_tangent.n.X = -1;
-    temp_tangent.n.Y = -1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-
-    temp_tangent.pt.X = 280;
-    temp_tangent.pt.Y = 150;
-
-    temp_tangent.n.X = 1;
-    temp_tangent.n.Y = -1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-
-    temp_tangent.pt.X = 80;
-    temp_tangent.pt.Y = 150;
-
-    temp_tangent.n.X = -1;
-    temp_tangent.n.Y = 1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-    corridor.push_back(temp_polyh);
-
-    //4th corridor: 4 plane
-
-    temp_polyh.PolyhedronTangentArray.clear();
-    
-    temp_tangent.pt.X = 250;
-    temp_tangent.pt.Y = 180;
-
-    temp_tangent.n.X = 1;
-    temp_tangent.n.Y = 1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-    
-    temp_tangent.pt.X = 250;
-    temp_tangent.pt.Y = -20;
-
-    temp_tangent.n.X = -1;
-    temp_tangent.n.Y = -1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-
-    temp_tangent.pt.X = 350;
-    temp_tangent.pt.Y = 80;
-
-    temp_tangent.n.X = 1;
-    temp_tangent.n.Y = -1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-
-    temp_tangent.pt.X = 150;
-    temp_tangent.pt.Y = 80;
-
-    temp_tangent.n.X = -1;
-    temp_tangent.n.Y = 1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-    corridor.push_back(temp_polyh);
-
-    //5th corridor: 4 plane
-
-    temp_polyh.PolyhedronTangentArray.clear();
-    
-    temp_tangent.pt.X = 280;
-    temp_tangent.pt.Y = 100;
-
-    temp_tangent.n.X = 1;
-    temp_tangent.n.Y = 1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-    
-    temp_tangent.pt.X = 280;
-    temp_tangent.pt.Y = -100;
-
-    temp_tangent.n.X = -1;
-    temp_tangent.n.Y = -1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-
-    temp_tangent.pt.X = 380;
-    temp_tangent.pt.Y = 0;
-
-    temp_tangent.n.X = 1;
-    temp_tangent.n.Y = -1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-
-    temp_tangent.pt.X = 180;
-    temp_tangent.pt.Y = 0;
-
-    temp_tangent.n.X = -1;
-    temp_tangent.n.Y = 1;
-
-    temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
-
-    corridor.push_back(temp_polyh);
-
-    // cout<<corridor.size()<<endl;
-    // for(auto what : corridor)
-    // {
-    //     cout<<what.PolyhedronTangentArray.size()<<endl;
-    // }
-
+    cout<<corridors.size()<<endl;
     ROS_INFO("corridor all set");
 
     //dynamic constraint
     alan_traj::dynamic_constraints d_constraints;
-    d_constraints.v_max(0) =  150;
-    d_constraints.v_min(0) = -150;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(0) =  200;
-    d_constraints.a_min(0) = -200;//OsqpEigen::INFTY;//-200;
-    d_constraints.j_max(0) =  400;
-    d_constraints.j_min(0) = -400;//OsqpEigen::INFTY;//-400;
+    d_constraints.v_max(0) =  2;
+    d_constraints.v_min(0) = -2;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(0) =  4;
+    d_constraints.a_min(0) = -4;//OsqpEigen::INFTY;//-200;
 
-    d_constraints.v_max(1) =  150;
-    d_constraints.v_min(1) = -150;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(1) =  200;
-    d_constraints.a_min(1) = -200;//OsqpEigen::INFTY;//-200;
-    d_constraints.j_max(1) =  400;
-    d_constraints.j_min(1) = -400;//OsqpEigen::INFTY;//-400;
+    d_constraints.v_max(1) =  2;
+    d_constraints.v_min(1) = -2;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(1) =  4;
+    d_constraints.a_min(1) = -4;//OsqpEigen::INFTY;//-200;
+
+    d_constraints.v_max(2) =  2;
+    d_constraints.v_min(2) = -2;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(2) =  4;
+    d_constraints.a_min(2) = -4;//OsqpEigen::INFTY;//-200;
 
 
     alan_traj::bezier_constraints b_constraints;
 
-    b_constraints.start = start_2d;
-    b_constraints.end = end_2d;
+    b_constraints.start = start_3d;
+    b_constraints.end = end_3d;
 
-    b_constraints.sfc_list = corridor;
+    b_constraints.sfc_list = corridors;
     b_constraints.d_constraints = d_constraints;
 
     b_constraints.corridor_type = "POLYH";
 
 
-	alan_traj::traj_gen traj(b_info, b_constraints, 50);
+
+    alan_traj::traj_gen traj(b_info, b_constraints, 50);
     
 
     traj.solve_opt(50);
@@ -350,19 +202,257 @@ int main(int argc, char** argv)
     cout<<"ms: "<<(t01-t00)<<endl;
     cout<<"fps: "<<1/(t01-t00)<<endl;
 
-    ros::Rate rosrate(50);
-
-    while(ros::ok())
-    {
-        traj_pub.publish(optiTraj);
-        ros::spinOnce();
-        rosrate.sleep();
-    }
 
 
 
+    
 
-    // //////////////////////////////////////////////////////
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// //1st corridor: 4 plane
+//     temp_polyh.PolyhedronTangentArray.clear();
+
+//     temp_tangent.pt.X = 50;
+//     temp_tangent.pt.Y = 150;
+
+//     temp_tangent.n.X = 1;
+//     temp_tangent.n.Y = 1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+    
+//     temp_tangent.pt.X = 50;
+//     temp_tangent.pt.Y = -50;
+
+//     temp_tangent.n.X = -1;
+//     temp_tangent.n.Y = -1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+
+//     temp_tangent.pt.X = 150;
+//     temp_tangent.pt.Y = 50;
+
+//     temp_tangent.n.X = 1;
+//     temp_tangent.n.Y = -1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+
+//     temp_tangent.pt.X = -50;
+//     temp_tangent.pt.Y = 50;
+
+//     temp_tangent.n.X = -1;
+//     temp_tangent.n.Y = 1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+//     corridor.push_back(temp_polyh);
+
+//     //2nd corridor: 4 plane
+
+//     temp_polyh.PolyhedronTangentArray.clear();
+    
+//     temp_tangent.pt.X = 100;
+//     temp_tangent.pt.Y = 220;
+
+//     temp_tangent.n.X = 1;
+//     temp_tangent.n.Y = 1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+    
+//     temp_tangent.pt.X = 100;
+//     temp_tangent.pt.Y = 20;
+
+//     temp_tangent.n.X = -1;
+//     temp_tangent.n.Y = -1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+
+//     temp_tangent.pt.X = 200;
+//     temp_tangent.pt.Y = 120;
+
+//     temp_tangent.n.X = 1;
+//     temp_tangent.n.Y = -1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+
+//     temp_tangent.pt.X = 0;
+//     temp_tangent.pt.Y = 120;
+
+//     temp_tangent.n.X = -1;
+//     temp_tangent.n.Y = 1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+//     corridor.push_back(temp_polyh);
+
+//     //3rd corridor: 4 plane
+
+//     temp_polyh.PolyhedronTangentArray.clear();
+    
+//     temp_tangent.pt.X = 180;
+//     temp_tangent.pt.Y = 250;
+
+//     temp_tangent.n.X = 1;
+//     temp_tangent.n.Y = 1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+    
+//     temp_tangent.pt.X = 180;
+//     temp_tangent.pt.Y = 50;
+
+//     temp_tangent.n.X = -1;
+//     temp_tangent.n.Y = -1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+
+//     temp_tangent.pt.X = 280;
+//     temp_tangent.pt.Y = 150;
+
+//     temp_tangent.n.X = 1;
+//     temp_tangent.n.Y = -1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+
+//     temp_tangent.pt.X = 80;
+//     temp_tangent.pt.Y = 150;
+
+//     temp_tangent.n.X = -1;
+//     temp_tangent.n.Y = 1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+//     corridor.push_back(temp_polyh);
+
+//     //4th corridor: 4 plane
+
+//     temp_polyh.PolyhedronTangentArray.clear();
+    
+//     temp_tangent.pt.X = 250;
+//     temp_tangent.pt.Y = 180;
+
+//     temp_tangent.n.X = 1;
+//     temp_tangent.n.Y = 1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+    
+//     temp_tangent.pt.X = 250;
+//     temp_tangent.pt.Y = -20;
+
+//     temp_tangent.n.X = -1;
+//     temp_tangent.n.Y = -1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+
+//     temp_tangent.pt.X = 350;
+//     temp_tangent.pt.Y = 80;
+
+//     temp_tangent.n.X = 1;
+//     temp_tangent.n.Y = -1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+
+//     temp_tangent.pt.X = 150;
+//     temp_tangent.pt.Y = 80;
+
+//     temp_tangent.n.X = -1;
+//     temp_tangent.n.Y = 1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+//     corridor.push_back(temp_polyh);
+
+//     //5th corridor: 4 plane
+
+//     temp_polyh.PolyhedronTangentArray.clear();
+    
+//     temp_tangent.pt.X = 280;
+//     temp_tangent.pt.Y = 100;
+
+//     temp_tangent.n.X = 1;
+//     temp_tangent.n.Y = 1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+    
+//     temp_tangent.pt.X = 280;
+//     temp_tangent.pt.Y = -100;
+
+//     temp_tangent.n.X = -1;
+//     temp_tangent.n.Y = -1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+
+//     temp_tangent.pt.X = 380;
+//     temp_tangent.pt.Y = 0;
+
+//     temp_tangent.n.X = 1;
+//     temp_tangent.n.Y = -1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+
+//     temp_tangent.pt.X = 180;
+//     temp_tangent.pt.Y = 0;
+
+//     temp_tangent.n.X = -1;
+//     temp_tangent.n.Y = 1;
+
+//     temp_polyh.PolyhedronTangentArray.push_back(temp_tangent);
+
+//     corridor.push_back(temp_polyh);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//earliest example
+// //////////////////////////////////////////////////////
 
     // alan_traj::endpt b_traj_start;
     // b_traj_start.posi(0) = 50;
@@ -481,6 +571,3 @@ int main(int argc, char** argv)
     // double t1 = ros::Time::now().toSec();
 
     // cout<<"fps: "<<1/(t3-t2)<<endl;
-
-	return 0;
-}
