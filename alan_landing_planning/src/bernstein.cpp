@@ -2,7 +2,6 @@
 
 namespace alan_traj
 {
-
     //for cube_list
     bernstein::bernstein(
     int axis_dim,
@@ -116,6 +115,8 @@ namespace alan_traj
             //2. calculate each individual
         //see which one is faster
 
+        ROS_INFO("hi we now in POLYH...\n");
+
         if(m == sfc_list.size() && m == s.size())
         {
             A_sfc_eq_array.clear();
@@ -127,10 +128,6 @@ namespace alan_traj
             lb_eq_array.clear();
             lb_ieq_array.clear();
 
-
-            // A_array.emplace_back(A);
-            // ub_array.emplace_back(ub);
-            // lb_array.emplace_back(lb);
             MQM_array.clear();
 
             for(int axis_i = 0; axis_i < axis_dim; axis_i++)
@@ -147,67 +144,61 @@ namespace alan_traj
                 end_local.a_ = end.accl(axis_i);
                 end_local.j_ = end.jerk(axis_i);
 
+
+                //set Aeq
                 setAeq1D(axis_i, n_order, m, d_order, s);
-            
-                setUBeq1D(axis_i, start_local, end_local, n_order, m, d_order);//remember continuotiy
-                setLBeq1D(axis_i, start_local, end_local, n_order, m, d_order);//remember continuotiy
+                A_sfc_eq_array.emplace_back(A_eq); 
 
-                printf("eq matrices: pass\n");
+                //set beq(U,L)
+                setUBeq1D(axis_i, start_local, end_local, n_order, m, d_order);
+                setLBeq1D(axis_i, start_local, end_local, n_order, m, d_order);
+                ub_eq_array.emplace_back(ub_eq);
+                lb_eq_array.emplace_back(lb_eq);
+                
+                printf("eq matrices: pass\n");                
 
-                setAieq1D(axis_i, n_order, m, d_order, s, "POLYH");     
+                // cout<<axis_i<<" dimension:\n";
+                // cout<<A_eq.rows()<<" "<<A_eq.cols()<<endl<<endl;
+                // cout<<ub_eq<<endl<<endl;
+                // cout<<lb_eq<<endl<<endl<<endl;
 
+                //----------------------------------------------------------------------------------------------
+
+                //set Aieq
+                setAieq1D(axis_i, n_order, m, d_order, s, "POLYH");
+                A_sfc_ieq_dyn_array.emplace_back(A_ieq);  
+                
+                //set bieq(U,L)
                 setUBieq1D_polyh(axis_i, d_constraints, n_order, m, d_order);        
                 setlBieq1D_polyh(axis_i, d_constraints, n_order, m, d_order);
+                ub_ieq_array.emplace_back(ub_ieq);                
+                lb_ieq_array.emplace_back(lb_ieq);
 
                 printf("ieq matriaces: pass\n");
 
-                // setA1D();
-                // setUB1D();
-                // setLB1D();
+                cout<<axis_i<<" dimension:\n\n";
+                // cout<<A_ieq<<endl;
+                // cout<<A_ieq.rows()<<" "<<A_ieq.cols()<<endl<<endl;
+                
+                // cout<<ub_ieq<<endl<<endl;
+                // cout<<lb_ieq<<endl<<endl<<endl;
 
-                // cout<<"\nhere!"<<endl;
+                //----------------------------------------------------------------------------------------------
 
-                // cout<<A.rows()<<endl;
-                // cout<<A.cols()<<endl;
-                // cout<<ub.size()<<endl;
-                // cout<<lb.size()<<endl;
-
-                // printf("pass 3\n");
                 setMQM1D(axis_i, n_order, m, d_order, s);
-                // printf("pass 4\n");
-
-                A_sfc_eq_array.emplace_back(A_eq);
-                A_sfc_ieq_dyn_array.emplace_back(A_ieq);
-
-                ub_eq_array.emplace_back(ub_eq);
-                ub_ieq_array.emplace_back(ub_ieq);
-
-                lb_eq_array.emplace_back(lb_eq);
-                lb_ieq_array.emplace_back(lb_ieq);
-
-
-                // A_array.emplace_back(A);
-                // ub_array.emplace_back(ub);
-                // lb_array.emplace_back(lb);
                 MQM_array.emplace_back(MQM);
 
-
+                cout<<"that's one dimension\n\n\n";
             }
 
-            
-            // cout<<2<<endl;
-            // setUbFinal_polyh();
-            // cout<<3<<endl;
-            // setLbFinal_polyh();
-            // cout<<4<<endl;
-
-
-            printf("\n\nnow set Aieqsfc...:\n\n");
+            printf("\n---------------------- now set all dimension ----------------------\n");
+            printf("now set Aieqsfc...:\n");
 
             setAieqBieqsfc(axis_dim, sfc_list, d_constraints, n_order, m, d_order, s);
 
             // cout<<0<<endl;
             setMQMFinal();
+            
 
             cout<<"set final AFinal_polyh..."<<endl;
             setAFinal_polyh();
@@ -219,7 +210,6 @@ namespace alan_traj
             // cout<<"Aieq_sfc size: "<<A_ieqsfc.rows()<<" "<<A_ieqsfc.cols()<<endl;
             // cout<<"ub_ieqsfc size: "<<ub_ieqsfc.size()<<endl;
             // cout<<"lb_ieqsfc size: "<<lb_ieqsfc.size()<<endl<<endl;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
         }
         else
         {
@@ -523,7 +513,7 @@ namespace alan_traj
         for(int i = 0; i < s.size(); i++)
         {
             starto_row_col = i * (n_order + 1);   
-            cout<<"starto_row_col = "<<starto_row_col  <<endl;
+            // cout<<"starto_row_col = "<<starto_row_col  <<endl;
 
             Aieq_p.block(starto_row_col, starto_row_col, (n_order + 1), (n_order + 1)) = Aieq_p.block(starto_row_col, starto_row_col, (n_order + 1), (n_order + 1)) * pow(s[i], 1);
         }
@@ -1460,6 +1450,10 @@ namespace alan_traj
         // cout<<1<<endl;
 
         A_final.resize(A_final_rows, A_final_cols);
+        cout<<"here are the final sizes of constraints...\n";
+        cout<<A_sfc_eq_array.size() * A_sfc_eq_array[0].rows()<<endl;
+        cout<<A_ieqsfc.rows()<<endl;
+        cout<<A_sfc_ieq_dyn_array.size() * A_sfc_ieq_dyn_array[0].rows()<<endl;
 
         cout<<"A_final_polyh size: "<<A_final.rows()<<"  "<<A_final.cols()<<endl;
 
@@ -1484,7 +1478,7 @@ namespace alan_traj
             cout<<"temp_j: "<<i * A_sfc_eq_array[i].cols()<<endl;
             cout<<"temp_r: "<<A_sfc_ieq_dyn_array[i].rows()<<endl;
             cout<<"temp_c: "<<A_sfc_ieq_dyn_array[i].cols()<<endl<<endl;
-            A_final.block(starto + i * A_sfc_ieq_dyn_array[i].rows(), i * A_sfc_eq_array[i].cols(), A_sfc_ieq_dyn_array[i].rows(), A_sfc_ieq_dyn_array[i].cols()) = A_sfc_ieq_dyn_array[i];            
+            A_final.block(starto + i * A_sfc_ieq_dyn_array[i].rows(), i * A_sfc_eq_array[i].cols(), A_sfc_ieq_dyn_array[i].rows(), A_sfc_ieq_dyn_array[i].cols()) = A_sfc_ieq_dyn_array[i];
         }
         // cout<<4<<endl;
 

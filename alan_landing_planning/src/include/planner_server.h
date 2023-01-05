@@ -91,8 +91,6 @@ private:
     //other functions
     void planner_pub();   
 
-    void planner_display();  
-
     //server
 
     //private variables

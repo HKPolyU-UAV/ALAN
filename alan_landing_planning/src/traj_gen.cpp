@@ -168,8 +168,20 @@ namespace alan_traj
 
         osqpsolver trajSolver;
 
+        // _MQM = _MQM * 100;
+        // _A = _A * 100;
+        // _ub = _ub * 100;
+        // _lb = _lb * 100;
+
+        cout<<"\n-----------------------------------------------lalalalalalalalala\n";
+        // cout<<_MQM.rows()<<"  "<<_MQM.cols()<<endl<<endl;;
+        
+
+
         trajSolver.qp_opt(_MQM, _A, _ub, _lb);
         PolyCoeff = trajSolver.getQpsol();
+        cout<<"\n----------------results here-------------------------\n";
+        cout<<PolyCoeff<<endl<<endl<<endl;
 
         cout<<"size of ctrl pts..."<<PolyCoeff.size()<<endl;
 
@@ -397,7 +409,7 @@ namespace alan_traj
 
         remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/b_traj.txt"); 
         ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/b_traj.txt",ios::app);
-
+        save<<"log of trajectory optimization..."<<endl;
         save<<endl<<"log start..."<<endl<<endl;
         save<<"_axis_dim:\n"<<_axis_dim<<endl<<endl;
         save<<"_n_dim:\n"<<_n_dim<<endl<<endl;

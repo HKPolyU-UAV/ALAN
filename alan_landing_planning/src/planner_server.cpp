@@ -674,7 +674,6 @@ void planner_server::set_alan_b_traj()
     set_btraj_inequality_dynamic();
     cout<<5<<endl;
     
-    planner_display();
         
     alan_traj::traj_gen alan_btraj(btraj_info, btraj_constraints, _pub_freq);
     alan_btraj.solve_opt(_pub_freq);
@@ -817,42 +816,5 @@ void planner_server::set_traj_time()
     btraj_info.s.emplace_back(
         landing_time_total * final_corridor_length / distance_uav_ugv
         );
-
-}
-
-void planner_server::planner_display()
-{
-    cout<<"\n\n\naxis_dim:\n";
-    cout<<btraj_info.axis_dim<<endl<<endl;
-
-    cout<<"n_order:\n";
-    cout<<btraj_info.n_order<<endl<<endl;
-
-    cout<<"m:\n";
-    cout<<btraj_info.m<<endl<<endl;
-
-    cout<<"d_order:\n";
-    cout<<btraj_info.d_order<<endl<<endl;
-
-    cout<<"s allocation:\n";
-    for(int i = 0; i < btraj_info.s.size(); i++)
-        cout<<btraj_info.s[i]<<" ";
-    cout<<endl<<endl;
-
-    cout<<"starting state:\n";
-    cout<<"posi:\n";
-    cout<<btraj_constraints.start.posi<<endl;
-    cout<<"velo :\n";
-    cout<<btraj_constraints.start.velo<<endl;
-    cout<<"accl:\n";
-    cout<<btraj_constraints.start.accl<<endl;
-    cout<<"\nending state\n:";
-    cout<<"posi:\n";
-    cout<<btraj_constraints.end.posi<<endl;
-    cout<<"velo:\n";
-    cout<<btraj_constraints.end.velo<<endl;
-    cout<<"accl:\n";
-    cout<<btraj_constraints.end.accl<<endl;
-    cout<<endl;
 
 }
