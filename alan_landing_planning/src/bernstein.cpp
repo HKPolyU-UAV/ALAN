@@ -1279,18 +1279,18 @@ namespace alan_traj
         for(int i = 0; i < corridor.size(); i++)
         {
             //which corridor, i.e., segment
-            starto_col = i * onedim_ctrl_pts_per_seg;            
+            starto_col = i * onedim_ctrl_pts_per_dim;            
             
             if(i > 0)
                 //which control points we are at , hence the row of constraints
                 starto_row = starto_row + corridor[i-1].PolyhedronTangentArray.size() * onedim_ctrl_pts_per_seg;
                
                          
-            cout<<"starto_row: "<<starto_row<<endl;
+            // cout<<"starto_row: "<<starto_row<<endl;
             // cout<<"starto_col: "<<starto_col<<endl<<endl;
 
             cout<<"starto_row: "<<starto_row<<endl;
-            // cout<<"starto_col: "<<starto_col + onedim_ctrl_pts_per_dim<<endl<<endl;
+            cout<<"starto_col: "<<starto_col + onedim_ctrl_pts_per_dim<<endl<<endl;
             
             for(int j = 0; j < onedim_ctrl_pts_per_seg; j++)
             {
@@ -1317,8 +1317,7 @@ namespace alan_traj
                     for(int k = 0; k < corridor[i].PolyhedronTangentArray.size(); k++)
                     {
                         
-                        A_ieqsfc(starto_row_for_each_segment, starto_col + j) = corridor[i].PolyhedronTangentArray[k].n.X;
-                    
+                        A_ieqsfc(starto_row_for_each_segment, starto_col + j) = corridor[i].PolyhedronTangentArray[k].n.X;                    
                         A_ieqsfc(starto_row_for_each_segment, starto_col + j + 1 * onedim_ctrl_pts_per_dim) = corridor[i].PolyhedronTangentArray[k].n.Y;
                         
                         ub_ieqsfc(starto_row_for_each_segment) = corridor[i].PolyhedronTangentArray[k].n.X

@@ -174,6 +174,7 @@ namespace alan_traj
         // _lb = _lb * 100;
 
         cout<<"\n-----------------------------------------------lalalalalalalalala\n";
+        cout<<_MQM<<endl;
         // cout<<_MQM.rows()<<"  "<<_MQM.cols()<<endl<<endl;;
         
 
