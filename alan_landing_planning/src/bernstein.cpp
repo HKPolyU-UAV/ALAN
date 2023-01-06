@@ -1246,7 +1246,15 @@ namespace alan_traj
         int onedim_ctrl_pts_per_dim = m * (n_order + 1);
         int total_ctrl_pts          = axis_dim * m * (n_order + 1);
         
-        corridor.size();
+        cout<<"---------------------------------set PolyH here------------"<<endl;
+        cout<<corridor.size()<<endl;;
+        for(auto what : corridor)
+        {
+            cout<<what.PolyhedronTangentArray.size()<<endl;
+        }
+
+        cout<<"---------------------------------set PolyH end------------"<<endl;
+
         //how many corridor are there
         
         int tangent_plane_no = 0;

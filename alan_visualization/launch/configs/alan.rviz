@@ -11,11 +11,9 @@ Panels:
         - /alan_traj1/PolyhedronArray1
         - /UAV1
         - /UAV1/MarkerArray1
-        - /UAV1/MarkerArray1/Status1
         - /UAV1/Pose1
         - /UGV1
         - /ledcpp_output1/Odometry1
-        - /ledcpp_output1/Odometry1/Status1
         - /ledcpp_output1/Odometry1/Shape1
         - /ledcpp_output1/Pose1
         - /ledcpp_output1/UAVPose1
@@ -96,7 +94,7 @@ Visualization Manager:
           MeshColor: 46; 52; 54
           Name: PolyhedronArray
           Queue Size: 10
-          Scale: 0.10000000149011612
+          Scale: 0.009999999776482582
           State: Both
           Topic: /polyhedron_array
           Unreliable: false
@@ -112,7 +110,7 @@ Visualization Manager:
           Marker Topic: /rviz_vehicle/UAV
           Name: MarkerArray
           Namespaces:
-            UAV: true
+            {}
           Queue Size: 100
           Value: true
         - Alpha: 1
@@ -316,7 +314,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 19.586559295654297
+      Distance: 13.347691535949707
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -324,17 +322,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.17128542065620422
-        Y: 2.0930676460266113
-        Z: -0.26421067118644714
+        X: -3.217000961303711
+        Y: 1.0385595560073853
+        Z: -1.0263574123382568
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4447975158691406
+      Pitch: 0.22979772090911865
       Target Frame: <Fixed Frame>
-      Yaw: 4.932746887207031
+      Yaw: 5.062749862670898
     Saved:
       - Class: rviz/Orbit
         Distance: 19.586559295654297

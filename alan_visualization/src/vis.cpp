@@ -68,11 +68,15 @@ void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
 
             // cout<<sf            
         }
+        // cout<<sfc_pub_vis_object_tangent.points.size()<<endl;
+        // cout<<sfc_pub_vis_object_tangent.normals.size()<<endl;
         sfc_pub_vis_object_tangent.points.clear();
         sfc_pub_vis_object_tangent.normals.clear();
     }
 
     sfc_pub_vis_object_polyh.header.frame_id = "map";    
+
+    // cout<<sfc_pub_vis_object_polyh.polyhedrons.size()<<endl;
 
     rviz_sfc_initiated = true;
 }
@@ -247,6 +251,8 @@ int main(int argc, char** argv)
 
         if(rviz_sfc_initiated)
             polyh_vis_pub.publish(sfc_pub_vis_object_polyh);
+        
+        // cout<<sfc_pub_vis_object_polyh.polyhedrons.size()<<endl;
 
         if(rviz_traj_initiated)
             traj_vis_pub.publish(traj_points);  

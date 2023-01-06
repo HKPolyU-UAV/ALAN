@@ -410,6 +410,9 @@ alan_visualization::Tangent alan::MsgSyncNodelet::set_plane_bound(Eigen::Vector3
     // v.z() = 0;
     v.normalize();
 
+    // cout<<v<<endl;
+    // cout<<pt<<endl<<endl;
+
     tangent_plane.n.X = v.x();
     tangent_plane.n.Y = v.y();
     tangent_plane.n.Z = v.z();
@@ -575,16 +578,21 @@ void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Qua
     polyhedron_temp.PolyhedronTangentArray.clear();
 
     //1st plane
-
     polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[0]);
+    
     temp_normal = Eigen::Vector3d(0,0,1);
-
     alan_visualization::Tangent ceil_tangent = set_plane_bound(
         temp_normal,
-        t_current.translation() + q_rotate_vector(q_current, Eigen::Vector3d(0,0,final_corridor_height))
-        );
+        // Eigen::Vector3d(0,0,final_corridor_height));t_current.translation() +  
+        Eigen::Vector3d(0,0,final_corridor_height + t_current.translation().z())
+    );
+
+    // cout<<temp_normal<<endl;
+    // cout<<t_current.translation() +  Eigen::Vector3d(0,0,final_corridor_height)<<endl<<endl;
     
     polyhedron_temp.PolyhedronTangentArray.push_back(ceil_tangent);
+
+    // cout<<ceil_tangent.
         
     //2nd plane
     polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[1]);
@@ -604,13 +612,21 @@ void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Qua
     temp_tangent = set_plane_bound(
         temp_normal,
         t_current.translation() + q_rotate_vector(q_current, Eigen::Vector3d(final_corridor_length,0,0))
-        );
+    );
 
     
     //6th plane
     polyhedron_temp.PolyhedronTangentArray.push_back(temp_tangent);
 
+    // cout<<polyhedron_temp.PolyhedronTangentArray.size()<<endl;
+
+
     polyh_array_pub_object.a_series_of_Corridor.push_back(polyhedron_temp);
+
+    // for(auto what : polyh_array_pub_object.a_series_of_Corridor)
+    // {
+    //     cout<<what.PolyhedronTangentArray.size()<<endl;
+    // }
 
 }
 
