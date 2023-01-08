@@ -1252,31 +1252,20 @@ namespace alan_traj
         int onedim_ctrl_pts_per_dim = m * (n_order + 1);
         int total_ctrl_pts          = axis_dim * m * (n_order + 1);
         
-        // cout<<"---------------------------------set PolyH here------------"<<endl;
-        // cout<<corridor.size()<<endl;;
-        // for(auto what : corridor)
-        // {
-        //     cout<<what.PolyhedronTangentArray.size()<<endl;
-        // }
 
-        // cout<<"---------------------------------set PolyH end------------"<<endl;
-
-        //how many corridor are there
         
         int tangent_plane_no = 0;
         //total kinematic constraints for control points
         int total_constraint_no = 0;
 
-        for(int i = 0; i < corridor.size(); i++)  
+        for(int i = 0; i < 1; i++)//  corridor.size()
             tangent_plane_no = tangent_plane_no + corridor[i].PolyhedronTangentArray.size();        
         
         // cout<<"onedim_ctrl_pts_per_seg: "<<onedim_ctrl_pts_per_seg<<endl;
         // cout<<"tangent_plane_no: "<<tangent_plane_no<<endl<<endl;
         
         total_constraint_no = tangent_plane_no * onedim_ctrl_pts_per_seg;    
-        
-        // cout<<"total tangent plane constraints: "<<total_constraint_no<<endl;
-        // cout<<"total control points number: "<<total_ctrl_pts<<endl; 
+
 
         A_ieqsfc.resize(total_constraint_no, total_ctrl_pts);
         ub_ieqsfc.resize(total_constraint_no);
@@ -1291,7 +1280,7 @@ namespace alan_traj
 
         int starto_row_for_each_segment = 0;
 
-        for(int i = 0; i < corridor.size(); i++)
+        for(int i = 0; i < 1; i++) // corridor.size()
         {
             //which corridor, i.e., segment
             starto_col = i * onedim_ctrl_pts_per_seg;            
@@ -1351,6 +1340,7 @@ namespace alan_traj
 
                     for(int k = 0; k < corridor[i].PolyhedronTangentArray.size(); k++)                    
                     {
+                        cout<<s[i]<<endl;
                         // cout<<"hi: "<<starto_row_for_each_segment<<" "<<starto_col<<endl;                        
                         A_ieqsfc(starto_row_for_each_segment, starto_col + j) = corridor[i].PolyhedronTangentArray[k].n.X * s[i];
                         A_ieqsfc(starto_row_for_each_segment, starto_col + j + 1 * onedim_ctrl_pts_per_dim) = corridor[i].PolyhedronTangentArray[k].n.Y * s[i];
@@ -1382,7 +1372,7 @@ namespace alan_traj
         // cout<<"Aieq_sfc in setAieq_sfc !: "<<A_ieqsfc.cols()<<endl;
         // cout<<"ub_ieqsfc in setAieq_sfc !: "<<ub_ieqsfc.size()<<endl;
         // cout<<"lb_ieqsfc in setAieq_sfc !: "<<lb_ieqsfc.size()<<endl;
-        // cout<<A_ieqsfc<<endl<<endl;
+        cout<<A_ieqsfc<<endl<<endl;
         // cout<<lb_ieqsfc<<endl<<endl;;
 
     }
@@ -1476,7 +1466,7 @@ namespace alan_traj
         // A_final.block(A_sfc_eq_array.size() * A_sfc_eq_array[0].rows(), 0, A_ieqsfc.rows(), A_ieqsfc.cols()) = A_ieqsfc;
 
 
-        int starto = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows();// + A_ieqsfc.rows();
+        int starto = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows();// + A_ieqsfc.rows(); ;//
 
 
         for(int i = 0 ; i < A_sfc_ieq_dyn_array.size(); i++)
@@ -1499,13 +1489,14 @@ namespace alan_traj
                             + ub_ieq_array.size() * ub_ieq_array[0].rows();
 
         ub_final.resize(ub_final_rows);
+        ub_final.setZero();
 
         for(int i = 0; i < ub_eq_array.size(); i++)
             ub_final.middleRows(ub_eq_array[i].size() * i, ub_eq_array[i].size()) = ub_eq_array[i];
         
         // ub_final.middleRows(ub_eq_array.size() * ub_eq_array[0].rows(), ub_ieqsfc.size()) = ub_ieqsfc;
 
-        int starto = ub_eq_array.size() * ub_eq_array[0].rows();// + ub_ieqsfc.rows();
+        int starto = ub_eq_array.size() * ub_eq_array[0].rows();// + ub_ieqsfc.rows(); ;//
         
         for(int i = 0; i < ub_ieq_array.size(); i++)
             ub_final.middleRows(starto + i * ub_ieq_array[i].size(), ub_ieq_array[i].size()) = ub_ieq_array[i];                            
@@ -1524,13 +1515,14 @@ namespace alan_traj
                             + lb_ieq_array.size() * lb_ieq_array[0].rows();
 
         lb_final.resize(lb_final_rows);
+        lb_final.setZero();
 
         for(int i = 0; i < lb_eq_array.size(); i++)
             lb_final.middleRows(lb_eq_array[i].size() * i, lb_eq_array[i].size()) = lb_eq_array[i];
         
         // lb_final.middleRows(lb_eq_array.size() * lb_eq_array[0].rows(), lb_ieqsfc.size()) = lb_ieqsfc;
 
-        int starto = lb_eq_array.size() * lb_eq_array[0].rows();// + lb_ieqsfc.rows();
+        int starto = lb_eq_array.size() * lb_eq_array[0].rows() ;//+ lb_ieqsfc.rows(); ;//
         
         for(int i = 0; i < lb_ieq_array.size(); i++)
             lb_final.middleRows(starto + i * lb_ieq_array[i].size(), lb_ieq_array[i].size()) = lb_ieq_array[i];                            
