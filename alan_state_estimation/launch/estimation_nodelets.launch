@@ -16,11 +16,11 @@
     <!-- <nodec -->
 
     <!-- CnnNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="cnn" args="standalone alan/CnnNodelet alan_master" output="screen">
-        <rosparam command="load" file="$(find alan)/launch/configs/alan_pose_estimation.yaml" />
-        <param name="/weightpath"    type="string" value="$(find alan)/launch/configs/yolo/uav_new.weights"/>
-        <param name="/cfgpath"       type="string" value="$(find alan)/launch/configs/yolo/uav_new.cfg    "/>
-        <param name="/classnamepath" type="string" value="$(find alan)/launch/configs/yolo/uav.names      "/>
+    <!-- <node pkg="nodelet" type="nodelet" name="cnn" args="load alan/CnnNodelet alan_master" output="screen">
+        <param name="/weightpath"    type="string" value="$(find alan_state_estimation)/launch/configs/yolo/uav_new.weights"/>
+        <param name="/cfgpath"       type="string" value="$(find alan_state_estimation)/launch/configs/yolo/uav_new.cfg    "/>
+        <param name="/classnamepath" type="string" value="$(find alan_state_estimation)/launch/configs/yolo/uav.names      "/>
+        <rosparam command="load" file="$(find alan_state_estimation)/launch/configs/CNN_SUBPUB_topics.yaml" />
     </node> -->
 
     <!-- LedNodelet -->

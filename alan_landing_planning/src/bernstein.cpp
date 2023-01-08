@@ -1289,12 +1289,6 @@ namespace alan_traj
                 //which control points we are at , hence the row of constraints
                 starto_row = starto_row + corridor[i-1].PolyhedronTangentArray.size() * onedim_ctrl_pts_per_seg;
                
-                         
-            // cout<<"starto_row: "<<starto_row<<endl;
-            // cout<<"starto_col: "<<starto_col<<endl<<endl;
-
-            // cout<<"starto_row: "<<starto_row<<endl;
-            // cout<<"starto_col: "<<starto_col + onedim_ctrl_pts_per_dim<<endl<<endl;
             
             for(int j = 0; j < onedim_ctrl_pts_per_seg; j++)
             {
@@ -1367,13 +1361,8 @@ namespace alan_traj
                 }            
             }
         }
-    
-        // cout<<"\nAieq_sfc in setAieq_sfc !: "<<A_ieqsfc.rows()<<endl;
-        // cout<<"Aieq_sfc in setAieq_sfc !: "<<A_ieqsfc.cols()<<endl;
-        // cout<<"ub_ieqsfc in setAieq_sfc !: "<<ub_ieqsfc.size()<<endl;
-        // cout<<"lb_ieqsfc in setAieq_sfc !: "<<lb_ieqsfc.size()<<endl;
+
         cout<<A_ieqsfc<<endl<<endl;
-        // cout<<lb_ieqsfc<<endl<<endl;;
 
     }
 

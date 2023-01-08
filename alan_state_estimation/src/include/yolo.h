@@ -37,6 +37,11 @@
 
 #include <pthread.h>
 
+#include "tools/RosTopicConfigs.h"
+// map definition for convinience
+#define COLOR_SUB_TOPIC CAMERA_SUB_TOPIC_A
+#define DEPTH_SUB_TOPIC CAMERA_SUB_TOPIC_B
+
 namespace alan{
 
     typedef struct objectinfo
@@ -99,14 +104,16 @@ namespace alan{
             {
                 ros::NodeHandle& nh = getNodeHandle();
 
+                RosTopicConfigs configs(nh, "/cnn");
+
                 nh.getParam("/cnn/weightpath", weightpath);
                 nh.getParam("/cnn/cfgpath", cfgpath); 
                 nh.getParam("/cnn/classnamepath", classnamepath);
                 CnnNodeletInitiate(cfgpath, weightpath, classnamepath, 0.1);
 
-                // cout<<weightpath<<endl;
-                // cout<<cfgpath<<endl;
-                // cout<<classnamepath<<endl;
+                cout<<weightpath<<endl;
+                cout<<cfgpath<<endl;
+                cout<<classnamepath<<endl;
 
                 //subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);
