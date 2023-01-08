@@ -783,6 +783,23 @@ void planner_server::set_traj_time()
 {
     btraj_info.s.clear();
 
+    double distance_uav_ugv_first_corridor = sqrt(
+        pow(
+            uav_current_AlanPlannerMsg.position.x - ugv_current_AlanPlannerMsg.position.x,
+            2
+        )
+        +
+        pow(
+            uav_current_AlanPlannerMsg.position.y - ugv_current_AlanPlannerMsg.position.y,
+            2
+        )
+        +
+        pow(
+            uav_current_AlanPlannerMsg.position.z - ugv_current_AlanPlannerMsg.position.z,
+            2
+        )
+    );
+
     double distance_uav_ugv = sqrt(
         pow(
             uav_current_AlanPlannerMsg.position.x - ugv_current_AlanPlannerMsg.position.x,

@@ -1258,7 +1258,7 @@ namespace alan_traj
         //total kinematic constraints for control points
         int total_constraint_no = 0;
 
-        for(int i = 0; i < 1; i++)//  corridor.size()
+        for(int i = 0; i < corridor.size(); i++)//  corridor.size()
             tangent_plane_no = tangent_plane_no + corridor[i].PolyhedronTangentArray.size();        
         
         // cout<<"onedim_ctrl_pts_per_seg: "<<onedim_ctrl_pts_per_seg<<endl;
@@ -1280,7 +1280,7 @@ namespace alan_traj
 
         int starto_row_for_each_segment = 0;
 
-        for(int i = 0; i < 1; i++) // corridor.size()
+        for(int i = 0; i < corridor.size(); i++) // corridor.size()
         {
             //which corridor, i.e., segment
             starto_col = i * onedim_ctrl_pts_per_seg;            
@@ -1442,7 +1442,7 @@ namespace alan_traj
         cout<<"\n\nhi now in AFinal_polyh..."<<endl;
         
         int A_final_rows = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows()
-                            // + A_ieqsfc.rows()
+                            + A_ieqsfc.rows()
                             + A_sfc_ieq_dyn_array.size() * A_sfc_ieq_dyn_array[0].rows();
         
         int A_final_cols = A_sfc_eq_array.size() * A_sfc_eq_array[0].cols();
@@ -1463,10 +1463,10 @@ namespace alan_traj
         }
 
 
-        // A_final.block(A_sfc_eq_array.size() * A_sfc_eq_array[0].rows(), 0, A_ieqsfc.rows(), A_ieqsfc.cols()) = A_ieqsfc;
+        A_final.block(A_sfc_eq_array.size() * A_sfc_eq_array[0].rows(), 0, A_ieqsfc.rows(), A_ieqsfc.cols()) = A_ieqsfc;
 
 
-        int starto = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows();// + A_ieqsfc.rows(); ;//
+        int starto = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows() + A_ieqsfc.rows(); ;//
 
 
         for(int i = 0 ; i < A_sfc_ieq_dyn_array.size(); i++)
@@ -1485,7 +1485,7 @@ namespace alan_traj
     void bernstein::setUbFinal_polyh()
     {
         int ub_final_rows = ub_eq_array.size() * ub_eq_array[0].rows()
-                            // + ub_ieqsfc.rows()
+                            + ub_ieqsfc.rows()
                             + ub_ieq_array.size() * ub_ieq_array[0].rows();
 
         ub_final.resize(ub_final_rows);
@@ -1494,9 +1494,9 @@ namespace alan_traj
         for(int i = 0; i < ub_eq_array.size(); i++)
             ub_final.middleRows(ub_eq_array[i].size() * i, ub_eq_array[i].size()) = ub_eq_array[i];
         
-        // ub_final.middleRows(ub_eq_array.size() * ub_eq_array[0].rows(), ub_ieqsfc.size()) = ub_ieqsfc;
+        ub_final.middleRows(ub_eq_array.size() * ub_eq_array[0].rows(), ub_ieqsfc.size()) = ub_ieqsfc;
 
-        int starto = ub_eq_array.size() * ub_eq_array[0].rows();// + ub_ieqsfc.rows(); ;//
+        int starto = ub_eq_array.size() * ub_eq_array[0].rows() + ub_ieqsfc.rows(); ;//
         
         for(int i = 0; i < ub_ieq_array.size(); i++)
             ub_final.middleRows(starto + i * ub_ieq_array[i].size(), ub_ieq_array[i].size()) = ub_ieq_array[i];                            
@@ -1511,7 +1511,7 @@ namespace alan_traj
     void bernstein::setLbFinal_polyh()
     {
         int lb_final_rows = lb_eq_array.size() * lb_eq_array[0].rows()
-                            // + lb_ieqsfc.rows()
+                            + lb_ieqsfc.rows()
                             + lb_ieq_array.size() * lb_ieq_array[0].rows();
 
         lb_final.resize(lb_final_rows);
@@ -1520,9 +1520,9 @@ namespace alan_traj
         for(int i = 0; i < lb_eq_array.size(); i++)
             lb_final.middleRows(lb_eq_array[i].size() * i, lb_eq_array[i].size()) = lb_eq_array[i];
         
-        // lb_final.middleRows(lb_eq_array.size() * lb_eq_array[0].rows(), lb_ieqsfc.size()) = lb_ieqsfc;
+        lb_final.middleRows(lb_eq_array.size() * lb_eq_array[0].rows(), lb_ieqsfc.size()) = lb_ieqsfc;
 
-        int starto = lb_eq_array.size() * lb_eq_array[0].rows() ;//+ lb_ieqsfc.rows(); ;//
+        int starto = lb_eq_array.size() * lb_eq_array[0].rows() + lb_ieqsfc.rows(); ;//
         
         for(int i = 0; i < lb_ieq_array.size(); i++)
             lb_final.middleRows(starto + i * lb_ieq_array[i].size(), lb_ieq_array[i].size()) = lb_ieq_array[i];                            

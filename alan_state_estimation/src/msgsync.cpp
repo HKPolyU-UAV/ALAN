@@ -558,8 +558,8 @@ void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Qua
 
     alan_visualization::Tangent temp_tangent = set_plane_bound(
         temp_normal,
-         t_current.translation() + q_rotate_vector(q_current,Eigen::Vector3d(final_corridor_length,0,0))
-        );
+        t_current.translation() + q_rotate_vector(q_current,Eigen::Vector3d(final_corridor_length ,0,0))
+    );
 
 
     //5th plane
@@ -611,7 +611,7 @@ void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Qua
 
     temp_tangent = set_plane_bound(
         temp_normal,
-        t_current.translation() + q_rotate_vector(q_current, Eigen::Vector3d(final_corridor_length,0,0))
+        t_current.translation() + q_rotate_vector(q_current, Eigen::Vector3d(final_corridor_length ,0,0))
     );
 
     

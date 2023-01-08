@@ -112,8 +112,8 @@ int main(int argc, char** argv)
     b_info.m = 2;
     b_info.d_order = 3;
 
-    b_info.s.push_back(0.265229);
-    b_info.s.push_back(1.00022);
+    b_info.s.push_back(2.0);
+    b_info.s.push_back(0.5);
 
     //
 
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
     alan_traj::endpt end_3d;
     end_3d.posi(0) = -2.2;
     end_3d.posi(1) = -2.1999;
-    end_3d.posi(2) = 0.259144;
+    end_3d.posi(2) = 0.259144 + 0.3;
 
 
     end_3d.velo(0) = -2.25129e-05;
