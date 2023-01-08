@@ -28,9 +28,9 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
 
-    double t0 = ros::Time::now().toSec(); 
+    double tick = ros::Time::now().toSec(); 
 
-    if(t0 - last_request > ros::Duration(0.1).toSec() && nodelet_activated)
+    if(tick - last_request > ros::Duration(0.1).toSec() && nodelet_activated)
     {
         LED_tracker_initiated_or_tracked = false;
         printf("\033c");
@@ -39,11 +39,11 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
            
     solve_pose_w_LED(frame, depth);
     
-    double t1 = ros::Time::now().toSec();    
+    double tock = ros::Time::now().toSec();    
 
-    terminal_msg_display(1 / (t1 - t0));
+    terminal_msg_display(1 / (tock - tick));
 
-    set_image_to_publish(1 / (t1 - t0), rgbmsg);
+    set_image_to_publish(1 / (tock - tick), rgbmsg);
                     
     last_request = ros::Time::now().toSec();
 
