@@ -161,20 +161,20 @@ int main(int argc, char** argv)
 
     //dynamic constraint
     alan_traj::dynamic_constraints d_constraints;
-    d_constraints.v_max(0) =  2;
-    d_constraints.v_min(0) = -2;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(0) =  4;
-    d_constraints.a_min(0) = -4;//OsqpEigen::INFTY;//-200;
+    d_constraints.v_max(0) =  5;
+    d_constraints.v_min(0) = -5;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(0) =  10;
+    d_constraints.a_min(0) = -10;//OsqpEigen::INFTY;//-200;
 
-    d_constraints.v_max(1) =  2;
-    d_constraints.v_min(1) = -2;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(1) =  4;
-    d_constraints.a_min(1) = -4;//OsqpEigen::INFTY;//-200;
+    d_constraints.v_max(1) =  5;
+    d_constraints.v_min(1) = -5;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(1) =  10;
+    d_constraints.a_min(1) = -10;//OsqpEigen::INFTY;//-200;
 
-    d_constraints.v_max(2) =  2;
-    d_constraints.v_min(2) = -2;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(2) =  4;
-    d_constraints.a_min(2) = -4;//OsqpEigen::INFTY;//-200;
+    d_constraints.v_max(2) =  5;
+    d_constraints.v_min(2) = -5;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(2) =  10;
+    d_constraints.a_min(2) = -10;//OsqpEigen::INFTY;//-200;
 
 
     alan_traj::bezier_constraints b_constraints;

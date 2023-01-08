@@ -173,8 +173,10 @@ namespace alan_traj
         // _ub = _ub * 100;
         // _lb = _lb * 100;
 
-        cout<<"\n-----------------------------------------------lalalalalalalalala\n";
-        cout<<_MQM<<endl;
+        // cout<<_A<<endl;
+        // cout<<_ub<<endl;
+        // cout<<"\n-----------------------------------------------lalalalalalalalala\n";
+        // cout<<_MQM<<endl;
         // cout<<_MQM.rows()<<"  "<<_MQM.cols()<<endl<<endl;;
         
 

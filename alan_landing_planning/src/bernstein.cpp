@@ -176,7 +176,7 @@ namespace alan_traj
 
                 printf("ieq matriaces: pass\n");
 
-                cout<<axis_i<<" dimension:\n\n";
+                // cout<<axis_i<<" dimension:\n\n";
                 // cout<<A_ieq<<endl;
                 // cout<<A_ieq.rows()<<" "<<A_ieq.cols()<<endl<<endl;
                 
@@ -188,7 +188,7 @@ namespace alan_traj
                 setMQM1D(axis_i, n_order, m, d_order, s);
                 MQM_array.emplace_back(MQM);
 
-                cout<<"that's one dimension\n\n\n";
+                // cout<<"that's one dimension\n\n\n";
             }
 
             printf("\n---------------------- now set all dimension ----------------------\n");
@@ -240,7 +240,7 @@ namespace alan_traj
 
             for(int j = 0; j <  i + 1; j++)
             {
-                Aeq_start(i, j) = p * pascal[j] * pow(s[0], 1-j);
+                Aeq_start(i, j) = p * pascal[j] * pow(s[0], 1-i);
             }
         }
 
@@ -259,7 +259,7 @@ namespace alan_traj
 
             for(int j = 0; j <  i + 1; j++)
             {
-                Aeq_end(i, _dim-1 - j) = p * pascal[j] * pow(s[s.size()-1], 1-j);
+                Aeq_end(i, _dim-1 - j) = p * pascal[j] * pow(s[s.size()-1], 1-i);
             }
         }
 
@@ -302,6 +302,9 @@ namespace alan_traj
                     break;
                 
                 case 1://v
+                    // cout<<"vel: "<<endl;
+                    // cout<<p * pascal[0] * pow(s[i+0], 1-j)<<endl;
+
                     Aeq_cont(starto_row, starto_col - 1) = p * pascal[0] * pow(s[i+0], 1-j);
                     Aeq_cont(starto_row, starto_col - 0) = p * pascal[1] * pow(s[i+0], 1-j);
 
@@ -339,15 +342,16 @@ namespace alan_traj
             }
             
         }
-
-
+        cout<<"hi..."<<endl;
+        cout<<Aeq_start<<endl;
+        cout<<Aeq_end<<endl<<endl;;
         A_eq.resize(Aeq_start.rows() + Aeq_end.rows() + Aeq_cont.rows(), _dim);
         
         A_eq << Aeq_start,
                 Aeq_end,
                 Aeq_cont;
 
-        cout<<"Aeq in setAeq1D!:\n"<<A_eq.rows()<<endl<<endl;
+        // cout<<"Aeq in setAeq1D!:\n"<<A_eq.rows()<<endl<<endl;
     }
 
     void bernstein::setUBeq1D(int axis_dim, endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
@@ -518,7 +522,7 @@ namespace alan_traj
             Aieq_p.block(starto_row_col, starto_row_col, (n_order + 1), (n_order + 1)) = Aieq_p.block(starto_row_col, starto_row_col, (n_order + 1), (n_order + 1)) * pow(s[i], 1);
         }
 
-        cout<<"should be fine..."<<endl;
+        // cout<<"should be fine..."<<endl;
 
         //Aieq_v
         Eigen::MatrixXd Aieq_v;
@@ -685,7 +689,7 @@ namespace alan_traj
 
         
 
-        cout<<"Aieq in setAieq1D !:\n"<<A_ieq.rows()<<endl<<endl;;
+        // cout<<"Aieq in setAieq1D !:\n"<<A_ieq.rows()<<endl<<endl;;
 
     }
 
@@ -1242,18 +1246,20 @@ namespace alan_traj
         vector<double> s
         )
     {
+        // this is for A_ieq_sfc
+
         int onedim_ctrl_pts_per_seg = (n_order + 1);
         int onedim_ctrl_pts_per_dim = m * (n_order + 1);
         int total_ctrl_pts          = axis_dim * m * (n_order + 1);
         
-        cout<<"---------------------------------set PolyH here------------"<<endl;
-        cout<<corridor.size()<<endl;;
-        for(auto what : corridor)
-        {
-            cout<<what.PolyhedronTangentArray.size()<<endl;
-        }
+        // cout<<"---------------------------------set PolyH here------------"<<endl;
+        // cout<<corridor.size()<<endl;;
+        // for(auto what : corridor)
+        // {
+        //     cout<<what.PolyhedronTangentArray.size()<<endl;
+        // }
 
-        cout<<"---------------------------------set PolyH end------------"<<endl;
+        // cout<<"---------------------------------set PolyH end------------"<<endl;
 
         //how many corridor are there
         
@@ -1264,12 +1270,13 @@ namespace alan_traj
         for(int i = 0; i < corridor.size(); i++)  
             tangent_plane_no = tangent_plane_no + corridor[i].PolyhedronTangentArray.size();        
         
-        cout<<"onedim_ctrl_pts_per_seg: "<<onedim_ctrl_pts_per_seg<<endl;
-        cout<<"tangent_plane_no: "<<tangent_plane_no<<endl<<endl;
+        // cout<<"onedim_ctrl_pts_per_seg: "<<onedim_ctrl_pts_per_seg<<endl;
+        // cout<<"tangent_plane_no: "<<tangent_plane_no<<endl<<endl;
         
         total_constraint_no = tangent_plane_no * onedim_ctrl_pts_per_seg;    
         
-        cout<<"total tangent plane constraints: "<<total_constraint_no<<endl; 
+        // cout<<"total tangent plane constraints: "<<total_constraint_no<<endl;
+        // cout<<"total control points number: "<<total_ctrl_pts<<endl; 
 
         A_ieqsfc.resize(total_constraint_no, total_ctrl_pts);
         ub_ieqsfc.resize(total_constraint_no);
@@ -1287,7 +1294,7 @@ namespace alan_traj
         for(int i = 0; i < corridor.size(); i++)
         {
             //which corridor, i.e., segment
-            starto_col = i * onedim_ctrl_pts_per_dim;            
+            starto_col = i * onedim_ctrl_pts_per_seg;            
             
             if(i > 0)
                 //which control points we are at , hence the row of constraints
@@ -1297,8 +1304,8 @@ namespace alan_traj
             // cout<<"starto_row: "<<starto_row<<endl;
             // cout<<"starto_col: "<<starto_col<<endl<<endl;
 
-            cout<<"starto_row: "<<starto_row<<endl;
-            cout<<"starto_col: "<<starto_col + onedim_ctrl_pts_per_dim<<endl<<endl;
+            // cout<<"starto_row: "<<starto_row<<endl;
+            // cout<<"starto_col: "<<starto_col + onedim_ctrl_pts_per_dim<<endl<<endl;
             
             for(int j = 0; j < onedim_ctrl_pts_per_seg; j++)
             {
@@ -1336,7 +1343,6 @@ namespace alan_traj
                         
                         lb_ieqsfc(starto_row_for_each_segment) = -(double)1e30;
                         starto_row_for_each_segment++;
-
                     }
                                         
                     break;
@@ -1345,9 +1351,10 @@ namespace alan_traj
 
                     for(int k = 0; k < corridor[i].PolyhedronTangentArray.size(); k++)                    
                     {
-                        A_ieqsfc(starto_row_for_each_segment, starto_col + j) = corridor[i].PolyhedronTangentArray[k].n.X;
-                        A_ieqsfc(starto_row_for_each_segment, starto_col + j + 1 * onedim_ctrl_pts_per_seg) = corridor[i].PolyhedronTangentArray[k].n.Y;
-                        A_ieqsfc(starto_row_for_each_segment, starto_col + j + 2 * onedim_ctrl_pts_per_seg) = corridor[i].PolyhedronTangentArray[k].n.Z;
+                        // cout<<"hi: "<<starto_row_for_each_segment<<" "<<starto_col<<endl;                        
+                        A_ieqsfc(starto_row_for_each_segment, starto_col + j) = corridor[i].PolyhedronTangentArray[k].n.X * s[i];
+                        A_ieqsfc(starto_row_for_each_segment, starto_col + j + 1 * onedim_ctrl_pts_per_dim) = corridor[i].PolyhedronTangentArray[k].n.Y * s[i];
+                        A_ieqsfc(starto_row_for_each_segment, starto_col + j + 2 * onedim_ctrl_pts_per_dim) = corridor[i].PolyhedronTangentArray[k].n.Z * s[i];
                         
                         ub_ieqsfc(starto_row_for_each_segment) = corridor[i].PolyhedronTangentArray[k].n.X
                                                     * corridor[i].PolyhedronTangentArray[k].pt.X
@@ -1360,7 +1367,6 @@ namespace alan_traj
                         
                         lb_ieqsfc(starto_row_for_each_segment) = -(double)1e30;
                         starto_row_for_each_segment++;
-
                     }
                     
                     break;
@@ -1394,6 +1400,11 @@ namespace alan_traj
         for(int i = 0; i < MQM_array.size(); i++)        
             MQM_final.block(i * MQM_array[i].rows(), i * MQM_array[i].cols(), MQM_array[i].rows(), MQM_array[i].cols()) = MQM_array[i];
         
+
+        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/MQM_matrix.txt");
+
+        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/MQM_matrix.txt",ios::app);
+        save<<MQM_final<<endl;
     }
 
     void bernstein::setAFinal()
@@ -1439,24 +1450,16 @@ namespace alan_traj
     void bernstein::setAFinal_polyh()
     {
         cout<<"\n\nhi now in AFinal_polyh..."<<endl;
-        // cout<<"A_sfc_eq_array..."<<A_sfc_eq_array.size()<<endl;
-        // cout<<"A_sfc_eq_array..."<<A_sfc_eq_array[0].rows()<<endl;
-        // cout<<"A_sfc_ieq_sfc...."<<A_ieqsfc.rows()<<endl;
-        // cout<<"A_sfc_ieq_array..."<<A_sfc_ieq_dyn_array.size()<<endl;
-        // cout<<"A_sfc_ieq_array..."<<A_sfc_ieq_dyn_array[0].rows()<<endl<<endl;
         
         int A_final_rows = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows()
-                            + A_ieqsfc.rows()
+                            // + A_ieqsfc.rows()
                             + A_sfc_ieq_dyn_array.size() * A_sfc_ieq_dyn_array[0].rows();
         
         int A_final_cols = A_sfc_eq_array.size() * A_sfc_eq_array[0].cols();
-                            // + A_ieqsfc.cols()
-                            // + A_sfc_ieq_dyn_array.size() * A_sfc_ieq_dyn_array[0].cols();
         
         
-        // cout<<1<<endl;
-
         A_final.resize(A_final_rows, A_final_cols);
+        A_final.setZero();
         cout<<"here are the final sizes of constraints...\n";
         cout<<A_sfc_eq_array.size() * A_sfc_eq_array[0].rows()<<endl;
         cout<<A_ieqsfc.rows()<<endl;
@@ -1469,42 +1472,30 @@ namespace alan_traj
             A_final.block(i * A_sfc_eq_array[i].rows(), i * A_sfc_eq_array[i].cols(), A_sfc_eq_array[i].rows(), A_sfc_eq_array[i].cols()) = A_sfc_eq_array[i];
         }
 
-        // cout<<2<<endl;
 
-        A_final.block(A_sfc_eq_array.size() * A_sfc_eq_array[0].rows(), 0, A_ieqsfc.rows(), A_ieqsfc.cols()) = A_ieqsfc;
+        // A_final.block(A_sfc_eq_array.size() * A_sfc_eq_array[0].rows(), 0, A_ieqsfc.rows(), A_ieqsfc.cols()) = A_ieqsfc;
 
-        // cout<<3<<endl;
 
-        int starto = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows() + A_ieqsfc.rows();
+        int starto = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows();// + A_ieqsfc.rows();
 
-        // cout<<"local starto = "<<starto<<endl;
 
         for(int i = 0 ; i < A_sfc_ieq_dyn_array.size(); i++)
         {
-            cout<<"temp_i: "<<starto + i * A_sfc_ieq_dyn_array[i].rows()<<endl;
-            cout<<"temp_j: "<<i * A_sfc_eq_array[i].cols()<<endl;
-            cout<<"temp_r: "<<A_sfc_ieq_dyn_array[i].rows()<<endl;
-            cout<<"temp_c: "<<A_sfc_ieq_dyn_array[i].cols()<<endl<<endl;
             A_final.block(starto + i * A_sfc_ieq_dyn_array[i].rows(), i * A_sfc_eq_array[i].cols(), A_sfc_ieq_dyn_array[i].rows(), A_sfc_ieq_dyn_array[i].cols()) = A_sfc_ieq_dyn_array[i];
         }
-        // cout<<4<<endl;
 
-        // cout<<A_final<<endl;
 
-        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/matrix.txt");
+        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/A_matrix.txt");
 
-        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/matrix.txt",ios::app);
+        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/A_matrix.txt",ios::app);
         save<<A_final<<endl;
         save.close();
-
-
-
     }
 
     void bernstein::setUbFinal_polyh()
     {
         int ub_final_rows = ub_eq_array.size() * ub_eq_array[0].rows()
-                            + ub_ieqsfc.rows()
+                            // + ub_ieqsfc.rows()
                             + ub_ieq_array.size() * ub_ieq_array[0].rows();
 
         ub_final.resize(ub_final_rows);
@@ -1512,16 +1503,16 @@ namespace alan_traj
         for(int i = 0; i < ub_eq_array.size(); i++)
             ub_final.middleRows(ub_eq_array[i].size() * i, ub_eq_array[i].size()) = ub_eq_array[i];
         
-        ub_final.middleRows(ub_eq_array.size() * ub_eq_array[0].rows(), ub_ieqsfc.size()) = ub_ieqsfc;
+        // ub_final.middleRows(ub_eq_array.size() * ub_eq_array[0].rows(), ub_ieqsfc.size()) = ub_ieqsfc;
 
-        int starto = ub_eq_array.size() * ub_eq_array[0].rows() + ub_ieqsfc.rows();
+        int starto = ub_eq_array.size() * ub_eq_array[0].rows();// + ub_ieqsfc.rows();
         
         for(int i = 0; i < ub_ieq_array.size(); i++)
             ub_final.middleRows(starto + i * ub_ieq_array[i].size(), ub_ieq_array[i].size()) = ub_ieq_array[i];                            
 
-        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/ub.txt");
+        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/ub.txt");
 
-        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/ub.txt",ios::app);
+        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/ub.txt",ios::app);
         save<<ub_final<<endl;
         save.close();
     }
@@ -1529,7 +1520,7 @@ namespace alan_traj
     void bernstein::setLbFinal_polyh()
     {
         int lb_final_rows = lb_eq_array.size() * lb_eq_array[0].rows()
-                            + lb_ieqsfc.rows()
+                            // + lb_ieqsfc.rows()
                             + lb_ieq_array.size() * lb_ieq_array[0].rows();
 
         lb_final.resize(lb_final_rows);
@@ -1537,17 +1528,17 @@ namespace alan_traj
         for(int i = 0; i < lb_eq_array.size(); i++)
             lb_final.middleRows(lb_eq_array[i].size() * i, lb_eq_array[i].size()) = lb_eq_array[i];
         
-        lb_final.middleRows(lb_eq_array.size() * lb_eq_array[0].rows(), lb_ieqsfc.size()) = lb_ieqsfc;
+        // lb_final.middleRows(lb_eq_array.size() * lb_eq_array[0].rows(), lb_ieqsfc.size()) = lb_ieqsfc;
 
-        int starto = lb_eq_array.size() * lb_eq_array[0].rows() + lb_ieqsfc.rows();
+        int starto = lb_eq_array.size() * lb_eq_array[0].rows();// + lb_ieqsfc.rows();
         
         for(int i = 0; i < lb_ieq_array.size(); i++)
             lb_final.middleRows(starto + i * lb_ieq_array[i].size(), lb_ieq_array[i].size()) = lb_ieq_array[i];                            
 
 
-        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/lb.txt");
+        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/lb.txt");
 
-        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/lb.txt",ios::app);
+        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/lb.txt",ios::app);
         save<<lb_final<<endl;
         save.close();
 
