@@ -4,7 +4,6 @@
 #include "tools/essential.h"
 #include "bezier_lib/traj_gen.h"
 
-#include <mavros_msgs/OverrideRCIn.h>
 
 // #include "alan/AlanPlanner.h"
 
@@ -37,7 +36,6 @@ class planner_server
 private:
     ros::NodeHandle nh;
 
-    mavros_msgs::OverrideRCIn pwm_test;
 
     //subscriber
     ros::Subscriber uav_state_sub;
@@ -49,8 +47,7 @@ private:
     ros::Publisher local_vel_pub;
     ros::Publisher pub_fsm;
 
-
-    ros::Publisher pwm_test_pub;
+    string log_path;
     
 
     //service

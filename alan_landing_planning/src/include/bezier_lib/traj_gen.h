@@ -40,6 +40,8 @@ namespace alan_traj
         dynamic_constraints _d_constraints;
         vector<alan_visualization::Polyhedron> _sfc_list;
 
+        string _log_path;
+
         //Cost term
         Eigen::MatrixXd _MQM;
         int _n_order, _m, _d_order;
@@ -57,6 +59,7 @@ namespace alan_traj
         //other tool
         void msg_printer(char *s);
         void log();
+        // void log_file(string log_txt_location, );
 
         const double pascal[100][100] 
             = {
@@ -81,7 +84,8 @@ namespace alan_traj
         traj_gen( 
             bezier_info b_info,  
             bezier_constraints b_constraints,
-            int discrete_freq
+            int discrete_freq,
+            string log_path
             );
         ~traj_gen(){};
 

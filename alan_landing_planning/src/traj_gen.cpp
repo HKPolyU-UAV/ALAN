@@ -12,7 +12,8 @@ namespace alan_traj
     traj_gen::traj_gen( 
         bezier_info b_info,  
         bezier_constraints b_constraints, 
-        int discrete_freq)
+        int discrete_freq,
+        string log_path)
         //for variable set
         :
         _axis_dim(b_info.axis_dim), 
@@ -33,11 +34,14 @@ namespace alan_traj
         _n_order(b_info.n_order), _m(b_info.m), _d_order(b_info.d_order), _s(b_info.s),
 
         //freq
-        _discrete_freq(discrete_freq) 
+        _discrete_freq(discrete_freq),
+
+        //log_path
+        _log_path(log_path)
     {
         ROS_WARN("entering traj generator!");  
 
-        log();      
+             
 
         // msg_printer("-----------------------------------------------------------------");
         // msg_printer("             ALan v0.1 - Autonomous Landing for UAV");
@@ -90,6 +94,9 @@ namespace alan_traj
             printf("3. cost term: x'M'QMx\n");
             _MQM = bezier_base.getMQM();
             // _MQM = get_nearest_SPD(_MQM);
+
+
+            
 
 
         }
@@ -158,6 +165,8 @@ namespace alan_traj
             ROS_ERROR("Please check kinematic constraint type...");
         }
 
+        log(); 
+
     }; 
 
     void traj_gen::solve_opt(int freq)
@@ -183,6 +192,13 @@ namespace alan_traj
 
         trajSolver.qp_opt(_MQM, _A, _ub, _lb);
         PolyCoeff = trajSolver.getQpsol();
+
+        string temp = _log_path + "polycoef.txt";
+        remove(temp.c_str()); 
+        ofstream save(temp ,ios::app);
+        save<<PolyCoeff<<endl;
+        save.close();
+
         cout<<"\n----------------results here-------------------------\n";
         cout<<PolyCoeff<<endl<<endl<<endl;
 
@@ -409,40 +425,59 @@ namespace alan_traj
 
     void traj_gen::log()
     {
+        //b_traj info log...
+        string temp = _log_path + "b_traj.txt";
+        remove(temp.c_str()); 
+        ofstream save(temp ,ios::app);
 
-        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/b_traj.txt"); 
-        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/b_traj.txt",ios::app);
         save<<"log of trajectory optimization..."<<endl;
         save<<endl<<"log start..."<<endl<<endl;
         save<<"_axis_dim:\n"<<_axis_dim<<endl<<endl;
         save<<"_n_dim:\n"<<_n_dim<<endl<<endl;
         save<<"_n_dim_per_axis:\n"<<_n_dim_per_axis<<endl<<endl;
-
         save<<"_start_posi:\n"<<_start.posi<<endl<<endl;
         save<<"_start_velo:\n"<<_start.velo<<endl<<endl;
         save<<"_start_accl:\n"<<_start.accl<<endl<<endl;
-
         save<<"_sfc_list:\n";
         for(auto what : _sfc_list)
-        {
             save<<"here is one corridor...: "<<what.PolyhedronTangentArray.size()<<endl;
-        }
-
         save<<endl;
-
         save<<"_d_constraints v:\n"<<_d_constraints.v_max<<endl<<endl;
         save<<"_d_constraints a:\n"<<_d_constraints.a_max<<endl<<endl;
-
         save<<"_n_order\n"<<_n_order<<endl<<endl;
         save<<"_m\n"<<_m<<endl<<endl;
         save<<"_d_order\n"<<_d_order<<endl<<endl;
 
         for(auto what : _s)
             save<<"_s\n"<<what<<endl;
-
         save<<endl<<"log end..."<<endl;
-
+        
         save.close();
 
+
+        //matrix log...
+        temp = _log_path + "MQM_matrix.txt";
+        remove(temp.c_str()); 
+        save = ofstream(temp ,ios::app);
+        save<<_MQM<<endl;
+        save.close();
+
+        temp = _log_path + "A_matrix.txt";
+        remove(temp.c_str()); 
+        save = ofstream(temp ,ios::app);
+        save<<_A<<endl;
+        save.close();
+
+        temp = _log_path + "ub.txt";
+        remove(temp.c_str()); 
+        save = ofstream(temp ,ios::app);
+        save<<_ub<<endl;
+        save.close();
+
+        temp = _log_path + "lb.txt";
+        remove(temp.c_str()); 
+        save = ofstream(temp ,ios::app);
+        save<<_lb<<endl;
+        save.close();
     }
 }

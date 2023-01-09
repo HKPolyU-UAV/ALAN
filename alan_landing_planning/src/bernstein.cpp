@@ -1380,10 +1380,10 @@ namespace alan_traj
             MQM_final.block(i * MQM_array[i].rows(), i * MQM_array[i].cols(), MQM_array[i].rows(), MQM_array[i].cols()) = MQM_array[i];
         
 
-        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/MQM_matrix.txt");
+        // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/MQM_matrix.txt");
 
-        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/MQM_matrix.txt",ios::app);
-        save<<MQM_final<<endl;
+        // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/MQM_matrix.txt",ios::app);
+        // save<<MQM_final<<endl;
     }
 
     void bernstein::setAFinal()
@@ -1464,11 +1464,11 @@ namespace alan_traj
         }
 
 
-        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/A_matrix.txt");
+        // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/A_matrix.txt");
 
-        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/A_matrix.txt",ios::app);
-        save<<A_final<<endl;
-        save.close();
+        // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/A_matrix.txt",ios::app);
+        // save<<A_final<<endl;
+        // save.close();
     }
 
     void bernstein::setUbFinal_polyh()
@@ -1490,11 +1490,11 @@ namespace alan_traj
         for(int i = 0; i < ub_ieq_array.size(); i++)
             ub_final.middleRows(starto + i * ub_ieq_array[i].size(), ub_ieq_array[i].size()) = ub_ieq_array[i];                            
 
-        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/ub.txt");
+        // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/ub.txt");
 
-        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/ub.txt",ios::app);
-        save<<ub_final<<endl;
-        save.close();
+        // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/ub.txt",ios::app);
+        // save<<ub_final<<endl;
+        // save.close();
     }
 
     void bernstein::setLbFinal_polyh()
@@ -1517,11 +1517,11 @@ namespace alan_traj
             lb_final.middleRows(starto + i * lb_ieq_array[i].size(), lb_ieq_array[i].size()) = lb_ieq_array[i];                            
 
 
-        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/lb.txt");
+        // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/lb.txt");
 
-        ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/lb.txt",ios::app);
-        save<<lb_final<<endl;
-        save.close();
+        // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/lb.txt",ios::app);
+        // save<<lb_final<<endl;
+        // save.close();
 
     }
 

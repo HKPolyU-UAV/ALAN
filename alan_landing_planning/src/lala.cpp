@@ -189,7 +189,7 @@ int main(int argc, char** argv)
 
 
 
-    alan_traj::traj_gen traj(b_info, b_constraints, 50);
+    alan_traj::traj_gen traj(b_info, b_constraints, 50, "/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/");
     
 
     traj.solve_opt(50);

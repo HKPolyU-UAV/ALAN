@@ -3,9 +3,6 @@
 planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 : nh(_nh), last_request(ros::Time::now().toSec()), _pub_freq(pub_freq)
 {
-
-    pwm_test.channels[6] = 900;
-
     nh.getParam("/alan_master_planner_node/final_landing_x", final_landing_x);
     nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
     nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
@@ -13,6 +10,8 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
     cout<<"ugv_height: "<<ugv_height<<endl;
     nh.getParam("/alan_master_planner_node/v_max", v_max);
     nh.getParam("/alan_master_planner_node/a_max", a_max);
+
+    nh.getParam("/alan_master_planner_node/log_path", log_path);
 
     cout<<"v_max: "<<v_max<<endl;
     cout<<"a_max: "<<a_max<<endl;
@@ -53,10 +52,6 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 
     uav_set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
             ("/uav/mavros/set_mode");
-
-
-    pwm_test_pub = nh.advertise<mavros_msgs::OverrideRCIn>
-            ("/uav/mavros/rc/override", 1);
 
     cout<<"final_landing_x: "<<final_landing_x<<endl;
 
@@ -410,8 +405,6 @@ void planner_server::planner_pub()
     alan_fsm_object.finite_state_machine = fsm_state;
     pub_fsm.publish(alan_fsm_object);
 
-    pwm_test_pub.publish(pwm_test);
-
 }
 
 Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vector4d setpoint)
@@ -686,7 +679,7 @@ void planner_server::set_alan_b_traj()
     cout<<5<<endl;
     
         
-    alan_traj::traj_gen alan_btraj(btraj_info, btraj_constraints, _pub_freq);
+    alan_traj::traj_gen alan_btraj(btraj_info, btraj_constraints, _pub_freq, log_path);
     alan_btraj.solve_opt(_pub_freq);
     alan_optiTraj = alan_btraj.getOptiTraj();
 
@@ -700,7 +693,6 @@ void planner_server::set_btraj_info()
     btraj_info.n_order = 7;
     btraj_info.m = 2;
     btraj_info.d_order = 3;
-
 }
 
 void planner_server::set_btraj_equality_constraint()
