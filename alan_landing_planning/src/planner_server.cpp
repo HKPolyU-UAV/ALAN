@@ -3,6 +3,9 @@
 planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 : nh(_nh), last_request(ros::Time::now().toSec()), _pub_freq(pub_freq)
 {
+
+    pwm_test.channels[6] = 900;
+
     nh.getParam("/alan_master_planner_node/final_landing_x", final_landing_x);
     nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
     nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
@@ -50,6 +53,10 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 
     uav_set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
             ("/uav/mavros/set_mode");
+
+
+    pwm_test_pub = nh.advertise<mavros_msgs::OverrideRCIn>
+            ("/uav/mavros/rc/override", 1);
 
     cout<<"final_landing_x: "<<final_landing_x<<endl;
 
@@ -333,19 +340,21 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     // target_traj_pose = set_uav_block_pose();
 
     //should be time and following quality
-    if(
-        uav_current_AlanPlannerMsg.good2fly && 
-        (ros::Time::now().toSec() - last_request) > ros::Duration(2.0).toSec()
-    )
-    {
-        // cout<<"good to fly"<<endl;
-        return true;
-    }
-    else
-    {
-        // cout<<"not good to fly"<<endl;
-        return false;
-    }
+    // if(
+    //     uav_current_AlanPlannerMsg.good2fly && 
+    //     (ros::Time::now().toSec() - last_request) > ros::Duration(2.0).toSec()
+    // )
+    // {
+    //     // cout<<"good to fly"<<endl;
+    //     return true;
+    // }
+    // else
+    // {
+    //     // cout<<"not good to fly"<<endl;
+    //     return false;
+    // }
+
+    return false;
 }
 
 bool planner_server::hover()
@@ -400,6 +409,8 @@ void planner_server::planner_pub()
 
     alan_fsm_object.finite_state_machine = fsm_state;
     pub_fsm.publish(alan_fsm_object);
+
+    pwm_test_pub.publish(pwm_test);
 
 }
 
