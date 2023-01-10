@@ -11,6 +11,7 @@ osqpsolver::osqpsolver()
 
 osqpsolver::~osqpsolver()
 {
+    //test
 
 }
 
