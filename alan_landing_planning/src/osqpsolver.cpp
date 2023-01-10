@@ -12,6 +12,7 @@ osqpsolver::osqpsolver()
 osqpsolver::~osqpsolver()
 {
     //test
+    //haha
 
 }
 
