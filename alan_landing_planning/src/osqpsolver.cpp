@@ -11,7 +11,7 @@ osqpsolver::osqpsolver()
 
 osqpsolver::~osqpsolver()
 {
-
+    //gan
 }
 
 void osqpsolver::qp_opt(
