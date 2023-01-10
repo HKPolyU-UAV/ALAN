@@ -343,7 +343,7 @@ namespace alan
                     norm_of_y_points.push_back(temp.y());
                     norm_of_z_points.push_back(temp.z());                    
                     cout<<"-----"<<endl;
-                    cout<<temp<<endl;                    
+                    cout<<temp.x()<<" "<<temp.y()<<" "<<temp.z()<<" "<<endl;                    
                     pts_on_body_frame.push_back(temp);
                 }   
                 cout<<endl;

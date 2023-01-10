@@ -181,10 +181,14 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "alan_rviz");
     ros::NodeHandle nh;
     
-    ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>("/alan/sfc/all_corridors", 1, &sfc_msg_callback);
-    ros::Subscriber traj_sub = nh.subscribe<alan_landing_planning::Traj>("/alan_visualization/traj", 1, &traj_msg_callback);
-    ros::Subscriber uav_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>("/AlanPlannerMsg/uav/data", 1, &uavAlanMsgCallback);
-    ros::Subscriber ugv_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>("/AlanPlannerMsg/ugv/data", 1, &ugvAlanMsgCallback);
+    ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>
+            ("/alan_state_estimation/msgsync/polyhedron_array", 1, &sfc_msg_callback);
+    ros::Subscriber traj_sub = nh.subscribe<alan_landing_planning::Traj>
+            ("/alan_visualization/traj", 1, &traj_msg_callback);
+    ros::Subscriber uav_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
+            ("/alan_state_estimation/msgsync/uav/alan_planner_msg", 1, &uavAlanMsgCallback);
+    ros::Subscriber ugv_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
+            ("/alan_state_estimation/msgsync/ugv/alan_planner_msg", 1, &ugvAlanMsgCallback);
         
     ros::Publisher polyh_vis_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
     ros::Publisher traj_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points", 1, true);

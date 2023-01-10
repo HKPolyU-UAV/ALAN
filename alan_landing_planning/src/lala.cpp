@@ -76,7 +76,7 @@ int main(int argc, char** argv)
     ros::Publisher traj_pub = nh.advertise<alan_landing_planning::Traj>("/alan_visualization/traj", 1, true);
 
     ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>
-            ("/alan/sfc/all_corridors", 1, sfcMsgCallback);
+            ("/alan_state_estimation/msgsync/polyhedron_array", 1, sfcMsgCallback);
 
     ros::Rate rosrate(50);
 

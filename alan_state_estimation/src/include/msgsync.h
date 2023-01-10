@@ -197,17 +197,16 @@ namespace alan
                                            
             //publisher
                 uav_pub_AlanPlannerMsg = nh.advertise<alan_landing_planning::AlanPlannerMsg>
-                                    ("/AlanPlannerMsg/uav/data", 1);
+                        ("/alan_state_estimation/msgsync/uav/alan_planner_msg", 1);
 
                 ugv_pub_AlanPlannerMsg = nh.advertise<alan_landing_planning::AlanPlannerMsg>
-                                    ("/AlanPlannerMsg/ugv/data", 1);
+                        ("/alan_state_estimation/msgsync/ugv/alan_planner_msg", 1);
 
                 // alan_sfc_pub = nh.advertise<alan_visualization::Polyhedron>
                 //                     ("/alan/sfc/total_bound", 1);
 
                 alan_all_sfc_pub = nh.advertise<alan_visualization::PolyhedronArray>
-                                    ("/alan/sfc/all_corridors", 1);                                                    
-                
+                        ("/alan_state_estimation/msgsync/polyhedron_array", 1);   
             }      
 
     };

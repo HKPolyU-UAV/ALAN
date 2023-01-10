@@ -1,8 +1,7 @@
+axis_dim: 3
 n_order: 7
-
-m: 3
-
-d_order: 4 # p v a j
+m: 2
+d_order: 3 # p v a j
 
 take_off_height: 0.8
 ugv_height: 0.259
@@ -19,18 +18,18 @@ a_max: 4.0
 
 PID_gain:
   - kp:
-    - x: 0
-      y: 0
-      z: 0
-      yaw: 0
+    - x: 2.0
+      y: 2.0
+      z: 1.5
+      yaw: 1
   - ki:
-    - x: 0
-      y: 0
-      z: 0
-      yaw: 0
+    - x: 0.05
+      y: 0.05
+      z: 0.05
+      yaw: 0.05
   - kd:
-    - x: 0
-      y: 0
-      z: 0
-      yaw: 0
+    - x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
 

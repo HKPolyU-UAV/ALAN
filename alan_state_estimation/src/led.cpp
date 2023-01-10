@@ -141,10 +141,7 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     Eigen::Translation3d t_final = Eigen::Translation3d(cam_pose.rotation() * cam_to_body * led_pose.translation() + cam_pose.translation());// Eigen::Translation3d(led_pose.translation());
 
     led_pose = t_final * q_final;
-
-    
-
-    
+        
     Eigen::Vector3d temp(
         (uav_pose.translation() - led_pose.translation()).x(),
         (uav_pose.translation() - led_pose.translation()).y(),

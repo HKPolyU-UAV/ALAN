@@ -3,36 +3,18 @@
 planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 : nh(_nh), last_request(ros::Time::now().toSec()), _pub_freq(pub_freq)
 {
-    nh.getParam("/alan_master_planner_node/final_landing_x", final_landing_x);
-    nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
-    nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
-    nh.getParam("/alan_master_planner_node/ugv_height", ugv_height);
-    cout<<"ugv_height: "<<ugv_height<<endl;
-    nh.getParam("/alan_master_planner_node/v_max", v_max);
-    nh.getParam("/alan_master_planner_node/a_max", a_max);
-
-    nh.getParam("/alan_master_planner_node/log_path", log_path);
-
-    cout<<"v_max: "<<v_max<<endl;
-    cout<<"a_max: "<<a_max<<endl;
-
-    nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
-    nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
-
-
     //subscribe
     uav_state_sub = nh.subscribe<mavros_msgs::State>
             ("/uav/mavros/state", 1, &planner_server::uavStateCallback, this);
     
     uav_AlanPlannerMsg_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
-            ("/AlanPlannerMsg/uav/data", 1, &planner_server::uavAlanMsgCallback, this);
+            ("/alan_state_estimation/msgsync/uav/alan_planner_msg", 1, &planner_server::uavAlanMsgCallback, this);
 
     ugv_AlanPlannerMsg_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
-            ("/AlanPlannerMsg/ugv/data", 1, &planner_server::ugvAlanMsgCallback, this);
+            ("/alan_state_estimation/msgsync/ugv/alan_planner_msg", 1, &planner_server::ugvAlanMsgCallback, this);
 
     sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>
-            ("/alan/sfc/all_corridors", 1, &planner_server::sfcMsgCallback, this);
-
+            ("/alan_state_estimation/msgsync/polyhedron_array", 1, &planner_server::sfcMsgCallback, this);
 
     //publish
     pub_fsm = nh.advertise<alan_landing_planning::StateMachine>
@@ -43,27 +25,15 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
         //   /mavros/setpoint_position/local
     local_vel_pub = nh.advertise<geometry_msgs::Twist>
             ("/uav/mavros/setpoint_velocity/cmd_vel_unstamped", 5);
-
-    
-    
+        
     //client
     uav_arming_client = nh.serviceClient<mavros_msgs::CommandBool>
             ("/uav/mavros/cmd/arming");
 
     uav_set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
             ("/uav/mavros/set_mode");
-
-    cout<<"final_landing_x: "<<final_landing_x<<endl;
-
-    uav_set_mode.request.custom_mode = "OFFBOARD";
-    arm_cmd.request.value = true;
-    alan_fsm_object.finite_state_machine = IDLE;
-
-    set_btraj_info();
-    set_btraj_inequality_dynamic();
-
-    //block traj temp
-    set_block_traj = true;
+    
+    config(nh);
 }
 
 planner_server::~planner_server()
@@ -107,14 +77,14 @@ void planner_server::uavAlanMsgCallback(const alan_landing_planning::AlanPlanner
         uav_current_AlanPlannerMsg.position.x,
         uav_current_AlanPlannerMsg.position.y,
         uav_current_AlanPlannerMsg.position.z
-        );
+    );
 
     Eigen::Quaterniond q_(
         uav_current_AlanPlannerMsg.orientation.ow,
         uav_current_AlanPlannerMsg.orientation.ox,
         uav_current_AlanPlannerMsg.orientation.oy,
         uav_current_AlanPlannerMsg.orientation.oz
-        );
+    );
     
     uavOdomPose = t_ * q_;
 
@@ -132,14 +102,14 @@ void planner_server::ugvAlanMsgCallback(const alan_landing_planning::AlanPlanner
         ugv_current_AlanPlannerMsg.position.x,
         ugv_current_AlanPlannerMsg.position.y,
         ugv_current_AlanPlannerMsg.position.z
-        );
+    );
 
     Eigen::Quaterniond q_(
         ugv_current_AlanPlannerMsg.orientation.ow,
         ugv_current_AlanPlannerMsg.orientation.ox,
         ugv_current_AlanPlannerMsg.orientation.oy,
         ugv_current_AlanPlannerMsg.orientation.oz
-        );
+    );
     
     ugvOdomPose = t_ * q_;
 
@@ -147,6 +117,20 @@ void planner_server::ugvAlanMsgCallback(const alan_landing_planning::AlanPlanner
     ugv_traj_pose(3) = atan2(q_.toRotationMatrix()(1,0), q_.toRotationMatrix()(0,0));
 
     ugv_traj_pose_initiated = true;
+
+    if(uav_traj_pose_initiated && ugv_traj_pose_initiated)
+    {
+        setRelativePose();
+    }
+}
+
+void planner_server::setRelativePose()
+{
+    uav_in_ugv_frame_posi =
+        ugvOdomPose.rotation().inverse() * 
+        (uavOdomPose.translation() - ugvOdomPose.translation());
+
+    // cout<<uav_in_ugv_frame_posi<<endl<<endl;
 }
 
 void planner_server::sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& msg)
@@ -156,6 +140,7 @@ void planner_server::sfcMsgCallback(const alan_visualization::PolyhedronArray::C
 
     land_traj_constraint_initiated = true;
 }
+
 
 void planner_server::fsm_manager()
 {
@@ -363,15 +348,12 @@ bool planner_server::hover()
 }
 
 bool planner_server::land()
-{    
-    
+{        
     if(plan_traj)
     {        
         set_alan_b_traj();
         plan_traj = false;
     }
-
-
 
     return false;
 }
@@ -689,10 +671,10 @@ void planner_server::set_alan_b_traj()
 
 void planner_server::set_btraj_info()
 {
-    btraj_info.axis_dim = 3;
-    btraj_info.n_order = 7;
-    btraj_info.m = 2;
-    btraj_info.d_order = 3;
+    btraj_info.axis_dim = axis_dim;
+    btraj_info.n_order = n_order;
+    btraj_info.m = m;
+    btraj_info.d_order = d_order;
 }
 
 void planner_server::set_btraj_equality_constraint()
@@ -837,4 +819,44 @@ void planner_server::set_traj_time()
         landing_time_total * final_corridor_length / distance_uav_ugv
         );
 
+}
+
+void planner_server::config(ros::NodeHandle& _nh)
+{
+    ROS_INFO("Planner Server Launch...\n");
+    nh.getParam("/alan_master_planner_node/axis_dim", axis_dim);
+    nh.getParam("/alan_master_planner_node/n_order", n_order);
+    nh.getParam("/alan_master_planner_node/m", m);
+    nh.getParam("/alan_master_planner_node/d_order", d_order);
+
+    // cout<<axis_dim<<endl;
+    // cout<<n_order<<endl;
+    // cout<<m<<endl;
+    // cout<<d_order<<endl;
+
+    nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
+    nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
+    nh.getParam("/alan_master_planner_node/ugv_height", ugv_height);
+    cout<<"ugv_height: "<<ugv_height<<endl;
+    nh.getParam("/alan_master_planner_node/v_max", v_max);
+    nh.getParam("/alan_master_planner_node/a_max", a_max);
+
+    nh.getParam("/alan_master_planner_node/log_path", log_path);
+
+    cout<<"v_max: "<<v_max<<endl;
+    cout<<"a_max: "<<a_max<<endl;
+
+    nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
+    nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
+
+
+    uav_set_mode.request.custom_mode = "OFFBOARD";
+    arm_cmd.request.value = true;
+    alan_fsm_object.finite_state_machine = IDLE;
+
+    set_btraj_info();
+    set_btraj_inequality_dynamic();
+
+    //block traj temp
+    set_block_traj = true;
 }
