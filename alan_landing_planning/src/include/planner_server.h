@@ -137,7 +137,7 @@ private:
 
 //rotation function
     Eigen::Vector3d q2rpy(Eigen::Quaterniond q) {
-        return q.toRotationMatrix().eulerAngles(2,1,0);
+        return q.toRotationMatrix().eulerAngles(1,0,2);
     };
 
     Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy){

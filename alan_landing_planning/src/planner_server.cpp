@@ -1,4 +1,6 @@
 #include "include/planner_server.h"
+#include <tf/tf.h>
+// #include <mavros_msgs/qua
 
 planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 : nh(_nh), last_request(ros::Time::now().toSec()), _pub_freq(pub_freq)
@@ -85,6 +87,20 @@ void planner_server::uavAlanMsgCallback(const alan_landing_planning::AlanPlanner
         uav_current_AlanPlannerMsg.orientation.oy,
         uav_current_AlanPlannerMsg.orientation.oz
     );
+
+    cout<<q2rpy(q_)<<endl<<endl;
+    // q_.
+    // tfScalar yaw, pitch, roll;
+    // tf::Quaternion q_tf;
+    // q_tf.setW(q_.w()); 
+    // q_tf.setX(q_.x()); 
+    // q_tf.setY(q_.y()); 
+    // q_tf.setZ(q_.z()); 
+
+    // tf::Matrix3x3 mat(q_tf);
+    // mat.getEulerYPR(yaw, pitch, roll);
+
+    // cout<<yaw<<" "<<pitch<<" "<<roll<<endl;
     
     uavOdomPose = t_ * q_;
 

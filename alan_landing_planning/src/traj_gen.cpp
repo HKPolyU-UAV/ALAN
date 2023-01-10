@@ -74,19 +74,6 @@ namespace alan_traj
             // cout<<"_A:"<<endl;
             cout<<_A.rows()<<endl;
 
-            // cout<<"_lb:"<<endl;
-            // cout<<_lb<<endl;
-            // cout<<"_ub:"<<endl;
-            // cout<<_ub<<endl;
-
-            // cout<<"\nsummary:\n";
-            // cout<<"A size:\n";
-            // cout<<_A.rows()<<endl;
-            // cout<<_A.cols()<<endl;
-            // cout<<"upper bound size:\n";
-            // cout<<_ub.size()<<endl;
-            // cout<<"lower bound size:\n";
-            // cout<<_lb.size()<<endl;
 
 
             

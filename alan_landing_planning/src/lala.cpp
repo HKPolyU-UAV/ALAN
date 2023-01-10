@@ -112,8 +112,8 @@ int main(int argc, char** argv)
     b_info.m = 2;
     b_info.d_order = 3;
 
-    b_info.s.push_back(2.0);
-    b_info.s.push_back(0.5);
+    b_info.s.push_back(1.0);
+    b_info.s.push_back(1.0);
 
     //
 

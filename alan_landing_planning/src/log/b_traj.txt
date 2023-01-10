@@ -27,6 +27,8 @@ _start_accl:
  0.0450449
 
 _sfc_list:
+here is one corridor...: 6
+here is one corridor...: 7
 
 _d_constraints v:
 5
@@ -48,8 +50,8 @@ _d_order
 3
 
 _s
-2
+1
 _s
-0.5
+1
 
 log end...

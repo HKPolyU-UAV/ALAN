@@ -11,8 +11,6 @@ osqpsolver::osqpsolver()
 
 osqpsolver::~osqpsolver()
 {
-    //test
-    //haha
 
 }
 
@@ -53,12 +51,12 @@ void osqpsolver::qp_opt(
     OsqpEigen::Solver qpsolver;
     
     qpsolver.settings()->setWarmStart(true);
+    qpsolver.settings()->setVerbosity(false);
+    // qpsolver.settings()->setMaxIteration(10);
 
     qpsolver.data()->setNumberOfVariables(nV);
     qpsolver.data()->setNumberOfConstraints(nC);
 
-    // qpsolver.p
-    
     if(!qpsolver.data()->setHessianMatrix(Hessian))
         cout<<"Hessian not set!"<<endl;
 
@@ -76,21 +74,31 @@ void osqpsolver::qp_opt(
     
     if(!qpsolver.initSolver())
         cout<<"please initialize solver!!"<<endl;
+
+    // qpsolver.p
+
+    for(int i = 0 ; i < 50; i++)
+    {
+        if(!qpsolver.updateHessianMatrix(Hessian))
+        cout<<"Hessian not set!"<<endl;
+        
+        if(!qpsolver.updateLinearConstraintsMatrix(ALinear))
+            cout<<"linear matrix not set!"<<endl;
+        
+
+        
+        // if(!qpsolver.initSolver())
+        //     cout<<"please initialize solver!!"<<endl;
+        
+        if(!qpsolver.solve())
+            cout<<"not yet solved"<<endl;
+
+    }
     
-    if(!qpsolver.solve())
-        cout<<"not yet solved"<<endl;
+    
 
     qpsol = qpsolver.getSolution();
 
-    
-
-    // cout<<"here are the solutions: "<<endl;
-    // cout<<qpsol<<endl;
-
-
     // cout<<"cost: "<<qpsol.transpose() * H * qpsol<<endl;
-    
-
-    
 
 }
