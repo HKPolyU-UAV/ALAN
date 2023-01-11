@@ -188,24 +188,32 @@ int main(int argc, char** argv)
     b_constraints.corridor_type = "POLYH";
 
 
-
+    double t0_matrix = ros::Time::now().toSec();
     alan_traj::traj_gen traj(b_info, b_constraints, 50, "/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/");
-    
+    double t1_matrix = ros::Time::now().toSec();
 
+
+    double t0_opt = ros::Time::now().toSec();
     traj.solve_opt(50);
+    double t1_opt = ros::Time::now().toSec();
     
 
     alan_landing_planning::Traj optiTraj = traj.getOptiTraj();
 
     double t01 = ros::Time::now().toSec();
 
+    cout<<"overall\n";
     cout<<"ms: "<<(t01-t00)<<endl;
-    cout<<"fps: "<<1/(t01-t00)<<endl;
+    cout<<"fps: "<<1/(t01-t00)<<endl<<endl;
 
+    cout<<"set matrices\n";
+    cout<<"ms: "<<(t1_matrix-t0_matrix)<<endl;
+    cout<<"fps: "<<1/(t1_matrix-t0_matrix)<<endl<<endl;
 
+    cout<<"optimize\n";
+    cout<<"ms: "<<(t1_opt-t0_opt)<<endl;
+    cout<<"fps: "<<1/(t1_opt-t0_opt)<<endl<<endl;
 
-
-    
 
 	return 0;
 }

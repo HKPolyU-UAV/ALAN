@@ -87,6 +87,7 @@ namespace alan_traj
             int discrete_freq,
             string log_path
             );
+        traj_gen();
         ~traj_gen(){};
 
         void solve_opt(int freq);

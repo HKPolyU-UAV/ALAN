@@ -342,9 +342,9 @@ namespace alan_traj
             }
             
         }
-        cout<<"hi..."<<endl;
-        cout<<Aeq_start<<endl;
-        cout<<Aeq_end<<endl<<endl;;
+        // cout<<"hi..."<<endl;
+        // cout<<Aeq_start<<endl;
+        // cout<<Aeq_end<<endl<<endl;;
         A_eq.resize(Aeq_start.rows() + Aeq_end.rows() + Aeq_cont.rows(), _dim);
         
         A_eq << Aeq_start,
@@ -1334,7 +1334,7 @@ namespace alan_traj
 
                     for(int k = 0; k < corridor[i].PolyhedronTangentArray.size(); k++)                    
                     {
-                        cout<<s[i]<<endl;
+                        // cout<<s[i]<<endl;
                         // cout<<"hi: "<<starto_row_for_each_segment<<" "<<starto_col<<endl;                        
                         A_ieqsfc(starto_row_for_each_segment, starto_col + j) = corridor[i].PolyhedronTangentArray[k].n.X * s[i];
                         A_ieqsfc(starto_row_for_each_segment, starto_col + j + 1 * onedim_ctrl_pts_per_dim) = corridor[i].PolyhedronTangentArray[k].n.Y * s[i];
@@ -1362,7 +1362,7 @@ namespace alan_traj
             }
         }
 
-        cout<<A_ieqsfc<<endl<<endl;
+        // cout<<A_ieqsfc<<endl<<endl;
 
     }
 

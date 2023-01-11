@@ -664,6 +664,54 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
 
 }
 
+void planner_server::config(ros::NodeHandle& _nh)
+{
+    ROS_INFO("Planner Server Launch...\n");
+    nh.getParam("/alan_master_planner_node/axis_dim", axis_dim);
+    nh.getParam("/alan_master_planner_node/n_order", n_order);
+    nh.getParam("/alan_master_planner_node/m", m);
+    nh.getParam("/alan_master_planner_node/d_order", d_order);
+
+    // cout<<axis_dim<<endl;
+    // cout<<n_order<<endl;
+    // cout<<m<<endl;
+    // cout<<d_order<<endl;
+
+    nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
+    nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
+    nh.getParam("/alan_master_planner_node/ugv_height", ugv_height);
+    cout<<"ugv_height: "<<ugv_height<<endl;
+    nh.getParam("/alan_master_planner_node/v_max", v_max);
+    nh.getParam("/alan_master_planner_node/a_max", a_max);
+
+    nh.getParam("/alan_master_planner_node/log_path", log_path);
+
+    cout<<"v_max: "<<v_max<<endl;
+    cout<<"a_max: "<<a_max<<endl;
+
+    nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
+    nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
+
+
+    uav_set_mode.request.custom_mode = "OFFBOARD";
+    arm_cmd.request.value = true;
+    alan_fsm_object.finite_state_machine = IDLE;
+
+    set_alan_b_traj_prerequisite();
+    
+
+    //block traj temp
+    set_block_traj = true;
+}
+
+void planner_server::set_alan_b_traj_prerequisite()
+{
+    set_btraj_info();
+    set_btraj_inequality_dynamic();
+
+}
+
+
 void planner_server::set_alan_b_traj()
 {
     cout<<1<<endl;            
@@ -835,44 +883,4 @@ void planner_server::set_traj_time()
         landing_time_total * final_corridor_length / distance_uav_ugv
         );
 
-}
-
-void planner_server::config(ros::NodeHandle& _nh)
-{
-    ROS_INFO("Planner Server Launch...\n");
-    nh.getParam("/alan_master_planner_node/axis_dim", axis_dim);
-    nh.getParam("/alan_master_planner_node/n_order", n_order);
-    nh.getParam("/alan_master_planner_node/m", m);
-    nh.getParam("/alan_master_planner_node/d_order", d_order);
-
-    // cout<<axis_dim<<endl;
-    // cout<<n_order<<endl;
-    // cout<<m<<endl;
-    // cout<<d_order<<endl;
-
-    nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
-    nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
-    nh.getParam("/alan_master_planner_node/ugv_height", ugv_height);
-    cout<<"ugv_height: "<<ugv_height<<endl;
-    nh.getParam("/alan_master_planner_node/v_max", v_max);
-    nh.getParam("/alan_master_planner_node/a_max", a_max);
-
-    nh.getParam("/alan_master_planner_node/log_path", log_path);
-
-    cout<<"v_max: "<<v_max<<endl;
-    cout<<"a_max: "<<a_max<<endl;
-
-    nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
-    nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
-
-
-    uav_set_mode.request.custom_mode = "OFFBOARD";
-    arm_cmd.request.value = true;
-    alan_fsm_object.finite_state_machine = IDLE;
-
-    set_btraj_info();
-    set_btraj_inequality_dynamic();
-
-    //block traj temp
-    set_block_traj = true;
 }

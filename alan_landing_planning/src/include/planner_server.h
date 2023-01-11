@@ -96,7 +96,10 @@ private:
     
 //set btraj
     //functions
+    alan_traj::traj_gen alan_btraj();
     void set_alan_b_traj();
+    void set_alan_b_traj_prerequisite();
+    void set_alan_b_traj_online();
     void set_btraj_info();
     void set_btraj_equality_constraint();
     void set_btraj_inequality_kinematic();
