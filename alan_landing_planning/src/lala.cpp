@@ -215,6 +215,11 @@ int main(int argc, char** argv)
     cout<<"ms: "<<(t1_opt-t0_opt)<<endl;
     cout<<"fps: "<<1/(t1_opt-t0_opt)<<endl<<endl;
 
+    vector<double> time_sample;
+    time_sample.emplace_back(1.78885);
+    time_sample.emplace_back(2.0);
+    traj.set_prerequisite(time_sample,10,10);
+
 
 	return 0;
 }

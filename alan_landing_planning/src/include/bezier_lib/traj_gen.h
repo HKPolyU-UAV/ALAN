@@ -78,6 +78,9 @@ namespace alan_traj
 
             };
 
+        // for matrix pre-definition
+
+
         
     public:
 
@@ -90,7 +93,16 @@ namespace alan_traj
         
         ~traj_gen(){};
 
-        void setAeq();
+    
+        // for m = 2 (landing trajectory)
+        void set_prerequisite(
+            vector<double> time_minmax, 
+            int total_time_sample_no,
+            int seg_time_sample_no
+        );
+        void setMQM_prerequisite(vector<vector<double>> sampling_time);
+        void setAeq_prerequisite();
+        void setBeq_prerequisite();
 
 
 

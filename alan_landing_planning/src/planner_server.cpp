@@ -335,7 +335,7 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     //perform block traj
     // target_traj_pose = set_uav_block_pose();
 
-    //should be time and following quality
+    //decide whether to land based on following quality
     // if(
     //     uav_current_AlanPlannerMsg.good2fly && 
     //     (ros::Time::now().toSec() - last_request) > ros::Duration(2.0).toSec()

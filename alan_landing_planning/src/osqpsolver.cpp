@@ -77,8 +77,9 @@ void osqpsolver::qp_opt(
 
     // qpsolver.p
 
-    for(int i = 0 ; i < 50; i++)
+    for(int i = 0 ; i < 100; i++)
     {
+        cout<<i<<endl;
         if(!qpsolver.updateHessianMatrix(Hessian))
         cout<<"Hessian not set!"<<endl;
         

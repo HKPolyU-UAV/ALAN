@@ -409,6 +409,67 @@ namespace alan_traj
         return pascal[n][k];
     }
 
+    void traj_gen::set_prerequisite(
+        vector<double> time_minmax, 
+        int total_time_sample_no,
+        int seg_time_sample_no
+    )
+    {
+        vector<vector<double>> sampling_time;
+
+        if(_m != 2)
+        {
+            ROS_ERROR("PLEASE CHECK SEGMENT NO., NOT CORRECT!");
+            return;
+        }
+            
+        int total_sample_no = total_time_sample_no * seg_time_sample_no;
+
+        // for(int i = 0)
+        double delta_time = time_minmax[1] - time_minmax[0];
+
+        double time_min = time_minmax[0];
+        double time_max = time_minmax[1];
+
+        // cout<<time_min<<endl;
+        // cout<<time_max<<endl;
+
+        for(int i = 0; i < total_time_sample_no ; i++)
+        {
+            double total_time_per_sample = 
+                (1.0 / (total_time_sample_no - 1)) * i * time_min + 
+                (1.0 / (total_time_sample_no - 1)) * ((total_time_sample_no - 1) - i) * time_max;
+            // cout<<total_time_per_sample<<endl;
+
+            for(int j = 0; j < seg_time_sample_no; j++)
+            {
+                // cout<<"hi"<<endl;
+                // cout<<total_time_per_sample<<endl;
+                double time_seg_0 = 
+                    (1.0 / (seg_time_sample_no + 1)) * (j + 1) * total_time_per_sample;
+                double time_seg_1 = total_time_per_sample - time_seg_0;
+
+            
+                vector<double> temp_sample = {time_seg_0, time_seg_1};
+                // cout<<time_seg_0<<" "<<time_seg_1<<endl<<endl;;
+                sampling_time.emplace_back(temp_sample);
+            }
+        }
+        cout<<"final sampling size..."<<sampling_time.size()<<endl;
+
+        // for(auto what : sampling_time)
+        // {
+        //     cout<<what[0]<<" "<<what[1]<<endl;
+        // }
+
+    }
+
+    void traj_gen::setMQM_prerequisite(vector<vector<double>> sampling_time)
+    {
+        
+
+    }
+
     void traj_gen::log()
     {
         //b_traj info log...
