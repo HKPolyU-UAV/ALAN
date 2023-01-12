@@ -22,16 +22,12 @@ namespace alan_traj
         _n_dim_per_axis((b_info.n_order + 1) * b_info.m),
 
         //for constraints set
-        _start(b_constraints.start), 
-        _end(b_constraints.end), 
-
-        _cube_list(b_constraints.cube_list),
         _sfc_list(b_constraints.sfc_list),
 
         _d_constraints(b_constraints.d_constraints),
 
         //for cost term
-        _n_order(b_info.n_order), _m(b_info.m), _d_order(b_info.d_order), _s(b_info.s),
+        _n_order(b_info.n_order), _m(b_info.m), _d_order(b_info.d_order),
 
         //freq
         _discrete_freq(discrete_freq),
@@ -64,13 +60,6 @@ namespace alan_traj
         setTimeDiscrete();
         cout<<"enter set Opti Traj..."<<endl;
         setOptiTraj();
-
-
-
-
-        // qpsolve.solve();
-        // qpsolve.ifopt_test(_MQM, _A, _ub, _lb);
-        // qpsolve.solve_trial();
 
         
     }

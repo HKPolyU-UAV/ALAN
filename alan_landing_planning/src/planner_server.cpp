@@ -88,7 +88,7 @@ void planner_server::uavAlanMsgCallback(const alan_landing_planning::AlanPlanner
         uav_current_AlanPlannerMsg.orientation.oz
     );
 
-    cout<<q2rpy(q_)<<endl<<endl;
+    // cout<<q2rpy(q_)<<endl<<endl;
     // q_.
     // tfScalar yaw, pitch, roll;
     // tf::Quaternion q_tf;

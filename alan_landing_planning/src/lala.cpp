@@ -114,47 +114,9 @@ int main(int argc, char** argv)
     b_info.m = 2;
     b_info.d_order = 3;
 
-    b_info.s.push_back(1.0);
-    b_info.s.push_back(1.0);
-
-    //
-
-    //equality constraint:
-    alan_traj::endpt start_3d;
-    start_3d.posi(0) = -1.05876;
-    start_3d.posi(1) = -1.02592;
-    start_3d.posi(2) = 1.02041;
-
-
-    start_3d.velo(0) = 0.00276129;
-    start_3d.velo(1) = -0.0477533;
-    start_3d.velo(2) = 0.0954305;
-
-
-    start_3d.accl(0) = -0.0239425;
-    start_3d.accl(1) = 0.0421186;
-    start_3d.accl(2) = 0.0450449;
-
-
-    alan_traj::endpt end_3d;
-    end_3d.posi(0) = -2.2;
-    end_3d.posi(1) = -2.1999;
-    end_3d.posi(2) = 0.259144 + 0.3;
-
-
-    end_3d.velo(0) = -2.25129e-05;
-    end_3d.velo(0) = 2.7078e-05;
-    end_3d.velo(0) = -6.78842e-08;
-
-
-    end_3d.accl(0) = -0.000801816;
-    end_3d.accl(0) = -0.000547266;
-    end_3d.accl(0) = -0.00614635;
-
 
 //inequality constraints:
     
-
     //kinematic constraints
     set_btraj_inequality_kinematic();
 
@@ -163,26 +125,24 @@ int main(int argc, char** argv)
 
     //dynamic constraint
     alan_traj::dynamic_constraints d_constraints;
-    d_constraints.v_max(0) =  5;
-    d_constraints.v_min(0) = -5;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(0) =  10;
-    d_constraints.a_min(0) = -10;//OsqpEigen::INFTY;//-200;
+    d_constraints.v_max(0) =  2;
+    d_constraints.v_min(0) = -2;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(0) =  4;
+    d_constraints.a_min(0) = -4;//OsqpEigen::INFTY;//-200;
 
-    d_constraints.v_max(1) =  5;
-    d_constraints.v_min(1) = -5;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(1) =  10;
-    d_constraints.a_min(1) = -10;//OsqpEigen::INFTY;//-200;
+    d_constraints.v_max(1) =  2;
+    d_constraints.v_min(1) = -2;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(1) =  4;
+    d_constraints.a_min(1) = -4;//OsqpEigen::INFTY;//-200;
 
-    d_constraints.v_max(2) =  5;
-    d_constraints.v_min(2) = -5;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(2) =  10;
-    d_constraints.a_min(2) = -10;//OsqpEigen::INFTY;//-200;
+    d_constraints.v_max(2) =  2;
+    d_constraints.v_min(2) = -2;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(2) =  4;
+    d_constraints.a_min(2) = -4;//OsqpEigen::INFTY;//-200;
 
 
     alan_traj::bezier_constraints b_constraints;
 
-    b_constraints.start = start_3d;
-    b_constraints.end = end_3d;
 
     b_constraints.sfc_list = corridors;
     b_constraints.d_constraints = d_constraints;
@@ -190,33 +150,7 @@ int main(int argc, char** argv)
     b_constraints.corridor_type = "POLYH";
 
 
-    double t0_matrix = ros::Time::now().toSec();
-    // for(int i = 0; i < 100; i++)
-    alan_traj::traj_gen traj(b_info, b_constraints, 50, "/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/");
-    double t1_matrix = ros::Time::now().toSec();
-
-
-    double t0_opt = ros::Time::now().toSec();
-    traj.solve_opt(50);
-    double t1_opt = ros::Time::now().toSec();
-    
-
-    // alan_landing_planning::Traj optiTraj = traj.getOptiTraj();
-
-    double t01 = ros::Time::now().toSec();
-
-    cout<<"overall\n";
-    cout<<"ms: "<<(t01-t00)<<endl;
-    cout<<"fps: "<<1/(t01-t00)<<endl<<endl;
-
-    cout<<"set matrices\n";
-    cout<<"ms: "<<(t1_matrix-t0_matrix)<<endl;
-    cout<<"fps: "<<1/(t1_matrix-t0_matrix)<<endl<<endl;
-
-    cout<<"optimize\n";
-    cout<<"ms: "<<(t1_opt-t0_opt)<<endl;
-    cout<<"fps: "<<1/(t1_opt-t0_opt)<<endl<<endl;
-
+//sampling..
     alan_traj::traj_sampling btraj_sampling(
         b_info, 
         b_constraints, 
@@ -227,7 +161,9 @@ int main(int argc, char** argv)
     vector<double> time_sample;
     time_sample.emplace_back(1.78885);
     time_sample.emplace_back(2.0);
-    btraj_sampling.set_prerequisite(time_sample,10,10);
+    btraj_sampling.set_prerequisite(time_sample, 10, 10);
+
+    // btraj_sampling.
 
 
 	return 0;
@@ -235,6 +171,32 @@ int main(int argc, char** argv)
 
 
 
+// double t0_matrix = ros::Time::now().toSec();
+//     // for(int i = 0; i < 100; i++)
+//     alan_traj::traj_gen traj(b_info, b_constraints, 50, "/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/");
+//     double t1_matrix = ros::Time::now().toSec();
+
+
+//     double t0_opt = ros::Time::now().toSec();
+//     traj.solve_opt(50);
+//     double t1_opt = ros::Time::now().toSec();
+    
+
+//     // alan_landing_planning::Traj optiTraj = traj.getOptiTraj();
+
+//     double t01 = ros::Time::now().toSec();
+
+//     cout<<"overall\n";
+//     cout<<"ms: "<<(t01-t00)<<endl;
+//     cout<<"fps: "<<1/(t01-t00)<<endl<<endl;
+
+//     cout<<"set matrices\n";
+//     cout<<"ms: "<<(t1_matrix-t0_matrix)<<endl;
+//     cout<<"fps: "<<1/(t1_matrix-t0_matrix)<<endl<<endl;
+
+//     cout<<"optimize\n";
+//     cout<<"ms: "<<(t1_opt-t0_opt)<<endl;
+//     cout<<"fps: "<<1/(t1_opt-t0_opt)<<endl<<endl;
 
 
 

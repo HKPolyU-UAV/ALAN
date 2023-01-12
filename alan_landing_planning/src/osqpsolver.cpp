@@ -106,5 +106,5 @@ void osqpsolver::qp_opt(
 
 void osqpsolver::qp_opt_samples(Eigen::VectorXd& current)
 {
-    
+    current[0];
 }

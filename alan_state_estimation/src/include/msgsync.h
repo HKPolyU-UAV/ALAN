@@ -137,6 +137,7 @@ namespace alan
             Eigen::Isometry3d body_to_cam_Pose;
 
             //functions
+            void setup_publish_SFC();
             Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
