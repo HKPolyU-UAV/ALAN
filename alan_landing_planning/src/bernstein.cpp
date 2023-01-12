@@ -1587,21 +1587,37 @@ namespace alan_traj
         
         // later after lunch, combine all these, and check dimension...
         // cout<<Aeq_1_sample<<Aieqdyn_1_sample<<A_ieqsfc<<endl;
+        // cout<<"here!..."<<endl;
+        // cout<<Aeq_1_sample.rows()<<" "<<Aeq_1_sample.cols()<<endl;
+        // cout<<Aieqdyn_1_sample.rows()<<" "<<Aieqdyn_1_sample.cols()<<endl;
+        // cout<<A_ieqsfc.rows()<<" "<<A_ieqsfc.cols()<<endl<<endl;;
 
+        Eigen::MatrixXd A_return;
+        int A_return_rows = Aeq_1_sample.rows() + A_ieqsfc.rows() + Aieqdyn_1_sample.rows();
+        int A_return_cols = Aeq_1_sample.cols();
 
+        A_return.resize(A_return_rows, A_return_cols);
+        A_return.setZero();
 
+        int starto_row = 0;
+        int starto_col = 0;
+        A_return.block(starto_row, starto_col, Aeq_1_sample.rows(), Aeq_1_sample.cols()) = 
+            Aeq_1_sample;
 
+        starto_row = Aeq_1_sample.rows();
+        starto_col = 0;
+        A_return.block(starto_row, starto_col, A_ieqsfc.rows(), A_ieqsfc.cols()) = 
+            A_ieqsfc;
+        
+        starto_row = Aeq_1_sample.rows() + A_ieqsfc.rows();
+        starto_col = 0;
+        A_return.block(starto_row, starto_col, Aieqdyn_1_sample.rows(), Aieqdyn_1_sample.cols()) 
+            = Aieqdyn_1_sample;
 
+        // cout<<A_return.rows()<<endl;
+        // cout<<A_return.cols()<<endl<<endl;
 
-
-
-
-
-
-
-
-
-        return Aeq_1_sample;                
+        return A_return;
     }
 
     Eigen::MatrixXd bernstein::set_1_AeqSample(int axis_dim, int n_order, int m, int d_order, vector<double> s)
@@ -1632,11 +1648,12 @@ namespace alan_traj
         int Aeq_final_cols = Aeq_array.size() * Aeq_array[0].cols();
 
         Aeq_return.resize(Aeq_final_rows, Aeq_final_cols);
+        Aeq_return.setZero();
 
         for(int i = 0; i < Aeq_array.size(); i++)
             Aeq_return.block(i * Aeq_array[i].rows(), i * Aeq_array[i].cols(), Aeq_array[i].rows(), Aeq_array[i].cols()) = Aeq_array[i];
         
-        cout<<"hi...: "<<Aeq_return.rows()<<" "<<Aeq_return.cols()<<endl; 
+        // cout<<"hi...: "<<Aeq_return.rows()<<" "<<Aeq_return.cols()<<endl; 
         return Aeq_return;
     }
 
@@ -1658,22 +1675,68 @@ namespace alan_traj
         for(int axis_i = 0; axis_i < axis_dim; axis_i++)
         {
             setAieq1D(axis_i, n_order, m, d_order, s, "POLYH");;
-            Aieq_array.emplace_back(A_eq);
+            Aieq_array.emplace_back(A_ieq);
         }
 
         int Aieq_final_rows = Aieq_array.size() * Aieq_array[0].rows();
         int Aieq_final_cols = Aieq_array.size() * Aieq_array[0].cols();
 
         Aieq_return.resize(Aieq_final_rows, Aieq_final_cols);
+        Aieq_return.setZero();
 
         for(int i = 0; i < Aieq_array.size(); i++)
             Aieq_return.block(i * Aieq_array[i].rows(), i * Aieq_array[i].cols(), Aieq_array[i].rows(), Aieq_array[i].cols()) = Aieq_array[i];
         
-        cout<<"hi...: "<<Aieq_return.rows()<<" "<<Aieq_return.cols()<<endl; 
+        // cout<<"hi...: "<<Aieq_return.rows()<<" "<<Aieq_return.cols()<<endl; 
+        // cout<<Aieq_return<<endl;
         return Aieq_return;
     }
 
-    // void bernstein::setAieqDynAll(Eigen::MatrixXd& Aieq_all, int)
+    tuple<Eigen::VectorXd, Eigen::VectorXd> bernstein::set_ub_lb(
+        int axis_dim, 
+        int n_order, 
+        int m, 
+        int d_order,
+        dynamic_constraints d_constraints
+    )
+    {
+        ub_eq_array.clear();
+        ub_ieq_array.clear();
+
+        lb_eq_array.clear();
+        lb_ieq_array.clear();
+
+        for(int axis_i = 0; axis_i < axis_dim; axis_i++)
+        {
+            endpt_cond start_temp, end_temp;
+
+            start_temp = {
+                0.0, 0.0, 0.0, 0.0
+            };
+
+            end_temp = {
+                0.0, 0.0, 0.0, 0.0
+            };
+
+            setUBeq1D(axis_i, start_temp, end_temp, n_order, m, d_order);
+            setLBeq1D(axis_i, start_temp, end_temp, n_order, m, d_order);
+            ub_eq_array.emplace_back(ub_eq);
+            lb_eq_array.emplace_back(lb_eq);
+
+
+            setUBieq1D_polyh(axis_i, d_constraints, n_order, m, d_order);        
+            setlBieq1D_polyh(axis_i, d_constraints, n_order, m, d_order);
+            ub_ieq_array.emplace_back(ub_ieq);                
+            lb_ieq_array.emplace_back(lb_ieq);            
+        }
+
+        setUbFinal_polyh();
+        setLbFinal_polyh();
+
+        return tuple<Eigen::VectorXd, Eigen::VectorXd>(ub_final, lb_final);
+
+    }
+
 
     inline double bernstein::permutation(int p, int q)
     {

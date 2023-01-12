@@ -1,5 +1,5 @@
-#ifndef TRAJ_GEN_H
-#define TRAJ_GEN_H
+#ifndef TRAJ_SAMPLING_H
+#define TRAJ_SAMPLING_H
 
 #include "../tools/essential.h"
 #include "bernstein.h"
@@ -12,12 +12,13 @@ namespace alan_traj
 {
 
     //test gan
-    class traj_gen
+    class traj_sampling
     {
 
     private:
 
         //final result
+        osqpsolver trajSolver;
         Eigen::VectorXd PolyCoeff;
         alan_landing_planning::Traj optiTraj;
 
@@ -78,16 +79,67 @@ namespace alan_traj
 
             };
 
+    //sampling-related
+        // for matrix pre-definition
+        vector<Eigen::MatrixXd> MQM_samples;
+        vector<Eigen::MatrixXd> A_samples;
+
+        vector<Eigen::VectorXd> ub_samples;
+        vector<Eigen::VectorXd> lb_samples;
+
+        void setSampling_time(
+            vector<vector<double>>& sampling_time,
+            vector<double> time_minmax,
+            int total_time_sample_no,
+            int seg_time_sample_no
+        );
+
+
+        void setMatrices_prerequisite(
+            bernstein& bezier_base, 
+            vector<vector<double>>& sampling_time
+        );
+
+        void setBoundary(bernstein& bezier_base);
+
+
+        void setVectors_prerequisite(
+            bernstein& bezier_base
+        );
+
+
+        void setTrajInfo();
+        
+        void passMatrices_prerequisite();
+
+
+        void setBeq_prerequisite();
+
+
         
     public:
 
-        traj_gen( 
+        traj_sampling( 
             bezier_info b_info,  
             bezier_constraints b_constraints,
             int discrete_freq,
             string log_path
-            );
-        ~traj_gen(){};
+        );
+        
+        ~traj_sampling(){};
+
+    
+        // for m = 2 (landing trajectory)
+        // void set_
+
+        void set_prerequisite(
+            vector<double> time_minmax, 
+            int total_time_sample_no,
+            int seg_time_sample_no
+        );
+        
+
+
 
         void solve_opt(int freq);
 

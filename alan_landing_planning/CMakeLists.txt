@@ -137,7 +137,8 @@ add_executable(planner_node
    
    src/bernstein.cpp
    src/osqpsolver.cpp
-   src/traj_gen.cpp)
+   src/traj_gen.cpp
+   src/traj_sampling.cpp)
 
 target_link_libraries(planner_node
   ${OpenCV_LIBRARIES}
@@ -154,9 +155,11 @@ target_link_libraries(planner_node
 
 add_executable(lala
    src/lala.cpp
+   
    src/bernstein.cpp
    src/osqpsolver.cpp
-   src/traj_gen.cpp)
+   src/traj_gen.cpp
+   src/traj_sampling.cpp)
    
 target_link_libraries(lala
   # ${OpenCV_LIBRARIES}

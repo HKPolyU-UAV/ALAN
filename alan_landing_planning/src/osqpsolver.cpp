@@ -103,3 +103,8 @@ void osqpsolver::qp_opt(
     // cout<<"cost: "<<qpsol.transpose() * H * qpsol<<endl;
 
 }
+
+void osqpsolver::qp_opt_samples(Eigen::VectorXd& current)
+{
+    
+}

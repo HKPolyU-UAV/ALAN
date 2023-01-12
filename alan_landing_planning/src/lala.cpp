@@ -8,6 +8,8 @@
 #include <iostream>
 #include "include/bezier_lib/traj_gen.h"
 
+#include "include/bezier_lib/traj_sampling.h"
+
 #include <decomp_ros_msgs/PolyhedronArray.h>
 #include <decomp_geometry/polyhedron.h> 
 
@@ -195,7 +197,7 @@ int main(int argc, char** argv)
 
 
     double t0_opt = ros::Time::now().toSec();
-    // traj.solve_opt(50);
+    traj.solve_opt(50);
     double t1_opt = ros::Time::now().toSec();
     
 
@@ -215,10 +217,17 @@ int main(int argc, char** argv)
     cout<<"ms: "<<(t1_opt-t0_opt)<<endl;
     cout<<"fps: "<<1/(t1_opt-t0_opt)<<endl<<endl;
 
+    alan_traj::traj_sampling btraj_sampling(
+        b_info, 
+        b_constraints, 
+        50, 
+        "/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/"
+    );
+
     vector<double> time_sample;
     time_sample.emplace_back(1.78885);
     time_sample.emplace_back(2.0);
-    traj.set_prerequisite(time_sample,10,10);
+    btraj_sampling.set_prerequisite(time_sample,10,10);
 
 
 	return 0;

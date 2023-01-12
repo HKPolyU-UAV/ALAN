@@ -186,8 +186,10 @@ namespace alan_traj
         double factorial(int r);
         vector<double> pascal_triangle(int level);
 
-        
-        
+        //sampling
+        Eigen::MatrixXd set_1_AeqSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
+        Eigen::MatrixXd set_1_AieqDynSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
+
         
     public:
         bernstein(
@@ -220,12 +222,14 @@ namespace alan_traj
             vector<alan_visualization::Polyhedron> sfc_list,
             vector<double> s
         );
-        Eigen::MatrixXd set_1_AeqSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
-        Eigen::MatrixXd set_1_AieqSfcSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
-        Eigen::MatrixXd set_1_AieqDynSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
-
-        void setAieqDynAll(Eigen::MatrixXd& Aeq_all, int axis_dim, int n_order, int m, int d_order, vector<double> s);
-
+        tuple<Eigen::VectorXd, Eigen::VectorXd> set_ub_lb(
+            int axis_dim, 
+            int n_order, 
+            int m, 
+            int d_order, 
+            dynamic_constraints d_constraints
+        );
+        
 
         inline Eigen::MatrixXd getMQM(){return MQM_final;}
         inline Eigen::MatrixXd getA(){return A_final;}
