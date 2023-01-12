@@ -194,7 +194,7 @@ namespace alan_traj
             printf("\n---------------------- now set all dimension ----------------------\n");
             printf("now set Aieqsfc...:\n");
 
-            setAieqBieqsfc(axis_dim, sfc_list, d_constraints, n_order, m, d_order, s);
+            setAieqBieqsfc(axis_dim, sfc_list, n_order, m, d_order, s);
 
             // cout<<0<<endl;
             setMQMFinal();
@@ -217,6 +217,12 @@ namespace alan_traj
         }
 
 
+    }
+
+
+    bernstein::bernstein()
+    {
+        ROS_INFO("Bernstein bases settings for ALAN_LANDING...ready to set pre-requisite\n");
     }
 
     void bernstein::setAeq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s)
@@ -1239,7 +1245,6 @@ namespace alan_traj
     void bernstein::setAieqBieqsfc(
         int axis_dim,
         vector<alan_visualization::Polyhedron> corridor, 
-        dynamic_constraints d_constraints, 
         int n_order, 
         int m, 
         int d_order, 
@@ -1525,16 +1530,95 @@ namespace alan_traj
 
     }
 
-    void bernstein::setAeqAll(Eigen::MatrixXd& Aeq_all, int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    Eigen::MatrixXd bernstein::set_1_MQMSample(int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    // set 1 MQM sample
+    // with different time allocations
+    // utilize it in pre-requisite
     {
+        Eigen::MatrixXd MQM_return;
+
+        vector<Eigen::MatrixXd> MQM_array;
+
+        // cout<<endl<<endl;
+        // cout<<"hi now in setMQMSample"<<endl;
+
+        // cout<<axis_dim<<endl;
+        // cout<<n_order<<endl;
+        // cout<<m<<endl;
+
+        MQM_array.clear();
+
+        for(int axis_i = 0; axis_i < axis_dim; axis_i++)
+        {
+            setMQM1D(axis_i, n_order, m, d_order, s);
+            MQM_array.emplace_back(MQM);
+        }
+
+        int MQM_final_rows = MQM_array.size() * MQM_array[0].rows();
+        int MQM_final_cols = MQM_array.size() * MQM_array[0].cols();
+
+        MQM_return.resize(MQM_final_rows, MQM_final_cols);
+
+        for(int i = 0; i < MQM_array.size(); i++)
+            MQM_return.block(i * MQM_array[i].rows(), i * MQM_array[i].cols(), MQM_array[i].rows(), MQM_array[i].cols()) = MQM_array[i];
+
+        // cout<<"hi: "<<MQM_return.rows()<<" "<<MQM_return.cols()<<endl;
+        return MQM_return;
+    }
+
+    Eigen::MatrixXd bernstein::set_1_ASample(
+        int axis_dim, 
+        int n_order, 
+        int m, 
+        int d_order,  
+        vector<alan_visualization::Polyhedron> sfc_list,
+        vector<double> s
+    )
+    {
+        Eigen::MatrixXd Aeq_1_sample = set_1_AeqSample(axis_dim, n_order, m, d_order, s);
+        Eigen::MatrixXd Aieqdyn_1_sample = set_1_AieqDynSample(axis_dim, n_order, m, d_order, s);
+        setAieqBieqsfc(axis_dim, sfc_list, n_order, m, d_order, s);
+        
+        
+        
+        
+        
+        
+        
+        // later after lunch, combine all these, and check dimension...
+        // cout<<Aeq_1_sample<<Aieqdyn_1_sample<<A_ieqsfc<<endl;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        return Aeq_1_sample;                
+    }
+
+    Eigen::MatrixXd bernstein::set_1_AeqSample(int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    // set 1 Aeq sample
+    // with different time allocations
+    // utilize it in pre-requisite
+    {
+        Eigen::MatrixXd Aeq_return;
+
         vector<Eigen::MatrixXd> Aeq_array;
 
-        cout<<endl<<endl;
-        cout<<"hi now in setAeqAll"<<endl;
+        // cout<<endl<<endl;
+        // cout<<"hi now in setAeqSample"<<endl;
 
-        cout<<axis_dim<<endl;
-        cout<<n_order<<endl;
-        cout<<m<<endl;
+        // cout<<axis_dim<<endl;
+        // cout<<n_order<<endl;
+        // cout<<m<<endl;
 
         Aeq_array.clear();
 
@@ -1544,14 +1628,49 @@ namespace alan_traj
             Aeq_array.emplace_back(A_eq);
         }
 
-        int A_final_rows = Aeq_array.size() * Aeq_array[0].rows();
-        int A_final_cols = Aeq_array.size() * Aeq_array[0].cols();
+        int Aeq_final_rows = Aeq_array.size() * Aeq_array[0].rows();
+        int Aeq_final_cols = Aeq_array.size() * Aeq_array[0].cols();
 
-        Aeq_all.resize(A_final_rows, A_final_cols);
+        Aeq_return.resize(Aeq_final_rows, Aeq_final_cols);
 
         for(int i = 0; i < Aeq_array.size(); i++)
-            Aeq_all.block(i * Aeq_array[i].rows(), i * Aeq_array[i].cols(), Aeq_array[i].rows(), Aeq_array[i].cols()) = Aeq_array[i];
+            Aeq_return.block(i * Aeq_array[i].rows(), i * Aeq_array[i].cols(), Aeq_array[i].rows(), Aeq_array[i].cols()) = Aeq_array[i];
+        
+        cout<<"hi...: "<<Aeq_return.rows()<<" "<<Aeq_return.cols()<<endl; 
+        return Aeq_return;
+    }
 
+    Eigen::MatrixXd bernstein::set_1_AieqDynSample(int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    {
+        Eigen::MatrixXd Aieq_return;
+
+        vector<Eigen::MatrixXd> Aieq_array;
+
+        // cout<<endl<<endl;
+        // cout<<"hi now in setAeqSample"<<endl;
+
+        // cout<<axis_dim<<endl;
+        // cout<<n_order<<endl;
+        // cout<<m<<endl;
+
+        Aieq_array.clear();
+
+        for(int axis_i = 0; axis_i < axis_dim; axis_i++)
+        {
+            setAieq1D(axis_i, n_order, m, d_order, s, "POLYH");;
+            Aieq_array.emplace_back(A_eq);
+        }
+
+        int Aieq_final_rows = Aieq_array.size() * Aieq_array[0].rows();
+        int Aieq_final_cols = Aieq_array.size() * Aieq_array[0].cols();
+
+        Aieq_return.resize(Aieq_final_rows, Aieq_final_cols);
+
+        for(int i = 0; i < Aieq_array.size(); i++)
+            Aieq_return.block(i * Aieq_array[i].rows(), i * Aieq_array[i].cols(), Aieq_array[i].rows(), Aieq_array[i].cols()) = Aieq_array[i];
+        
+        cout<<"hi...: "<<Aieq_return.rows()<<" "<<Aieq_return.cols()<<endl; 
+        return Aieq_return;
     }
 
     // void bernstein::setAieqDynAll(Eigen::MatrixXd& Aieq_all, int)

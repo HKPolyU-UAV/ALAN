@@ -78,7 +78,17 @@ namespace alan_traj
 
             };
 
+    //sampling-related
         // for matrix pre-definition
+        vector<Eigen::MatrixXd> MQM_samples;
+        vector<Eigen::MatrixXd> A_samples;
+        void setMatrices_prerequisite(bernstein& bezier_base, vector<vector<double>> sampling_time);
+        void passMatrices_prerequisite();
+
+        
+        void setMQM_prerequisite(bernstein& bezier_base, vector<vector<double>> sampling_time);
+        void setA_prerequisite(bernstein& bezier_base, vector<vector<double>> sampling_time);
+        void setBeq_prerequisite();
 
 
         
@@ -100,9 +110,7 @@ namespace alan_traj
             int total_time_sample_no,
             int seg_time_sample_no
         );
-        void setMQM_prerequisite(vector<vector<double>> sampling_time);
-        void setAeq_prerequisite();
-        void setBeq_prerequisite();
+        
 
 
 

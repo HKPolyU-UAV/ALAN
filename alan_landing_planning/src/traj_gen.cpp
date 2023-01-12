@@ -43,6 +43,7 @@ namespace alan_traj
 
         if(b_constraints.corridor_type == "POLYH")
         {
+            ROS_INFO("hello there, welcome to traj_gen...\n");
             //all axis matrices set here
 
             printf("POLYH constraints...\n");
@@ -58,19 +59,19 @@ namespace alan_traj
 
             //2. constraints set
             //should get everything (all axis) here
-            _A = bezier_base.getA(); 
-            _ub = bezier_base.getUB();
-            _lb = bezier_base.getLB();
+            // _A = bezier_base.getA(); 
+            // _ub = bezier_base.getUB();
+            // _lb = bezier_base.getLB();
 
             printf("2. constraints set: ");
-            cout<<_A.rows()<<endl;
+            // cout<<_A.rows()<<endl;
 
 
 
             
             // //3. cost set
             printf("3. cost term: x'M'QMx\n");
-            _MQM = bezier_base.getMQM();
+            // _MQM = bezier_base.getMQM();
 
             // Eigen::MatrixXd aeq_temp;
             // bezier_base.setAeqAll(aeq_temp, _axis_dim, _n_order, _m, _d_order, _s);
@@ -110,31 +111,7 @@ namespace alan_traj
             _lb = bezier_base.getLB();
 
             // printf("2. constraints set: ");
-            // cout<<_A.rows()<<endl;
-
-            // cout<<"_lb:"<<endl;
-            // cout<<_lb.size()<<endl;
-
-
-
-
-
-
-
-            // cout<<"_ub:"<<endl;
-            // cout<<_ub<<endl;
-
-            // cout<<"\nsummary:\n";
-            // cout<<"A size:\n";
-            // cout<<_A.rows()<<endl;
-            // cout<<_A.cols()<<endl;
-            // cout<<"upper bound size:\n";
-            // cout<<_ub.size()<<endl;
-            // cout<<"lower bound size:\n";
-            // cout<<_lb.size()<<endl;
-
-
-            
+              
             //3. cost set
             printf("3. cost term: x'M'QMx\n");
             _MQM = bezier_base.getMQM();
@@ -457,6 +434,13 @@ namespace alan_traj
         }
         cout<<"final sampling size..."<<sampling_time.size()<<endl;
 
+        bernstein bezier_base;
+
+        setMatrices_prerequisite(bezier_base, sampling_time);
+        //!!!!!!then pass it to osqpsolver class -> standby for optimization
+        //and then remember to clear array!
+
+
         // for(auto what : sampling_time)
         // {
         //     cout<<what[0]<<" "<<what[1]<<endl;
@@ -464,10 +448,59 @@ namespace alan_traj
 
     }
 
-    void traj_gen::setMQM_prerequisite(vector<vector<double>> sampling_time)
+    void traj_gen::setMatrices_prerequisite(bernstein& bezier_base, vector<vector<double>> sampling_time)
     {
-        
+        double tick = ros::Time::now().toSec();
+        for(auto& what : sampling_time)
+        {
+            MQM_samples.emplace_back(
+                bezier_base.set_1_MQMSample(_axis_dim, _n_order, _m, _d_order, what)
+            );   
 
+            A_samples.emplace_back(
+                bezier_base.set_1_ASample(
+                    _axis_dim, 
+                    _n_order, 
+                    _m, 
+                    _d_order,
+                    _sfc_list,
+                    what
+                )
+            );
+        }
+        double tock = ros::Time::now().toSec();
+
+        cout<<1 / (tock-tick)<<endl;
+        cout<<MQM_samples.size()<<endl;
+        cout<<A_samples.size()<<endl;
+    }
+
+
+    void traj_gen::setMQM_prerequisite(bernstein& bezier_base, vector<vector<double>> sampling_time)
+    {
+        vector<Eigen::MatrixXd> MQM_samples;
+
+        for(auto& what : sampling_time)
+        {
+            MQM_samples.emplace_back(
+                bezier_base.set_1_MQMSample(_axis_dim, _n_order, _m, _d_order, what)
+            );            
+        }
+
+        //throw this to class osqpsolver
+        //what r we throwing? -> different time allocation
+    }
+
+    void traj_gen::setA_prerequisite(bernstein& bezier_base, vector<vector<double>> sampling_time)
+    {
+        vector<Eigen::MatrixXd> A_samples;
+
+        for(auto& what : sampling_time)
+        {
+            A_samples.emplace_back(
+                bezier_base.set_1_AeqSample(_axis_dim, _n_order, _m, _d_order, what)
+            );
+        }
     }
 
     void traj_gen::log()

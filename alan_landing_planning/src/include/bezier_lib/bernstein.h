@@ -160,7 +160,14 @@ namespace alan_traj
         void setQM1D(int axis_dim, int n_order, int m, int d_order, vector<double> s);
 
 
-        void setAieqBieqsfc(int axis_dim, vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order, vector<double> s);
+        void setAieqBieqsfc(
+            int axis_dim, 
+            vector<alan_visualization::Polyhedron> corridor, 
+            int n_order, 
+            int m, 
+            int d_order, 
+            vector<double> s
+        );
         //coupled      
 
         void setMQMFinal();
@@ -199,9 +206,24 @@ namespace alan_traj
              dynamic_constraints d_constraints
             );//for cube
 
+        bernstein();
+        //for alan_landing in particular
+
         ~bernstein(){};
 
-        void setAeqAll(Eigen::MatrixXd& Aeq_all, int axis_dim, int n_order, int m, int d_order, vector<double> s);
+        Eigen::MatrixXd set_1_MQMSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
+        Eigen::MatrixXd set_1_ASample(
+            int axis_dim, 
+            int n_order, 
+            int m, 
+            int d_order,  
+            vector<alan_visualization::Polyhedron> sfc_list,
+            vector<double> s
+        );
+        Eigen::MatrixXd set_1_AeqSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
+        Eigen::MatrixXd set_1_AieqSfcSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
+        Eigen::MatrixXd set_1_AieqDynSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
+
         void setAieqDynAll(Eigen::MatrixXd& Aeq_all, int axis_dim, int n_order, int m, int d_order, vector<double> s);
 
 

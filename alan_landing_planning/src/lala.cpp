@@ -190,12 +190,12 @@ int main(int argc, char** argv)
 
     double t0_matrix = ros::Time::now().toSec();
     // for(int i = 0; i < 100; i++)
-        alan_traj::traj_gen traj(b_info, b_constraints, 50, "/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/");
+    alan_traj::traj_gen traj(b_info, b_constraints, 50, "/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/");
     double t1_matrix = ros::Time::now().toSec();
 
 
     double t0_opt = ros::Time::now().toSec();
-    traj.solve_opt(50);
+    // traj.solve_opt(50);
     double t1_opt = ros::Time::now().toSec();
     
 
