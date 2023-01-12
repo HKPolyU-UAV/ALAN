@@ -86,9 +86,13 @@ namespace alan_traj
             bezier_constraints b_constraints,
             int discrete_freq,
             string log_path
-            );
-        traj_gen();
+        );
+        
         ~traj_gen(){};
+
+        void setAeq();
+
+
 
         void solve_opt(int freq);
 

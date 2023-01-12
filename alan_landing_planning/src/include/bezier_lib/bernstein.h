@@ -163,8 +163,6 @@ namespace alan_traj
         void setAieqBieqsfc(int axis_dim, vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order, vector<double> s);
         //coupled      
 
-        void setFinalMatrices();
-
         void setMQMFinal();
         void setAFinal();
         void setUbFinal();
@@ -173,9 +171,6 @@ namespace alan_traj
         void setAFinal_polyh();
         void setUbFinal_polyh();
         void setLbFinal_polyh();
-
-
-
         // Eigen::MatrixXd getSPD(Eigen::MatrixXd Q);
 
         
@@ -205,6 +200,9 @@ namespace alan_traj
             );//for cube
 
         ~bernstein(){};
+
+        void setAeqAll(Eigen::MatrixXd& Aeq_all, int axis_dim, int n_order, int m, int d_order, vector<double> s);
+        void setAieqDynAll(Eigen::MatrixXd& Aeq_all, int axis_dim, int n_order, int m, int d_order, vector<double> s);
 
 
         inline Eigen::MatrixXd getMQM(){return MQM_final;}

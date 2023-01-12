@@ -189,7 +189,8 @@ int main(int argc, char** argv)
 
 
     double t0_matrix = ros::Time::now().toSec();
-    alan_traj::traj_gen traj(b_info, b_constraints, 50, "/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/");
+    // for(int i = 0; i < 100; i++)
+        alan_traj::traj_gen traj(b_info, b_constraints, 50, "/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/");
     double t1_matrix = ros::Time::now().toSec();
 
 
@@ -198,7 +199,7 @@ int main(int argc, char** argv)
     double t1_opt = ros::Time::now().toSec();
     
 
-    alan_landing_planning::Traj optiTraj = traj.getOptiTraj();
+    // alan_landing_planning::Traj optiTraj = traj.getOptiTraj();
 
     double t01 = ros::Time::now().toSec();
 

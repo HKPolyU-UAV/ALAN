@@ -1525,6 +1525,37 @@ namespace alan_traj
 
     }
 
+    void bernstein::setAeqAll(Eigen::MatrixXd& Aeq_all, int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    {
+        vector<Eigen::MatrixXd> Aeq_array;
+
+        cout<<endl<<endl;
+        cout<<"hi now in setAeqAll"<<endl;
+
+        cout<<axis_dim<<endl;
+        cout<<n_order<<endl;
+        cout<<m<<endl;
+
+        Aeq_array.clear();
+
+        for(int axis_i = 0; axis_i < axis_dim; axis_i++)
+        {
+            setAeq1D(axis_i, n_order, m, d_order, s);
+            Aeq_array.emplace_back(A_eq);
+        }
+
+        int A_final_rows = Aeq_array.size() * Aeq_array[0].rows();
+        int A_final_cols = Aeq_array.size() * Aeq_array[0].cols();
+
+        Aeq_all.resize(A_final_rows, A_final_cols);
+
+        for(int i = 0; i < Aeq_array.size(); i++)
+            Aeq_all.block(i * Aeq_array[i].rows(), i * Aeq_array[i].cols(), Aeq_array[i].rows(), Aeq_array[i].cols()) = Aeq_array[i];
+
+    }
+
+    // void bernstein::setAieqDynAll(Eigen::MatrixXd& Aieq_all, int)
+
     inline double bernstein::permutation(int p, int q)
     {
         return factorial(p) / factorial(q);

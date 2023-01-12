@@ -39,15 +39,7 @@ namespace alan_traj
         //log_path
         _log_path(log_path)
     {
-        ROS_WARN("entering traj generator!");  
-
-             
-
-        // msg_printer("-----------------------------------------------------------------");
-        // msg_printer("             ALan v0.1 - Autonomous Landing for UAV");
-        // msg_printer("                 (c) Li-yu LO,  Ching-wei Chang");
-        // msg_printer("              The Hong Kong Polytechnic University");
-        // msg_printer("-----------------------------------------------------------------");
+        ROS_WARN("entering traj generator!");          
 
         if(b_constraints.corridor_type == "POLYH")
         {
@@ -71,16 +63,21 @@ namespace alan_traj
             _lb = bezier_base.getLB();
 
             printf("2. constraints set: ");
-            // cout<<"_A:"<<endl;
             cout<<_A.rows()<<endl;
 
 
 
             
-            //3. cost set
+            // //3. cost set
             printf("3. cost term: x'M'QMx\n");
             _MQM = bezier_base.getMQM();
-            // _MQM = get_nearest_SPD(_MQM);
+
+            // Eigen::MatrixXd aeq_temp;
+            // bezier_base.setAeqAll(aeq_temp, _axis_dim, _n_order, _m, _d_order, _s);
+            // cout<<"hihih"<<endl;
+            // cout<<aeq_temp.rows()<<" "<<aeq_temp.cols()<<endl;
+
+            // cout<<aeq_temp<<endl;
 
 
             
@@ -155,6 +152,8 @@ namespace alan_traj
         log(); 
 
     }; 
+
+    
 
     void traj_gen::solve_opt(int freq)
     {

@@ -480,7 +480,7 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
 
 Eigen::Vector4d planner_server::set_following_target_pose()
 {
-    Eigen::Vector3d uav_following_pt = Eigen::Vector3d(-1.6, 0.0, take_off_height);    
+    Eigen::Vector3d uav_following_pt = Eigen::Vector3d(-landing_horizontal, 0.0, take_off_height);    
     uav_following_pt =  ugvOdomPose.rotation() * uav_following_pt 
         + Eigen::Vector3d(
             ugvOdomPose.translation().x(),
@@ -672,15 +672,15 @@ void planner_server::config(ros::NodeHandle& _nh)
     nh.getParam("/alan_master_planner_node/m", m);
     nh.getParam("/alan_master_planner_node/d_order", d_order);
 
-    // cout<<axis_dim<<endl;
-    // cout<<n_order<<endl;
-    // cout<<m<<endl;
-    // cout<<d_order<<endl;
-
     nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
-    nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
     nh.getParam("/alan_master_planner_node/ugv_height", ugv_height);
-    cout<<"ugv_height: "<<ugv_height<<endl;
+    
+    nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
+    nh.getParam("/alan_master_planner_node/landing_horizontal", landing_horizontal);
+    landing_time_duration_max = (take_off_height + landing_horizontal) / uav_landing_velocity;
+    landing_time_duration_min = (sqrt(pow(take_off_height,2) + pow(landing_horizontal,2)));
+    cout<<"time here: "<<landing_time_duration_max<<" "<<landing_time_duration_min<<endl;
+
     nh.getParam("/alan_master_planner_node/v_max", v_max);
     nh.getParam("/alan_master_planner_node/a_max", a_max);
 
@@ -692,25 +692,42 @@ void planner_server::config(ros::NodeHandle& _nh)
     nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
     nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
 
-
     uav_set_mode.request.custom_mode = "OFFBOARD";
     arm_cmd.request.value = true;
     alan_fsm_object.finite_state_machine = IDLE;
 
     set_alan_b_traj_prerequisite();
     
-
     //block traj temp
     set_block_traj = true;
 }
 
 void planner_server::set_alan_b_traj_prerequisite()
 {
-    set_btraj_info();
-    set_btraj_inequality_dynamic();
+    btraj_info.axis_dim = axis_dim;
+    btraj_info.n_order = n_order;
+    btraj_info.m = m;
+    btraj_info.d_order = d_order;
 
+    btraj_dconstraints.v_max(0) = v_max;
+    btraj_dconstraints.v_min(0) = -v_max;
+    btraj_dconstraints.a_max(0) = a_max;
+    btraj_dconstraints.a_min(0) = -a_max;
+
+    btraj_dconstraints.v_max(1) = v_max;
+    btraj_dconstraints.v_min(1) = -v_max;
+    btraj_dconstraints.a_max(1) = a_max;
+    btraj_dconstraints.a_min(1) = -a_max;
+
+    btraj_dconstraints.v_max(2) = v_max;
+    btraj_dconstraints.v_min(2) = -v_max;
+    btraj_dconstraints.a_max(2) = a_max;
+    btraj_dconstraints.a_min(2) = -a_max;
+
+    btraj_constraints.d_constraints = btraj_dconstraints;    
+
+    alan_btraj = new alan_traj::traj_gen(btraj_info, btraj_constraints, _pub_freq, log_path);
 }
-
 
 void planner_server::set_alan_b_traj()
 {
@@ -720,10 +737,6 @@ void planner_server::set_alan_b_traj()
     set_btraj_equality_constraint();
     cout<<3<<endl;
     set_btraj_inequality_kinematic();
-    cout<<4<<endl;
-    set_btraj_inequality_dynamic();
-    cout<<5<<endl;
-    
         
     alan_traj::traj_gen alan_btraj(btraj_info, btraj_constraints, _pub_freq, log_path);
     alan_btraj.solve_opt(_pub_freq);
@@ -735,10 +748,7 @@ void planner_server::set_alan_b_traj()
 
 void planner_server::set_btraj_info()
 {
-    btraj_info.axis_dim = axis_dim;
-    btraj_info.n_order = n_order;
-    btraj_info.m = m;
-    btraj_info.d_order = d_order;
+    
 }
 
 void planner_server::set_btraj_equality_constraint()
@@ -809,22 +819,7 @@ void planner_server::set_btraj_inequality_kinematic()
 void planner_server::set_btraj_inequality_dynamic()
 {
     
-    btraj_dconstraints.v_max(0) = v_max;
-    btraj_dconstraints.v_min(0) = -v_max;
-    btraj_dconstraints.a_max(0) = a_max;
-    btraj_dconstraints.a_min(0) = -a_max;
-
-    btraj_dconstraints.v_max(1) = v_max;
-    btraj_dconstraints.v_min(1) = -v_max;
-    btraj_dconstraints.a_max(1) = a_max;
-    btraj_dconstraints.a_min(1) = -a_max;
-
-    btraj_dconstraints.v_max(2) = v_max;
-    btraj_dconstraints.v_min(2) = -v_max;
-    btraj_dconstraints.a_max(2) = a_max;
-    btraj_dconstraints.a_min(2) = -a_max;
-
-    btraj_constraints.d_constraints = btraj_dconstraints;    
+    
 
 }
 
