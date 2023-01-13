@@ -94,29 +94,13 @@ namespace alan_traj
             int seg_time_sample_no
         );
 
-
-        void setMatrices_prerequisite(
+        void setMatrices(
             bernstein& bezier_base, 
             vector<vector<double>>& sampling_time
         );
 
         void setBoundary(bernstein& bezier_base);
 
-
-        void setVectors_prerequisite(
-            bernstein& bezier_base
-        );
-
-
-        void setTrajInfo();
-        
-        void passMatrices_prerequisite();
-
-
-        void setBeq_prerequisite();
-
-
-        
     public:
 
         traj_sampling( 
@@ -137,6 +121,14 @@ namespace alan_traj
             int total_time_sample_no,
             int seg_time_sample_no
         );
+
+        void updateBoundary(
+            Eigen::Vector3d& posi_start, 
+            Eigen::Vector3d& posi_end, 
+            Eigen::Vector3d& velo_constraints
+        );
+
+        void optSamples();
         
 
 

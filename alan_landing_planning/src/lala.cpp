@@ -102,7 +102,8 @@ int main(int argc, char** argv)
     // cout<<"hey we got these..."<<corridors.size()<<endl;
     // cout<<"we are out"<<endl;
 
-
+    Eigen::Vector3d virtual_car_velo;
+    virtual_car_velo.setZero();
 
 
     double t00 = ros::Time::now().toSec();
@@ -161,8 +162,40 @@ int main(int argc, char** argv)
     vector<double> time_sample;
     time_sample.emplace_back(1.78885);
     time_sample.emplace_back(2.0);
-    btraj_sampling.set_prerequisite(time_sample, 10, 10);
+    
+    double tick0 = ros::Time::now().toSec();
+    btraj_sampling.set_prerequisite(time_sample, 10,10);
+    double tock0 = ros::Time::now().toSec();
+    
+    cout<<"set pre-requisite:"<<endl;
+    cout<<(tock0 - tick0)<<endl;
+    cout<<1/(tock0 - tick0)<<endl<<endl;;
 
+
+    Eigen::Vector3d posi_start(
+            -1.6,
+            0.0,
+            0.8
+        );
+    Eigen::Vector3d posi_end(
+            0.0,
+            0.0,
+            0.1
+        );
+
+    Eigen::Vector3d velo_constraint(0,0,0);
+
+    double tick1 = ros::Time::now().toSec();
+
+    btraj_sampling.updateBoundary(posi_start, posi_end, velo_constraint);
+    btraj_sampling.optSamples();
+
+    double tock1 = ros::Time::now().toSec();
+
+    cout<<"online update:"<<endl;
+    cout<<(tock1 - tick1)<<endl;
+    cout<<1/(tock1 - tick1)<<endl;
+    
     // btraj_sampling.
 
 

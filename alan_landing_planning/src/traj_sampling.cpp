@@ -285,7 +285,7 @@ namespace alan_traj
             seg_time_sample_no
         );
 
-        setMatrices_prerequisite(bezier_base, sampling_time);
+        setMatrices(bezier_base, sampling_time);
         setBoundary(bezier_base);
         trajSolver.set_sampling_matrices(MQM_samples, A_samples, _ub, _lb);
 
@@ -346,21 +346,8 @@ namespace alan_traj
         cout<<"final sampling size..."<<sampling_time.size()<<endl;
     }
 
-    void traj_sampling::setBoundary(bernstein& bezier_base)
+    void traj_sampling::setMatrices(bernstein& bezier_base, vector<vector<double>>& sampling_time)
     {
-        tuple<Eigen::VectorXd, Eigen::VectorXd> temp_tuple
-            = bezier_base.set_ub_lb(_axis_dim, _n_order, _m, _d_order, _d_constraints);
-
-        _ub = get<0>(temp_tuple);
-        _lb = get<1>(temp_tuple);
-        // cout<<"hi!:.."<<endl;
-        // cout<<_ub<<endl;
-        // cout<<_lb<<endl<<endl<<endl;;
-    }
-
-    void traj_sampling::setMatrices_prerequisite(bernstein& bezier_base, vector<vector<double>>& sampling_time)
-    {
-        double tick = ros::Time::now().toSec();
         for(auto& what : sampling_time)
         {
             MQM_samples.emplace_back(
@@ -378,7 +365,7 @@ namespace alan_traj
                 )
             );
         }
-        double tock = ros::Time::now().toSec();
+       
 
         // cout<<A_samples[0]<<endl;
 
@@ -388,9 +375,48 @@ namespace alan_traj
         // save<<A_samples[0]<<endl;
         // save.close();
 
-        cout<<1 / (tock-tick)<<endl;
-        cout<<MQM_samples.size()<<endl;
-        cout<<A_samples.size()<<endl;
+        // cout<<1 / (tock-tick)<<endl;
+        // cout<<MQM_samples.size()<<endl;
+        // cout<<A_samples.size()<<endl;
+    }
+
+    void traj_sampling::setBoundary(bernstein& bezier_base)
+    {
+        tuple<Eigen::VectorXd, Eigen::VectorXd> temp_tuple
+            = bezier_base.set_ub_lb(_axis_dim, _n_order, _m, _d_order, _d_constraints);
+
+        _ub = get<0>(temp_tuple);
+        _lb = get<1>(temp_tuple);
+    }
+
+    void traj_sampling::updateBoundary(
+        Eigen::Vector3d& posi_start, 
+        Eigen::Vector3d& posi_end,
+        Eigen::Vector3d& velo_constraints
+    )
+    {
+        int starto = 0;
+        //set starting state in {b}, in particular for the ALAN project 
+        for(int axis_i = 0; axis_i < _axis_dim; axis_i++)
+        {
+            starto = _axis_dim * 2 + _d_order;
+            cout<<axis_i * starto<<endl;
+            _ub(axis_i * starto) = posi_start(axis_i);
+            _lb(axis_i * starto) = posi_start(axis_i);
+
+            _ub(axis_i * starto + _axis_dim) = posi_end(axis_i);
+            _lb(axis_i * starto + _axis_dim) = posi_end(axis_i);
+
+        }
+
+        // cout<<_ub<<endl;
+        trajSolver.update_b_vectors(_ub, _lb);
+    }
+
+    void traj_sampling::optSamples()
+    {
+        trajSolver.qp_opt_samples();
+
     }
 
     void traj_sampling::log()

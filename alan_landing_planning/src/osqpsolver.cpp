@@ -104,7 +104,43 @@ void osqpsolver::qp_opt(
 
 }
 
-void osqpsolver::qp_opt_samples(Eigen::VectorXd& current)
+void osqpsolver::qp_opt_samples()
 {
-    current[0];
+    int success_i = 0;
+    if(Hessian_array.size() != Alinear_array.size())
+        return;
+    else
+    {
+         for(int i = 0; i < Hessian_array.size(); i++)
+        {
+            // cout<<i<<endl;
+            if(!qpsolver.updateHessianMatrix(Hessian_array[i]))
+                cout<<"Hessian not update!"<<endl;
+            
+            if(!qpsolver.updateLinearConstraintsMatrix(Alinear_array[i]))
+                cout<<"linear matrix not update!"<<endl;
+            
+
+            
+            // if(!qpsolver.initSolver())
+            //     cout<<"please initialize solver!!"<<endl;
+            
+            if(!qpsolver.solve())
+                cout<<"not yet solved"<<endl;
+            else
+            {
+                success_i++;
+                // cout<<qpsolver.getSolution()<<endl<<endl;;
+                qpsolver.workspace()->;
+                
+                // cout<<"cost: "<< qpsolver.getSolution().transpose() * Hessian_array[i] * qpsolver.getSolution().transpose()<<endl;
+
+            }
+                
+        }
+    }
+    
+    cout<<success_i<<endl;
+   
+    
 }
