@@ -131,7 +131,7 @@ void osqpsolver::qp_opt_samples()
             {
                 success_i++;
                 // cout<<qpsolver.getSolution()<<endl<<endl;;
-                qpsolver.workspace()->;
+                // qpsolver.workspace()->;
                 
                 // cout<<"cost: "<< qpsolver.getSolution().transpose() * Hessian_array[i] * qpsolver.getSolution().transpose()<<endl;
 
