@@ -75,26 +75,21 @@ void osqpsolver::qp_opt(
     if(!qpsolver.initSolver())
         cout<<"please initialize solver!!"<<endl;
 
-    // qpsolver.p
-
-    for(int i = 0 ; i < 100; i++)
-    {
-        cout<<i<<endl;
-        if(!qpsolver.updateHessianMatrix(Hessian))
+    if(!qpsolver.updateHessianMatrix(Hessian))
         cout<<"Hessian not set!"<<endl;
-        
-        if(!qpsolver.updateLinearConstraintsMatrix(ALinear))
-            cout<<"linear matrix not set!"<<endl;
-        
+    
+    if(!qpsolver.updateLinearConstraintsMatrix(ALinear))
+        cout<<"linear matrix not set!"<<endl;
+    
 
-        
-        // if(!qpsolver.initSolver())
-        //     cout<<"please initialize solver!!"<<endl;
-        
-        if(!qpsolver.solve())
-            cout<<"not yet solved"<<endl;
+    
+    // if(!qpsolver.initSolver())
+    //     cout<<"please initialize solver!!"<<endl;
+    
+    if(!qpsolver.solve())
+        cout<<"not yet solved"<<endl;
 
-    }
+    
     
     
 
@@ -120,15 +115,12 @@ void osqpsolver::qp_opt_samples()
             if(!qpsolver.updateLinearConstraintsMatrix(Alinear_array[i]))
                 cout<<"linear matrix not update!"<<endl;
             
-
-            
-            // if(!qpsolver.initSolver())
-            //     cout<<"please initialize solver!!"<<endl;
-            
             if(!qpsolver.solve())
-                cout<<"not yet solved"<<endl;
+                ROS_RED_STREAM("FAILED!");
             else
-            {
+            {   
+                cout<<i;
+                ROS_GREEN_STREAM("Succeed!");
                 success_i++;
                 // cout<<qpsolver.getSolution()<<endl<<endl;;
                 // qpsolver.workspace()->;
@@ -139,8 +131,5 @@ void osqpsolver::qp_opt_samples()
                 
         }
     }
-    
     cout<<success_i<<endl;
-   
-    
 }

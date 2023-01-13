@@ -126,20 +126,22 @@ int main(int argc, char** argv)
 
     //dynamic constraint
     alan_traj::dynamic_constraints d_constraints;
-    d_constraints.v_max(0) =  2;
-    d_constraints.v_min(0) = -2;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(0) =  4;
-    d_constraints.a_min(0) = -4;//OsqpEigen::INFTY;//-200;
+    double vel_temp = 5;
+    double acc_temp = 10;
+    d_constraints.v_max(0) =  vel_temp;
+    d_constraints.v_min(0) = -vel_temp;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(0) =  acc_temp;
+    d_constraints.a_min(0) = -acc_temp;//OsqpEigen::INFTY;//-200;
 
-    d_constraints.v_max(1) =  2;
-    d_constraints.v_min(1) = -2;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(1) =  4;
-    d_constraints.a_min(1) = -4;//OsqpEigen::INFTY;//-200;
+    d_constraints.v_max(1) =  vel_temp;
+    d_constraints.v_min(1) = -vel_temp;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(1) =  acc_temp;
+    d_constraints.a_min(1) = -acc_temp;//OsqpEigen::INFTY;//-200;
 
-    d_constraints.v_max(2) =  2;
-    d_constraints.v_min(2) = -2;//OsqpEigen::INFTY;//-150;
-    d_constraints.a_max(2) =  4;
-    d_constraints.a_min(2) = -4;//OsqpEigen::INFTY;//-200;
+    d_constraints.v_max(2) =  vel_temp;
+    d_constraints.v_min(2) = -vel_temp;//OsqpEigen::INFTY;//-150;
+    d_constraints.a_max(2) =  acc_temp;
+    d_constraints.a_min(2) = -acc_temp;//OsqpEigen::INFTY;//-200;
 
 
     alan_traj::bezier_constraints b_constraints;
@@ -160,7 +162,7 @@ int main(int argc, char** argv)
     );
 
     vector<double> time_sample;
-    time_sample.emplace_back(1.78885);
+    time_sample.emplace_back(0.894425);
     time_sample.emplace_back(2.0);
     
     double tick0 = ros::Time::now().toSec();

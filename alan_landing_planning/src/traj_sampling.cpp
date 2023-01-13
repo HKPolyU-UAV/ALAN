@@ -288,6 +288,7 @@ namespace alan_traj
         setMatrices(bezier_base, sampling_time);
         setBoundary(bezier_base);
         trajSolver.set_sampling_matrices(MQM_samples, A_samples, _ub, _lb);
+        
 
         // for(auto what : sampling_time)
         // {
@@ -339,7 +340,7 @@ namespace alan_traj
 
             
                 vector<double> temp_sample = {time_seg_0, time_seg_1};
-                // cout<<time_seg_0<<" "<<time_seg_1<<endl<<endl;;
+                cout<<time_seg_0<<" "<<time_seg_1<<endl<<endl;;
                 sampling_time.emplace_back(temp_sample);
             }
         }
