@@ -5,11 +5,11 @@
 
 // #include "osqpsolver.hpp"
 
-#include "include/bezier_lib/traj_gen.h"
+#include "include/bezier_lib/traj_sampling.h"
 
 namespace alan_traj
 {
-    traj_gen::traj_gen( 
+    traj_sampling::traj_sampling( 
         bezier_info b_info,  
         bezier_constraints b_constraints, 
         int discrete_freq,
@@ -22,16 +22,12 @@ namespace alan_traj
         _n_dim_per_axis((b_info.n_order + 1) * b_info.m),
 
         //for constraints set
-        _start(b_constraints.start), 
-        _end(b_constraints.end), 
-
-        _cube_list(b_constraints.cube_list),
         _sfc_list(b_constraints.sfc_list),
 
         _d_constraints(b_constraints.d_constraints),
 
         //for cost term
-        _n_order(b_info.n_order), _m(b_info.m), _d_order(b_info.d_order), _s(b_info.s),
+        _n_order(b_info.n_order), _m(b_info.m), _d_order(b_info.d_order),
 
         //freq
         _discrete_freq(discrete_freq),
@@ -39,144 +35,13 @@ namespace alan_traj
         //log_path
         _log_path(log_path)
     {
-        ROS_WARN("entering traj generator!");  
-
-             
-
-        // msg_printer("-----------------------------------------------------------------");
-        // msg_printer("             ALan v0.1 - Autonomous Landing for UAV");
-        // msg_printer("                 (c) Li-yu LO,  Ching-wei Chang");
-        // msg_printer("              The Hong Kong Polytechnic University");
-        // msg_printer("-----------------------------------------------------------------");
-
-        if(b_constraints.corridor_type == "POLYH")
-        {
-            //all axis matrices set here
-
-            printf("POLYH constraints...\n");
-
-            bernstein bezier_base(
-                _axis_dim,
-                _n_order, _m, _d_order, _s, 
-                _start, _end,
-                _sfc_list, _d_constraints
-            );
-            printf("1. variable set: ");
-            cout<<_n_dim<<endl;
-
-            //2. constraints set
-            //should get everything (all axis) here
-            _A = bezier_base.getA(); 
-            _ub = bezier_base.getUB();
-            _lb = bezier_base.getLB();
-
-            printf("2. constraints set: ");
-            // cout<<"_A:"<<endl;
-            cout<<_A.rows()<<endl;
-
-
-
-            
-            //3. cost set
-            printf("3. cost term: x'M'QMx\n");
-            _MQM = bezier_base.getMQM();
-            // _MQM = get_nearest_SPD(_MQM);
-
-
-            
-
-
-        }
-        else if(b_constraints.corridor_type == "CUBE")
-        {
-            //all axis matrices set here
-
-            printf("CUBE constraints...");
-            bernstein bezier_base(
-            _axis_dim,
-            _n_order, _m, _d_order, _s,
-            _start, _end,
-            _cube_list, _d_constraints             
-            );//pass everything in one pass
-            
-            // if
-            
-            //1. variable set
-            // _n_dim = (b_info.n_order + 1) + b_info.m
-            // printf("1. variable set: ");
-            // cout<<_n_dim<<endl;
-
-            //2. constraints set
-            //should be containing all axises matrices
-            _A = bezier_base.getA();
-            _ub = bezier_base.getUB();
-            _lb = bezier_base.getLB();
-
-            // printf("2. constraints set: ");
-            // cout<<_A.rows()<<endl;
-
-            // cout<<"_lb:"<<endl;
-            // cout<<_lb.size()<<endl;
-
-
-
-
-
-
-
-            // cout<<"_ub:"<<endl;
-            // cout<<_ub<<endl;
-
-            // cout<<"\nsummary:\n";
-            // cout<<"A size:\n";
-            // cout<<_A.rows()<<endl;
-            // cout<<_A.cols()<<endl;
-            // cout<<"upper bound size:\n";
-            // cout<<_ub.size()<<endl;
-            // cout<<"lower bound size:\n";
-            // cout<<_lb.size()<<endl;
-
-
-            
-            //3. cost set
-            printf("3. cost term: x'M'QMx\n");
-            _MQM = bezier_base.getMQM();
-
-            
-            // cout<<_MQM<<endl;
-            // _MQM = get_nearest_SPD(_MQM);
-
-        }
-        else
-        {
-            ROS_ERROR("Please check kinematic constraint type...");
-        }
-
-        log(); 
-
+        ROS_WARN("TRAJ_SAMPLING INSTANTIATED!");          
     }; 
 
-    void traj_gen::solve_opt(int freq)
+    
+
+    void traj_sampling::solve_opt(int freq)
     {
-        // qpsolver qpsolve(_n_dim, _A.rows());
-
-        // qpsolve.solve_qp(_MQM, _A, _ub, _lb);
-
-        osqpsolver trajSolver;
-
-        // _MQM = _MQM * 100;
-        // _A = _A * 100;
-        // _ub = _ub * 100;
-        // _lb = _lb * 100;
-
-        // cout<<_A<<endl;
-        // cout<<_ub<<endl;
-        // cout<<"\n-----------------------------------------------lalalalalalalalala\n";
-        // cout<<_MQM<<endl;
-        // cout<<_MQM.rows()<<"  "<<_MQM.cols()<<endl<<endl;;
-        
-
-
         trajSolver.qp_opt(_MQM, _A, _ub, _lb);
         PolyCoeff = trajSolver.getQpsol();
 
@@ -196,18 +61,11 @@ namespace alan_traj
         cout<<"enter set Opti Traj..."<<endl;
         setOptiTraj();
 
-
-
-
-        // qpsolve.solve();
-        // qpsolve.ifopt_test(_MQM, _A, _ub, _lb);
-        // qpsolve.solve_trial();
-
         
     }
 
 
-    Eigen::MatrixXd traj_gen::get_nearest_SPD(Eigen::MatrixXd MQM) 
+    Eigen::MatrixXd traj_sampling::get_nearest_SPD(Eigen::MatrixXd MQM) 
     {
         // make the Hessian to a 
         // symmetric positive semidefinite matrix
@@ -288,12 +146,12 @@ namespace alan_traj
         return spd;
     }
 
-    void traj_gen::msg_printer(char *s)
+    void traj_sampling::msg_printer(char *s)
     {
         // printf("%*s%*s\n",10+strlen(s)/2,s,10-strlen(s)/2," ");
     }
 
-    void traj_gen::setOptiTraj()
+    void traj_sampling::setOptiTraj()
     {
         alan_landing_planning::AlanPlannerMsg traj_discrete_pt;
         
@@ -378,7 +236,7 @@ namespace alan_traj
 
     }
 
-    void traj_gen::setTimeDiscrete()
+    void traj_sampling::setTimeDiscrete()
     {
         vector<double> time_vector_per_seg;
         double discrete_time_step;
@@ -405,12 +263,163 @@ namespace alan_traj
         
     }
 
-    double traj_gen::nchoosek(int n, int k)
+    double traj_sampling::nchoosek(int n, int k)
     {
         return pascal[n][k];
     }
 
-    void traj_gen::log()
+    void traj_sampling::set_prerequisite(
+        vector<double> time_minmax, 
+        int total_time_sample_no,
+        int seg_time_sample_no
+    )
+    {
+        vector<vector<double>> sampling_time;
+
+        bernstein bezier_base;
+
+        setSampling_time(
+            sampling_time, 
+            time_minmax, 
+            total_time_sample_no, 
+            seg_time_sample_no
+        );
+
+        setMatrices(bezier_base, sampling_time);
+        setBoundary(bezier_base);
+        trajSolver.set_sampling_matrices(MQM_samples, A_samples, _ub, _lb);
+
+        // for(auto what : sampling_time)
+        // {
+        //     cout<<what[0]<<" "<<what[1]<<endl;
+        // }
+
+    }
+
+    void traj_sampling::setSampling_time(
+        vector<vector<double>>& sampling_time,
+        vector<double> time_minmax, 
+        int total_time_sample_no, 
+        int seg_time_sample_no
+    )
+    {
+        if(_m != 2)
+        {
+            ROS_ERROR("PLEASE CHECK SEGMENT NO., NOT CORRECT!");
+            return;
+        }
+
+        sampling_time.clear();
+            
+        int total_sample_no = total_time_sample_no * seg_time_sample_no;
+
+        // for(int i = 0)
+        double delta_time = time_minmax[1] - time_minmax[0];
+
+        double time_min = time_minmax[0];
+        double time_max = time_minmax[1];
+
+        // cout<<time_min<<endl;
+        // cout<<time_max<<endl;
+
+        for(int i = 0; i < total_time_sample_no ; i++)
+        {
+            double total_time_per_sample = 
+                (1.0 / (total_time_sample_no - 1)) * i * time_min + 
+                (1.0 / (total_time_sample_no - 1)) * ((total_time_sample_no - 1) - i) * time_max;
+            // cout<<total_time_per_sample<<endl;
+
+            for(int j = 0; j < seg_time_sample_no; j++)
+            {
+                // cout<<"hi"<<endl;
+                // cout<<total_time_per_sample<<endl;
+                double time_seg_0 = 
+                    (1.0 / (seg_time_sample_no + 1)) * (j + 1) * total_time_per_sample;
+                double time_seg_1 = total_time_per_sample - time_seg_0;
+
+            
+                vector<double> temp_sample = {time_seg_0, time_seg_1};
+                // cout<<time_seg_0<<" "<<time_seg_1<<endl<<endl;;
+                sampling_time.emplace_back(temp_sample);
+            }
+        }
+        cout<<"final sampling size..."<<sampling_time.size()<<endl;
+    }
+
+    void traj_sampling::setMatrices(bernstein& bezier_base, vector<vector<double>>& sampling_time)
+    {
+        for(auto& what : sampling_time)
+        {
+            MQM_samples.emplace_back(
+                bezier_base.set_1_MQMSample(_axis_dim, _n_order, _m, _d_order, what)
+            );   
+
+            A_samples.emplace_back(
+                bezier_base.set_1_ASample(
+                    _axis_dim, 
+                    _n_order, 
+                    _m, 
+                    _d_order,
+                    _sfc_list,
+                    what
+                )
+            );
+        }
+       
+
+        // cout<<A_samples[0]<<endl;
+
+        // string temp = _log_path + "A_prerequisite.txt";
+        // remove(temp.c_str());
+        // ofstream save(temp ,ios::app);
+        // save<<A_samples[0]<<endl;
+        // save.close();
+
+        // cout<<1 / (tock-tick)<<endl;
+        // cout<<MQM_samples.size()<<endl;
+        // cout<<A_samples.size()<<endl;
+    }
+
+    void traj_sampling::setBoundary(bernstein& bezier_base)
+    {
+        tuple<Eigen::VectorXd, Eigen::VectorXd> temp_tuple
+            = bezier_base.set_ub_lb(_axis_dim, _n_order, _m, _d_order, _d_constraints);
+
+        _ub = get<0>(temp_tuple);
+        _lb = get<1>(temp_tuple);
+    }
+
+    void traj_sampling::updateBoundary(
+        Eigen::Vector3d& posi_start, 
+        Eigen::Vector3d& posi_end,
+        Eigen::Vector3d& velo_constraints
+    )
+    {
+        int starto = 0;
+        //set starting state in {b}, in particular for the ALAN project 
+        for(int axis_i = 0; axis_i < _axis_dim; axis_i++)
+        {
+            starto = _axis_dim * 2 + _d_order;
+            cout<<axis_i * starto<<endl;
+            _ub(axis_i * starto) = posi_start(axis_i);
+            _lb(axis_i * starto) = posi_start(axis_i);
+
+            _ub(axis_i * starto + _axis_dim) = posi_end(axis_i);
+            _lb(axis_i * starto + _axis_dim) = posi_end(axis_i);
+
+        }
+
+        // cout<<_ub<<endl;
+        trajSolver.update_b_vectors(_ub, _lb);
+    }
+
+    void traj_sampling::optSamples()
+    {
+        trajSolver.qp_opt_samples();
+
+    }
+
+    void traj_sampling::log()
     {
         //b_traj info log...
         string temp = _log_path + "b_traj.txt";

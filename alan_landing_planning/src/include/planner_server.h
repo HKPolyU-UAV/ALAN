@@ -96,7 +96,19 @@ private:
     
 //set btraj
     //functions
+    //b_traj-related
+    int axis_dim = 0;
+    int n_order = 0;
+    int m = 0;
+    int d_order = 0;
+    alan_traj::bezier_info btraj_info;
+    alan_traj::endpt start_3d;
+    alan_traj::endpt end_3d;
+    alan_traj::dynamic_constraints btraj_dconstraints;
+    // alan_traj::traj_gen alan_traj()
     void set_alan_b_traj();
+    void set_alan_b_traj_prerequisite();
+    void set_alan_b_traj_online();
     void set_btraj_info();
     void set_btraj_equality_constraint();
     void set_btraj_inequality_kinematic();
@@ -107,22 +119,20 @@ private:
     double final_corridor_height = 0;
     double final_corridor_length = 0;
     double take_off_height = 0;
-    double ugv_height = 0.0;
+    double landing_horizontal = 0;
+    double ugv_height = 0;
+    double landing_time_duration_max = 0;
+    double landing_time_duration_min = 0;
     alan_traj::bezier_constraints btraj_constraints;
     alan_visualization::Polyhedron temp_poly;
     vector<alan_visualization::Polyhedron> corridors;
     alan_visualization::PolyhedronArray land_traj_constraint;
     bool land_traj_constraint_initiated;
 
-    //b_traj-related
-    int axis_dim = 0;
-    int n_order = 0;
-    int m = 0;
-    int d_order = 0;
-    alan_traj::bezier_info btraj_info;
-    alan_traj::endpt start_3d;
-    alan_traj::endpt end_3d;
-    alan_traj::dynamic_constraints btraj_dconstraints;
+
+    alan_traj::traj_gen* alan_btraj; //= alan_traj::traj_gen(btraj_info, btraj_constraints, _pub_freq, log_path);
+
+    
     bool plan_traj = false;
     int traj_i = 0;
     double landing_time_total = 0;
@@ -137,7 +147,7 @@ private:
 
 //rotation function
     Eigen::Vector3d q2rpy(Eigen::Quaterniond q) {
-        return q.toRotationMatrix().eulerAngles(2,1,0);
+        return q.toRotationMatrix().eulerAngles(1,0,2);
     };
 
     Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy){

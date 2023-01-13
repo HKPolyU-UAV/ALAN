@@ -160,10 +160,15 @@ namespace alan_traj
         void setQM1D(int axis_dim, int n_order, int m, int d_order, vector<double> s);
 
 
-        void setAieqBieqsfc(int axis_dim, vector<alan_visualization::Polyhedron> corridor, dynamic_constraints d_constraints, int n_order, int m, int d_order, vector<double> s);
+        void setAieqBieqsfc(
+            int axis_dim, 
+            vector<alan_visualization::Polyhedron> corridor, 
+            int n_order, 
+            int m, 
+            int d_order, 
+            vector<double> s
+        );
         //coupled      
-
-        void setFinalMatrices();
 
         void setMQMFinal();
         void setAFinal();
@@ -173,9 +178,6 @@ namespace alan_traj
         void setAFinal_polyh();
         void setUbFinal_polyh();
         void setLbFinal_polyh();
-
-
-
         // Eigen::MatrixXd getSPD(Eigen::MatrixXd Q);
 
         
@@ -184,8 +186,10 @@ namespace alan_traj
         double factorial(int r);
         vector<double> pascal_triangle(int level);
 
-        
-        
+        //sampling
+        Eigen::MatrixXd set_1_AeqSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
+        Eigen::MatrixXd set_1_AieqDynSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
+
         
     public:
         bernstein(
@@ -204,8 +208,28 @@ namespace alan_traj
              dynamic_constraints d_constraints
             );//for cube
 
+        bernstein();
+        //for alan_landing in particular
+
         ~bernstein(){};
 
+        Eigen::MatrixXd set_1_MQMSample(int axis_dim, int n_order, int m, int d_order, vector<double> s);
+        Eigen::MatrixXd set_1_ASample(
+            int axis_dim, 
+            int n_order, 
+            int m, 
+            int d_order,  
+            vector<alan_visualization::Polyhedron> sfc_list,
+            vector<double> s
+        );
+        tuple<Eigen::VectorXd, Eigen::VectorXd> set_ub_lb(
+            int axis_dim, 
+            int n_order, 
+            int m, 
+            int d_order, 
+            dynamic_constraints d_constraints
+        );
+        
 
         inline Eigen::MatrixXd getMQM(){return MQM_final;}
         inline Eigen::MatrixXd getA(){return A_final;}

@@ -51,12 +51,12 @@ void osqpsolver::qp_opt(
     OsqpEigen::Solver qpsolver;
     
     qpsolver.settings()->setWarmStart(true);
+    qpsolver.settings()->setVerbosity(false);
+    // qpsolver.settings()->setMaxIteration(10);
 
     qpsolver.data()->setNumberOfVariables(nV);
     qpsolver.data()->setNumberOfConstraints(nC);
 
-    // qpsolver.p
-    
     if(!qpsolver.data()->setHessianMatrix(Hessian))
         cout<<"Hessian not set!"<<endl;
 
@@ -74,21 +74,73 @@ void osqpsolver::qp_opt(
     
     if(!qpsolver.initSolver())
         cout<<"please initialize solver!!"<<endl;
+
+    // qpsolver.p
+
+    for(int i = 0 ; i < 100; i++)
+    {
+        cout<<i<<endl;
+        if(!qpsolver.updateHessianMatrix(Hessian))
+        cout<<"Hessian not set!"<<endl;
+        
+        if(!qpsolver.updateLinearConstraintsMatrix(ALinear))
+            cout<<"linear matrix not set!"<<endl;
+        
+
+        
+        // if(!qpsolver.initSolver())
+        //     cout<<"please initialize solver!!"<<endl;
+        
+        if(!qpsolver.solve())
+            cout<<"not yet solved"<<endl;
+
+    }
     
-    if(!qpsolver.solve())
-        cout<<"not yet solved"<<endl;
+    
 
     qpsol = qpsolver.getSolution();
 
-    
-
-    // cout<<"here are the solutions: "<<endl;
-    // cout<<qpsol<<endl;
-
-
     // cout<<"cost: "<<qpsol.transpose() * H * qpsol<<endl;
-    
 
-    
+}
 
+void osqpsolver::qp_opt_samples()
+{
+    int success_i = 0;
+    if(Hessian_array.size() != Alinear_array.size())
+        return;
+    else
+    {
+         for(int i = 0; i < Hessian_array.size(); i++)
+        {
+            // cout<<i<<endl;
+            if(!qpsolver.updateHessianMatrix(Hessian_array[i]))
+                cout<<"Hessian not update!"<<endl;
+            
+            if(!qpsolver.updateLinearConstraintsMatrix(Alinear_array[i]))
+                cout<<"linear matrix not update!"<<endl;
+            
+
+            
+            // if(!qpsolver.initSolver())
+            //     cout<<"please initialize solver!!"<<endl;
+            
+            if(!qpsolver.solve())
+                cout<<"not yet solved"<<endl;
+            else
+            {
+                success_i++;
+                // cout<<qpsolver.getSolution()<<endl<<endl;;
+                qpsolver.workspace()->;
+                
+                // cout<<"cost: "<< qpsolver.getSolution().transpose() * Hessian_array[i] * qpsolver.getSolution().transpose()<<endl;
+
+            }
+                
+        }
+    }
+    
+    cout<<success_i<<endl;
+   
+    
 }

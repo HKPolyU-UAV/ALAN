@@ -301,39 +301,13 @@ void alan::MsgSyncNodelet::ugv_vrpn_pose_callback(const geometry_msgs::PoseStamp
         //below for sfc
         camPose = ugvOdomPose * body_to_cam_Pose;
 
-        set_total_bound(
-            Eigen::Translation3d(
-                camPose.translation().x(),
-                camPose.translation().y(),
-                camPose.translation().z()
-            ),
-            Eigen::Quaterniond(
-                camPose.rotation()
-            )
-        );
-        set_all_sfc(
-            Eigen::Translation3d(
-                camPose.translation().x(),
-                camPose.translation().y(),
-                camPose.translation().z()
-            ),
-            Eigen::Quaterniond(
-                camPose.rotation()
-            )
-        );
-
         cam_pos_world = Eigen::Vector3d(
             camPose.translation().x(),
             camPose.translation().y(),
             camPose.translation().z()
         );
-        
-        //remember to add ugv camera translation                
-        // alan_sfc_pub.publish(polyh_total_bound);
-        // cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<endl;
 
-        alan_all_sfc_pub.publish(polyh_array_pub_object);
-
+        setup_publish_SFC();        
     }
 }
 
@@ -353,6 +327,69 @@ void alan::MsgSyncNodelet::ugv_imu_callback(const sensor_msgs::Imu::ConstPtr& im
 }
 
 //////////////////below defines sfc////////////////////////
+void alan::MsgSyncNodelet::setup_publish_SFC()
+{
+    Eigen::Vector3d cam_posi_in_B = Eigen::Vector3d(
+        c2b_ugv(0),
+        c2b_ugv(1),
+        c2b_ugv(2)
+    );
+
+    Eigen::Quaterniond cam_orien_in_B = rpy2q(
+        Eigen::Vector3d(
+            c2b_ugv(3),
+            c2b_ugv(4),
+            c2b_ugv(5)
+        )
+    );
+
+    //in {b}
+    set_total_bound(
+        Eigen::Translation3d(
+            cam_posi_in_B
+        ),
+        cam_orien_in_B
+    );
+
+    set_all_sfc(
+        Eigen::Translation3d(
+            cam_posi_in_B
+        ),
+        cam_orien_in_B
+    );
+
+    //in {w}
+    // set_total_bound(
+    //     Eigen::Translation3d(
+    //         camPose.translation().x(),
+    //         camPose.translation().y(),
+    //         camPose.translation().z()
+    //     ),
+    //     Eigen::Quaterniond(
+    //         camPose.rotation()
+    //     )
+    // );
+
+    // set_all_sfc(
+    //     Eigen::Translation3d(
+    //         camPose.translation().x(),
+    //         camPose.translation().y(),
+    //         camPose.translation().z()
+    //     ),
+    //     Eigen::Quaterniond(
+    //         camPose.rotation()
+    //     )
+    // );
+
+    
+    
+    //remember to add ugv camera translation                
+    // alan_sfc_pub.publish(polyh_total_bound);
+    // cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<endl;
+
+    alan_all_sfc_pub.publish(polyh_array_pub_object);
+
+}
 
 Eigen::Vector3d alan::MsgSyncNodelet::q2rpy(Eigen::Quaterniond q)
 {
