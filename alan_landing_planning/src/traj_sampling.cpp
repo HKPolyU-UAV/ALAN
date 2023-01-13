@@ -217,9 +217,6 @@ namespace alan_traj
                 traj_discrete_pt.position.x = x_pos;
                 traj_discrete_pt.position.y = y_pos;
 
-
-                
-
                 // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt",ios::app);
                 // save<<x_pos<<endl;
                 // save<<y_pos<<endl;
@@ -229,8 +226,6 @@ namespace alan_traj
                 optiTraj.trajectory.emplace_back(traj_discrete_pt);                
             }
         }
-
-
         
         cout<<"here are the traj size...: "<<optiTraj.trajectory.size()<<endl;
 
@@ -344,6 +339,7 @@ namespace alan_traj
                 sampling_time.emplace_back(temp_sample);
             }
         }
+        trajSolver.set_time_sampling(sampling_time);
         cout<<"final sampling size..."<<sampling_time.size()<<endl;
     }
 
@@ -365,6 +361,8 @@ namespace alan_traj
                     what
                 )
             );
+
+
         }
        
 

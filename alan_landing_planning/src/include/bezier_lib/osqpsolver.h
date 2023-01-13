@@ -8,10 +8,13 @@ class osqpsolver
 {
 private:
     Eigen::VectorXd qpsol;
-    vector<Eigen::SparseMatrix<double>> Hessian_array;
-    vector<Eigen::SparseMatrix<double>> Alinear_array;
+    vector<Eigen::MatrixXd> _MQM_array;
+    vector<Eigen::SparseMatrix<double>> _Hessian_array;
+    vector<Eigen::SparseMatrix<double>> _Alinear_array;
     Eigen::VectorXd _ub;
     Eigen::VectorXd _lb;
+    vector<vector<double>> _time_samples;
+    vector<double> _cost_array;
 
     OsqpEigen::Solver qpsolver;
 
@@ -28,13 +31,13 @@ private:
         qpsolver.data()->setNumberOfVariables(nV);
         qpsolver.data()->setNumberOfConstraints(nC);
 
-        if(!qpsolver.data()->setHessianMatrix(Hessian_array[0]))
+        if(!qpsolver.data()->setHessianMatrix(_Hessian_array[0]))
         cout<<"Hessian not set!"<<endl;
 
         if(!qpsolver.data()->setGradient(g))
             cout<<"gradient not set!"<<endl;
         
-        if(!qpsolver.data()->setLinearConstraintsMatrix(Alinear_array[0]))
+        if(!qpsolver.data()->setLinearConstraintsMatrix(_Alinear_array[0]))
             cout<<"linear matrix not set!"<<endl;
         
         if(!qpsolver.data()->setLowerBound(_lb))
@@ -53,19 +56,24 @@ public:
     osqpsolver(/* args */);    
     ~osqpsolver();
 
+    // single traj
     void qp_opt(
         Eigen::MatrixXd _MQM, 
         Eigen::MatrixXd _A, 
         Eigen::MatrixXd _ub, 
-        Eigen::MatrixXd _lb);
+        Eigen::MatrixXd _lb
+    );
+
+    inline Eigen::VectorXd getQpsol(){return qpsol;}
 
     void update_b_vectors(Eigen::VectorXd& ub, Eigen::VectorXd& lb)
     {
         _ub = ub;
         _lb = lb;
-
     }
 
+    
+    // sampling traj
     void qp_opt_samples();
 
     inline void set_sampling_matrices(
@@ -75,11 +83,18 @@ public:
         Eigen::VectorXd& lb
     )
     {
-        for(auto& what : MQM_array)
-            Hessian_array.emplace_back(what.sparseView());
+        _MQM_array.clear();
+        _Hessian_array.clear();
+        _Alinear_array.clear();
 
+        for(auto& what : MQM_array)
+        {
+            _MQM_array.emplace_back(what);
+            _Hessian_array.emplace_back(what.sparseView());
+        }
+            
         for(auto& what : A_array)
-            Alinear_array.emplace_back(what.sparseView());
+            _Alinear_array.emplace_back(what.sparseView());
         
         _ub = ub;
         _lb = lb;
@@ -88,18 +103,14 @@ public:
         int nC = A_array[0].rows();
 
         cout<<"hi we now in osqpsolver class..."<<endl;
-        cout<<Hessian_array.size()<<endl;
+        cout<<_Hessian_array.size()<<endl;
 
         initiate_qpsolve(nV, nC);
-
-        // cout<<_ub<<endl;
-        // cout<<_lb<<endl;
-
-        
-
     };
 
-    inline Eigen::VectorXd getQpsol(){return qpsol;}
+    inline void set_time_sampling(vector<vector<double>> time_samples){_time_samples = time_samples;}
+
+
     
 };
 
