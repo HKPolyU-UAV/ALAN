@@ -126,8 +126,8 @@ int main(int argc, char** argv)
 
     //dynamic constraint
     alan_traj::dynamic_constraints d_constraints;
-    double vel_temp = 5;
-    double acc_temp = 10;
+    double vel_temp = 2;
+    double acc_temp = 4;
     d_constraints.v_max(0) =  vel_temp;
     d_constraints.v_min(0) = -vel_temp;//OsqpEigen::INFTY;//-150;
     d_constraints.a_max(0) =  acc_temp;
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
     time_sample.emplace_back(2.0);
     
     double tick0 = ros::Time::now().toSec();
-    btraj_sampling.set_prerequisite(time_sample, 10,10);
+    btraj_sampling.set_prerequisite(time_sample, 10, 10);
     double tock0 = ros::Time::now().toSec();
     
     cout<<"set pre-requisite:"<<endl;

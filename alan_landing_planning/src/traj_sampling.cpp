@@ -414,7 +414,22 @@ namespace alan_traj
 
     void traj_sampling::optSamples()
     {
-        trajSolver.qp_opt_samples();
+        vector<Eigen::VectorXd> qpsol_array;
+        vector<vector<double>> sample_time_array;
+        vector<double> optimal_time_allocation;
+        int optimal_index;
+
+        trajSolver.qp_opt_samples(
+            qpsol_array,
+            sample_time_array,
+            optimal_time_allocation, 
+            optimal_index
+        );
+
+        cout<<endl<<qpsol_array.size()<<endl;
+        cout<<sample_time_array.size()<<endl;
+        cout<<optimal_time_allocation[0]<<" "<<optimal_time_allocation[1]<<endl;
+        cout<<optimal_index<<endl<<endl;;
 
     }
 

@@ -99,13 +99,21 @@ void osqpsolver::qp_opt(
 
 }
 
-void osqpsolver::qp_opt_samples()
+void osqpsolver::qp_opt_samples(
+    vector<Eigen::VectorXd>& qpsol_array,
+    vector<vector<double>>& sample_time_array,
+    vector<double>& optimal_time_allocation,
+    int& optimal_index
+)
 {
-    int success_i = 0;
-
     double cost_min = INFINITY;
     double cost_temp = INFINITY;
-    int cost_min_i = 0;
+    
+    int success_i = 0;
+    int index_for_all_array = 0;
+    int index_for_extracted = 0;
+
+    qpsol_array.clear();
 
     if(_Hessian_array.size() != _Alinear_array.size())
         return;
@@ -114,19 +122,27 @@ void osqpsolver::qp_opt_samples()
          for(int i = 0; i < _Hessian_array.size(); i++)
         {
             // cout<<i<<endl;
-            if(!qpsolver.updateHessianMatrix(_Hessian_array[i]))
+            if(!_qpsolver.updateHessianMatrix(_Hessian_array[i]))
                 cout<<"Hessian not update!"<<endl;
             
-            if(!qpsolver.updateLinearConstraintsMatrix(_Alinear_array[i]))
+            if(!_qpsolver.updateLinearConstraintsMatrix(_Alinear_array[i]))
                 cout<<"linear matrix not update!"<<endl;
             
-            if(!qpsolver.solve())
+            if(!_qpsolver.solve())
                 ROS_RED_STREAM("FAILED!");
             else
             {                   
-                ROS_GREEN_STREAM("Succeed!");
+                ROS_GREEN_STREAM("SUCCEED!");
+                qpsol_array.emplace_back(_qpsolver.getSolution());
+                sample_time_array.emplace_back(_time_samples[i]);
+
                 cout<<_time_samples[i][0]<<" "<<_time_samples[i][1]<<endl;
-                cost_temp = qpsolver.getSolution().transpose() * _MQM_array[i] * qpsolver.getSolution();
+
+                cost_temp = 
+                    _qpsolver.getSolution().transpose() 
+                    * _MQM_array[i] 
+                    * _qpsolver.getSolution();
+                    
                 _cost_array.emplace_back(cost_temp);
 
                 cout<<"cost: "<<_cost_array[_cost_array.size() - 1]<<endl;
@@ -134,36 +150,47 @@ void osqpsolver::qp_opt_samples()
                 if(cost_temp < cost_min)
                 {
                     cost_min = cost_temp;
-                    cost_min_i = i;
-                }
-                    
-                    
-
-                success_i++;
-                // cout<<qpsolver.getSolution()<<endl<<endl;;
-                // qpsolver.workspace()->;
-                
-                // cout<<"cost: "<< qpsolver.getSolution().transpose() * Hessian_array[i] * qpsolver.getSolution().transpose()<<endl;
-
-            }
-                
+                    index_for_all_array = i;
+                    index_for_extracted = _cost_array.size() - 1;
+                }       
+                success_i ++;                                                 
+            }                            
         }
 
         if(success_i < 1)
+        {
+            cout<<endl;
             ROS_RED_STREAM("SAMPLING FAIL, PLEASE CHECK CONSTRAINTS & TIME ALLOCTION...");
+            cout<<endl;
+        }        
         else
         {
-            string msg_display0
-                = "MINIMUM COST TRAJECTORY SEARCHED, " 
-                    + to_string(cost_min_i) 
-                    + " th SAMPLE, COST: " 
-                    + to_string(cost_min)
-                    + "TIME ALLOCATION: "
-                    + to_string(_time_samples[cost_min_i][0])
-                    + " "
-                    + to_string(_time_samples[cost_min_i][1]);
+            optimal_index = index_for_extracted;
 
-            ROS_GREEN_STREAM(msg_display0);    
+            optimal_time_allocation = _time_samples[index_for_all_array];
+
+            string msg_display0
+                = to_string(_Hessian_array.size()) 
+                    + " TRAJ EVALUATED, SUCCEEDED "
+                    + to_string(qpsol_array.size())
+                    + " TRAJ";
+
+            string msg_display1
+                = to_string(optimal_index) 
+                    + " th SAMPLE POSSESSES LOWEST COST: " 
+                    + to_string(cost_min);
+
+            string msg_display2
+                = "TIME ALLOCATION: "
+                    + to_string(_time_samples[index_for_all_array][0])
+                    + " "
+                    + to_string(_time_samples[index_for_all_array][1]);
+
+            cout<<endl;
+            ROS_GREEN_STREAM(msg_display0);   
+            ROS_GREEN_STREAM(msg_display1);   
+            ROS_GREEN_STREAM(msg_display2);    
+            cout<<endl;
         }
     }
 }

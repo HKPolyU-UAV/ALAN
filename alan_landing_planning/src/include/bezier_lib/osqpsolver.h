@@ -7,7 +7,14 @@
 class osqpsolver
 {
 private:
+    //solver itself
+    OsqpEigen::Solver _qpsolver;
+
+    //solutions
     Eigen::VectorXd qpsol;
+    vector<Eigen::VectorXd> _qpsol_array;
+
+    //sampling
     vector<Eigen::MatrixXd> _MQM_array;
     vector<Eigen::SparseMatrix<double>> _Hessian_array;
     vector<Eigen::SparseMatrix<double>> _Alinear_array;
@@ -16,8 +23,6 @@ private:
     vector<vector<double>> _time_samples;
     vector<double> _cost_array;
 
-    OsqpEigen::Solver qpsolver;
-
     inline void initiate_qpsolve(int nV, int nC)
     {
         Eigen::VectorXd g;
@@ -25,28 +30,28 @@ private:
         // g << -2, -6;
         g.setZero();
 
-        qpsolver.settings()->setWarmStart(true);
-        qpsolver.settings()->setVerbosity(false);
+        _qpsolver.settings()->setWarmStart(true);
+        _qpsolver.settings()->setVerbosity(false);
 
-        qpsolver.data()->setNumberOfVariables(nV);
-        qpsolver.data()->setNumberOfConstraints(nC);
+        _qpsolver.data()->setNumberOfVariables(nV);
+        _qpsolver.data()->setNumberOfConstraints(nC);
 
-        if(!qpsolver.data()->setHessianMatrix(_Hessian_array[0]))
+        if(!_qpsolver.data()->setHessianMatrix(_Hessian_array[0]))
         cout<<"Hessian not set!"<<endl;
 
-        if(!qpsolver.data()->setGradient(g))
+        if(!_qpsolver.data()->setGradient(g))
             cout<<"gradient not set!"<<endl;
         
-        if(!qpsolver.data()->setLinearConstraintsMatrix(_Alinear_array[0]))
+        if(!_qpsolver.data()->setLinearConstraintsMatrix(_Alinear_array[0]))
             cout<<"linear matrix not set!"<<endl;
         
-        if(!qpsolver.data()->setLowerBound(_lb))
+        if(!_qpsolver.data()->setLowerBound(_lb))
             cout<<"lb not set!!"<<endl;
         
-        if(!qpsolver.data()->setUpperBound(_ub))
+        if(!_qpsolver.data()->setUpperBound(_ub))
             cout<<"ub not set!"<<endl;
         
-        if(!qpsolver.initSolver())
+        if(!_qpsolver.initSolver())
             cout<<"please initialize solver!!"<<endl;
 
     }
@@ -74,7 +79,12 @@ public:
 
     
     // sampling traj
-    void qp_opt_samples();
+    void qp_opt_samples(
+        vector<Eigen::VectorXd>& qpsol_array,
+        vector<vector<double>>& sample_time_array,
+        vector<double>& optimal_time_allocation,
+        int& optimal_index
+    );
 
     inline void set_sampling_matrices(
         vector<Eigen::MatrixXd>& MQM_array,
