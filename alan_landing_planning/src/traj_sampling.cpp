@@ -75,11 +75,6 @@ namespace alan_traj
         int no_of_ctrl = qpsol.size() / _axis_dim; //16
         int no_of_ctrl_per_seg = no_of_ctrl / _m;//8
         
-        cout<<endl<<qpsol.size()<<endl;
-        cout<<_n_dim<<endl;
-        cout<<no_of_ctrl<<endl;
-        cout<<no_of_ctrl_per_seg<<endl<<endl;
-        
         for(int i = 0; i < _m; i++)
         {
             double t_per_seg = _s[i];
@@ -87,7 +82,6 @@ namespace alan_traj
 
             for(int j = 0; j < no_of_ctrl_per_seg; j++)
             {
-                cout<<"hi"<<endl;
                 qpsol(i * no_of_ctrl_per_seg + j) 
                     = qpsol(i * no_of_ctrl_per_seg + j) * t_per_seg;
                 qpsol(i * no_of_ctrl_per_seg + j + no_of_ctrl) 

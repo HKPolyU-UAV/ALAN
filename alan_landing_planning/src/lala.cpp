@@ -118,7 +118,7 @@ int main(int argc, char** argv)
     ctrl_points.action = visualization_msgs::Marker::ADD;
     ctrl_points.pose.orientation.w = 1.0;
     ctrl_points.type = visualization_msgs::Marker::SPHERE_LIST;
-    ctrl_points.scale.x = ctrl_points.scale.y = ctrl_points.scale.z = 0.01;
+    ctrl_points.scale.x = ctrl_points.scale.y = ctrl_points.scale.z = 0.04;
     std_msgs::ColorRGBA color_for_edge;
     ctrl_points.color.a=1;
     ctrl_points.color.g=0;
@@ -205,8 +205,8 @@ int main(int argc, char** argv)
     );
 
     vector<double> time_sample;
-    time_sample.emplace_back(0.95); //0.894425 //1.16726
-    time_sample.emplace_back(1.73405);//2.0 //2.75
+    time_sample.emplace_back(1.16726); //0.894425 //1.16726
+    time_sample.emplace_back(2.75);//2.0 //2.75
     
     double tick0 = ros::Time::now().toSec();
     btraj_sampling.set_prerequisite(time_sample, 10, 10);
@@ -218,9 +218,9 @@ int main(int argc, char** argv)
 
 
     Eigen::Vector3d posi_start(
-            -1.2,
+            -1.6,
             0.0,
-            0.8
+            1.8
         );
     Eigen::Vector3d posi_end(
             0.0,
