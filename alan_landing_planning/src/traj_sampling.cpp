@@ -38,211 +38,22 @@ namespace alan_traj
         ROS_WARN("TRAJ_SAMPLING INSTANTIATED!");          
     }; 
 
-    
-
-    void traj_sampling::solve_opt(int freq)
-    {
-        trajSolver.qp_opt(_MQM, _A, _ub, _lb);
-        PolyCoeff = trajSolver.getQpsol();
-
-        string temp = _log_path + "polycoef.txt";
-        remove(temp.c_str()); 
-        ofstream save(temp ,ios::app);
-        save<<PolyCoeff<<endl;
-        save.close();
-
-        cout<<"\n----------------results here-------------------------\n";
-        cout<<PolyCoeff<<endl<<endl<<endl;
-
-        cout<<"size of ctrl pts..."<<PolyCoeff.size()<<endl;
-
-        cout<<"enter set Time Discrete..."<<endl;
-        setTimeDiscrete();
-        cout<<"enter set Opti Traj..."<<endl;
-        setOptiTraj();
-
-        
-    }
-
-
-    Eigen::MatrixXd traj_sampling::get_nearest_SPD(Eigen::MatrixXd MQM) 
-    {
-        // make the Hessian to a 
-        // symmetric positive semidefinite matrix
-        // depends on the solver, whether require this step or not
-        
-        // From Higham: "The nearest symmetric positive semidefinite matrix in the
-        // Frobenius norm to an arbitrary real matrix A is shown to be (B + H)/2,
-        // where H is the symmetric polar factor of B=(A + A')/2."
-
-
-        Eigen::MatrixXd spd;
-        Eigen::MatrixXd B = (MQM + MQM.transpose()) / 2;
-        
-        Eigen::JacobiSVD<Eigen::MatrixXd> svd(B, Eigen::ComputeFullU | Eigen::ComputeFullV);
-        Eigen::MatrixXd U = svd.matrixU();
-        Eigen::MatrixXd V = svd.matrixV();
-
-        Eigen::MatrixXd H = V * svd.singularValues().asDiagonal() * V.transpose();
-        spd = (B + H) / 2;
-        spd = (spd + spd.transpose()) / 2;
-
-
-        bool psd_or_not = false;
-        double k = 0;
-
-        // cout<<"spd:"<<endl<<spd<<endl;
-
-        while(!psd_or_not && k < 10)
-        {
-            cout<<k<<endl;
-            Eigen::LLT<Eigen::MatrixXd> llt_check(spd);
-            if(llt_check.info() == Eigen::NumericalIssue)//
-            //try to do cholesky decomposition
-            //as if A has A=LL^T
-            //A is Hermitian & Positive (semi-)Definite
-            {
-                // cout<<"Possibly non semi-positive definitie matrix!"<<endl;;
-            }   
-            else
-            {
-                psd_or_not = true;
-                // cout<<"we got it semi-positive definte!"<<endl;
-                continue;
-            }
-
-            k = k + 1;
-
-            Eigen::VectorXd spd_eigen_vector = spd.eigenvalues().real();
-
-
-            double mineig = INFINITY;
-
-            for(int i = 0; i < spd_eigen_vector.size(); i++)
-            {
-                // cout<<"here's one:"<<endl;
-                // cout<<mineig<<endl;
-                // cout<<spd_eigen_vector(i)<<endl<<endl;;;
-
-                if(spd_eigen_vector(i) < mineig)
-                    mineig = spd_eigen_vector(i);
-            }
-
-            Eigen::MatrixXd tweak;
-            tweak.setIdentity(spd.rows(), spd.cols());
-
-            double epsd = std::numeric_limits<double>::epsilon();
-
-            double eps_mineig = std::nextafter(mineig, epsd) - mineig;
-
-            tweak = tweak * (-mineig * pow(k,2) + eps_mineig);
-            
-
-            spd = spd + tweak;
-
-            
-        }
-
-        return spd;
-    }
-
-    void traj_sampling::msg_printer(char *s)
-    {
-        // printf("%*s%*s\n",10+strlen(s)/2,s,10-strlen(s)/2," ");
-    }
-
-    void traj_sampling::setOptiTraj()
-    {
-        alan_landing_planning::AlanPlannerMsg traj_discrete_pt;
-        
-        double x_pos = 0, y_pos = 0, z_pos = 0;
-        double p_base;
-
-        remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt");
-        // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/p_base.txt");
-
-        // cout<<"seg_i: "<<_m<<endl;
-        // cout<<"_n_order: "<<_n_order<<endl;
-
-
-        // cout<<time_vector.size()<<endl;
-
-
-        for(int seg_i = 0; seg_i < _m; seg_i++)
-        {
-
-            cout<<"seg time size: "<<time_vector[seg_i].size()<<endl;
-
-            for(int i = 0; i < time_vector[seg_i].size(); i++)
-            {
-                x_pos = 0;
-                y_pos = 0;
-                z_pos = 0;
-                
-                for(int k = 0; k < _n_order + 1; k++)
-                {
-                    // cout<<"here: "<<seg_i<<" "<<i<<" "<<k<<endl;
-                    // cout<<"here: "<<_n_order<<"  "<<k<<endl;
-
-                    // cout<<nchoosek(_n_order, k)<<endl;
-
-                    
-
-                    p_base = nchoosek(_n_order, k) 
-                        * pow(time_vector[seg_i][i], k) 
-                        * pow(1 - time_vector[seg_i][i], _n_order - k);
-                    // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/p_base.txt",ios::app);
-                    // save<<p_base<<endl;
-                
-                
-                    // save.close();
-                    
-                    // cout<<"p_Base: "<<p_base<<endl;
-
-                    // cout<< seg_i * (_n_order + 1) + k<<endl;
-                    // cout<< seg_i * (_n_order + 1) + k + _n_dim_per_axis<<endl;
-
-                    // cout<<PolyCoeff(seg_i * (_n_order + 1) + k)<<endl;
-                    // cout<<PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis)<<endl;
-                    
-                    x_pos = x_pos + PolyCoeff(seg_i * (_n_order + 1) + k) * p_base;
-                    y_pos = y_pos + PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis) * p_base;
-
-                    
-
-                    // x_pos(idx) = x_pos(idx) + poly_coef_x((k-1)*(n_order+1)+i+1) * basis_p;
-                    // y_pos(idx) = y_pos(idx) + poly_coef_y((k-1)*(n_order+1)+i+1) * basis_p;
-
-                }
-                traj_discrete_pt.position.x = x_pos;
-                traj_discrete_pt.position.y = y_pos;
-
-                // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt",ios::app);
-                // save<<x_pos<<endl;
-                // save<<y_pos<<endl;
-                // save<<endl;
-                // save.close();
-
-                optiTraj.trajectory.emplace_back(traj_discrete_pt);                
-            }
-        }
-        
-        cout<<"here are the traj size...: "<<optiTraj.trajectory.size()<<endl;
-
-    }
-
-    void traj_sampling::setTimeDiscrete()
+    void traj_sampling::setTimeDiscrete(vector<double> _s_sample)
     {
         vector<double> time_vector_per_seg;
         double discrete_time_step;
         double seg_time;
 
-        for(auto what : time_vector)
-            what.clear();
+        // for(auto what : time_vector)
+        //     what.clear();
+
+        time_vector.clear();
+        _s.clear();
+        _s = _s_sample;
 
         for(int i = 0; i < _m; i++)
         {
-            seg_time = _s[i];
+            seg_time = _s_sample[i];
             discrete_time_step = seg_time * _discrete_freq;
 
             time_vector_per_seg.clear();
@@ -258,10 +69,92 @@ namespace alan_traj
         
     }
 
-    double traj_sampling::nchoosek(int n, int k)
+    void traj_sampling::setCtrlPts(Eigen::VectorXd& qpsol)
     {
-        return pascal[n][k];
+        
+        int no_of_ctrl = qpsol.size() / _axis_dim; //16
+        int no_of_ctrl_per_seg = no_of_ctrl / _m;//8
+        
+        cout<<endl<<qpsol.size()<<endl;
+        cout<<_n_dim<<endl;
+        cout<<no_of_ctrl<<endl;
+        cout<<no_of_ctrl_per_seg<<endl<<endl;
+        
+        for(int i = 0; i < _m; i++)
+        {
+            double t_per_seg = _s[i];
+            cout<<t_per_seg<<endl;
+
+            for(int j = 0; j < no_of_ctrl_per_seg; j++)
+            {
+                cout<<"hi"<<endl;
+                qpsol(i * no_of_ctrl_per_seg + j) 
+                    = qpsol(i * no_of_ctrl_per_seg + j) * t_per_seg;
+                qpsol(i * no_of_ctrl_per_seg + j + no_of_ctrl) 
+                    = qpsol(i * no_of_ctrl_per_seg + j + no_of_ctrl) * t_per_seg;
+                qpsol(i * no_of_ctrl_per_seg + j + no_of_ctrl * 2) 
+                    = qpsol(i * no_of_ctrl_per_seg + j + no_of_ctrl * 2) * t_per_seg;
+            }
+        }
+
     }
+
+    void traj_sampling::setOptiTrajSample(Eigen::VectorXd PolyCoeff)
+    {
+        alan_landing_planning::AlanPlannerMsg traj_discrete_pt;
+        alan_landing_planning::Traj optiTraj;
+        optiTraj.trajectory.clear();
+        
+        double x_pos = 0, y_pos = 0, z_pos = 0;
+        double p_base;
+
+        // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt");
+        // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/p_base.txt");
+
+        // cout<<"seg_i: "<<_m<<endl;
+        // cout<<"_n_order: "<<_n_order<<endl;
+
+
+        // cout<<time_vector.size()<<endl;
+
+
+        for(int seg_i = 0; seg_i < _m; seg_i++)
+        {
+            // cout<<"seg time size: "<<time_vector[seg_i].size()<<endl;
+
+            for(int i = 0; i < time_vector[seg_i].size(); i++)
+            {
+                x_pos = 0;
+                y_pos = 0;
+                z_pos = 0;
+                
+                for(int k = 0; k < _n_order + 1; k++)
+                {
+                    p_base =  nchoosek(_n_order, k) //_s[seg_i] *
+                        * pow(time_vector[seg_i][i], k) 
+                        * pow(1 - time_vector[seg_i][i], _n_order - k);
+                      
+                    x_pos = x_pos + PolyCoeff(seg_i * (_n_order + 1) + k) * p_base;
+                    y_pos = y_pos + PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis) * p_base;
+                    z_pos = z_pos + PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis * 2) * p_base;            
+                }
+
+                traj_discrete_pt.position.x = x_pos;
+                traj_discrete_pt.position.y = y_pos;
+                traj_discrete_pt.position.z = z_pos;
+
+                optiTraj.trajectory.emplace_back(traj_discrete_pt);                
+            }
+        }
+        
+        // cout<<"here are the traj size...: "<<optiTraj.trajectory.size()<<endl;
+        optiTrajArray.trajectory_array.emplace_back(optiTraj);
+
+    }
+
+    
+
+    
 
     void traj_sampling::set_prerequisite(
         vector<double> time_minmax, 
@@ -414,6 +307,8 @@ namespace alan_traj
 
     void traj_sampling::optSamples()
     {
+        optiTrajArray.trajectory_array.clear();
+
         vector<Eigen::VectorXd> qpsol_array;
         vector<vector<double>> sample_time_array;
         vector<double> optimal_time_allocation;
@@ -425,11 +320,52 @@ namespace alan_traj
             optimal_time_allocation, 
             optimal_index
         );
+        
+        
 
-        cout<<endl<<qpsol_array.size()<<endl;
-        cout<<sample_time_array.size()<<endl;
-        cout<<optimal_time_allocation[0]<<" "<<optimal_time_allocation[1]<<endl;
-        cout<<optimal_index<<endl<<endl;;
+
+        if(sample_time_array.size() == qpsol_array.size() && !qpsol_array.empty())
+        {
+            for(int i = 0; i < qpsol_array.size(); i++)
+            {
+                setTimeDiscrete(sample_time_array[i]);
+                setCtrlPts(qpsol_array[i]);
+                setOptiTrajSample(qpsol_array[i]);
+            }
+        }
+        else
+        {
+            ROS_ERROR("OPTIMIZATION WENT WRONG...");
+        }
+
+        cout<<"Total Sample Size: "<<optiTrajArray.trajectory_array.size()<<endl;
+        optiTraj = optiTrajArray.trajectory_array[optimal_index];
+        ctrl_pts_optimal = qpsol_array[optimal_index];
+
+        
+        
+
+        string temp = _log_path + "coeeff.txt";
+        int no_of_ctrl = ctrl_pts_optimal.size() / 3;
+        remove(temp.c_str());
+        ofstream save(temp ,ios::app);
+        
+
+        for(int i = 0; i < no_of_ctrl; i++)
+        {
+            // ctrl_pts_optimal(i) = ctrl_pts_optimal(i) * 
+            save<<ctrl_pts_optimal(i)<<" "
+                <<ctrl_pts_optimal(i + no_of_ctrl)<<" "
+                <<ctrl_pts_optimal(i + no_of_ctrl * 2)<<endl<<endl;
+
+        }
+
+        save.close();
+        
+        // cout<<endl<<qpsol_array.size()<<endl;
+        // cout<<sample_time_array.size()<<endl;
+        // cout<<optimal_time_allocation[0]<<" "<<optimal_time_allocation[1]<<endl;
+        // cout<<optimal_index<<endl<<endl;;
 
     }
 
@@ -489,5 +425,10 @@ namespace alan_traj
         save = ofstream(temp ,ios::app);
         save<<_lb<<endl;
         save.close();
+    }
+
+    double traj_sampling::nchoosek(int n, int k)
+    {
+        return pascal[n][k];
     }
 }

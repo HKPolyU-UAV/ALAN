@@ -71,6 +71,7 @@ public:
 
     inline Eigen::VectorXd getQpsol(){return qpsol;}
 
+
     void update_b_vectors(Eigen::VectorXd& ub, Eigen::VectorXd& lb)
     {
         _ub = ub;

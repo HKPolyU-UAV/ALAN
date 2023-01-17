@@ -65,6 +65,7 @@ add_message_files(
  vector3D.msg
  vector4D.msg
  Traj.msg
+ TrajArray.msg
 )
 
 

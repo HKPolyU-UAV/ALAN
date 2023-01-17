@@ -6,7 +6,7 @@
 #include "osqpsolver.h"
 
 #include "alan_landing_planning/AlanPlannerMsg.h"
-#include "alan_landing_planning/Traj.h"
+#include "alan_landing_planning/TrajArray.h"
 
 namespace alan_traj
 {
@@ -19,8 +19,10 @@ namespace alan_traj
 
         //final result
         osqpsolver trajSolver;
-        Eigen::VectorXd PolyCoeff;
+        alan_landing_planning::TrajArray optiTrajArray;
         alan_landing_planning::Traj optiTraj;
+        Eigen::VectorXd ctrl_pts_optimal;
+        
 
         int _axis_dim;
 
@@ -49,16 +51,15 @@ namespace alan_traj
         vector<double> _s;  
 
         //math tool
-        Eigen::MatrixXd get_nearest_SPD(Eigen::MatrixXd Q);
         double nchoosek(int n, int i);
 
-        //set OptiTraj
-        void setOptiTraj();
-        void setTimeDiscrete();
+        //set OptiTrajSample
+        void setOptiTrajSample(Eigen::VectorXd PolyCoeff);
+        void setCtrlPts(Eigen::VectorXd& qpsol);
+        void setTimeDiscrete(vector<double> _s_sample);
         vector<vector<double>> time_vector;
 
         //other tool
-        void msg_printer(char *s);
         void log();
         // void log_file(string log_txt_location, );
 
@@ -130,15 +131,9 @@ namespace alan_traj
 
         void optSamples();
         
-
-
-
-        void solve_opt(int freq);
-
-        alan_landing_planning::Traj getOptiTraj(){return optiTraj;}
-
-
-        
+        alan_landing_planning::TrajArray getOptiTrajSamples(){return optiTrajArray;}
+        alan_landing_planning::Traj getOptiTraj(){return optiTraj;}      
+        Eigen::VectorXd getOptiCtrl(){return ctrl_pts_optimal;}  
     };
 }
 

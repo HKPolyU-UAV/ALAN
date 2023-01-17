@@ -8,11 +8,10 @@ Panels:
         - /basics1
         - /basics1/Axes1
         - /alan_traj1
+        - /alan_traj1/Marker1
         - /alan_traj1/PolyhedronArray1
-        - /UAV1
         - /UAV1/MarkerArray1
         - /UAV1/Pose1
-        - /UGV1
         - /ledcpp_output1/Odometry1
         - /ledcpp_output1/Odometry1/Shape1
         - /ledcpp_output1/Pose1
@@ -84,7 +83,7 @@ Visualization Manager:
           Marker Topic: /gt_points
           Name: Marker
           Namespaces:
-            {}
+            GT_points: true
           Queue Size: 500
           Value: true
         - Alpha: 0.10000000149011612
@@ -110,7 +109,7 @@ Visualization Manager:
           Marker Topic: /rviz_vehicle/UAV
           Name: MarkerArray
           Namespaces:
-            UAV: true
+            {}
           Queue Size: 100
           Value: true
         - Alpha: 1
@@ -129,7 +128,7 @@ Visualization Manager:
           Topic: /rviz_vehicle/UAV/pose
           Unreliable: true
           Value: true
-      Enabled: true
+      Enabled: false
       Name: UAV
     - Class: rviz/Group
       Displays:
@@ -314,7 +313,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.058484077453613
+      Distance: 7.166312217712402
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -322,17 +321,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.8387790322303772
-        Y: -1.7926661968231201
-        Z: 0.992520272731781
+        X: -0.32600948214530945
+        Y: -1.6590147018432617
+        Z: 1.0745341777801514
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5147970914840698
+      Pitch: 0.2647969722747803
       Target Frame: <Fixed Frame>
-      Yaw: 5.2678632736206055
+      Yaw: 4.80287504196167
     Saved:
       - Class: rviz/Orbit
         Distance: 19.586559295654297

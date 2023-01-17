@@ -10,7 +10,7 @@ cam_ugv_extrinsics_d455: [0.54446, 0.0, 0.0307356, 0.0, -20.0, 180.0] #xyzrpy
 cam_FOV_H: 90
 cam_FOV_V: 65
 
-final_corridor_height: 0.6
+final_corridor_height: 0.3
 final_corridor_length: 1.2
 
 LED_r_number: 3 #2

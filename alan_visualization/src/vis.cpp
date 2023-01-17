@@ -201,7 +201,7 @@ int main(int argc, char** argv)
     traj_points.action = visualization_msgs::Marker::ADD;
     traj_points.pose.orientation.w = 1.0;
     traj_points.type = visualization_msgs::Marker::SPHERE_LIST;
-    traj_points.scale.x = traj_points.scale.y = traj_points.scale.z = 0.5;
+    traj_points.scale.x = traj_points.scale.y = traj_points.scale.z = 0.01;
     std_msgs::ColorRGBA color_for_edge;
     traj_points.color.a=1;
     traj_points.color.g=1;

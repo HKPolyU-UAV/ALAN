@@ -15,7 +15,11 @@
 
 #include "alan_visualization/PolyhedronArray.h"
 #include "alan_visualization/Tangent.h"
+
 #include <mavros_msgs/AttitudeTarget.h>
+
+#include "visualization_msgs/Marker.h"
+
 
 // #include <decomp_ros_utils/data_ros_utils.h>
 // decomp_ros_msg
@@ -24,6 +28,11 @@ using namespace std;
 static alan_visualization::PolyhedronArray land_traj_constraint;
 static bool land_traj_constraint_initiated = false;
 static vector<alan_visualization::Polyhedron> corridors;
+static alan_landing_planning::Traj optiTraj;
+static Eigen::VectorXd optiCtrl;
+
+static visualization_msgs::Marker ctrl_points;
+
 
 
 void set_btraj_inequality_kinematic()
@@ -67,6 +76,23 @@ void sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& sfc)
     
 }
 
+void setCtrlVis()
+{
+    geometry_msgs::Point posi_temp;
+    ctrl_points.points.clear();
+
+    int no_of_ctrl = optiCtrl.size() / 3;
+
+    for(int i = 0; i < no_of_ctrl; i++)
+    {
+        posi_temp.x = optiCtrl(i);
+        posi_temp.y = optiCtrl(i + no_of_ctrl);
+        posi_temp.z = optiCtrl(i + no_of_ctrl * 2);
+        ctrl_points.points.push_back(posi_temp);
+
+    }
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "lala");
@@ -74,19 +100,36 @@ int main(int argc, char** argv)
 
     // ros::Publisher poly_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
     // ros::Publisher polyh_pub = nh.advertise<alan_visualization::Polyhedron>("/alan_visualization/polyhedron", 1, true);
-
+    ros::Publisher ctrl_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points/ctrl", 1, true);
     ros::Publisher traj_pub = nh.advertise<alan_landing_planning::Traj>("/alan_visualization/traj", 1, true);
 
     ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>
             ("/alan_state_estimation/msgsync/polyhedron_array", 1, sfcMsgCallback);
 
+    
     ros::Rate rosrate(50);
+
+
+    ctrl_points.header.frame_id = "map";
+    ctrl_points.header.stamp = ros::Time::now();
+    ctrl_points.ns = "GT_points";
+
+    ctrl_points.id = 0;
+    ctrl_points.action = visualization_msgs::Marker::ADD;
+    ctrl_points.pose.orientation.w = 1.0;
+    ctrl_points.type = visualization_msgs::Marker::SPHERE_LIST;
+    ctrl_points.scale.x = ctrl_points.scale.y = ctrl_points.scale.z = 0.01;
+    std_msgs::ColorRGBA color_for_edge;
+    ctrl_points.color.a=1;
+    ctrl_points.color.g=0;
+    ctrl_points.color.r=1;
+    ctrl_points.color.b=0;
 
     int i = 0;
 
     while(ros::ok())
     {
-        // traj_pub.publish(optiTraj);
+        
         ros::spinOnce();
         rosrate.sleep();
 
@@ -162,8 +205,8 @@ int main(int argc, char** argv)
     );
 
     vector<double> time_sample;
-    time_sample.emplace_back(0.894425);
-    time_sample.emplace_back(2.0);
+    time_sample.emplace_back(0.95); //0.894425 //1.16726
+    time_sample.emplace_back(1.73405);//2.0 //2.75
     
     double tick0 = ros::Time::now().toSec();
     btraj_sampling.set_prerequisite(time_sample, 10, 10);
@@ -175,7 +218,7 @@ int main(int argc, char** argv)
 
 
     Eigen::Vector3d posi_start(
-            -1.6,
+            -1.2,
             0.0,
             0.8
         );
@@ -192,13 +235,29 @@ int main(int argc, char** argv)
     btraj_sampling.updateBoundary(posi_start, posi_end, velo_constraint);
     btraj_sampling.optSamples();
 
+    optiTraj = btraj_sampling.getOptiTraj();
+    optiCtrl = btraj_sampling.getOptiCtrl();
+    setCtrlVis();
+    
+
     double tock1 = ros::Time::now().toSec();
 
     cout<<"online update:"<<endl;
     cout<<(tock1 - tick1)<<endl;
-    cout<<1/(tock1 - tick1)<<endl;
+    cout<<1 / (tock1 - tick1)<<endl;
+
+
     
     // btraj_sampling.
+
+
+    while(ros::ok())
+    {
+        traj_pub.publish(optiTraj);
+        ctrl_vis_pub.publish(ctrl_points);
+        
+        rosrate.sleep();
+    }
 
 
 	return 0;
