@@ -208,8 +208,8 @@ int main(int argc, char** argv)
     );
 
     vector<double> time_sample;
-    time_sample.emplace_back(0.87321246); //0.894425 //1.16726
-    time_sample.emplace_back(1.91667);//2.0 //2.75
+    time_sample.emplace_back(1.16726); //0.894425 //1.16726
+    time_sample.emplace_back(2.75);//2.0 //2.75
     
     double tick0 = ros::Time::now().toSec();
     btraj_sampling.set_prerequisite(time_sample, 31, 31);
@@ -223,7 +223,7 @@ int main(int argc, char** argv)
     Eigen::Vector3d posi_start(
             -1.6,
             0.0,
-            0.8
+            1.8
         );
     Eigen::Vector3d posi_end(
             0.0,

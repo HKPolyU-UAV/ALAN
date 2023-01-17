@@ -95,13 +95,13 @@ Visualization Manager:
           Queue Size: 500
           Value: true
         - Class: rviz/Marker
-          Enabled: false
+          Enabled: true
           Marker Topic: /gt_points/samples
           Name: Marker_sample
           Namespaces:
-            {}
+            GT_points: true
           Queue Size: 500
-          Value: false
+          Value: true
         - Alpha: 0.10000000149011612
           BoundColor: 252; 233; 79
           Class: decomp_rviz_plugins/PolyhedronArray
@@ -329,7 +329,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.7611114978790283
+      Distance: 4.571314334869385
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -337,17 +337,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.5001148581504822
-        Y: -0.330545574426651
-        Z: 0.5980042219161987
+        X: -0.757145345211029
+        Y: -0.3114434778690338
+        Z: 0.6033486127853394
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: -0.13020408153533936
+      Pitch: -0.05520443618297577
       Target Frame: <Fixed Frame>
-      Yaw: 4.769747257232666
+      Yaw: 1.4165806770324707
     Saved:
       - Class: rviz/Orbit
         Distance: 19.586559295654297
