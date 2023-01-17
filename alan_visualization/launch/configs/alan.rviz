@@ -8,7 +8,7 @@ Panels:
         - /basics1
         - /basics1/Axes1
         - /alan_traj1
-        - /alan_traj1/Marker1
+        - /alan_traj1/Marker_opti1
         - /alan_traj1/PolyhedronArray1
         - /UAV1/MarkerArray1
         - /UAV1/Pose1
@@ -81,7 +81,7 @@ Visualization Manager:
         - Class: rviz/Marker
           Enabled: true
           Marker Topic: /gt_points
-          Name: Marker
+          Name: Marker_opti
           Namespaces:
             GT_points: true
           Queue Size: 500
@@ -89,11 +89,19 @@ Visualization Manager:
         - Class: rviz/Marker
           Enabled: true
           Marker Topic: /gt_points/ctrl
-          Name: Marker
+          Name: Marker_ctrl
           Namespaces:
             GT_points: true
           Queue Size: 500
           Value: true
+        - Class: rviz/Marker
+          Enabled: false
+          Marker Topic: /gt_points/samples
+          Name: Marker_sample
+          Namespaces:
+            {}
+          Queue Size: 500
+          Value: false
         - Alpha: 0.10000000149011612
           BoundColor: 252; 233; 79
           Class: decomp_rviz_plugins/PolyhedronArray
@@ -101,7 +109,7 @@ Visualization Manager:
           MeshColor: 46; 52; 54
           Name: PolyhedronArray
           Queue Size: 10
-          Scale: 0.05000000074505806
+          Scale: 0.009999999776482582
           State: Both
           Topic: /polyhedron_array
           Unreliable: false
@@ -321,7 +329,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 12.103337287902832
+      Distance: 2.7611114978790283
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -329,17 +337,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.667094349861145
-        Y: -0.4514368772506714
-        Z: 0.7826534509658813
+        X: -0.5001148581504822
+        Y: -0.330545574426651
+        Z: 0.5980042219161987
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3597958981990814
+      Pitch: -0.13020408153533936
       Target Frame: <Fixed Frame>
-      Yaw: 1.999710202217102
+      Yaw: 4.769747257232666
     Saved:
       - Class: rviz/Orbit
         Distance: 19.586559295654297

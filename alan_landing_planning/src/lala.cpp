@@ -28,6 +28,7 @@ using namespace std;
 static alan_visualization::PolyhedronArray land_traj_constraint;
 static bool land_traj_constraint_initiated = false;
 static vector<alan_visualization::Polyhedron> corridors;
+static alan_landing_planning::TrajArray optiTrajArray;
 static alan_landing_planning::Traj optiTraj;
 static Eigen::VectorXd optiCtrl;
 
@@ -102,6 +103,8 @@ int main(int argc, char** argv)
     // ros::Publisher polyh_pub = nh.advertise<alan_visualization::Polyhedron>("/alan_visualization/polyhedron", 1, true);
     ros::Publisher ctrl_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points/ctrl", 1, true);
     ros::Publisher traj_pub = nh.advertise<alan_landing_planning::Traj>("/alan_visualization/traj", 1, true);
+    ros::Publisher trajArray_pub = nh.advertise<alan_landing_planning::TrajArray>("/alan_visualization/trajArray", 1, true);
+
 
     ros::Subscriber sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>
             ("/alan_state_estimation/msgsync/polyhedron_array", 1, sfcMsgCallback);
@@ -205,11 +208,11 @@ int main(int argc, char** argv)
     );
 
     vector<double> time_sample;
-    time_sample.emplace_back(1.16726); //0.894425 //1.16726
-    time_sample.emplace_back(2.75);//2.0 //2.75
+    time_sample.emplace_back(0.87321246); //0.894425 //1.16726
+    time_sample.emplace_back(1.91667);//2.0 //2.75
     
     double tick0 = ros::Time::now().toSec();
-    btraj_sampling.set_prerequisite(time_sample, 10, 10);
+    btraj_sampling.set_prerequisite(time_sample, 31, 31);
     double tock0 = ros::Time::now().toSec();
     
     cout<<"set pre-requisite:"<<endl;
@@ -220,7 +223,7 @@ int main(int argc, char** argv)
     Eigen::Vector3d posi_start(
             -1.6,
             0.0,
-            1.8
+            0.8
         );
     Eigen::Vector3d posi_end(
             0.0,
@@ -236,6 +239,7 @@ int main(int argc, char** argv)
     btraj_sampling.optSamples();
 
     optiTraj = btraj_sampling.getOptiTraj();
+    optiTrajArray = btraj_sampling.getOptiTrajSamples();
     optiCtrl = btraj_sampling.getOptiCtrl();
     setCtrlVis();
     
@@ -254,6 +258,7 @@ int main(int argc, char** argv)
     while(ros::ok())
     {
         traj_pub.publish(optiTraj);
+        trajArray_pub.publish(optiTrajArray);
         ctrl_vis_pub.publish(ctrl_points);
         
         rosrate.sleep();

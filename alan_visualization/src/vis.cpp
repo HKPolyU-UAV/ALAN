@@ -4,7 +4,7 @@
 #include <decomp_geometry/polyhedron.h>
 
 #include "alan_visualization/PolyhedronArray.h"
-#include "alan_landing_planning/Traj.h"
+#include "alan_landing_planning/TrajArray.h"
 
 #include "visualization_msgs/Marker.h"
 
@@ -15,6 +15,7 @@ using namespace std;
 static decomp_ros_msgs::PolyhedronArray sfc_pub_vis_object_polyh;
 static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
 static visualization_msgs::Marker traj_points;
+static visualization_msgs::Marker trajArray_points;
 
 static Eigen::VectorXd c2b_ugv;
 
@@ -102,6 +103,29 @@ void traj_msg_callback(const alan_landing_planning::Traj::ConstPtr& msg)
 
 }
 
+static bool rviz_traj_array_initiated = false;
+void trajArray_msg_callback(const alan_landing_planning::TrajArray::ConstPtr& msg)
+{
+    geometry_msgs::Point posi_temp;
+
+    trajArray_points.points.clear();
+
+    for(auto what : msg->trajectory_array)
+    {
+        for(auto whatelse : what.trajectory)
+        {
+            posi_temp.x = whatelse.position.x;
+            posi_temp.y = whatelse.position.y;
+            posi_temp.z = whatelse.position.z;
+            trajArray_points.points.push_back(posi_temp);            
+        }
+    }
+    rviz_traj_array_initiated = true;
+
+    // cout<<1<<endl;
+
+}
+
 static bool rviz_uav_initiated = false;
 static geometry_msgs::PoseStamped uav_pose;
 void uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg)
@@ -185,6 +209,8 @@ int main(int argc, char** argv)
             ("/alan_state_estimation/msgsync/polyhedron_array", 1, &sfc_msg_callback);
     ros::Subscriber traj_sub = nh.subscribe<alan_landing_planning::Traj>
             ("/alan_visualization/traj", 1, &traj_msg_callback);
+    ros::Subscriber trajArray_sub = nh.subscribe<alan_landing_planning::TrajArray>
+            ("/alan_visualization/trajArray", 1, &trajArray_msg_callback);
     ros::Subscriber uav_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
             ("/alan_state_estimation/msgsync/uav/alan_planner_msg", 1, &uavAlanMsgCallback);
     ros::Subscriber ugv_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
@@ -192,6 +218,7 @@ int main(int argc, char** argv)
         
     ros::Publisher polyh_vis_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
     ros::Publisher traj_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points", 1, true);
+    ros::Publisher trajArray_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points/samples", 1, true);
 
     traj_points.header.frame_id = "map";
     traj_points.header.stamp = ros::Time::now();
@@ -202,11 +229,25 @@ int main(int argc, char** argv)
     traj_points.pose.orientation.w = 1.0;
     traj_points.type = visualization_msgs::Marker::SPHERE_LIST;
     traj_points.scale.x = traj_points.scale.y = traj_points.scale.z = 0.02;
-    std_msgs::ColorRGBA color_for_edge;
     traj_points.color.a=1;
     traj_points.color.g=1;
     traj_points.color.r=0;
     traj_points.color.b=0;
+
+
+    trajArray_points.header.frame_id = "map";
+    trajArray_points.header.stamp = ros::Time::now();
+    trajArray_points.ns = "GT_points";
+
+    trajArray_points.id = 0;
+    trajArray_points.action = visualization_msgs::Marker::ADD;
+    trajArray_points.pose.orientation.w = 1.0;
+    trajArray_points.type = visualization_msgs::Marker::SPHERE_LIST;
+    trajArray_points.scale.x = trajArray_points.scale.y = trajArray_points.scale.z = 0.008;
+    trajArray_points.color.a=1;
+    trajArray_points.color.g=0;
+    trajArray_points.color.r=0;
+    trajArray_points.color.b=1;
 
     rviz_vehicle uav_rviz = rviz_vehicle(nh, UAV, false);
 
@@ -260,6 +301,9 @@ int main(int argc, char** argv)
 
         if(rviz_traj_initiated)
             traj_vis_pub.publish(traj_points);  
+
+        if(rviz_traj_array_initiated)
+            trajArray_vis_pub.publish(trajArray_points); 
         
             
         ros::spinOnce();
