@@ -195,7 +195,6 @@ int main(int argc, char** argv)
 
     b_constraints.sfc_list = corridors;
     b_constraints.d_constraints = d_constraints;
-
     b_constraints.corridor_type = "POLYH";
 
 

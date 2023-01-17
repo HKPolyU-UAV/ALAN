@@ -3,6 +3,7 @@
 
 #include "tools/essential.h"
 #include "bezier_lib/traj_gen.h"
+#include "bezier_lib/traj_sampling.h"
 
 #include "alan_landing_planning/AlanPlannerMsg.h"
 #include "alan_landing_planning/StateMachine.h"
@@ -106,20 +107,17 @@ private:
     alan_traj::endpt end_3d;
     alan_traj::dynamic_constraints btraj_dconstraints;
     // alan_traj::traj_gen alan_traj()
-    void set_alan_b_traj();
+    
     void set_alan_b_traj_prerequisite();
     void set_alan_b_traj_online();
-    void set_btraj_info();
-    void set_btraj_equality_constraint();
     void set_btraj_inequality_kinematic();
-    void set_btraj_inequality_dynamic();
-    void set_traj_time();
 
     //corridors-related
     double final_corridor_height = 0;
     double final_corridor_length = 0;
     double take_off_height = 0;
     double landing_horizontal = 0;
+    double touch_down_height = 0;
     double ugv_height = 0;
     double landing_time_duration_max = 0;
     double landing_time_duration_min = 0;
@@ -127,11 +125,11 @@ private:
     alan_visualization::Polyhedron temp_poly;
     vector<alan_visualization::Polyhedron> corridors;
     alan_visualization::PolyhedronArray land_traj_constraint;
-    bool land_traj_constraint_initiated;
-
+    bool land_traj_constraint_initiated = false;
 
     alan_traj::traj_gen* alan_btraj; //= alan_traj::traj_gen(btraj_info, btraj_constraints, _pub_freq, log_path);
-
+    alan_traj::traj_sampling* alan_btraj_sample;
+    alan_traj::optimal_traj optimal_traj_info_obj;
     
     bool plan_traj = false;
     int traj_i = 0;
@@ -143,6 +141,8 @@ private:
     double v_max, a_max;
     double uav_landing_velocity = 0;
     alan_landing_planning::Traj alan_optiTraj;
+
+    bool prerequisite_set = false;
 
 
 //rotation function

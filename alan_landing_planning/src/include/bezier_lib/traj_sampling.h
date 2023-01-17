@@ -10,6 +10,12 @@
 
 namespace alan_traj
 {
+    typedef struct optimal_traj //
+    {
+        vector<double> optimal_time_allocation;
+        Eigen::MatrixXd MQM;
+        Eigen::MatrixXd A;        
+    }optimal_traj;
 
     //test gan
     class traj_sampling
@@ -23,7 +29,6 @@ namespace alan_traj
         alan_landing_planning::Traj optiTraj;
         Eigen::VectorXd ctrl_pts_optimal;
         
-
         int _axis_dim;
 
         //variable set
@@ -102,6 +107,8 @@ namespace alan_traj
 
         void setBoundary(bernstein& bezier_base);
 
+        optimal_traj optimal_traj_info;
+
     public:
 
         traj_sampling( 
@@ -134,6 +141,8 @@ namespace alan_traj
         alan_landing_planning::TrajArray getOptiTrajSamples(){return optiTrajArray;}
         alan_landing_planning::Traj getOptiTraj(){return optiTraj;}      
         Eigen::VectorXd getOptiCtrl(){return ctrl_pts_optimal;}  
+
+        optimal_traj getOptimalTime(){return optimal_traj_info;}
     };
 }
 

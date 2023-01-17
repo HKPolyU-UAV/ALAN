@@ -78,7 +78,7 @@ namespace alan_traj
         for(int i = 0; i < _m; i++)
         {
             double t_per_seg = _s[i];
-            cout<<t_per_seg<<endl;
+            // cout<<t_per_seg<<endl;
 
             for(int j = 0; j < no_of_ctrl_per_seg; j++)
             {
@@ -222,12 +222,12 @@ namespace alan_traj
 
             
                 vector<double> temp_sample = {time_seg_0, time_seg_1};
-                cout<<time_seg_0<<" "<<time_seg_1<<endl<<endl;;
+                // cout<<time_seg_0<<" "<<time_seg_1<<endl<<endl;;
                 sampling_time.emplace_back(temp_sample);
             }
         }
         trajSolver.set_time_sampling(sampling_time);
-        cout<<"final sampling size..."<<sampling_time.size()<<endl;
+        // cout<<"final sampling size..."<<sampling_time.size()<<endl;
     }
 
     void traj_sampling::setMatrices(bernstein& bezier_base, vector<vector<double>>& sampling_time)
@@ -314,9 +314,6 @@ namespace alan_traj
             optimal_time_allocation, 
             optimal_index
         );
-        
-        
-
 
         if(sample_time_array.size() == qpsol_array.size() && !qpsol_array.empty())
         {
@@ -336,14 +333,14 @@ namespace alan_traj
         optiTraj = optiTrajArray.trajectory_array[optimal_index];
         ctrl_pts_optimal = qpsol_array[optimal_index];
 
-        
-        
+        optimal_traj_info.optimal_time_allocation = optimal_time_allocation;
+        optimal_traj_info.A = A_samples[optimal_index];
+        optimal_traj_info.MQM = MQM_samples[optimal_index];
 
         string temp = _log_path + "coeeff.txt";
         int no_of_ctrl = ctrl_pts_optimal.size() / 3;
         remove(temp.c_str());
         ofstream save(temp ,ios::app);
-        
 
         for(int i = 0; i < no_of_ctrl; i++)
         {
