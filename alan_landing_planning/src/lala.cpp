@@ -216,7 +216,7 @@ int main(int argc, char** argv)
     time_sample.emplace_back(2.75);//2.0 //2.75
     
     double tick0 = ros::Time::now().toSec();
-    btraj_sampling.set_prerequisite(time_sample, 40, 40);
+    btraj_sampling.set_prerequisite(time_sample, 32, 32);
     double tock0 = ros::Time::now().toSec();
     
     cout<<"set pre-requisite:"<<endl;
@@ -250,13 +250,24 @@ int main(int argc, char** argv)
 
     double tock1 = ros::Time::now().toSec();
 
-    cout<<"online update:"<<endl;
-    cout<<(tock1 - tick1)<<endl;
-    cout<<1 / (tock1 - tick1)<<endl;
-
-
     
+
+
+    cout<<endl<<endl;
+    cout<<"now online..."<<endl;
     // btraj_sampling.
+    Eigen::Vector3d posi_current(-1.5,0.1,0.7);
+    Eigen::Vector3d posi_goal(0,0,0.1);
+    double tick2 = ros::Time::now().toSec();
+    alan_landing_planning::Traj traj_execute_final_in_B = btraj_sampling.opt_traj_online(
+        posi_current,
+        posi_goal
+    );
+    double tock2 = ros::Time::now().toSec();
+
+    cout<<"online update:"<<endl;
+    cout<<(tock2 - tick2)<<endl;
+    cout<<1 / (tock2 - tick2)<<endl;
 
 
     while(ros::ok())

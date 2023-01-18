@@ -69,6 +69,14 @@ public:
         Eigen::MatrixXd _lb
     );
 
+    bool qp_opt_single(
+        Eigen::MatrixXd& _MQM, 
+        Eigen::MatrixXd& _A, 
+        Eigen::VectorXd& _ub, 
+        Eigen::VectorXd& _lb,
+        Eigen::VectorXd& final_sol
+    );
+
     inline Eigen::VectorXd getQpsol(){return qpsol;}
 
 
@@ -83,6 +91,8 @@ public:
     bool qp_opt_samples(
         vector<Eigen::VectorXd>& qpsol_array,
         vector<vector<double>>& sample_time_array,
+        vector<Eigen::MatrixXd>& MQM_opti_array,
+        vector<Eigen::MatrixXd>& A_opti_array,
         vector<double>& optimal_time_allocation,
         int& optimal_index
     );

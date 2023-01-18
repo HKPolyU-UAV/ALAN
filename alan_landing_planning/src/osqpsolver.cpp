@@ -99,11 +99,51 @@ void osqpsolver::qp_opt(
 
 }
 
+bool osqpsolver::qp_opt_single(
+    Eigen::MatrixXd& _MQM,
+    Eigen::MatrixXd& _A,
+    Eigen::VectorXd& _ub,
+    Eigen::VectorXd& _lb,
+    Eigen::VectorXd& final_sol
+)
+{
+    cout<<"here in qp_opt_single"<<endl;
+
+    Eigen::SparseMatrix<double> Hessian = _MQM.sparseView();
+    if(!_qpsolver.updateHessianMatrix(Hessian))
+        cout<<"Hessian not updated!"<<endl;
+    
+    Eigen::SparseMatrix<double> ALinear = _A.sparseView();
+    if(!_qpsolver.updateLinearConstraintsMatrix(ALinear));
+
+    if(!_qpsolver.data()->setUpperBound(_ub))
+        cout<<"ub not set!!"<<endl;
+    
+    if(!_qpsolver.data()->setLowerBound(_lb))
+        cout<<"lb not set!"<<endl;
+
+
+    if(!_qpsolver.solve())
+    {
+        ROS_RED_STREAM("FAILED!");
+        return false;
+    }
+    else
+    {
+        final_sol = _qpsolver.getSolution();
+        cout<<"end..."<<final_sol.size()<<endl; 
+        ROS_GREEN_STREAM("SUCCEEDED!");
+        return true;
+    }                   
+}
+
 bool osqpsolver::qp_opt_samples(
     vector<Eigen::VectorXd>& qpsol_array,
-    vector<vector<double>>& sample_time_array,
-    vector<double>& optimal_time_allocation,
-    int& optimal_index
+        vector<vector<double>>& sample_time_array,
+        vector<Eigen::MatrixXd>& MQM_opti_array,
+        vector<Eigen::MatrixXd>& A_opti_array,
+        vector<double>& optimal_time_allocation,
+        int& optimal_index
 )
 {
     double cost_min = INFINITY;
@@ -135,6 +175,8 @@ bool osqpsolver::qp_opt_samples(
                 ROS_GREEN_STREAM("SUCCEED!");
                 qpsol_array.emplace_back(_qpsolver.getSolution());
                 sample_time_array.emplace_back(_time_samples[i]);
+                MQM_opti_array.emplace_back(_MQM_array[i]);
+                A_opti_array.emplace_back(_Alinear_array[i]);
 
                 cout<<_time_samples[i][0]<<" "<<_time_samples[i][1]<<endl;
 
@@ -197,4 +239,6 @@ bool osqpsolver::qp_opt_samples(
         }
     }
 }
+
+
 

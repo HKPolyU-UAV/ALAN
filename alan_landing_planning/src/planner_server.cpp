@@ -71,8 +71,7 @@ void planner_server::mainserver()
             if(
                 this->uav_current_state_inititaed     &&
                 this->uav_traj_pose_initiated         &&
-                this->ugv_traj_pose_initiated         &&
-                this->prerequisite_set
+                this->ugv_traj_pose_initiated                
             )
             {        
                 cout<<"hi"<<endl;
@@ -866,6 +865,13 @@ void planner_server::set_btraj_inequality_kinematic()
 
 void planner_server::set_alan_b_traj_online()
 {
+    Eigen::Vector3d posi_current = uav_in_ugv_frame_posi;
+    Eigen::Vector3d posi_goal(0,0,touch_down_height);
+
+    traj_execute_final_in_B = alan_btraj_sample->opt_traj_online(
+        posi_current,
+        posi_goal
+    );
 
 }
 

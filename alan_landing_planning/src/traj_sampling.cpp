@@ -146,6 +146,49 @@ namespace alan_traj
 
     }
 
+    void traj_sampling::setOptiFinalTraj(Eigen::VectorXd PolyCoeff)
+    {        
+        cout<<"hi setOptiFinalTraj"<<endl;
+        cout<<PolyCoeff.size()<<endl;
+        alan_landing_planning::AlanPlannerMsg traj_discrete_pt;
+        alan_landing_planning::Traj optiTraj;
+        optiTraj.trajectory.clear();
+        
+        double x_pos = 0, y_pos = 0, z_pos = 0;
+        double p_base;
+
+        for(int seg_i = 0; seg_i < _m; seg_i++)
+        {
+            // cout<<"seg time size: "<<time_vector[seg_i].size()<<endl;
+
+            for(int i = 0; i < time_vector[seg_i].size(); i++)
+            {
+                x_pos = 0;
+                y_pos = 0;
+                z_pos = 0;
+                
+                for(int k = 0; k < _n_order + 1; k++)
+                {
+                    p_base =  nchoosek(_n_order, k) //_s[seg_i] *
+                        * pow(time_vector[seg_i][i], k) 
+                        * pow(1 - time_vector[seg_i][i], _n_order - k);
+                      
+                    x_pos = x_pos + PolyCoeff(seg_i * (_n_order + 1) + k) * p_base;
+                    y_pos = y_pos + PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis) * p_base;
+                    z_pos = z_pos + PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis * 2) * p_base;            
+                }
+
+                traj_discrete_pt.position.x = x_pos;
+                traj_discrete_pt.position.y = y_pos;
+                traj_discrete_pt.position.z = z_pos;
+
+                optiTraj.trajectory.emplace_back(traj_discrete_pt);                
+            }
+        }    
+        _optiTraj = optiTraj;
+
+    }
+
         
     void traj_sampling::set_prerequisite(
         vector<double> time_minmax, 
@@ -248,19 +291,7 @@ namespace alan_traj
 
 
         }
-       
-
-        // cout<<A_samples[0]<<endl;
-
-        // string temp = _log_path + "A_prerequisite.txt";
-        // remove(temp.c_str());
-        // ofstream save(temp ,ios::app);
-        // save<<A_samples[0]<<endl;
-        // save.close();
-
-        // cout<<1 / (tock-tick)<<endl;
-        // cout<<MQM_samples.size()<<endl;
-        // cout<<A_samples.size()<<endl;
+  
     }
 
     void traj_sampling::setBoundary(bernstein& bezier_base)
@@ -293,6 +324,7 @@ namespace alan_traj
         }
 
         // cout<<_ub<<endl;
+        // cout<<_lb<<endl;
         trajSolver.update_b_vectors(_ub, _lb);
     }
 
@@ -302,12 +334,16 @@ namespace alan_traj
 
         vector<Eigen::VectorXd> qpsol_array;
         vector<vector<double>> sample_time_array;
+        vector<Eigen::MatrixXd> MQM_opti_array;
+        vector<Eigen::MatrixXd> A_opti_array;
         vector<double> optimal_time_allocation;
         int optimal_index;
 
         bool sample_success = trajSolver.qp_opt_samples(
             qpsol_array,
             sample_time_array,
+            MQM_opti_array,
+            A_opti_array,
             optimal_time_allocation, 
             optimal_index
         );
@@ -344,17 +380,41 @@ namespace alan_traj
             }
             save.close();
 
+            optimal_traj_info.optimal_index = optimal_index;
             optimal_traj_info.optimal_time_allocation = optimal_time_allocation;
             optimal_traj_info.optiTraj = _optiTraj;
             optimal_traj_info.optiTrajArray = _optiTrajArray;
             optimal_traj_info.ctrl_pts_optimal = _ctrl_pts_optimal;
-            optimal_traj_info.MQM = MQM_samples[optimal_index];
-            optimal_traj_info.A = A_samples[optimal_index];
+            optimal_traj_info.MQM = MQM_opti_array[optimal_index];
+            optimal_traj_info.A = A_opti_array[optimal_index];
             optimal_traj_info.got_heuristic_optimal = true;
         }
         else
             optimal_traj_info.got_heuristic_optimal = false;
 
+    }
+
+    alan_landing_planning::Traj traj_sampling::opt_traj_online(Eigen::Vector3d& posi_current, Eigen::Vector3d& posi_goal)
+    {
+        Eigen::VectorXd final_sol;
+        Eigen::Vector3d velo_temp;
+        velo_temp.setZero();
+        updateBoundary(posi_current, posi_goal, velo_temp);
+
+        bool traj_gen_success = trajSolver.qp_opt_single(
+            optimal_traj_info.MQM,
+            optimal_traj_info.A,
+            _ub,
+            _lb,
+            final_sol
+        );
+
+        setTimeDiscrete(optimal_traj_info.optimal_time_allocation);
+        setCtrlPts(final_sol);
+        setOptiFinalTraj(final_sol);
+
+        cout<<"execute this..."<<_optiTraj.trajectory.size()<<endl;
+        return _optiTraj;
     }
 
     void traj_sampling::log()

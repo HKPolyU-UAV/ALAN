@@ -12,6 +12,7 @@ namespace alan_traj
 {
     typedef struct optimal_traj //
     {
+        int optimal_index;
         vector<double> optimal_time_allocation;
         alan_landing_planning::Traj optiTraj;
         alan_landing_planning::TrajArray optiTrajArray;
@@ -64,6 +65,7 @@ namespace alan_traj
 
         //set OptiTrajSample
         void setOptiTrajSample(Eigen::VectorXd PolyCoeff);
+        void setOptiFinalTraj(Eigen::VectorXd PolyCoeff);
         void setCtrlPts(Eigen::VectorXd& qpsol);
         void setTimeDiscrete(vector<double> _s_sample);
         vector<vector<double>> time_vector;
@@ -147,6 +149,8 @@ namespace alan_traj
         Eigen::VectorXd getOptiCtrl(){return _ctrl_pts_optimal;}  
 
         optimal_traj getOptimalTrajInfo(){return optimal_traj_info;}
+
+        alan_landing_planning::Traj opt_traj_online(Eigen::Vector3d& posi_current, Eigen::Vector3d& posi_goal);
     };
 }
 

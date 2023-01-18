@@ -98,7 +98,7 @@ private:
 
     
 //set btraj
-    //functions
+    alan_landing_planning::Traj traj_execute_final_in_B;
     //b_traj-related
     int axis_dim = 0;
     int n_order = 0;
@@ -111,9 +111,9 @@ private:
     // alan_traj::traj_gen alan_traj()
     
     void set_alan_b_traj_prerequisite();
-    void set_alan_b_traj_online();
     void set_btraj_inequality_kinematic();
-
+    void set_alan_b_traj_online();
+    
     //corridors-related
     double final_corridor_height = 0;
     double final_corridor_length = 0;
@@ -146,6 +146,7 @@ private:
 
     bool prerequisite_set = false;
     int sample_square_root = 0;
+
 
 
 //rotation function
