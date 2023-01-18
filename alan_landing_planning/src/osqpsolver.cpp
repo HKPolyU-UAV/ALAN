@@ -99,7 +99,7 @@ void osqpsolver::qp_opt(
 
 }
 
-void osqpsolver::qp_opt_samples(
+bool osqpsolver::qp_opt_samples(
     vector<Eigen::VectorXd>& qpsol_array,
     vector<vector<double>>& sample_time_array,
     vector<double>& optimal_time_allocation,
@@ -116,7 +116,7 @@ void osqpsolver::qp_opt_samples(
     qpsol_array.clear();
 
     if(_Hessian_array.size() != _Alinear_array.size())
-        return;
+        return false;
     else
     {
          for(int i = 0; i < _Hessian_array.size(); i++)
@@ -162,6 +162,7 @@ void osqpsolver::qp_opt_samples(
             cout<<endl;
             ROS_RED_STREAM("SAMPLING FAIL, PLEASE CHECK CONSTRAINTS & TIME ALLOCTION...");
             cout<<endl;
+            return false;
         }        
         else
         {
@@ -191,6 +192,8 @@ void osqpsolver::qp_opt_samples(
             ROS_GREEN_STREAM(msg_display1);   
             ROS_GREEN_STREAM(msg_display2);    
             cout<<endl;
+
+            return true;
         }
     }
 }

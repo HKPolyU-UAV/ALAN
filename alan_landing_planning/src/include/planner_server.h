@@ -9,6 +9,8 @@
 #include "alan_landing_planning/StateMachine.h"
 #include "alan_visualization/PolyhedronArray.h"
 
+#include <thread>
+
 #define IDLE "IDLE"
 #define ARMED "ARMED"
 #define TOOKOFF "TOOKOFF"
@@ -143,6 +145,7 @@ private:
     alan_landing_planning::Traj alan_optiTraj;
 
     bool prerequisite_set = false;
+    int sample_square_root = 0;
 
 
 //rotation function
@@ -172,7 +175,7 @@ private:
     //block trajectory (for data collection)
     Eigen::Vector4d set_following_target_pose();
     Eigen::Vector4d set_uav_block_pose();
-    bool set_block_traj = false;
+    bool set_block_traj = true;
     vector<vector<Eigen::Vector3d>> block_traj_pts;
     int wp_counter_i = 0;
     int traj_counter_j = 0;

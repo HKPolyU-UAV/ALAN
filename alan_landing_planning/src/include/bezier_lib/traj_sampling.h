@@ -13,8 +13,12 @@ namespace alan_traj
     typedef struct optimal_traj //
     {
         vector<double> optimal_time_allocation;
+        alan_landing_planning::Traj optiTraj;
+        alan_landing_planning::TrajArray optiTrajArray;
+        Eigen::VectorXd ctrl_pts_optimal;
         Eigen::MatrixXd MQM;
-        Eigen::MatrixXd A;        
+        Eigen::MatrixXd A;      
+        bool got_heuristic_optimal = false;  
     }optimal_traj;
 
     //test gan
@@ -25,9 +29,9 @@ namespace alan_traj
 
         //final result
         osqpsolver trajSolver;
-        alan_landing_planning::TrajArray optiTrajArray;
-        alan_landing_planning::Traj optiTraj;
-        Eigen::VectorXd ctrl_pts_optimal;
+        alan_landing_planning::TrajArray _optiTrajArray;
+        alan_landing_planning::Traj _optiTraj;
+        Eigen::VectorXd _ctrl_pts_optimal;
         
         int _axis_dim;
 
@@ -138,11 +142,11 @@ namespace alan_traj
 
         void optSamples();
         
-        alan_landing_planning::TrajArray getOptiTrajSamples(){return optiTrajArray;}
-        alan_landing_planning::Traj getOptiTraj(){return optiTraj;}      
-        Eigen::VectorXd getOptiCtrl(){return ctrl_pts_optimal;}  
+        alan_landing_planning::TrajArray getOptiTrajSamples(){return _optiTrajArray;}
+        alan_landing_planning::Traj getOptiTraj(){return _optiTraj;}      
+        Eigen::VectorXd getOptiCtrl(){return _ctrl_pts_optimal;}  
 
-        optimal_traj getOptimalTime(){return optimal_traj_info;}
+        optimal_traj getOptimalTrajInfo(){return optimal_traj_info;}
     };
 }
 

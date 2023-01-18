@@ -94,7 +94,7 @@ namespace alan_traj
     }
 
     void traj_sampling::setOptiTrajSample(Eigen::VectorXd PolyCoeff)
-    {
+    {        
         alan_landing_planning::AlanPlannerMsg traj_discrete_pt;
         alan_landing_planning::Traj optiTraj;
         optiTraj.trajectory.clear();
@@ -142,14 +142,11 @@ namespace alan_traj
         }
         
         // cout<<"here are the traj size...: "<<optiTraj.trajectory.size()<<endl;
-        optiTrajArray.trajectory_array.emplace_back(optiTraj);
+        _optiTrajArray.trajectory_array.emplace_back(optiTraj);
 
     }
 
-    
-
-    
-
+        
     void traj_sampling::set_prerequisite(
         vector<double> time_minmax, 
         int total_time_sample_no,
@@ -286,7 +283,7 @@ namespace alan_traj
         for(int axis_i = 0; axis_i < _axis_dim; axis_i++)
         {
             starto = _axis_dim * 2 + _d_order;
-            cout<<axis_i * starto<<endl;
+            // cout<<axis_i * starto<<endl;
             _ub(axis_i * starto) = posi_start(axis_i);
             _lb(axis_i * starto) = posi_start(axis_i);
 
@@ -301,62 +298,62 @@ namespace alan_traj
 
     void traj_sampling::optSamples()
     {
-        optiTrajArray.trajectory_array.clear();
+        _optiTrajArray.trajectory_array.clear();
 
         vector<Eigen::VectorXd> qpsol_array;
         vector<vector<double>> sample_time_array;
         vector<double> optimal_time_allocation;
         int optimal_index;
 
-        trajSolver.qp_opt_samples(
+        bool sample_success = trajSolver.qp_opt_samples(
             qpsol_array,
             sample_time_array,
             optimal_time_allocation, 
             optimal_index
         );
 
-        if(sample_time_array.size() == qpsol_array.size() && !qpsol_array.empty())
+        if(sample_success)
         {
-            for(int i = 0; i < qpsol_array.size(); i++)
+            if(sample_time_array.size() == qpsol_array.size() && !qpsol_array.empty())
             {
-                setTimeDiscrete(sample_time_array[i]);
-                setCtrlPts(qpsol_array[i]);
-                setOptiTrajSample(qpsol_array[i]);
+                for(int i = 0; i < qpsol_array.size(); i++)
+                {
+                    setTimeDiscrete(sample_time_array[i]);
+                    setCtrlPts(qpsol_array[i]);
+                    setOptiTrajSample(qpsol_array[i]);
+                }
             }
+            else
+            {
+                ROS_ERROR("OPTIMIZATION WENT WRONG...");
+            }
+
+            cout<<"Total Sample Size: "<<_optiTrajArray.trajectory_array.size()<<endl;
+            _optiTraj = _optiTrajArray.trajectory_array[optimal_index];
+            _ctrl_pts_optimal = qpsol_array[optimal_index];
+
+            string temp = _log_path + "coeeff.txt";
+            int no_of_ctrl = _ctrl_pts_optimal.size() / 3;
+            remove(temp.c_str());
+            ofstream save(temp ,ios::app);
+            for(int i = 0; i < no_of_ctrl; i++)
+            {
+                save<<_ctrl_pts_optimal(i)<<" "
+                    <<_ctrl_pts_optimal(i + no_of_ctrl)<<" "
+                    <<_ctrl_pts_optimal(i + no_of_ctrl * 2)<<endl<<endl;
+            }
+            save.close();
+
+            optimal_traj_info.optimal_time_allocation = optimal_time_allocation;
+            optimal_traj_info.optiTraj = _optiTraj;
+            optimal_traj_info.optiTrajArray = _optiTrajArray;
+            optimal_traj_info.ctrl_pts_optimal = _ctrl_pts_optimal;
+            optimal_traj_info.MQM = MQM_samples[optimal_index];
+            optimal_traj_info.A = A_samples[optimal_index];
+            optimal_traj_info.got_heuristic_optimal = true;
         }
         else
-        {
-            ROS_ERROR("OPTIMIZATION WENT WRONG...");
-        }
-
-        cout<<"Total Sample Size: "<<optiTrajArray.trajectory_array.size()<<endl;
-        optiTraj = optiTrajArray.trajectory_array[optimal_index];
-        ctrl_pts_optimal = qpsol_array[optimal_index];
-
-        optimal_traj_info.optimal_time_allocation = optimal_time_allocation;
-        optimal_traj_info.A = A_samples[optimal_index];
-        optimal_traj_info.MQM = MQM_samples[optimal_index];
-
-        string temp = _log_path + "coeeff.txt";
-        int no_of_ctrl = ctrl_pts_optimal.size() / 3;
-        remove(temp.c_str());
-        ofstream save(temp ,ios::app);
-
-        for(int i = 0; i < no_of_ctrl; i++)
-        {
-            // ctrl_pts_optimal(i) = ctrl_pts_optimal(i) * 
-            save<<ctrl_pts_optimal(i)<<" "
-                <<ctrl_pts_optimal(i + no_of_ctrl)<<" "
-                <<ctrl_pts_optimal(i + no_of_ctrl * 2)<<endl<<endl;
-
-        }
-
-        save.close();
-        
-        // cout<<endl<<qpsol_array.size()<<endl;
-        // cout<<sample_time_array.size()<<endl;
-        // cout<<optimal_time_allocation[0]<<" "<<optimal_time_allocation[1]<<endl;
-        // cout<<optimal_index<<endl<<endl;;
+            optimal_traj_info.got_heuristic_optimal = false;
 
     }
 

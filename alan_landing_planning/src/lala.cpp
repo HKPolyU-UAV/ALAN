@@ -206,12 +206,17 @@ int main(int argc, char** argv)
         "/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/"
     );
 
+    // for visualization
+    // posi_start: -1.6 0.0 1.8
+    // end_start :  0.0 0.0 0.1
+    // time max...1.16726 2.75
+
     vector<double> time_sample;
-    time_sample.emplace_back(1.16726); //0.894425 //1.16726
+    time_sample.emplace_back(1.16726); //0.894425 //1.16726   1.91667
     time_sample.emplace_back(2.75);//2.0 //2.75
     
     double tick0 = ros::Time::now().toSec();
-    btraj_sampling.set_prerequisite(time_sample, 31, 31);
+    btraj_sampling.set_prerequisite(time_sample, 40, 40);
     double tock0 = ros::Time::now().toSec();
     
     cout<<"set pre-requisite:"<<endl;

@@ -80,7 +80,7 @@ public:
 
     
     // sampling traj
-    void qp_opt_samples(
+    bool qp_opt_samples(
         vector<Eigen::VectorXd>& qpsol_array,
         vector<vector<double>>& sample_time_array,
         vector<double>& optimal_time_allocation,
@@ -113,8 +113,8 @@ public:
         int nV = MQM_array[0].rows();
         int nC = A_array[0].rows();
 
-        cout<<"hi we now in osqpsolver class..."<<endl;
-        cout<<_Hessian_array.size()<<endl;
+        // cout<<"hi we now in osqpsolver class..."<<endl;
+        // cout<<_Hessian_array.size()<<endl;
 
         initiate_qpsolve(nV, nC);
     };

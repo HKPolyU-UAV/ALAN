@@ -36,6 +36,20 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
             ("/uav/mavros/set_mode");
     
     config(nh);
+
+    ros::Rate rate(_pub_freq);
+    while(ros::ok())
+    {
+        if(
+            land_traj_constraint_initiated
+        )
+        {
+            cout<<"hi"<<endl;
+            break;
+        }
+        ros::spinOnce();
+        rate.sleep();
+    }
 }
 
 planner_server::~planner_server()
@@ -45,32 +59,35 @@ planner_server::~planner_server()
 
 void planner_server::mainserver()
 {
-    ros::Rate rate(_pub_freq);    
+    thread thread_prerequisite_obj(&planner_server::set_alan_b_traj_prerequisite, this);   
 
-    while(ros::ok())
+    auto mainloop = [this]()
     {
-        // cout<<"hi"<<endl;
-        if(!prerequisite_set)
-            set_alan_b_traj_prerequisite();
-        else
+        ros::Rate rate(this->_pub_freq); 
+        while(ros::ok())
         {
+            // if()
+            cout<<"gan"<<endl;
             if(
-                uav_current_state_inititaed     &&
-                uav_traj_pose_initiated         &&
-                ugv_traj_pose_initiated         &&
-                land_traj_constraint_initiated
+                this->uav_current_state_inititaed     &&
+                this->uav_traj_pose_initiated         &&
+                this->ugv_traj_pose_initiated         &&
+                this->prerequisite_set
             )
             {        
-                fsm_manager();
-                planner_pub();            
-            }
-
+                cout<<"hi"<<endl;
+                this->fsm_manager();
+                this->planner_pub();            
+            }        
+            ros::spinOnce();
+            rate.sleep();
         }
-        
-        
-        ros::spinOnce();
-        rate.sleep();
-    }
+    };
+
+    thread thread_mainloop_obj(mainloop);
+
+    thread_prerequisite_obj.join();
+    thread_mainloop_obj.join();
 }
 
 void planner_server::uavStateCallback(const mavros_msgs::State::ConstPtr& msg)
@@ -686,16 +703,18 @@ void planner_server::config(ros::NodeHandle& _nh)
     nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
     nh.getParam("/alan_master_planner_node/landing_horizontal", landing_horizontal);
     nh.getParam("/alan_master_planner_node/touch_down_height", touch_down_height);
-    
-    landing_time_duration_max 
-        = (take_off_height - touch_down_height + landing_horizontal) / uav_landing_velocity;
-    landing_time_duration_min 
-        = (sqrt(pow(take_off_height - touch_down_height,2) + pow(landing_horizontal,2)));
-    cout<<"time here: "<<landing_time_duration_max<<" "<<landing_time_duration_min<<endl;
 
     nh.getParam("/alan_master_planner_node/v_max", v_max);
     nh.getParam("/alan_master_planner_node/a_max", a_max);
 
+    nh.getParam("/alan_master_planner_node/sample_square_root", sample_square_root);
+    
+    landing_time_duration_max 
+        = (take_off_height - touch_down_height + landing_horizontal) / uav_landing_velocity;
+    landing_time_duration_min 
+        = (sqrt(pow(take_off_height - touch_down_height,2) + pow(landing_horizontal,2))) / v_max;
+    cout<<"time here: "<<landing_time_duration_max<<" "<<landing_time_duration_min<<endl;
+    
     nh.getParam("/alan_master_planner_node/log_path", log_path);
 
     cout<<"v_max: "<<v_max<<endl;
@@ -708,10 +727,8 @@ void planner_server::config(ros::NodeHandle& _nh)
     arm_cmd.request.value = true;
     alan_fsm_object.finite_state_machine = IDLE;
 
-    
-    
     //block traj temp
-    set_block_traj = true;
+    cout<<"set block traj..."<<set_block_traj<<endl;
 }
 
 void planner_server::set_alan_b_traj_prerequisite()
@@ -758,10 +775,7 @@ void planner_server::set_alan_b_traj_prerequisite()
 
         vector<double> time_sample;
         time_sample.emplace_back(landing_time_duration_min);
-        time_sample.emplace_back(landing_time_duration_max);
-
-
-        alan_btraj_sample->set_prerequisite(time_sample, 31, 31);
+        time_sample.emplace_back(landing_time_duration_max);        
 
         Eigen::Vector3d posi_start(
             -landing_horizontal,
@@ -777,20 +791,40 @@ void planner_server::set_alan_b_traj_prerequisite()
 
         Eigen::Vector3d velo_constraint(0.0,0.0,0.0);
 
+        cout<<"here are the starting point:"<<endl;
         cout<<posi_start<<endl;
-        cout<<posi_end<<endl;
+        cout<<posi_end<<endl<<endl;
 
+        cout<<sample_square_root<<endl;
+
+        double tick0 = ros::Time::now().toSec();
+        alan_btraj_sample->set_prerequisite(time_sample, sample_square_root, sample_square_root);        
         alan_btraj_sample->updateBoundary(posi_start, posi_end, velo_constraint);
+        double tock0 = ros::Time::now().toSec();
+
+        double tick1 = ros::Time::now().toSec();
         alan_btraj_sample->optSamples();
-        optimal_traj_info_obj = alan_btraj_sample->getOptimalTime();
+        optimal_traj_info_obj = alan_btraj_sample->getOptimalTrajInfo();        
+        double tock1 = ros::Time::now().toSec();
+
+        cout<<"set Matrices..."<<endl;
+        cout<<"ms: "<<(tock0 - tick0) * 1000<<endl;
+        cout<<"fps: "<<1 / (tock0 - tick0)<<endl<<endl;
+
+        cout<<"set Optimization Sample..."<<endl;
+        cout<<"ms: "<<(tock1 - tick1) * 1000<<endl;
+        cout<<"fps: "<<1 / (tock1 - tick1)<<endl;
 
         // cout<<"planner_server optimal time here..."<<optimal_time.size()<<endl;
-        for(auto what : optimal_traj_info_obj.optimal_time_allocation)
-        {
-            cout<<what<<endl;
-        }
+        // for(auto what : optimal_traj_info_obj.optimal_time_allocation)
+        // {
+        //     cout<<what<<endl;
+        // }
 
-        prerequisite_set = true;
+        if(optimal_traj_info_obj.got_heuristic_optimal)
+            prerequisite_set = true;
+        else
+            prerequisite_set = false;
 
     }
     else
@@ -798,9 +832,7 @@ void planner_server::set_alan_b_traj_prerequisite()
         prerequisite_set = false;
         return;
     }
-    
 
-    // Eigen::Vector3d posi
 }
 
 void planner_server::set_btraj_inequality_kinematic()

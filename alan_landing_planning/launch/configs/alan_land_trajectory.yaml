@@ -17,6 +17,7 @@ v_max: 2.0
 
 a_max: 4.0
 
+sample_square_root: 31
 
 PID_gain:
   - kp:
