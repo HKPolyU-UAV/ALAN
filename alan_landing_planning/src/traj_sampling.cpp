@@ -409,10 +409,18 @@ namespace alan_traj
             final_sol
         );
 
-        setTimeDiscrete(optimal_traj_info.optimal_time_allocation);
-        setCtrlPts(final_sol);
-        setOptiFinalTraj(final_sol);
+        if(traj_gen_success)
+        {
+            setTimeDiscrete(optimal_traj_info.optimal_time_allocation);
+            setCtrlPts(final_sol);
+            setOptiFinalTraj(final_sol);
+        }
+        else
+        {
+            _optiTraj = optimal_traj_info.optiTraj;
+        }
 
+        
         cout<<"execute this..."<<_optiTraj.trajectory.size()<<endl;
         return _optiTraj;
     }
