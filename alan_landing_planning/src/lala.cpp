@@ -215,8 +215,9 @@ int main(int argc, char** argv)
     time_sample.emplace_back(1.16726); //0.894425 //1.16726   1.91667
     time_sample.emplace_back(2.75);//2.0 //2.75
     
+    int sample_size_root = 32;
     double tick0 = ros::Time::now().toSec();
-    btraj_sampling.set_prerequisite(time_sample, 31, 31);
+    btraj_sampling.set_prerequisite(time_sample, sample_size_root, sample_size_root);
     double tock0 = ros::Time::now().toSec();
     
     cout<<"set pre-requisite:"<<endl;
@@ -256,7 +257,7 @@ int main(int argc, char** argv)
     cout<<endl<<endl;
     cout<<"now online..."<<endl;
     // btraj_sampling.
-    Eigen::Vector3d posi_current(-1.5,0.1,0.7);
+    Eigen::Vector3d posi_current(-1.6,0.0,1.8);
     Eigen::Vector3d posi_goal(0,0,0.1);
     double tick2 = ros::Time::now().toSec();
     alan_landing_planning::Traj traj_execute_final_in_B = btraj_sampling.opt_traj_online(

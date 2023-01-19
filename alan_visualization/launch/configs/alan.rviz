@@ -83,7 +83,7 @@ Visualization Manager:
           Marker Topic: /gt_points
           Name: Marker_opti
           Namespaces:
-            GT_points: true
+            {}
           Queue Size: 500
           Value: true
         - Class: rviz/Marker
@@ -91,7 +91,7 @@ Visualization Manager:
           Marker Topic: /gt_points/ctrl
           Name: Marker_ctrl
           Namespaces:
-            GT_points: true
+            {}
           Queue Size: 500
           Value: true
         - Class: rviz/Marker
@@ -99,7 +99,7 @@ Visualization Manager:
           Marker Topic: /gt_points/samples
           Name: Marker_sample
           Namespaces:
-            GT_points: true
+            {}
           Queue Size: 500
           Value: true
         - Alpha: 0.10000000149011612
@@ -125,7 +125,7 @@ Visualization Manager:
           Marker Topic: /rviz_vehicle/UAV
           Name: MarkerArray
           Namespaces:
-            {}
+            UAV: true
           Queue Size: 100
           Value: true
         - Alpha: 1
@@ -144,7 +144,7 @@ Visualization Manager:
           Topic: /rviz_vehicle/UAV/pose
           Unreliable: true
           Value: true
-      Enabled: false
+      Enabled: true
       Name: UAV
     - Class: rviz/Group
       Displays:
@@ -153,7 +153,7 @@ Visualization Manager:
           Marker Topic: /rviz_vehicle/UGV
           Name: MarkerArray
           Namespaces:
-            {}
+            UGV: true
           Queue Size: 100
           Value: true
         - Alpha: 1
@@ -177,7 +177,7 @@ Visualization Manager:
           Marker Topic: /rviz_vehicle/UGV/camera
           Name: cam_Marker
           Namespaces:
-            {}
+            camera_pyramid: true
           Queue Size: 100
           Value: true
         - Alpha: 1
@@ -196,7 +196,7 @@ Visualization Manager:
           Topic: /alan_state_estimation/CAM/pose
           Unreliable: false
           Value: false
-      Enabled: false
+      Enabled: true
       Name: UGV
     - Class: rviz/Group
       Displays:
@@ -329,7 +329,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.571314334869385
+      Distance: 4.1832780838012695
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -337,17 +337,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.757145345211029
-        Y: -0.3114434778690338
-        Z: 0.6033486127853394
+        X: -0.8267391920089722
+        Y: -0.6369915008544922
+        Z: 0.9310241341590881
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: -0.05520443618297577
+      Pitch: 0.1097971498966217
       Target Frame: <Fixed Frame>
-      Yaw: 1.4165806770324707
+      Yaw: 4.503500461578369
     Saved:
       - Class: rviz/Orbit
         Distance: 19.586559295654297

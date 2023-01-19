@@ -27,6 +27,12 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
         //   /mavros/setpoint_position/local
     local_vel_pub = nh.advertise<geometry_msgs::Twist>
             ("/uav/mavros/setpoint_velocity/cmd_vel_unstamped", 5);
+
+    traj_pub = nh.advertise<alan_landing_planning::Traj>
+            ("/alan_visualization/traj", 1, true);
+
+    trajArray_pub = nh.advertise<alan_landing_planning::TrajArray>
+            ("/alan_visualization/trajArray", 1, true);
         
     //client
     uav_arming_client = nh.serviceClient<mavros_msgs::CommandBool>
@@ -60,21 +66,22 @@ planner_server::~planner_server()
 void planner_server::mainserver()
 {
     thread thread_prerequisite_obj(&planner_server::set_alan_b_traj_prerequisite, this);   
-
-    auto mainloop = [this]()
+    
+    //define lambda here for mainloop
+    auto mainloop = [this]() mutable
     {
         ros::Rate rate(this->_pub_freq); 
         while(ros::ok())
         {
             // if()
-            cout<<"gan"<<endl;
+            // cout<<"gan"<<endl;
             if(
                 this->uav_current_state_inititaed     &&
                 this->uav_traj_pose_initiated         &&
                 this->ugv_traj_pose_initiated                
             )
             {        
-                cout<<"hi"<<endl;
+                // cout<<"hi"<<endl;
                 this->fsm_manager();
                 this->planner_pub();            
             }        
@@ -426,6 +433,13 @@ void planner_server::planner_pub()
 
     alan_fsm_object.finite_state_machine = fsm_state;
     pub_fsm.publish(alan_fsm_object);
+
+    if(prerequisite_set)
+    {
+        // cout<<"hi"<<endl;
+        traj_pub.publish(optimal_traj_info_obj.optiTraj);
+        traj_pub.publish(optimal_traj_info_obj.optiTrajArray);
+    }
 
 }
 
@@ -814,11 +828,33 @@ void planner_server::set_alan_b_traj_prerequisite()
         cout<<"ms: "<<(tock1 - tick1) * 1000<<endl;
         cout<<"fps: "<<1 / (tock1 - tick1)<<endl;
 
+
+        //test online here...
+
         // cout<<"planner_server optimal time here..."<<optimal_time.size()<<endl;
         // for(auto what : optimal_traj_info_obj.optimal_time_allocation)
         // {
         //     cout<<what<<endl;
         // }
+
+        cout<<"after setting pre-requisite..."<<endl;
+
+        cout<<uav_in_ugv_frame_posi<<endl;
+        cout<<endl<<endl;
+        cout<<"now online..."<<endl;
+        // btraj_sampling.
+        
+        Eigen::Vector3d posi_goal(0,0,touch_down_height);
+        double tick2 = ros::Time::now().toSec();
+        alan_landing_planning::Traj traj_execute_final_in_B = alan_btraj_sample->opt_traj_online(
+            posi_start,
+            posi_end
+        );
+        double tock2 = ros::Time::now().toSec();
+
+        cout<<"online update:"<<endl;
+        cout<<"ms: "<<(tock2 - tick2) * 1000<<endl;
+        cout<<"fps: "<<1 / (tock2 - tick2)<<endl;
 
         if(optimal_traj_info_obj.got_heuristic_optimal)
             prerequisite_set = true;

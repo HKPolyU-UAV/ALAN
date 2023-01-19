@@ -44,6 +44,8 @@ private:
     ros::Publisher local_pos_pub;
     ros::Publisher local_vel_pub;
     ros::Publisher pub_fsm;
+    ros::Publisher traj_pub;
+    ros::Publisher trajArray_pub;
     
     //service
     ros::ServiceClient uav_arming_client;

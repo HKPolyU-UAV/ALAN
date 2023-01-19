@@ -13,9 +13,9 @@ final_landing_x: 1.0
 
 landing_velocity: 1.2
 
-v_max: 2.0
+v_max: 4.0
 
-a_max: 4.0
+a_max: 8.0
 
 sample_square_root: 31
 

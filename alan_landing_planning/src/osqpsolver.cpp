@@ -108,6 +108,8 @@ bool osqpsolver::qp_opt_single(
 )
 {
     cout<<"here in qp_opt_single"<<endl;
+    // cout<<_ub<<endl;
+    // cout<<_lb<<endl;
 
     Eigen::SparseMatrix<double> Hessian = _MQM.sparseView();
     if(!_qpsolver.updateHessianMatrix(Hessian))

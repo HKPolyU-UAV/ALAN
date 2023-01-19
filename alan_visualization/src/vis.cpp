@@ -19,6 +19,8 @@ static visualization_msgs::Marker trajArray_points;
 
 static Eigen::VectorXd c2b_ugv;
 
+static Eigen::Isometry3d ugv_body_pose_in_world;
+
 Eigen::Vector3d q2rpy(Eigen::Quaterniond q) {
     return q.toRotationMatrix().eulerAngles(2,1,0);
 };
@@ -122,8 +124,6 @@ void trajArray_msg_callback(const alan_landing_planning::TrajArray::ConstPtr& ms
     }
     rviz_traj_array_initiated = true;
 
-    // cout<<1<<endl;
-
 }
 
 static bool rviz_uav_initiated = false;
@@ -158,6 +158,18 @@ void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
     ugv_pose.pose.orientation.x = msg->orientation.ox;
     ugv_pose.pose.orientation.y = msg->orientation.oy;
     ugv_pose.pose.orientation.z = msg->orientation.oz;
+
+    ugv_body_pose_in_world =
+        Eigen::Translation3d(
+            ugv_pose.pose.position.x,
+            ugv_pose.pose.position.y,
+            ugv_pose.pose.position.z
+        ) * Eigen::Quaterniond(
+            ugv_pose.pose.orientation.w,
+            ugv_pose.pose.orientation.x,
+            ugv_pose.pose.orientation.y,
+            ugv_pose.pose.orientation.z
+    );
 
     // cout<<ugv_pose.pose.orientation.w<<endl;
 
@@ -304,6 +316,10 @@ int main(int argc, char** argv)
 
         if(rviz_traj_array_initiated)
             trajArray_vis_pub.publish(trajArray_points); 
+
+
+        
+        
         
             
         ros::spinOnce();
