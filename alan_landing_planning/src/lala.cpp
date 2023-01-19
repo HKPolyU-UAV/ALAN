@@ -172,8 +172,8 @@ int main(int argc, char** argv)
 
     //dynamic constraint
     alan_traj::dynamic_constraints d_constraints;
-    double vel_temp = 2;
-    double acc_temp = 4;
+    double vel_temp = 4;
+    double acc_temp = 8;
     d_constraints.v_max(0) =  vel_temp;
     d_constraints.v_min(0) = -vel_temp;//OsqpEigen::INFTY;//-150;
     d_constraints.a_max(0) =  acc_temp;
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
     time_sample.emplace_back(2.75);//2.0 //2.75
     
     double tick0 = ros::Time::now().toSec();
-    btraj_sampling.set_prerequisite(time_sample, 32, 32);
+    btraj_sampling.set_prerequisite(time_sample, 31, 31);
     double tock0 = ros::Time::now().toSec();
     
     cout<<"set pre-requisite:"<<endl;
@@ -266,8 +266,8 @@ int main(int argc, char** argv)
     double tock2 = ros::Time::now().toSec();
 
     cout<<"online update:"<<endl;
-    cout<<(tock2 - tick2)<<endl;
-    cout<<1 / (tock2 - tick2)<<endl;
+    cout<<"ms: "<<(tock2 - tick2) * 1000<<endl;
+    cout<<"fps: "<<1 / (tock2 - tick2)<<endl;
 
 
     while(ros::ok())
