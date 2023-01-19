@@ -9,6 +9,7 @@
 #include "visualization_msgs/Marker.h"
 
 #include "./include/rviz_vehicle.hpp"
+#include <tf/transform_broadcaster.h>
 
 using namespace std;
 
@@ -16,6 +17,9 @@ static decomp_ros_msgs::PolyhedronArray sfc_pub_vis_object_polyh;
 static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
 static visualization_msgs::Marker traj_points;
 static visualization_msgs::Marker trajArray_points;
+
+static geometry_msgs::PoseStamped ugv_pose;
+
 
 static Eigen::VectorXd c2b_ugv;
 
@@ -77,7 +81,28 @@ void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
         sfc_pub_vis_object_tangent.normals.clear();
     }
 
-    sfc_pub_vis_object_polyh.header.frame_id = "map";    
+    sfc_pub_vis_object_polyh.header.frame_id = "body";  
+
+
+    static tf::TransformBroadcaster br;
+    tf::Transform transform;
+    transform.setOrigin( tf::Vector3(
+        ugv_pose.pose.position.x,
+        ugv_pose.pose.position.y,
+        ugv_pose.pose.position.z
+        ) 
+    );
+    tf::Quaternion q;
+    q.setW(ugv_pose.pose.orientation.w);
+    q.setX(ugv_pose.pose.orientation.x);
+    q.setY(ugv_pose.pose.orientation.y);
+    q.setZ(ugv_pose.pose.orientation.z);
+    
+    transform.setRotation(q);
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "map", "body"));
+  
+    
+    
 
     // cout<<sfc_pub_vis_object_polyh.polyhedrons.size()<<endl;
 
@@ -99,7 +124,10 @@ void traj_msg_callback(const alan_landing_planning::Traj::ConstPtr& msg)
         posi_temp.y = what.position.y;
         posi_temp.z = what.position.z;
         traj_points.points.push_back(posi_temp);
-    }    
+    }      
+
+    
+
     
     rviz_traj_initiated = true;
 
@@ -144,7 +172,6 @@ void uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& m
 }
 
 static bool rviz_ugv_initiated = false;
-static geometry_msgs::PoseStamped ugv_pose;
 void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg)
 {
     //when ugv is directly received from vicon,
@@ -232,8 +259,8 @@ int main(int argc, char** argv)
     ros::Publisher traj_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points", 1, true);
     ros::Publisher trajArray_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points/samples", 1, true);
 
-    traj_points.header.frame_id = "map";
-    traj_points.header.stamp = ros::Time::now();
+    traj_points.header.frame_id = "body";
+    
     traj_points.ns = "GT_points";
 
     traj_points.id = 0;
@@ -247,8 +274,8 @@ int main(int argc, char** argv)
     traj_points.color.b=0;
 
 
-    trajArray_points.header.frame_id = "map";
-    trajArray_points.header.stamp = ros::Time::now();
+    trajArray_points.header.frame_id = "body";
+
     trajArray_points.ns = "GT_points";
 
     trajArray_points.id = 0;
@@ -299,7 +326,7 @@ int main(int argc, char** argv)
 
     while(ros::ok())
     {
-
+        
         if(rviz_uav_initiated)
             uav_rviz.rviz_pub_vehicle(uav_pose);
 
@@ -311,16 +338,30 @@ int main(int argc, char** argv)
         
         // cout<<sfc_pub_vis_object_polyh.polyhedrons.size()<<endl;
 
-        if(rviz_traj_initiated)
+        if(rviz_traj_initiated && rviz_traj_array_initiated)
+        {
+            traj_points.header.stamp = ros::Time::now();
+            trajArray_points.header.stamp = ros::Time::now();
+
+            static tf::TransformBroadcaster br;
+            tf::Transform transform;
+            transform.setOrigin( tf::Vector3(
+                ugv_pose.pose.position.x,
+                ugv_pose.pose.position.y,
+                ugv_pose.pose.position.z
+                ) 
+            );
+            tf::Quaternion q;
+            q.setW(ugv_pose.pose.orientation.w);
+            q.setX(ugv_pose.pose.orientation.x);
+            q.setY(ugv_pose.pose.orientation.y);
+            q.setZ(ugv_pose.pose.orientation.z);
+            
+            transform.setRotation(q);
+            br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "map", "body"));
             traj_vis_pub.publish(traj_points);  
-
-        if(rviz_traj_array_initiated)
-            trajArray_vis_pub.publish(trajArray_points); 
-
-
-        
-        
-        
+            trajArray_vis_pub.publish(trajArray_points);
+        }                                                 
             
         ros::spinOnce();
         visrate.sleep();

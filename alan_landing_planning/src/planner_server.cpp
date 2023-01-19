@@ -438,7 +438,7 @@ void planner_server::planner_pub()
     {
         // cout<<"hi"<<endl;
         traj_pub.publish(optimal_traj_info_obj.optiTraj);
-        traj_pub.publish(optimal_traj_info_obj.optiTrajArray);
+        trajArray_pub.publish(optimal_traj_info_obj.optiTrajArray);
     }
 
 }
