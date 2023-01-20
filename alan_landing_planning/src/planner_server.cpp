@@ -1,5 +1,4 @@
 #include "include/planner_server.h"
-#include <tf/tf.h>
 // #include <mavros_msgs/qua
 
 planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
@@ -33,6 +32,9 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 
     trajArray_pub = nh.advertise<alan_landing_planning::TrajArray>
             ("/alan_visualization/trajArray", 1, true);
+
+    ctrl_pt_pub = nh.advertise<alan_landing_planning::Traj>
+            ("/alan_visualization/ctrlPts", 1, true);
         
     //client
     uav_arming_client = nh.serviceClient<mavros_msgs::CommandBool>
@@ -438,7 +440,8 @@ void planner_server::planner_pub()
     {
         // cout<<"hi"<<endl;
         traj_pub.publish(optimal_traj_info_obj.optiTraj);
-        trajArray_pub.publish(optimal_traj_info_obj.optiTrajArray);
+        trajArray_pub.publish(optimal_traj_info_obj.optiTrajArray);        
+        ctrl_pt_pub.publish(optimal_traj_info_obj.ctrl_pts_optimal);
     }
 
 }

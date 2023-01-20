@@ -384,7 +384,7 @@ namespace alan_traj
             optimal_traj_info.optimal_time_allocation = optimal_time_allocation;
             optimal_traj_info.optiTraj = _optiTraj;
             optimal_traj_info.optiTrajArray = _optiTrajArray;
-            optimal_traj_info.ctrl_pts_optimal = _ctrl_pts_optimal;
+            optimal_traj_info.ctrl_pts_optimal = setCtrlVis(_ctrl_pts_optimal);
             optimal_traj_info.MQM = MQM_opti_array[optimal_index];
             optimal_traj_info.A = A_opti_array[optimal_index];
             optimal_traj_info.got_heuristic_optimal = true;
@@ -423,6 +423,25 @@ namespace alan_traj
         
         cout<<"execute this..."<<_optiTraj.trajectory.size()<<endl;
         return _optiTraj;
+    }
+
+    alan_landing_planning::Traj traj_sampling::setCtrlVis(Eigen::VectorXd optiCtrl)
+    {
+        alan_landing_planning::Traj vis_ctrl;
+        alan_landing_planning::AlanPlannerMsg posi_temp;
+
+        int no_of_ctrl = optiCtrl.size() / 3;
+
+        for(int i = 0; i < no_of_ctrl; i++)
+        {
+            posi_temp.position.x = optiCtrl(i);
+            posi_temp.position.y = optiCtrl(i + no_of_ctrl);
+            posi_temp.position.z = optiCtrl(i + no_of_ctrl * 2);
+
+            vis_ctrl.trajectory.emplace_back(posi_temp);
+        }
+
+        return vis_ctrl;
     }
 
     void traj_sampling::log()

@@ -16,7 +16,8 @@ namespace alan_traj
         vector<double> optimal_time_allocation;
         alan_landing_planning::Traj optiTraj;
         alan_landing_planning::TrajArray optiTrajArray;
-        Eigen::VectorXd ctrl_pts_optimal;
+        alan_landing_planning::Traj ctrl_pts_optimal;
+        // Eigen::VectorXd ctrl_pts_optimal;
         Eigen::MatrixXd MQM;
         Eigen::MatrixXd A;      
         bool got_heuristic_optimal = false;  
@@ -114,6 +115,8 @@ namespace alan_traj
         void setBoundary(bernstein& bezier_base);
 
         optimal_traj optimal_traj_info;
+
+        alan_landing_planning::Traj setCtrlVis(Eigen::VectorXd optiCtrl);
 
     public:
 

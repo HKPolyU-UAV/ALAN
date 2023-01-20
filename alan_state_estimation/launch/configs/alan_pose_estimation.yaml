@@ -13,6 +13,8 @@ cam_FOV_V: 65
 final_corridor_height: 0.15
 final_corridor_length: 1.2
 
+landing_horizontal: 1.6
+
 LED_r_number: 3 #2
 LED_g_number: 3
 

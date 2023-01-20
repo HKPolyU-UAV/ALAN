@@ -120,7 +120,7 @@ rviz_vehicle::rviz_vehicle(
     vehicle_cam_pose_pub = nh.advertise<visualization_msgs::Marker>(topicname, 1, true);
 
 
-    robot_marker_temp.header.frame_id = "map";
+    robot_marker_temp.header.frame_id = "world";
     // robot_marker_temp.
     robot_marker_temp.header.stamp = ros::Time::now();
 
@@ -174,7 +174,7 @@ rviz_vehicle::rviz_vehicle(
     topicname = "/rviz_vehicle/" + _robot_type + "/camera";
     vehicle_cam_pose_pub = nh.advertise<visualization_msgs::Marker>(topicname, 1, true);
 
-    robot_marker_temp.header.frame_id = "map";
+    robot_marker_temp.header.frame_id = "world";
     
     robot_marker_temp.ns = robot_type;
 
@@ -232,7 +232,7 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
         setupUAV();        
         //final publish
         vehicle_marker_pub.publish(robot_marker_array);
-        robot_pose.header.frame_id = "map";
+        robot_pose.header.frame_id = "world";
         vehicle_pose_pub.publish(robot_pose);
 
     }
@@ -241,7 +241,7 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
         setupUGV();
         //final publish
         vehicle_marker_pub.publish(robot_marker_array);
-        robot_pose.header.frame_id = "map";
+        robot_pose.header.frame_id = "world";
         vehicle_pose_pub.publish(robot_pose);
     }
     else
@@ -252,7 +252,7 @@ void rviz_vehicle::rviz_pub_vehicle(geometry_msgs::PoseStamped robot_pose)
 
     if(_got_camera)
     {                
-        camera_pyramid.header.frame_id = "map";
+        camera_pyramid.header.frame_id = "world";
         camera_pyramid.header.stamp = ros::Time::now();
 
         camera_pyramid.ns = "camera_pyramid";

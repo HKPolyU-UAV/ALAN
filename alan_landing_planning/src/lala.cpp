@@ -113,7 +113,7 @@ int main(int argc, char** argv)
     ros::Rate rosrate(50);
 
 
-    ctrl_points.header.frame_id = "map";
+    ctrl_points.header.frame_id = "world";
     ctrl_points.header.stamp = ros::Time::now();
     ctrl_points.ns = "GT_points";
 

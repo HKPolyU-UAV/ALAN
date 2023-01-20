@@ -528,6 +528,10 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
     else
         cam2uav_xy_d = 2.5;
 
+    cam2uav_xy_d = landing_horizontal + 1.0;
+    // remember that there's a difference between
+    // camera and UGV body frame
+
 
     Eigen::Vector3d temp_bound;
     temp_bound = t_current.translation() + q_rotate_vector(
@@ -675,8 +679,8 @@ void alan::MsgSyncNodelet::setup_camera_config(ros::NodeHandle& nh)
     nh.getParam("/alan_master/cam_FOV_V", FOV_V);   
 
     nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
-    nh.getParam("/alan_master/final_corridor_length", final_corridor_length);                          
-
+    nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
+    nh.getParam("/alan_master/landing_horizontal", landing_horizontal);
 //set sfc visualization
     FOV_H = FOV_H / 180 * M_PI * 0.75;
     FOV_V = FOV_V / 180 * M_PI * 0.75;        

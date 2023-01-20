@@ -17,6 +17,7 @@ static decomp_ros_msgs::PolyhedronArray sfc_pub_vis_object_polyh;
 static decomp_ros_msgs::Polyhedron sfc_pub_vis_object_tangent;
 static visualization_msgs::Marker traj_points;
 static visualization_msgs::Marker trajArray_points;
+static visualization_msgs::Marker ctrl_points;
 
 static geometry_msgs::PoseStamped ugv_pose;
 
@@ -99,7 +100,7 @@ void sfc_msg_callback(const alan_visualization::PolyhedronArray::ConstPtr & msg)
     q.setZ(ugv_pose.pose.orientation.z);
     
     transform.setRotation(q);
-    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "map", "body"));
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "body"));
   
     
     
@@ -151,6 +152,27 @@ void trajArray_msg_callback(const alan_landing_planning::TrajArray::ConstPtr& ms
         }
     }
     rviz_traj_array_initiated = true;
+
+}
+
+static bool ctrlPts_initiated = false;
+void ctrlPts_msg_callback(const alan_landing_planning::Traj::ConstPtr& msg)
+{
+    geometry_msgs::Point posi_temp;
+
+    // cout<<msg->trajectory.size()<<endl;
+
+    ctrl_points.points.clear();
+    
+    for(auto what : msg->trajectory)
+    {
+        posi_temp.x = what.position.x;
+        posi_temp.y = what.position.y;
+        posi_temp.z = what.position.z;
+        ctrl_points.points.push_back(posi_temp);
+    }      
+
+    ctrlPts_initiated = true;
 
 }
 
@@ -250,14 +272,17 @@ int main(int argc, char** argv)
             ("/alan_visualization/traj", 1, &traj_msg_callback);
     ros::Subscriber trajArray_sub = nh.subscribe<alan_landing_planning::TrajArray>
             ("/alan_visualization/trajArray", 1, &trajArray_msg_callback);
+    ros::Subscriber ctrlPts_sub = nh.subscribe<alan_landing_planning::Traj>
+            ("/alan_visualization/ctrlPts", 1, &ctrlPts_msg_callback);
     ros::Subscriber uav_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
             ("/alan_state_estimation/msgsync/uav/alan_planner_msg", 1, &uavAlanMsgCallback);
     ros::Subscriber ugv_pose_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
             ("/alan_state_estimation/msgsync/ugv/alan_planner_msg", 1, &ugvAlanMsgCallback);
         
     ros::Publisher polyh_vis_pub = nh.advertise<decomp_ros_msgs::PolyhedronArray>("/polyhedron_array", 1, true);
-    ros::Publisher traj_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points", 1, true);
-    ros::Publisher trajArray_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points/samples", 1, true);
+    ros::Publisher traj_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points/traj", 1, true);
+    ros::Publisher trajArray_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points/trajSamples", 1, true);
+    ros::Publisher ctrl_pts_vis_pub = nh.advertise <visualization_msgs::Marker>("/gt_points/trajCtrlpts", 1, true);
 
     traj_points.header.frame_id = "body";
     
@@ -287,6 +312,21 @@ int main(int argc, char** argv)
     trajArray_points.color.g=0;
     trajArray_points.color.r=0;
     trajArray_points.color.b=1;
+
+
+    ctrl_points.header.frame_id = "body";
+
+    ctrl_points.ns = "GT_points";
+
+    ctrl_points.id = 0;
+    ctrl_points.action = visualization_msgs::Marker::ADD;
+    ctrl_points.pose.orientation.w = 1.0;
+    ctrl_points.type = visualization_msgs::Marker::SPHERE_LIST;
+    ctrl_points.scale.x = ctrl_points.scale.y = ctrl_points.scale.z = 0.04;
+    ctrl_points.color.a=1;
+    ctrl_points.color.g=1;
+    ctrl_points.color.r=1;
+    ctrl_points.color.b=0;
 
     rviz_vehicle uav_rviz = rviz_vehicle(nh, UAV, false);
 
@@ -338,7 +378,11 @@ int main(int argc, char** argv)
         
         // cout<<sfc_pub_vis_object_polyh.polyhedrons.size()<<endl;
 
-        if(rviz_traj_initiated && rviz_traj_array_initiated)
+        if(
+            rviz_traj_initiated && 
+            rviz_traj_array_initiated &&
+            ctrlPts_initiated
+        )
         {
             traj_points.header.stamp = ros::Time::now();
             trajArray_points.header.stamp = ros::Time::now();
@@ -358,9 +402,10 @@ int main(int argc, char** argv)
             q.setZ(ugv_pose.pose.orientation.z);
             
             transform.setRotation(q);
-            br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "map", "body"));
+            br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "body"));
             traj_vis_pub.publish(traj_points);  
             trajArray_vis_pub.publish(trajArray_points);
+            ctrl_pts_vis_pub.publish(ctrl_points);
         }                                                 
             
         ros::spinOnce();

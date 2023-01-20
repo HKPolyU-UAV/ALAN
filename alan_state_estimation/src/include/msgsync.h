@@ -121,7 +121,7 @@ namespace alan
             //objects 
             double FOV_H = 0, FOV_V = 0;//fov horizontal & vertical
             double final_corridor_height = 0, final_corridor_length = 0;
-
+            double landing_horizontal = 0;
             Eigen::Quaterniond q1, q2, q3, q4;
             Eigen::Vector3d cam_center_vector = Eigen::Vector3d(1,0,0),
                             cam_1axis_vector, 

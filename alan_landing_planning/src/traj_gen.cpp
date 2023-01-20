@@ -405,6 +405,8 @@ namespace alan_traj
         
     }
 
+    
+
     double traj_gen::nchoosek(int n, int k)
     {
         return pascal[n][k];

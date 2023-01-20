@@ -9,6 +9,8 @@ Panels:
         - /basics1/Axes1
         - /alan_traj1
         - /alan_traj1/Marker_opti1
+        - /alan_traj1/Marker_ctrl1
+        - /alan_traj1/Marker_sample1
         - /alan_traj1/PolyhedronArray1
         - /UAV1/MarkerArray1
         - /UAV1/Pose1
@@ -80,26 +82,26 @@ Visualization Manager:
       Displays:
         - Class: rviz/Marker
           Enabled: true
-          Marker Topic: /gt_points
+          Marker Topic: /gt_points/traj
           Name: Marker_opti
           Namespaces:
-            {}
+            GT_points: true
           Queue Size: 500
           Value: true
         - Class: rviz/Marker
           Enabled: true
-          Marker Topic: /gt_points/ctrl
+          Marker Topic: /gt_points/trajCtrlpts
           Name: Marker_ctrl
           Namespaces:
-            {}
+            GT_points: true
           Queue Size: 500
           Value: true
         - Class: rviz/Marker
           Enabled: true
-          Marker Topic: /gt_points/samples
+          Marker Topic: /gt_points/trajSamples
           Name: Marker_sample
           Namespaces:
-            {}
+            GT_points: true
           Queue Size: 500
           Value: true
         - Alpha: 0.10000000149011612
@@ -305,7 +307,7 @@ Visualization Manager:
   Global Options:
     Background Color: 255; 255; 255
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: world
     Frame Rate: 30
   Name: root
   Tools:
@@ -329,7 +331,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.1832780838012695
+      Distance: 6.582468509674072
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -345,9 +347,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.1097971498966217
+      Pitch: 0.2747969925403595
       Target Frame: <Fixed Frame>
-      Yaw: 4.503500461578369
+      Yaw: 5.03350830078125
     Saved:
       - Class: rviz/Orbit
         Distance: 19.586559295654297
