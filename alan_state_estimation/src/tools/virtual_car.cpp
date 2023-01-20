@@ -8,6 +8,8 @@
 #include <cmath>
 #include <random>
 
+using namespace std;
+
 #define TURN 0
 #define GOST 1
 

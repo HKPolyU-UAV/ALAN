@@ -37,9 +37,6 @@
 
 // #include "q"
 
-using namespace std;
-
-
 namespace pc
 {
   enum PRINT_COLOR

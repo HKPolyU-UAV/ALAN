@@ -29,7 +29,7 @@ void alan::CnnNodelet::camera_callback(const sensor_msgs::CompressedImageConstPt
             ROS_ERROR("cv_bridge exception: %s", e.what());
         }
         
-        // cout<<frame.size()<<endl;
+        // std::cout<<frame.size()<<std::endl;
 
         char hz[40];
         char fps[5] = " fps";
@@ -51,10 +51,10 @@ void alan::CnnNodelet::camera_callback(const sensor_msgs::CompressedImageConstPt
         
         cv::rectangle(test, ROI, CV_RGB(0, 0, 0), -1);
 
-        // cout<<frame.type()<<endl;
-        // cout<<test.type()<<endl;
-        // cout<<frame.size()<<endl;
-        // cout<<test.size()<<endl;
+        // std::cout<<frame.type()<<std::endl;
+        // std::cout<<test.type()<<std::endl;
+        // std::cout<<frame.size()<<std::endl;
+        // std::cout<<test.size()<<std::endl;
 
         cv::subtract(frame, test, frame);
         
@@ -66,12 +66,12 @@ void alan::CnnNodelet::camera_callback(const sensor_msgs::CompressedImageConstPt
     }
 
     // ros::Duration(5.0).sleep();
-    // cout<<frame.size<<endl;
+    // std::cout<<frame.size<<std::endl;
 }
 
 inline void alan::CnnNodelet::CnnNodeletInitiate(const cv::String cfgfile, const cv::String weightfile, const cv::String objfile, const float confidence)
 {
-    cout<<"start initiation"<<endl;
+    std::cout<<"start initiation"<<std::endl;
     this->mydnn = cv::dnn::readNetFromDarknet(cfgfile, weightfile);
 
     //opt CUDA or notcc
@@ -80,7 +80,7 @@ inline void alan::CnnNodelet::CnnNodeletInitiate(const cv::String cfgfile, const
     intiated = true;
     set_confidence = confidence;
 
-    cout<<"end   initiation"<<endl;
+    std::cout<<"end   initiation"<<std::endl;
     
     // this->mydnn.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
     // this->mydnn.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
@@ -118,10 +118,10 @@ void alan::CnnNodelet::findboundingboxes(cv::Mat &frame)
     mydnn.setInput(blob);
     //feed 4-D blob to darknet dnn
 
-    vector<cv::String> net_outputNames;//names of output layer of yolo, should be 3
+    std::vector<cv::String> net_outputNames;//names of output layer of yolo, should be 3
     net_outputNames = mydnn.getUnconnectedOutLayersNames();
 
-    vector<cv::Mat> netOutput;
+    std::vector<cv::Mat> netOutput;
     //coppy the result to this object
 
 
@@ -129,23 +129,23 @@ void alan::CnnNodelet::findboundingboxes(cv::Mat &frame)
 
     mydnn.forward(netOutput, net_outputNames);
 
-    //    cout<<netOut[0].size()<<endl;
-    //    cout<<netOut[1].size()<<endl;
-    //    cout<<netOut[2].size()<<endl<<endl;
+    //    std::cout<<netOut[0].size()<<std::endl;
+    //    std::cout<<netOut[1].size()<<std::endl;
+    //    std::cout<<netOut[2].size()<<std::endl<<std::endl;
     double endtime = ros::Time::now().toSec();
     double deltatime = endtime - starttime;
-    // cout<<"time:"<<deltatime<<endl;
-    // cout<<"fps: "<<1/deltatime<<endl;
+    // std::cout<<"time:"<<deltatime<<std::endl;
+    // std::cout<<"fps: "<<1/deltatime<<std::endl;
     findwhichboundingboxrocks(netOutput, frame);
 }
 
-void alan::CnnNodelet::findwhichboundingboxrocks(vector<cv::Mat> &netOutput, cv::Mat &frame)
+void alan::CnnNodelet::findwhichboundingboxrocks(std::vector<cv::Mat> &netOutput, cv::Mat &frame)
 {
-    vector<float> confidenceperbbox;
-    vector<int> indices;
-    vector<cv::Rect> bboxes;
-    vector<string> classnames;
-    vector<int> classids;
+    std::vector<float> confidenceperbbox;
+    std::vector<int> indices;
+    std::vector<cv::Rect> bboxes;
+    std::vector<std::string> classnames;
+    std::vector<int> classids;
 
     getclassname(classnames);
 
@@ -174,7 +174,7 @@ void alan::CnnNodelet::findwhichboundingboxrocks(vector<cv::Mat> &netOutput, cv:
                 auto h_ = int(h);
                 cv::Rect Rect_temp(x_,y_,w_,h_);
 
-                //                cout<<"here: "<<c_max<<" "<<c_no1<<" "<<c_no2<<" "<<c_no3<<" "<<c_no4<<" "<<c_no5<<" "<<endl<<endl;
+                //                std::cout<<"here: "<<c_max<<" "<<c_no1<<" "<<c_no2<<" "<<c_no3<<" "<<c_no4<<" "<<c_no5<<" "<<std::endl<<std::endl;
                 for(int class_i=0;class_i<classnames.size();class_i++)//as for this step, this for loop take the probabilities of every class
                 {
                     auto confidence_each_class = output.at<float>(i, 5+class_i); //6th element will be the 1st class confidence, class id=0
@@ -214,10 +214,10 @@ void alan::CnnNodelet::findwhichboundingboxrocks(vector<cv::Mat> &netOutput, cv:
         cv::Mat ROI(depthdata, letsgetdepth);
         cv::Mat ROIframe;
         ROI.copyTo(ROIframe);
-        vector<cv::Point> nonzeros;
+        std::vector<cv::Point> nonzeros;
 
         cv::findNonZero(ROIframe, nonzeros);
-        vector<double> nonzerosvalue;
+        std::vector<double> nonzerosvalue;
         for(auto temp : nonzeros)
         {
             double depth = ROIframe.at<ushort>(temp);
@@ -233,7 +233,7 @@ void alan::CnnNodelet::findwhichboundingboxrocks(vector<cv::Mat> &netOutput, cv:
         int temp_iy = 0;
 
 
-        string detectedclass = classnames[classids[index]];
+        std::string detectedclass = classnames[classids[index]];
         float detectedconfidence = confidenceperbbox[index]*100;
 
         char temp_depth[40];
@@ -242,7 +242,7 @@ void alan::CnnNodelet::findwhichboundingboxrocks(vector<cv::Mat> &netOutput, cv:
         sprintf(temp_confidence, "%.2f", detectedconfidence);     
 
 
-        string textoutputonframe = detectedclass + ": " + temp_confidence + "%, "+ temp_depth + "m";
+        std::string textoutputonframe = detectedclass + ": " + temp_confidence + "%, "+ temp_depth + "m";
 
 
         cv::Scalar colorforbox(rand()&255, rand()&255, rand()&255);
@@ -259,15 +259,15 @@ void alan::CnnNodelet::findwhichboundingboxrocks(vector<cv::Mat> &netOutput, cv:
 
 }
 
-void alan::CnnNodelet::getclassname(vector<std::string> &classnames)
+void alan::CnnNodelet::getclassname(std::vector<std::string> &classnames)
 {
-    ifstream class_file(classnamepath);
+    std::ifstream class_file(classnamepath);
     if (!class_file)
     {
-        cerr << "failed to open classes.txt\n";
+        std::cerr << "failed to open classes.txt\n";
     }
 
-    string line;
+    std::string line;
     while (getline(class_file, line))
     {
         classnames.push_back(line);

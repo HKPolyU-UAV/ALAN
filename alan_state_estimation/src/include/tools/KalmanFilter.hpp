@@ -85,7 +85,7 @@ KalmanFilter::KalmanFilter(
         0, 0.05, 0,
         0, 0, 1.00;
 
-    cerr << "initiation succeed" << endl;
+    std::cerr << "initiation succeed" << std::endl;
 
     
 }
@@ -101,7 +101,7 @@ void KalmanFilter::predict(Eigen::VectorXd& x, float dt)
     else if (type == unscented)
         ukf_predict(x, dt);
     else
-        cout<< "Please identify Kalman filter type!" <<endl;
+        std::cout<< "Please identify Kalman filter type!" <<std::endl;
 }
 
 void KalmanFilter::update(Eigen::VectorXd& x, Eigen::VectorXd zk)
@@ -113,7 +113,7 @@ void KalmanFilter::update(Eigen::VectorXd& x, Eigen::VectorXd zk)
     else if (type == unscented)
         ukf_update(x, zk);
     else
-        cout<< "Please identify Kalman filter type!" <<endl;
+        std::cout<< "Please identify Kalman filter type!" <<std::endl;
 }
 
 void KalmanFilter::lkf_predict(Eigen::VectorXd& x, float dt)

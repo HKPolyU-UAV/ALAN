@@ -85,8 +85,8 @@ namespace alan
             Eigen::Translation3d t_c2b;
 
             //LED config and correspondences
-            vector<Eigen::Vector3d> pts_on_body_frame;
-            vector<correspondence::matchid> corres_global;
+            std::vector<Eigen::Vector3d> pts_on_body_frame;
+            std::vector<correspondence::matchid> corres_global;
 
             //poses
             Sophus::SE3d pose_global_sophus;
@@ -111,7 +111,7 @@ namespace alan
             double BA_error = 0;
             double depth_avg_of_all = 0;
             
-            vector<cv::KeyPoint> blobs_for_initialize;
+            std::vector<cv::KeyPoint> blobs_for_initialize;
             int _width = 0, _height = 0;
 
 
@@ -138,15 +138,15 @@ namespace alan
         //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
             Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);   
-            double get_reprojection_error(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector2d> pts_2d, Sophus::SE3d pose, bool draw_reproject);         
+            double get_reprojection_error(std::vector<Eigen::Vector3d> pts_3d, std::vector<Eigen::Vector2d> pts_2d, Sophus::SE3d pose, bool draw_reproject);         
 
         //main process
             void recursive_filtering(cv::Mat& frame, cv::Mat depth);
-            bool search_corres_and_pose_predict(vector<Eigen::Vector2d> pts_2d_detect);
+            bool search_corres_and_pose_predict(std::vector<Eigen::Vector2d> pts_2d_detect);
 
         //pnp + BA
-            void solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts);
-            void optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected);
+            void solve_pnp_initial_pose(std::vector<Eigen::Vector2d> pts_2d, std::vector<Eigen::Vector3d> body_frame_pts);
+            void optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3d> pts_3d_exists, std::vector<Eigen::Vector2d> pts_2d_detected);
                 //converge problem need to be solved //-> fuck you, your Jacobian was wrong
             void solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
 
@@ -154,9 +154,9 @@ namespace alan
             //objects
             double LANDING_DISTANCE = 0;
             int BINARY_THRES = 0;
-            vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
-            vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
-            bool get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected);
+            std::vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
+            std::vector<Eigen::Vector3d> pointcloud_generate(std::vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
+            bool get_final_POI(std::vector<Eigen::Vector2d>& pts_2d_detected);
 
         //initiation & correspondence 
             //objects
@@ -165,7 +165,7 @@ namespace alan
             int LED_r_no;
             int LED_g_no;
             //functions       
-            void correspondence_search_kmeans(vector<Eigen::Vector2d> pts_2d_detected);        
+            void correspondence_search_kmeans(std::vector<Eigen::Vector2d> pts_2d_detected);        
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
                       
         //outlier rejection 
@@ -175,15 +175,15 @@ namespace alan
             double MAD_x_threshold = 0, MAD_y_threshold = 0, MAD_z_threshold = 0;
             double min_blob_size = 0;
             //functions
-            void reject_outlier(vector<Eigen::Vector2d>& pts_2d_detect, cv::Mat depth);
-            double calculate_MAD(vector<double> norm_of_points);
+            void reject_outlier(std::vector<Eigen::Vector2d>& pts_2d_detect, cv::Mat depth);
+            double calculate_MAD(std::vector<double> norm_of_points);
         
         //depth compensation
             //objects
             Eigen::Vector3d led_3d_posi_in_camera_frame_depth;
 
         //reinitialization
-            bool reinitialization(vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth);
+            bool reinitialization(std::vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth);
             
         //publish
             //objects
@@ -252,7 +252,7 @@ namespace alan
                 nh.getParam("/alan_master/frame_height", _height);
 
                 // #define CAR_POSE_TOPIC POSE_SUB_TOPIC_A
-                // cout<<CAR_POSE_TOPIC<<endl;
+                // std::cout<<CAR_POSE_TOPIC<<std::endl;
                 // nh.getParam("/alan_master/CAR_POSE_TOPIC", CAR_POSE_TOPIC);
                 // nh.getParam("/alan_master/UAV_POSE_TOPIC", UAV_POSE_TOPIC);
 
@@ -272,7 +272,7 @@ namespace alan
                     0, intrinsics_value[1], intrinsics_value[3],
                     0, 0,  1; 
 
-                // cout<<cameraMat<<endl;
+                // std::cout<<cameraMat<<std::endl;
 
                 cameraEX.resize(6);
                 XmlRpc::XmlRpcValue extrinsics_list;
@@ -332,9 +332,9 @@ namespace alan
                 XmlRpc::XmlRpcValue LED_list;
                 nh.getParam("/alan_master/LED_positions", LED_list); 
 
-                vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
+                std::vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
 
-                cout<<"\nPts on body frame (X Y Z):\n";
+                std::cout<<"\nPts on body frame (X Y Z):\n";
                 for(int i = 0; i < LED_list.size(); i++)
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
@@ -342,11 +342,11 @@ namespace alan
                     norm_of_x_points.push_back(temp.x());
                     norm_of_y_points.push_back(temp.y());
                     norm_of_z_points.push_back(temp.z());                    
-                    cout<<"-----"<<endl;
-                    cout<<temp.x()<<" "<<temp.y()<<" "<<temp.z()<<" "<<endl;                    
+                    std::cout<<"-----"<<std::endl;
+                    std::cout<<temp.x()<<" "<<temp.y()<<" "<<temp.z()<<" "<<std::endl;                    
                     pts_on_body_frame.push_back(temp);
                 }   
-                cout<<endl;
+                std::cout<<std::endl;
 
                 LED_no = pts_on_body_frame.size();
 
@@ -362,9 +362,9 @@ namespace alan
                 MAD_y_threshold = (calculate_MAD(norm_of_y_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_y_points) * MAD_dilate);
                 MAD_z_threshold = (calculate_MAD(norm_of_z_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_z_points) * MAD_dilate);
 
-                // cout<<MAD_x_threshold<<endl;
-                // cout<<MAD_y_threshold<<endl;
-                // cout<<MAD_z_threshold<<endl;
+                // std::cout<<MAD_x_threshold<<std::endl;
+                // std::cout<<MAD_y_threshold<<std::endl;
+                // std::cout<<MAD_z_threshold<<std::endl;
 
                 LED_no = pts_on_body_frame.size();
                                                                 

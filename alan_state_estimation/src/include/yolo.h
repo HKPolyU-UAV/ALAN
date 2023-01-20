@@ -47,7 +47,7 @@ namespace alan{
     typedef struct objectinfo
     {
         float confidence = 0;
-        string classnameofdetection;
+        std::string classnameofdetection;
         cv::Rect boundingbox;
         cv::Mat frame;
         double depth;
@@ -76,12 +76,12 @@ namespace alan{
             cv::Mat depthdata;
 
             float set_confidence;
-            vector<std::string> classnames;
+            std::vector<std::string> classnames;
 
             void findboundingboxes(cv::Mat &frame);
-            void findwhichboundingboxrocks(vector<cv::Mat> &netOut, cv::Mat &frame);
-            void getclassname(vector<std::string> &classnames);
-            chrono::time_point <chrono::steady_clock> total_start, total_end, dnn_start, dnn_end;
+            void findwhichboundingboxrocks(std::vector<cv::Mat> &netOut, cv::Mat &frame);
+            void getclassname(std::vector<std::string> &classnames);
+            std::chrono::time_point <std::chrono::steady_clock> total_start, total_end, dnn_start, dnn_end;
             float total_fps;
             objectinfo obj;
             cv::dnn::Net mydnn;
@@ -93,7 +93,7 @@ namespace alan{
             void display(cv::Mat frame);
             void getdepthdata(cv::Mat depthdata);
             float appro_fps;
-            vector<objectinfo> obj_vector;
+            std::vector<objectinfo> obj_vector;
 
             void camera_callback(
                 const sensor_msgs::CompressedImageConstPtr & rgbimage,
@@ -111,9 +111,9 @@ namespace alan{
                 nh.getParam("/cnn/classnamepath", classnamepath);
                 CnnNodeletInitiate(cfgpath, weightpath, classnamepath, 0.1);
 
-                cout<<weightpath<<endl;
-                cout<<cfgpath<<endl;
-                cout<<classnamepath<<endl;
+                std::cout<<weightpath<<std::endl;
+                std::cout<<cfgpath<<std::endl;
+                std::cout<<classnamepath<<std::endl;
 
                 //subscribe
                 subimage.subscribe(nh, "/camera/color/image_raw/compressed", 1);

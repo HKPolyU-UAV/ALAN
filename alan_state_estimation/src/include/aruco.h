@@ -85,7 +85,7 @@ namespace alan
 
             //private variables
             cv::Mat frame;
-            vector<Eigen::Vector3d> body_frame_pts;
+            std::vector<Eigen::Vector3d> body_frame_pts;
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             std_msgs::Bool test;
             geometry_msgs::PoseStamped pose_estimated;
@@ -107,28 +107,28 @@ namespace alan
             Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
             Eigen::Vector2d reproject_3D_2D_temp(Eigen::Vector3d P, Sophus::SE3f pose);
 
-            void get_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
+            void get_initial_pose(std::vector<Eigen::Vector2d> pts_2d, std::vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
 
-            bool aruco_detect(cv::Mat& frame, vector<Eigen::Vector2d>& pts_2d);
+            bool aruco_detect(cv::Mat& frame, std::vector<Eigen::Vector2d>& pts_2d);
 
             void solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
 
-            void optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected);//converge problem need to be solved //-> fuck you, your Jacobian was wrong
+            void optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3d> pts_3d_exists, std::vector<Eigen::Vector2d> pts_2d_detected);//converge problem need to be solved //-> fuck you, your Jacobian was wrong
 
             void map_SE3_to_pose(Sophus::SE3d pose);
 
             Sophus::SE3d pose_add_noise(Eigen::Vector3d t, Eigen::Matrix3d R);
 
-            void use_pnp_instead(cv::Mat frame, vector<Eigen::Vector2d> pts_2d_detect, Sophus::SE3d& pose);
+            void use_pnp_instead(cv::Mat frame, std::vector<Eigen::Vector2d> pts_2d_detect, Sophus::SE3d& pose);
 
             //ICP
             void pose_w_aruco_icp(cv::Mat& rgbframe, cv::Mat& depthframe);
 
-            void solveicp_svd(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
+            void solveicp_svd(std::vector<Eigen::Vector3d> pts_3d, std::vector<Eigen::Vector3d> body_frame_pts, Eigen::Matrix3d& R, Eigen::Vector3d& t);
 
-            vector<Eigen::Vector3d> pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
+            std::vector<Eigen::Vector3d> pointcloud_generate(std::vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
 
-            Eigen::Vector3d get_CoM(vector<Eigen::Vector3d> pts_3d);
+            Eigen::Vector3d get_CoM(std::vector<Eigen::Vector3d> pts_3d);
 
 
             Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
@@ -143,7 +143,7 @@ namespace alan
 
                 RosTopicConfigs configs(nh, "/alan_master");
 
-                // cout<<"in oninit..."<<temp<<endl;
+                // std::cout<<"in oninit..."<<temp<<std::endl;
                 //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
@@ -175,7 +175,7 @@ namespace alan
                     cameraEX(i) = extrinsics_list[i];
                 }
 
-                // cout<<cameraEX<<endl;
+                // std::cout<<cameraEX<<std::endl;
 
                 q_c2b = rpy2q(
                     Eigen::Vector3d(
@@ -199,10 +199,10 @@ namespace alan
                     )
                 );
 
-                cout<<q_aruco_2_body.toRotationMatrix()<<endl;
+                std::cout<<q_aruco_2_body.toRotationMatrix()<<std::endl;
 
 
-                // cout<<cameraMat.inverse()<<endl;
+                // std::cout<<cameraMat.inverse()<<std::endl;
 
                 Eigen::Matrix3d body_to_cam;//rpy = 0 -90 90
                 body_to_cam << 
@@ -214,17 +214,17 @@ namespace alan
                 //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
                 nh.getParam("/alan_master/ARUCO_positions", LED_list); 
-                cout<<endl<<"Pts here:..."<<endl;
+                std::cout<<std::endl<<"Pts here:..."<<std::endl;
 
                 for(int i = 0; i < LED_list.size(); i++)
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
                     // temp = body_to_cam * temp;
-                    cout<<temp<<endl;
-                    cout<<"------"<<endl;
+                    std::cout<<temp<<std::endl;
+                    std::cout<<"------"<<std::endl;
                     body_frame_pts.push_back(temp);
                 }
-                cout<<endl;
+                std::cout<<std::endl;
                 
                 //initialize publisher
                 arucopose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_A), 1);

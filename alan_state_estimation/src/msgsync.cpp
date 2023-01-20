@@ -64,8 +64,8 @@ void alan::MsgSyncNodelet::uav_vrpn_pose_callback(const geometry_msgs::PoseStamp
     uav_vrpn_pose_initiated = true;
 
     bool use_led = false;
-    // cout<<"hi"<<endl;
-    // cout<<failsafe_on<<endl;
+    // std::cout<<"hi"<<std::endl;
+    // std::cout<<failsafe_on<<std::endl;
 
     if(failsafe_on)
     {
@@ -90,7 +90,7 @@ void alan::MsgSyncNodelet::uav_vrpn_pose_callback(const geometry_msgs::PoseStamp
 
                 delta = sqrt(delta);
 
-                // cout<<delta<<endl;
+                // std::cout<<delta<<std::endl;
 
                 if(delta < 0.14)
                 {
@@ -385,7 +385,7 @@ void alan::MsgSyncNodelet::setup_publish_SFC()
     
     //remember to add ugv camera translation                
     // alan_sfc_pub.publish(polyh_total_bound);
-    // cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<endl;
+    // std::cout<<"publisher here..."<<polyh_array_pub_object.a_series_of_Corridor.size()<<std::endl;
 
     alan_all_sfc_pub.publish(polyh_array_pub_object);
 
@@ -447,8 +447,8 @@ alan_visualization::Tangent alan::MsgSyncNodelet::set_plane_bound(Eigen::Vector3
     // v.z() = 0;
     v.normalize();
 
-    // cout<<v<<endl;
-    // cout<<pt<<endl<<endl;
+    // std::cout<<v<<std::endl;
+    // std::cout<<pt<<std::endl<<std::endl;
 
     tangent_plane.n.X = v.x();
     tangent_plane.n.Y = v.y();
@@ -513,7 +513,7 @@ void alan::MsgSyncNodelet::set_total_bound(Eigen::Translation3d t_current,Eigen:
             uav_pos_world.y() - cam_pos_world.y()
         );
 
-    // cout<<ugv2uav_vector.norm()<<endl;
+    // std::cout<<ugv2uav_vector.norm()<<std::endl;
 
 
     // alan_visualization::Tangent plane_bound = set_plane_bound(
@@ -628,12 +628,12 @@ void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Qua
         Eigen::Vector3d(0,0,final_corridor_height + t_current.translation().z())
     );
 
-    // cout<<temp_normal<<endl;
-    // cout<<t_current.translation() +  Eigen::Vector3d(0,0,final_corridor_height)<<endl<<endl;
+    // std::cout<<temp_normal<<std::endl;
+    // std::cout<<t_current.translation() +  Eigen::Vector3d(0,0,final_corridor_height)<<std::endl<<std::endl;
     
     polyhedron_temp.PolyhedronTangentArray.push_back(ceil_tangent);
 
-    // cout<<ceil_tangent.
+    // std::cout<<ceil_tangent.
         
     //2nd plane
     polyhedron_temp.PolyhedronTangentArray.push_back(polyh_total_bound.PolyhedronTangentArray[1]);
@@ -659,14 +659,14 @@ void alan::MsgSyncNodelet::set_all_sfc(Eigen::Translation3d t_current,Eigen::Qua
     //6th plane
     polyhedron_temp.PolyhedronTangentArray.push_back(temp_tangent);
 
-    // cout<<polyhedron_temp.PolyhedronTangentArray.size()<<endl;
+    // std::cout<<polyhedron_temp.PolyhedronTangentArray.size()<<std::endl;
 
 
     polyh_array_pub_object.a_series_of_Corridor.push_back(polyhedron_temp);
 
     // for(auto what : polyh_array_pub_object.a_series_of_Corridor)
     // {
-    //     cout<<what.PolyhedronTangentArray.size()<<endl;
+    //     std::cout<<what.PolyhedronTangentArray.size()<<std::endl;
     // }
 
 }

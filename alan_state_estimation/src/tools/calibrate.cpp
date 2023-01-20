@@ -4,6 +4,8 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
 
+using namespace std;
+
 static geometry_msgs::PoseStamped uav_pose;
 static geometry_msgs::PoseStamped led_pose;
 static geometry_msgs::PoseStamped ledfront_pose;

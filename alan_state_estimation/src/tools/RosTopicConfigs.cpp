@@ -1,6 +1,6 @@
 #include "../include/tools/RosTopicConfigs.h"
 
-RosTopicConfigs::RosTopicConfigs(ros::NodeHandle& _nh, string param_namespace)
+RosTopicConfigs::RosTopicConfigs(ros::NodeHandle& _nh, std::string param_namespace)
 : nh(_nh)
 {
     nh.getParam(param_namespace + "/TOPICLIST", TOPICLIST);
@@ -12,9 +12,9 @@ RosTopicConfigs::~RosTopicConfigs()
 {
 }
 
-string RosTopicConfigs::getTopicName(string designated_types)
+std::string RosTopicConfigs::getTopicName(std::string designated_types)
 {
-    string returnvalue;
+    std::string returnvalue;
 
     if(object_ConfigLIST.empty())
     {
@@ -36,13 +36,13 @@ string RosTopicConfigs::getTopicName(string designated_types)
 void RosTopicConfigs::setupTOPICLIST()
 {
     CONFIG_SETUP config_setup_temp;
-    string topic_type;
+    std::string topic_type;
 
     for(int i = 0; i < TOPICLIST.size(); i++)
     {        
-        // static_cast<std::string>(TOPICLIST[i][TOPICTYPE]).c_str();
-        topic_type = static_cast<string>(TOPICLIST[i][TOPICTYPE]).c_str();
-        static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
+        // static_cast<std::std::string>(TOPICLIST[i][TOPICTYPE]).c_str();
+        topic_type = static_cast<std::string>(TOPICLIST[i][TOPICTYPE]).c_str();
+        static_cast<std::string>(TOPICLIST[i][TOPICNAME]).c_str();
 
         if(
             topic_type != CAMERA_SUB_TOPIC_A ||
@@ -158,7 +158,7 @@ void RosTopicConfigs::setupTOPICLIST()
         )
         {
             config_setup_temp.topictypes = topic_type;
-            config_setup_temp.topicnames = static_cast<string>(TOPICLIST[i][TOPICNAME]).c_str();
+            config_setup_temp.topicnames = static_cast<std::string>(TOPICLIST[i][TOPICNAME]).c_str();
             config_setup_temp.SUB_PUB = TOPICLIST[i][SUBORPUB];
 
         }

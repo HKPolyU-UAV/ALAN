@@ -248,7 +248,7 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
 
 void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 {
-    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
+    std::vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
     //what is this for?
     //to extract POI point of interest        
 
@@ -290,12 +290,12 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
         LED_tracker_initiated_or_tracked = false;                          
 }
 
-bool alan::LedNodelet::search_corres_and_pose_predict(vector<Eigen::Vector2d> pts_2d_detect)
+bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2d> pts_2d_detect)
 {
     correspondence_search_kmeans(pts_2d_detect);
 
-    vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
-    vector<Eigen::Vector2d> pts_detected_in_corres_order;            
+    std::vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
+    std::vector<Eigen::Vector2d> pts_detected_in_corres_order;            
 
     for(int i = 0; i < corres_global.size(); i++)
     {            
@@ -360,7 +360,7 @@ inline Eigen::Vector2d alan::LedNodelet::reproject_3D_2D(Eigen::Vector3d P, Soph
     return result2d;
 }
 
-double alan::LedNodelet::get_reprojection_error(vector<Eigen::Vector3d> pts_3d, vector<Eigen::Vector2d> pts_2d, Sophus::SE3d pose, bool draw_reproject)
+double alan::LedNodelet::get_reprojection_error(std::vector<Eigen::Vector3d> pts_3d, std::vector<Eigen::Vector2d> pts_2d, Sophus::SE3d pose, bool draw_reproject)
 {
     double e = 0;
 
@@ -380,7 +380,7 @@ double alan::LedNodelet::get_reprojection_error(vector<Eigen::Vector3d> pts_3d, 
     return e;
 }
 
-void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, vector<Eigen::Vector3d> pts_3d)
+void alan::LedNodelet::solve_pnp_initial_pose(std::vector<Eigen::Vector2d> pts_2d, std::vector<Eigen::Vector3d> pts_3d)
 {
     Eigen::Matrix3d R;
     Eigen::Vector3d t;
@@ -398,8 +398,8 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
     // cv::Rodrigues(no_ro_rmat, rvec);
 
     cv::Mat camMat = cv::Mat::eye(3,3,CV_64F);
-    vector<cv::Point3d> pts_3d_;
-    vector<cv::Point2d> pts_2d_;
+    std::vector<cv::Point3d> pts_3d_;
+    std::vector<cv::Point2d> pts_2d_;
 
     cv::Point3d temp3d;
     cv::Point2d temp2d;
@@ -476,7 +476,7 @@ void alan::LedNodelet::solve_pnp_initial_pose(vector<Eigen::Vector2d> pts_2d, ve
 
 }
 
-void alan::LedNodelet::optimize(Sophus::SE3d& pose, vector<Eigen::Vector3d> pts_3d_exists, vector<Eigen::Vector2d> pts_2d_detected)
+void alan::LedNodelet::optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3d> pts_3d_exists, std::vector<Eigen::Vector2d> pts_2d_detected)
 {
     //execute Gaussian-Newton Method
     // cout<<"Bundle Adjustment Optimization"<<endl;
@@ -574,7 +574,7 @@ void alan::LedNodelet::solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus:
     
 }
 
-vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
+std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
 {    
     cv::Mat depth_mask_src = depth.clone(), depth_mask_dst1, depth_mask_dst2;
 
@@ -611,7 +611,7 @@ vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Ma
     cv::bitwise_and(depth_mask_src, frame, frame); //filter out with depth information
 
     // Blob method
-    vector<cv::KeyPoint> keypoints_rgb_d, keypoints_rgb;
+    std::vector<cv::KeyPoint> keypoints_rgb_d, keypoints_rgb;
 	cv::SimpleBlobDetector::Params params;
 
 	params.filterByArea = false;
@@ -634,7 +634,7 @@ vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Ma
 
     min_blob_size = INFINITY;
 
-    vector<Eigen::Vector2d> POI;
+    std::vector<Eigen::Vector2d> POI;
     for(auto what : keypoints_rgb_d)
     {
         min_blob_size =(what.size < min_blob_size ? what.size : min_blob_size);
@@ -645,13 +645,13 @@ vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Ma
     return POI;
 }
 
-vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
+std::vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(std::vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage)
 {
     //get 9 pixels around the point of interest
     int no_pixels = 9;
     int POI_width = (sqrt(9) - 1 ) / 2;
 
-    vector<Eigen::Vector3d> pointclouds;
+    std::vector<Eigen::Vector3d> pointclouds;
 
     int x_pixel, y_pixel;
     Eigen::Vector3d temp;
@@ -672,10 +672,10 @@ vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(vector<Eigen::Vect
         cv::Mat ROI(depthimage, letsgetdepth);
         cv::Mat ROIframe;
         ROI.copyTo(ROIframe);
-        vector<cv::Point> nonzeros;
+        std::vector<cv::Point> nonzeros;
 
         cv::findNonZero(ROIframe, nonzeros);
-        vector<double> nonzerosvalue;
+        std::vector<double> nonzerosvalue;
         for(auto temp : nonzeros)
         {
             double depth = ROIframe.at<ushort>(temp);
@@ -707,7 +707,7 @@ vector<Eigen::Vector3d> alan::LedNodelet::pointcloud_generate(vector<Eigen::Vect
     return pointclouds;
 }
 
-bool alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
+bool alan::LedNodelet::get_final_POI(std::vector<Eigen::Vector2d>& pts_2d_detected)
 {
     double x_min = INFINITY, y_min = INFINITY;
     double x_max = -INFINITY, y_max = -INFINITY;
@@ -737,7 +737,7 @@ bool alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
     frame_initial_thresholded.copyTo(final_ROI, ROI_mask);
 
     // Blob method
-    vector<cv::KeyPoint> keypoints_rgb_d, keypoints_rgb;
+    std::vector<cv::KeyPoint> keypoints_rgb_d, keypoints_rgb;
 	cv::SimpleBlobDetector::Params params;
 
 	params.filterByArea = false;
@@ -757,8 +757,8 @@ bool alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
         
     blobs_for_initialize = keypoints_rgb_d;
 
-    vector<cv::Point2f> POI_pts;
-    vector<cv::Point2f> centers;
+    std::vector<cv::Point2f> POI_pts;
+    std::vector<cv::Point2f> centers;
     cv::Mat labels;
 
     for(auto what : keypoints_rgb_d)
@@ -777,7 +777,7 @@ bool alan::LedNodelet::get_final_POI(vector<Eigen::Vector2d>& pts_2d_detected)
 
     if(no_cluster < 4)
     {
-        // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/wrong/final_ROI_gan"+ to_string(i)+ ".png", final_ROI);
+        // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/wrong/final_ROI_gan"+ std::to_string(i)+ ".png", final_ROI);
         // i++;
         return false;
     }
@@ -802,12 +802,12 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 {
     corres_global.clear();
 
-    vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth); 
-    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
+    std::vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth); 
+    std::vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
 
     //after above, I got:
     //pointcloud in {c}
-    vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
+    std::vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
 
     for(auto what :  pts_3d_pcl_detect)
     {
@@ -830,10 +830,10 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 
         //hsv detect color feature
         cv::cvtColor(hsv, hsv, CV_RGB2HSV);
-        vector<bool> g_or_r; //g = true
+        std::vector<bool> g_or_r; //g = true
 
-        vector<int> corres_g;
-        vector<int> corres_r;
+        std::vector<int> corres_g;
+        std::vector<int> corres_r;
 
         for(int i = 0 ; i < blobs_for_initialize.size(); i++)
         {
@@ -871,7 +871,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
                 corres_r.push_back(i);
         }
 
-        vector<int> corres(LED_no);
+        std::vector<int> corres(LED_no);
 
         if(corres_g.size() != LED_g_no || corres_r.size() != LED_r_no)
         {
@@ -881,7 +881,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
             return false;
         }
 
-        vector<int> final_corres;
+        std::vector<int> final_corres;
         double error_total = INFINITY;
 
         Eigen::Matrix3d R;
@@ -897,7 +897,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
                 for(auto what : corres_r)
                     corres.push_back(what);
 
-                vector<Eigen::Vector2d> pts_2d_detect_temp;   
+                std::vector<Eigen::Vector2d> pts_2d_detect_temp;   
 
                 for(auto what : corres)
                 {
@@ -935,7 +935,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 
         correspondence::matchid corres_temp;
         
-        vector<Eigen::Vector2d> pts_2d_detect_correct_order;
+        std::vector<Eigen::Vector2d> pts_2d_detect_correct_order;
         
         for(auto what : final_corres)
         {
@@ -958,12 +958,12 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
         return false;
 }
 
-bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth)
+bool alan::LedNodelet::reinitialization(std::vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth)
 {
     corres_global.clear();
-    vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
+    std::vector<Eigen::Vector3d> pts_3d_pcl_detect = pointcloud_generate(pts_2d_detect, depth);
 
-    vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
+    std::vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
 
     for(auto what :  pts_3d_pcl_detect)
     {
@@ -983,10 +983,10 @@ bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, c
 
         //hsv detect feature
         cv::cvtColor(hsv, hsv, CV_RGB2HSV);
-        vector<bool> g_or_r; //g = true
+        std::vector<bool> g_or_r; //g = true
 
-        vector<int> corres_g;
-        vector<int> corres_r;
+        std::vector<int> corres_g;
+        std::vector<int> corres_r;
 
         for(int i = 0 ; i < pts_2d_detect.size(); i++)
         {
@@ -1024,14 +1024,14 @@ bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, c
                 corres_r.push_back(i);
         }
 
-        vector<int> corres(LED_no);
+        std::vector<int> corres(LED_no);
 
         if(corres_g.size() != 3 || corres_r.size() != 3)
         {
             return false;
         }
 
-        vector<int> final_corres;
+        std::vector<int> final_corres;
         double error_total = INFINITY;
 
         do
@@ -1044,7 +1044,7 @@ bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, c
                 for(auto what : corres_r)
                     corres.push_back(what);
 
-                vector<Eigen::Vector2d> pts_2d_detect_temp;                   
+                std::vector<Eigen::Vector2d> pts_2d_detect_temp;                   
 
                 for(auto what : corres)
                 {
@@ -1078,7 +1078,7 @@ bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, c
 
         correspondence::matchid corres_temp;
         
-        vector<Eigen::Vector2d> pts_2d_detect_correct_order;
+        std::vector<Eigen::Vector2d> pts_2d_detect_correct_order;
         
         for(auto what : final_corres)
         {
@@ -1102,9 +1102,9 @@ bool alan::LedNodelet::reinitialization(vector<Eigen::Vector2d> pts_2d_detect, c
         return false;
 }
 
-void alan::LedNodelet::correspondence_search_kmeans(vector<Eigen::Vector2d> pts_2d_detected)
+void alan::LedNodelet::correspondence_search_kmeans(std::vector<Eigen::Vector2d> pts_2d_detected)
 {
-    vector<cv::Point2f> pts;
+    std::vector<cv::Point2f> pts;
     Eigen::Vector2d reproject_temp;  
 
     for(auto what : pts_on_body_frame)
@@ -1126,7 +1126,7 @@ void alan::LedNodelet::correspondence_search_kmeans(vector<Eigen::Vector2d> pts_
     
 
     
-    vector<cv::Point2f> centers;
+    std::vector<cv::Point2f> centers;
     cv::Mat labels;
 
     cv::kmeans(pts, LED_no, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
@@ -1171,18 +1171,18 @@ void alan::LedNodelet::correspondence_search_kmeans(vector<Eigen::Vector2d> pts_
     //we then calcullate the distance between the centroid of the cluster to the
     //center at previous time step(pcl_center_point_wo_outlier_previous)
     //and determine which cluster is the one that we want
-void alan::LedNodelet::reject_outlier(vector<Eigen::Vector2d>& pts_2d_detect, cv::Mat depth)
+void alan::LedNodelet::reject_outlier(std::vector<Eigen::Vector2d>& pts_2d_detect, cv::Mat depth)
 {
-    vector<Eigen::Vector3d> pts_3d_detect = pointcloud_generate(pts_2d_detect, depth);
+    std::vector<Eigen::Vector3d> pts_3d_detect = pointcloud_generate(pts_2d_detect, depth);
     //what is this for?
     //to get 3d coordinates in body frame, so that 
     //outlier rejection could be performed
     int n = pts_3d_detect.size();
 
-    vector<cv::Point3f> pts;
-    vector<double> norm_of_x_points;
-    vector<double> norm_of_y_points;
-    vector<double> norm_of_z_points;
+    std::vector<cv::Point3f> pts;
+    std::vector<double> norm_of_x_points;
+    std::vector<double> norm_of_y_points;
+    std::vector<double> norm_of_z_points;
 
     for(auto what :  pts_3d_detect)
     {
@@ -1207,8 +1207,8 @@ void alan::LedNodelet::reject_outlier(vector<Eigen::Vector2d>& pts_2d_detect, cv
         double d0 = cv::norm(pcl_center_point_wo_outlier_previous - centers[0]);
         double d1 = cv::norm(pcl_center_point_wo_outlier_previous - centers[1]);
 
-        vector<Eigen::Vector2d> pts_2d_result;
-        vector<Eigen::Vector3d> pts_3d_result;
+        std::vector<Eigen::Vector2d> pts_2d_result;
+        std::vector<Eigen::Vector3d> pts_3d_result;
 
         if(d0 < d1) //then get index with 0
         {           
@@ -1265,7 +1265,7 @@ void alan::LedNodelet::reject_outlier(vector<Eigen::Vector2d>& pts_2d_detect, cv
 
 }
 
-inline double alan::LedNodelet::calculate_MAD(vector<double> norm_of_points)
+inline double alan::LedNodelet::calculate_MAD(std::vector<double> norm_of_points)
 {
     int n = norm_of_points.size();
     double mean = 0, delta_sum = 0, MAD;
@@ -1371,7 +1371,7 @@ void alan::LedNodelet::set_image_to_publish(double freq, const sensor_msgs::Comp
     strcat(depth, depth_display);
     
     cv::putText(display, hz, cv::Point(20,40), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));  
-    cv::putText(display, to_string(detect_no), cv::Point(720,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
+    cv::putText(display, std::to_string(detect_no), cv::Point(720,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
     cv::putText(display, BA, cv::Point(720,60), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
     cv::putText(display, depth, cv::Point(20,460), cv::FONT_HERSHEY_PLAIN, 1.6, CV_RGB(255,0,0));
 
@@ -1388,35 +1388,35 @@ void alan::LedNodelet::set_image_to_publish(double freq, const sensor_msgs::Comp
     for_visual_input.encoding = sensor_msgs::image_encodings::BGR8;
     for_visual_input.image = frame_input;
     this->pubimage_input.publish(for_visual_input.toImageMsg());   
-    // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/in_camera_frame/"+ to_string(i)+ ".png", display); 
+    // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/in_camera_frame/"+ std::to_string(i)+ ".png", display); 
     // i++;
 }
 
 void alan::LedNodelet::terminal_msg_display(double hz)
 {
-    string LED_terminal_display = "DETECT_no: " + to_string(detect_no);
+    std::string LED_terminal_display = "DETECT_no: " + std::to_string(detect_no);
 
     std::ostringstream out1;
     out1.precision(2);
-    out1<<fixed<<BA_error;
-    string BA_terminal_display = " || BA_ERROR: " + out1.str();
+    out1<<std::fixed<<BA_error;
+    std::string BA_terminal_display = " || BA_ERROR: " + out1.str();
 
     std::ostringstream out2;
     out2.precision(2);
-    out2<<fixed<<depth_avg_of_all;
-    string depth_terminal_display = " || depth: " + out2.str();
+    out2<<std::fixed<<depth_avg_of_all;
+    std::string depth_terminal_display = " || depth: " + out2.str();
 
     std::ostringstream out3;
     out3.precision(2);
-    out3<<fixed<<hz;
-    string hz_terminal_display = " || hz: " + out3.str();
+    out3<<std::fixed<<hz;
+    std::string hz_terminal_display = " || hz: " + out3.str();
 
-    string final_msg = LED_terminal_display 
+    std::string final_msg = LED_terminal_display 
         + BA_terminal_display 
         + depth_terminal_display
         + hz_terminal_display;
 
-    string LED_tracker_status_display;
+    std::string LED_tracker_status_display;
 
     if(LED_tracker_initiated_or_tracked)
     {

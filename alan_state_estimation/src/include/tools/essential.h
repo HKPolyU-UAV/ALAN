@@ -37,8 +37,6 @@
 
 // #include "q"
 
-using namespace std;
-
 
 namespace pc
 {

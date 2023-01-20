@@ -17,7 +17,6 @@
 
 #include <ros/ros.h>
 #include <iostream>
-using namespace std;
 
 #define TOPICTYPE "TOPICTYPE"
 #define TOPICNAME "TOPICNAME"
@@ -138,8 +137,8 @@ using namespace std;
 
 
 struct CONFIG_SETUP{
-    string topictypes;
-    string topicnames;
+    std::string topictypes;
+    std::string topicnames;
     int SUB_PUB;
 };
 
@@ -150,14 +149,14 @@ private:
     XmlRpc::XmlRpcValue TOPICLIST;
 
     void setupTOPICLIST();
-    vector<CONFIG_SETUP> object_ConfigLIST;
+    std::vector<CONFIG_SETUP> object_ConfigLIST;
     
     
 public:
-    RosTopicConfigs(ros::NodeHandle& _nh, string param_namespace);
+    RosTopicConfigs(ros::NodeHandle& _nh, std::string param_namespace);
     ~RosTopicConfigs();
 
-    string getTopicName(string designated_name);
+    std::string getTopicName(std::string designated_name);
 };
 
 #endif
