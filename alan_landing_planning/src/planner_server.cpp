@@ -52,7 +52,7 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
             land_traj_constraint_initiated
         )
         {
-            cout<<"hi"<<endl;
+            std::cout<<"hi"<<std::endl;
             break;
         }
         ros::spinOnce();
@@ -67,7 +67,7 @@ planner_server::~planner_server()
 
 void planner_server::mainserver()
 {
-    thread thread_prerequisite_obj(&planner_server::set_alan_b_traj_prerequisite, this);   
+    std::thread thread_prerequisite_obj(&planner_server::set_alan_b_traj_prerequisite, this);   
     
     //define lambda here for mainloop
     auto mainloop = [this]() mutable
@@ -76,14 +76,14 @@ void planner_server::mainserver()
         while(ros::ok())
         {
             // if()
-            // cout<<"gan"<<endl;
+            // std::cout<<"gan"<<std::endl;
             if(
                 this->uav_current_state_inititaed     &&
                 this->uav_traj_pose_initiated         &&
                 this->ugv_traj_pose_initiated                
             )
             {        
-                // cout<<"hi"<<endl;
+                // std::cout<<"hi"<<std::endl;
                 this->fsm_manager();
                 this->planner_pub();            
             }        
@@ -92,7 +92,7 @@ void planner_server::mainserver()
         }
     };
 
-    thread thread_mainloop_obj(mainloop);
+    std::thread thread_mainloop_obj(mainloop);
 
     thread_prerequisite_obj.join();
     thread_mainloop_obj.join();
@@ -121,7 +121,7 @@ void planner_server::uavAlanMsgCallback(const alan_landing_planning::AlanPlanner
         uav_current_AlanPlannerMsg.orientation.oz
     );
 
-    // cout<<q2rpy(q_)<<endl<<endl;
+    // std::cout<<q2rpy(q_)<<std::endl<<std::endl;
     // q_.
     // tfScalar yaw, pitch, roll;
     // tf::Quaternion q_tf;
@@ -133,7 +133,7 @@ void planner_server::uavAlanMsgCallback(const alan_landing_planning::AlanPlanner
     // tf::Matrix3x3 mat(q_tf);
     // mat.getEulerYPR(yaw, pitch, roll);
 
-    // cout<<yaw<<" "<<pitch<<" "<<roll<<endl;
+    // std::cout<<yaw<<" "<<pitch<<" "<<roll<<std::endl;
     
     uavOdomPose = t_ * q_;
 
@@ -179,7 +179,7 @@ void planner_server::setRelativePose()
         ugvOdomPose.rotation().inverse() * 
         (uavOdomPose.translation() - ugvOdomPose.translation());
 
-    // cout<<uav_in_ugv_frame_posi<<endl<<endl;
+    // std::cout<<uav_in_ugv_frame_posi<<std::endl<<std::endl;
 }
 
 void planner_server::sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& msg)
@@ -214,7 +214,7 @@ void planner_server::fsm_manager()
             target_traj_pose(2) = takeoff_hover_pt.z;
             target_traj_pose(3) = uav_traj_pose(3);
 
-            cout<<"target takeoff position\n"<<target_traj_pose<<endl<<endl;
+            std::cout<<"target takeoff position\n"<<target_traj_pose<<std::endl<<std::endl;
         }
     }
     else if(fsm_state == ARMED)
@@ -353,7 +353,7 @@ bool planner_server::taking_off()
         );
     
     dis = sqrt(dis);
-    // cout<<dis<<endl;
+    // std::cout<<dis<<std::endl;
     if(dis < 0.15)
         return true;
     else    
@@ -374,12 +374,12 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     //     (ros::Time::now().toSec() - last_request) > ros::Duration(2.0).toSec()
     // )
     // {
-    //     // cout<<"good to fly"<<endl;
+    //     // std::cout<<"good to fly"<<std::endl;
     //     return true;
     // }
     // else
     // {
-    //     // cout<<"not good to fly"<<endl;
+    //     // std::cout<<"not good to fly"<<std::endl;
     //     return false;
     // }
 
@@ -414,7 +414,7 @@ bool planner_server::shutdown()
 
 void planner_server::planner_pub()
 {
-    // cout<<uav_traj_desired.pose.position.x<<endl;
+    // std::cout<<uav_traj_desired.pose.position.x<<std::endl;
 
     Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
 
@@ -423,8 +423,8 @@ void planner_server::planner_pub()
     uav_traj_twist_desired.linear.z = twist_result(2);
     uav_traj_twist_desired.angular.z = twist_result(3);
 
-    // cout<<target_traj_pose<<endl;
-    // cout<<twist_result<<endl<<endl;
+    // std::cout<<target_traj_pose<<std::endl;
+    // std::cout<<twist_result<<std::endl<<std::endl;
 
     local_vel_pub.publish(uav_traj_twist_desired);
 
@@ -438,7 +438,7 @@ void planner_server::planner_pub()
 
     if(prerequisite_set)
     {
-        // cout<<"hi"<<endl;
+        // std::cout<<"hi"<<std::endl;
         traj_pub.publish(optimal_traj_info_obj.optiTraj);
         trajArray_pub.publish(optimal_traj_info_obj.optiTrajArray);        
         ctrl_pt_pub.publish(optimal_traj_info_obj.ctrl_pts_optimal);
@@ -548,14 +548,14 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
     { 
         double vel = 0.2;
 
-        cout<<"take_off_height: "<<take_off_height<<endl;
+        std::cout<<"take_off_height: "<<take_off_height<<std::endl;
 
         Eigen::Vector3d v1 = Eigen::Vector3d(-0.0,  0.2, take_off_height);
         Eigen::Vector3d v2 = Eigen::Vector3d(-0.0, -0.2, take_off_height);
         Eigen::Vector3d v3 = Eigen::Vector3d(-2.0, -0.2, take_off_height);
         Eigen::Vector3d v4 = Eigen::Vector3d(-2.0,  0.2, take_off_height);
 
-        vector<Eigen::Vector3d> traj_per_edge;
+        std::vector<Eigen::Vector3d> traj_per_edge;
         
         //v1-v2
         double delta_distance = (v1 - v2).norm();
@@ -616,11 +616,11 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
         }
         block_traj_pts.emplace_back(traj_per_edge);
 
-        cout<<"total edge:..."<<block_traj_pts.size()<<endl;
-        cout<<"v1-v2:........"<<block_traj_pts[0].size()<<endl;
-        cout<<"v2-v3:........"<<block_traj_pts[1].size()<<endl;
-        cout<<"v3-v4:........"<<block_traj_pts[2].size()<<endl;
-        cout<<"v4-v1:........"<<block_traj_pts[3].size()<<endl;
+        std::cout<<"total edge:..."<<block_traj_pts.size()<<std::endl;
+        std::cout<<"v1-v2:........"<<block_traj_pts[0].size()<<std::endl;
+        std::cout<<"v2-v3:........"<<block_traj_pts[1].size()<<std::endl;
+        std::cout<<"v3-v4:........"<<block_traj_pts[2].size()<<std::endl;
+        std::cout<<"v4-v1:........"<<block_traj_pts[3].size()<<std::endl;
 
 
         //repeat 4 times        
@@ -640,19 +640,19 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
             block_traj_pts.emplace_back(block_traj_pts[i]);
         }
         
-        cout<<"total edge:..."<<block_traj_pts.size()<<endl;
+        std::cout<<"total edge:..."<<block_traj_pts.size()<<std::endl;
 
         set_block_traj = false;
         wp_counter_i = 0;
         traj_counter_j = 0;
-        // cout<<block_traj_pts[0][0].x()<<endl;
-        // cout<<block_traj_pts[0][0].y()<<endl;
-        // cout<<block_traj_pts[0][0].z()<<endl;
+        // std::cout<<block_traj_pts[0][0].x()<<std::endl;
+        // std::cout<<block_traj_pts[0][0].y()<<std::endl;
+        // std::cout<<block_traj_pts[0][0].z()<<std::endl;
     }
 
     Eigen::Vector4d following_target_pose;
-    // cout<<traj_counter_j<<endl;
-    // cout<<wp_counter_i<<endl<<endl;
+    // std::cout<<traj_counter_j<<std::endl;
+    // std::cout<<wp_counter_i<<std::endl<<std::endl;
 
     if(traj_counter_j == block_traj_pts[wp_counter_i].size())
     {
@@ -689,14 +689,14 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
         );
 
         traj_counter_j ++;
-        // cout<<traj_counter_j<<endl;
-        // cout<<"here"<<endl;
+        // std::cout<<traj_counter_j<<std::endl;
+        // std::cout<<"here"<<std::endl;
         following_target_pose(0) = uav_following_pt.x();
         following_target_pose(1) = uav_following_pt.y();
         following_target_pose(2) = uav_following_pt.z();
         following_target_pose(3) = ugv_traj_pose(3);
 
-        // cout<<following_target_pose<<endl<<endl;
+        // std::cout<<following_target_pose<<std::endl<<std::endl;
 
 
         return following_target_pose;
@@ -729,12 +729,12 @@ void planner_server::config(ros::NodeHandle& _nh)
         = (take_off_height - touch_down_height + landing_horizontal) / uav_landing_velocity;
     landing_time_duration_min 
         = (sqrt(pow(take_off_height - touch_down_height,2) + pow(landing_horizontal,2))) / v_max;
-    cout<<"time here: "<<landing_time_duration_max<<" "<<landing_time_duration_min<<endl;
+    std::cout<<"time here: "<<landing_time_duration_max<<" "<<landing_time_duration_min<<std::endl;
     
     nh.getParam("/alan_master_planner_node/log_path", log_path);
 
-    cout<<"v_max: "<<v_max<<endl;
-    cout<<"a_max: "<<a_max<<endl;
+    std::cout<<"v_max: "<<v_max<<std::endl;
+    std::cout<<"a_max: "<<a_max<<std::endl;
 
     nh.getParam("/alan_master/final_corridor_height", final_corridor_height);
     nh.getParam("/alan_master/final_corridor_length", final_corridor_length);
@@ -744,13 +744,13 @@ void planner_server::config(ros::NodeHandle& _nh)
     alan_fsm_object.finite_state_machine = IDLE;
 
     //block traj temp
-    cout<<"set block traj..."<<set_block_traj<<endl;
+    std::cout<<"set block traj..."<<set_block_traj<<std::endl;
 }
 
 void planner_server::set_alan_b_traj_prerequisite()
 {
-    // cout<<"set_pre_requisite...";
-    // cout<<land_traj_constraint_initiated<<endl;
+    // std::cout<<"set_pre_requisite...";
+    // std::cout<<land_traj_constraint_initiated<<std::endl;
     if(land_traj_constraint_initiated)
     {
         btraj_info.axis_dim = axis_dim;
@@ -775,8 +775,8 @@ void planner_server::set_alan_b_traj_prerequisite()
 
         set_btraj_inequality_kinematic();
 
-        cout<<"here are the corridors...";
-        cout<<corridors.size()<<endl;
+        std::cout<<"here are the corridors...";
+        std::cout<<corridors.size()<<std::endl;
 
         btraj_constraints.sfc_list = corridors;
         btraj_constraints.d_constraints = btraj_dconstraints;
@@ -789,7 +789,7 @@ void planner_server::set_alan_b_traj_prerequisite()
             log_path
         );
 
-        vector<double> time_sample;
+        std::vector<double> time_sample;
         time_sample.emplace_back(landing_time_duration_min);
         time_sample.emplace_back(landing_time_duration_max);        
 
@@ -807,11 +807,11 @@ void planner_server::set_alan_b_traj_prerequisite()
 
         Eigen::Vector3d velo_constraint(0.0,0.0,0.0);
 
-        cout<<"here are the starting point:"<<endl;
-        cout<<posi_start<<endl;
-        cout<<posi_end<<endl<<endl;
+        std::cout<<"here are the starting point:"<<std::endl;
+        std::cout<<posi_start<<std::endl;
+        std::cout<<posi_end<<std::endl<<std::endl;
 
-        cout<<sample_square_root<<endl;
+        std::cout<<sample_square_root<<std::endl;
 
         double tick0 = ros::Time::now().toSec();
         alan_btraj_sample->set_prerequisite(time_sample, sample_square_root, sample_square_root);        
@@ -823,28 +823,28 @@ void planner_server::set_alan_b_traj_prerequisite()
         optimal_traj_info_obj = alan_btraj_sample->getOptimalTrajInfo();        
         double tock1 = ros::Time::now().toSec();
 
-        cout<<"set Matrices..."<<endl;
-        cout<<"ms: "<<(tock0 - tick0) * 1000<<endl;
-        cout<<"fps: "<<1 / (tock0 - tick0)<<endl<<endl;
+        std::cout<<"set Matrices..."<<std::endl;
+        std::cout<<"ms: "<<(tock0 - tick0) * 1000<<std::endl;
+        std::cout<<"fps: "<<1 / (tock0 - tick0)<<std::endl<<std::endl;
 
-        cout<<"set Optimization Sample..."<<endl;
-        cout<<"ms: "<<(tock1 - tick1) * 1000<<endl;
-        cout<<"fps: "<<1 / (tock1 - tick1)<<endl;
+        std::cout<<"set Optimization Sample..."<<std::endl;
+        std::cout<<"ms: "<<(tock1 - tick1) * 1000<<std::endl;
+        std::cout<<"fps: "<<1 / (tock1 - tick1)<<std::endl;
 
 
         //test online here...
 
-        // cout<<"planner_server optimal time here..."<<optimal_time.size()<<endl;
+        // std::cout<<"planner_server optimal time here..."<<optimal_time.size()<<std::endl;
         // for(auto what : optimal_traj_info_obj.optimal_time_allocation)
         // {
-        //     cout<<what<<endl;
+        //     std::cout<<what<<std::endl;
         // }
 
-        cout<<"after setting pre-requisite..."<<endl;
+        std::cout<<"after setting pre-requisite..."<<std::endl;
 
-        cout<<uav_in_ugv_frame_posi<<endl;
-        cout<<endl<<endl;
-        cout<<"now online..."<<endl;
+        std::cout<<uav_in_ugv_frame_posi<<std::endl;
+        std::cout<<std::endl<<std::endl;
+        std::cout<<"now online..."<<std::endl;
         // btraj_sampling.
         
         Eigen::Vector3d posi_goal(0,0,touch_down_height);
@@ -855,9 +855,9 @@ void planner_server::set_alan_b_traj_prerequisite()
         );
         double tock2 = ros::Time::now().toSec();
 
-        cout<<"online update:"<<endl;
-        cout<<"ms: "<<(tock2 - tick2) * 1000<<endl;
-        cout<<"fps: "<<1 / (tock2 - tick2)<<endl;
+        std::cout<<"online update:"<<std::endl;
+        std::cout<<"ms: "<<(tock2 - tick2) * 1000<<std::endl;
+        std::cout<<"fps: "<<1 / (tock2 - tick2)<<std::endl;
 
         if(optimal_traj_info_obj.got_heuristic_optimal)
             prerequisite_set = true;
@@ -877,7 +877,7 @@ void planner_server::set_btraj_inequality_kinematic()
 {
     int temp_size_i = 0;
 
-    cout<<"we got this many corridor:..."<<land_traj_constraint.a_series_of_Corridor.size()<<endl;
+    std::cout<<"we got this many corridor:..."<<land_traj_constraint.a_series_of_Corridor.size()<<std::endl;
     
     corridors.clear();
 

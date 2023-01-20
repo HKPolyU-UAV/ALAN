@@ -70,7 +70,7 @@ private:
     bool shutdown();
     
 //parameters, states and desired states callback
-    string fsm_state = IDLE;
+    std::string fsm_state = IDLE;
     waypts takeoff_hover_pt = {0,0,1.2,0};
     waypts landing_hover_pt = {0,0,1.2,0};
     Eigen::Isometry3d uavOdomPose, ugvOdomPose;
@@ -128,7 +128,7 @@ private:
     double landing_time_duration_min = 0;
     alan_traj::bezier_constraints btraj_constraints;
     alan_visualization::Polyhedron temp_poly;
-    vector<alan_visualization::Polyhedron> corridors;
+    std::vector<alan_visualization::Polyhedron> corridors;
     alan_visualization::PolyhedronArray land_traj_constraint;
     bool land_traj_constraint_initiated = false;
 
@@ -173,14 +173,14 @@ private:
     }
 
 //other 
-    string log_path;
+    std::string log_path;
     void config(ros::NodeHandle& _nh);
 
     //block trajectory (for data collection)
     Eigen::Vector4d set_following_target_pose();
     Eigen::Vector4d set_uav_block_pose();
     bool set_block_traj = true;
-    vector<vector<Eigen::Vector3d>> block_traj_pts;
+    std::vector<std::vector<Eigen::Vector3d>> block_traj_pts;
     int wp_counter_i = 0;
     int traj_counter_j = 0;
 

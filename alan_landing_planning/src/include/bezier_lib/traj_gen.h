@@ -36,16 +36,16 @@ namespace alan_traj
 
         
         endpt _start, _end;
-        vector<corridor> _cube_list;
+        std::vector<corridor> _cube_list;
         dynamic_constraints _d_constraints;
-        vector<alan_visualization::Polyhedron> _sfc_list;
+        std::vector<alan_visualization::Polyhedron> _sfc_list;
 
-        string _log_path;
+        std::string _log_path;
 
         //Cost term
         Eigen::MatrixXd _MQM;
         int _n_order, _m, _d_order;
-        vector<double> _s;  
+        std::vector<double> _s;  
 
         //math tool
         Eigen::MatrixXd get_nearest_SPD(Eigen::MatrixXd Q);
@@ -54,12 +54,12 @@ namespace alan_traj
         //set OptiTraj
         void setOptiTraj();
         void setTimeDiscrete();
-        vector<vector<double>> time_vector;
+        std::vector<std::vector<double>> time_vector;
 
         //other tool
         void msg_printer(char *s);
         void log();
-        // void log_file(string log_txt_location, );
+        // void log_file(std::string log_txt_location, );
 
         const double pascal[100][100] 
             = {
@@ -85,7 +85,7 @@ namespace alan_traj
             bezier_info b_info,  
             bezier_constraints b_constraints,
             int discrete_freq,
-            string log_path
+            std::string log_path
             );
         ~traj_gen(){};
 

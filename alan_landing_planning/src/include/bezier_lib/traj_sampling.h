@@ -13,7 +13,7 @@ namespace alan_traj
     typedef struct optimal_traj //
     {
         int optimal_index;
-        vector<double> optimal_time_allocation;
+        std::vector<double> optimal_time_allocation;
         alan_landing_planning::Traj optiTraj;
         alan_landing_planning::TrajArray optiTrajArray;
         alan_landing_planning::Traj ctrl_pts_optimal;
@@ -50,16 +50,16 @@ namespace alan_traj
 
         
         endpt _start, _end;
-        vector<corridor> _cube_list;
+        std::vector<corridor> _cube_list;
         dynamic_constraints _d_constraints;
-        vector<alan_visualization::Polyhedron> _sfc_list;
+        std::vector<alan_visualization::Polyhedron> _sfc_list;
 
-        string _log_path;
+        std::string _log_path;
 
         //Cost term
         Eigen::MatrixXd _MQM;
         int _n_order, _m, _d_order;
-        vector<double> _s;  
+        std::vector<double> _s;  
 
         //math tool
         double nchoosek(int n, int i);
@@ -68,12 +68,12 @@ namespace alan_traj
         void setOptiTrajSample(Eigen::VectorXd PolyCoeff);
         void setOptiFinalTraj(Eigen::VectorXd PolyCoeff);
         void setCtrlPts(Eigen::VectorXd& qpsol);
-        void setTimeDiscrete(vector<double> _s_sample);
-        vector<vector<double>> time_vector;
+        void setTimeDiscrete(std::vector<double> _s_sample);
+        std::vector<std::vector<double>> time_vector;
 
         //other tool
         void log();
-        // void log_file(string log_txt_location, );
+        // void log_file(std::string log_txt_location, );
 
         const double pascal[100][100] 
             = {
@@ -94,22 +94,22 @@ namespace alan_traj
 
     //sampling-related
         // for matrix pre-definition
-        vector<Eigen::MatrixXd> MQM_samples;
-        vector<Eigen::MatrixXd> A_samples;
+        std::vector<Eigen::MatrixXd> MQM_samples;
+        std::vector<Eigen::MatrixXd> A_samples;
 
-        vector<Eigen::VectorXd> ub_samples;
-        vector<Eigen::VectorXd> lb_samples;
+        std::vector<Eigen::VectorXd> ub_samples;
+        std::vector<Eigen::VectorXd> lb_samples;
 
         void setSampling_time(
-            vector<vector<double>>& sampling_time,
-            vector<double> time_minmax,
+            std::vector<std::vector<double>>& sampling_time,
+            std::vector<double> time_minmax,
             int total_time_sample_no,
             int seg_time_sample_no
         );
 
         void setMatrices(
             bernstein& bezier_base, 
-            vector<vector<double>>& sampling_time
+            std::vector<std::vector<double>>& sampling_time
         );
 
         void setBoundary(bernstein& bezier_base);
@@ -124,7 +124,7 @@ namespace alan_traj
             bezier_info b_info,  
             bezier_constraints b_constraints,
             int discrete_freq,
-            string log_path
+            std::string log_path
         );
         
         ~traj_sampling(){};
@@ -134,7 +134,7 @@ namespace alan_traj
         // void set_
 
         void set_prerequisite(
-            vector<double> time_minmax, 
+            std::vector<double> time_minmax, 
             int total_time_sample_no,
             int seg_time_sample_no
         );

@@ -58,36 +58,36 @@ void osqpsolver::qp_opt(
     qpsolver.data()->setNumberOfConstraints(nC);
 
     if(!qpsolver.data()->setHessianMatrix(Hessian))
-        cout<<"Hessian not set!"<<endl;
+        std::cout<<"Hessian not set!"<<std::endl;
 
     if(!qpsolver.data()->setGradient(g))
-        cout<<"gradient not set!"<<endl;
+        std::cout<<"gradient not set!"<<std::endl;
     
     if(!qpsolver.data()->setLinearConstraintsMatrix(ALinear))
-        cout<<"linear matrix not set!"<<endl;
+        std::cout<<"linear matrix not set!"<<std::endl;
     
     if(!qpsolver.data()->setLowerBound(lb))
-        cout<<"lb not set!!"<<endl;
+        std::cout<<"lb not set!!"<<std::endl;
     
     if(!qpsolver.data()->setUpperBound(ub))
-        cout<<"ub not set!"<<endl;
+        std::cout<<"ub not set!"<<std::endl;
     
     if(!qpsolver.initSolver())
-        cout<<"please initialize solver!!"<<endl;
+        std::cout<<"please initialize solver!!"<<std::endl;
 
     if(!qpsolver.updateHessianMatrix(Hessian))
-        cout<<"Hessian not set!"<<endl;
+        std::cout<<"Hessian not set!"<<std::endl;
     
     if(!qpsolver.updateLinearConstraintsMatrix(ALinear))
-        cout<<"linear matrix not set!"<<endl;
+        std::cout<<"linear matrix not set!"<<std::endl;
     
 
     
     // if(!qpsolver.initSolver())
-    //     cout<<"please initialize solver!!"<<endl;
+    //     std::cout<<"please initialize solver!!"<<std::endl;
     
     if(!qpsolver.solve())
-        cout<<"not yet solved"<<endl;
+        std::cout<<"not yet solved"<<std::endl;
 
     
     
@@ -95,7 +95,7 @@ void osqpsolver::qp_opt(
 
     qpsol = qpsolver.getSolution();
 
-    // cout<<"cost: "<<qpsol.transpose() * H * qpsol<<endl;
+    // std::cout<<"cost: "<<qpsol.transpose() * H * qpsol<<std::endl;
 
 }
 
@@ -107,22 +107,22 @@ bool osqpsolver::qp_opt_single(
     Eigen::VectorXd& final_sol
 )
 {
-    cout<<"here in qp_opt_single"<<endl;
-    // cout<<_ub<<endl;
-    // cout<<_lb<<endl;
+    std::cout<<"here in qp_opt_single"<<std::endl;
+    // std::cout<<_ub<<std::endl;
+    // std::cout<<_lb<<std::endl;
 
     Eigen::SparseMatrix<double> Hessian = _MQM.sparseView();
     if(!_qpsolver.updateHessianMatrix(Hessian))
-        cout<<"Hessian not updated!"<<endl;
+        std::cout<<"Hessian not updated!"<<std::endl;
     
     Eigen::SparseMatrix<double> ALinear = _A.sparseView();
     if(!_qpsolver.updateLinearConstraintsMatrix(ALinear));
 
     if(!_qpsolver.data()->setUpperBound(_ub))
-        cout<<"ub not set!!"<<endl;
+        std::cout<<"ub not set!!"<<std::endl;
     
     if(!_qpsolver.data()->setLowerBound(_lb))
-        cout<<"lb not set!"<<endl;
+        std::cout<<"lb not set!"<<std::endl;
 
 
     if(!_qpsolver.solve())
@@ -133,18 +133,18 @@ bool osqpsolver::qp_opt_single(
     else
     {
         final_sol = _qpsolver.getSolution();
-        cout<<"end..."<<final_sol.size()<<endl; 
+        std::cout<<"end..."<<final_sol.size()<<std::endl; 
         ROS_GREEN_STREAM("SUCCEEDED!");
         return true;
     }                   
 }
 
 bool osqpsolver::qp_opt_samples(
-    vector<Eigen::VectorXd>& qpsol_array,
-        vector<vector<double>>& sample_time_array,
-        vector<Eigen::MatrixXd>& MQM_opti_array,
-        vector<Eigen::MatrixXd>& A_opti_array,
-        vector<double>& optimal_time_allocation,
+    std::vector<Eigen::VectorXd>& qpsol_array,
+        std::vector<std::vector<double>>& sample_time_array,
+        std::vector<Eigen::MatrixXd>& MQM_opti_array,
+        std::vector<Eigen::MatrixXd>& A_opti_array,
+        std::vector<double>& optimal_time_allocation,
         int& optimal_index
 )
 {
@@ -163,12 +163,12 @@ bool osqpsolver::qp_opt_samples(
     {
          for(int i = 0; i < _Hessian_array.size(); i++)
         {
-            // cout<<i<<endl;
+            // std::cout<<i<<std::endl;
             if(!_qpsolver.updateHessianMatrix(_Hessian_array[i]))
-                cout<<"Hessian not update!"<<endl;
+                std::cout<<"Hessian not update!"<<std::endl;
             
             if(!_qpsolver.updateLinearConstraintsMatrix(_Alinear_array[i]))
-                cout<<"linear matrix not update!"<<endl;
+                std::cout<<"linear matrix not update!"<<std::endl;
             
             if(!_qpsolver.solve())
                 ROS_RED_STREAM("FAILED!");
@@ -180,7 +180,7 @@ bool osqpsolver::qp_opt_samples(
                 MQM_opti_array.emplace_back(_MQM_array[i]);
                 A_opti_array.emplace_back(_Alinear_array[i]);
 
-                cout<<_time_samples[i][0]<<" "<<_time_samples[i][1]<<endl;
+                std::cout<<_time_samples[i][0]<<" "<<_time_samples[i][1]<<std::endl;
 
                 cost_temp = 
                     _qpsolver.getSolution().transpose() 
@@ -189,7 +189,7 @@ bool osqpsolver::qp_opt_samples(
                     
                 _cost_array.emplace_back(cost_temp);
 
-                cout<<"cost: "<<_cost_array[_cost_array.size() - 1]<<endl;
+                std::cout<<"cost: "<<_cost_array[_cost_array.size() - 1]<<std::endl;
 
                 if(cost_temp < cost_min)
                 {
@@ -203,9 +203,9 @@ bool osqpsolver::qp_opt_samples(
 
         if(success_i < 1)
         {
-            cout<<endl;
+            std::cout<<std::endl;
             ROS_RED_STREAM("SAMPLING FAIL, PLEASE CHECK CONSTRAINTS & TIME ALLOCTION...");
-            cout<<endl;
+            std::cout<<std::endl;
             return false;
         }        
         else
@@ -214,28 +214,28 @@ bool osqpsolver::qp_opt_samples(
 
             optimal_time_allocation = _time_samples[index_for_all_array];
 
-            string msg_display0
-                = to_string(_Hessian_array.size()) 
+            std::string msg_display0
+                = std::to_string(_Hessian_array.size()) 
                     + " TRAJ EVALUATED, SUCCEEDED "
-                    + to_string(qpsol_array.size())
+                    + std::to_string(qpsol_array.size())
                     + " TRAJ";
 
-            string msg_display1
-                = to_string(optimal_index) 
+            std::string msg_display1
+                = std::to_string(optimal_index) 
                     + " th SAMPLE POSSESSES LOWEST COST: " 
-                    + to_string(cost_min);
+                    + std::to_string(cost_min);
 
-            string msg_display2
+            std::string msg_display2
                 = "TIME ALLOCATION: "
-                    + to_string(_time_samples[index_for_all_array][0])
+                    + std::to_string(_time_samples[index_for_all_array][0])
                     + " "
-                    + to_string(_time_samples[index_for_all_array][1]);
+                    + std::to_string(_time_samples[index_for_all_array][1]);
 
-            cout<<endl;
+            std::cout<<std::endl;
             ROS_GREEN_STREAM(msg_display0);   
             ROS_GREEN_STREAM(msg_display1);   
             ROS_GREEN_STREAM(msg_display2);    
-            cout<<endl;
+            std::cout<<std::endl;
 
             return true;
         }

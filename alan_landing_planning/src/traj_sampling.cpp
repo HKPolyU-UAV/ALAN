@@ -13,7 +13,7 @@ namespace alan_traj
         bezier_info b_info,  
         bezier_constraints b_constraints, 
         int discrete_freq,
-        string log_path)
+        std::string log_path)
         //for variable set
         :
         _axis_dim(b_info.axis_dim), 
@@ -38,9 +38,9 @@ namespace alan_traj
         ROS_WARN("TRAJ_SAMPLING INSTANTIATED!");          
     }; 
 
-    void traj_sampling::setTimeDiscrete(vector<double> _s_sample)
+    void traj_sampling::setTimeDiscrete(std::vector<double> _s_sample)
     {
-        vector<double> time_vector_per_seg;
+        std::vector<double> time_vector_per_seg;
         double discrete_time_step;
         double seg_time;
 
@@ -60,7 +60,7 @@ namespace alan_traj
 
             for(double j = 0; j < discrete_time_step; j++)
             {
-                // cout<<1 * j / discrete_time_step + 1 / discrete_time_step<<endl;
+                // std::cout<<1 * j / discrete_time_step + 1 / discrete_time_step<<std::endl;
                 time_vector_per_seg.emplace_back(1 * j / discrete_time_step + 1 / discrete_time_step);
             }            
 
@@ -78,7 +78,7 @@ namespace alan_traj
         for(int i = 0; i < _m; i++)
         {
             double t_per_seg = _s[i];
-            // cout<<t_per_seg<<endl;
+            // std::cout<<t_per_seg<<std::endl;
 
             for(int j = 0; j < no_of_ctrl_per_seg; j++)
             {
@@ -105,16 +105,16 @@ namespace alan_traj
         // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt");
         // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/p_base.txt");
 
-        // cout<<"seg_i: "<<_m<<endl;
-        // cout<<"_n_order: "<<_n_order<<endl;
+        // std::cout<<"seg_i: "<<_m<<std::endl;
+        // std::cout<<"_n_order: "<<_n_order<<std::endl;
 
 
-        // cout<<time_vector.size()<<endl;
+        // std::cout<<time_vector.size()<<std::endl;
 
 
         for(int seg_i = 0; seg_i < _m; seg_i++)
         {
-            // cout<<"seg time size: "<<time_vector[seg_i].size()<<endl;
+            // std::cout<<"seg time size: "<<time_vector[seg_i].size()<<std::endl;
 
             for(int i = 0; i < time_vector[seg_i].size(); i++)
             {
@@ -141,15 +141,15 @@ namespace alan_traj
             }
         }
         
-        // cout<<"here are the traj size...: "<<optiTraj.trajectory.size()<<endl;
+        // std::cout<<"here are the traj size...: "<<optiTraj.trajectory.size()<<std::endl;
         _optiTrajArray.trajectory_array.emplace_back(optiTraj);
 
     }
 
     void traj_sampling::setOptiFinalTraj(Eigen::VectorXd PolyCoeff)
     {        
-        cout<<"hi setOptiFinalTraj"<<endl;
-        cout<<PolyCoeff.size()<<endl;
+        std::cout<<"hi setOptiFinalTraj"<<std::endl;
+        std::cout<<PolyCoeff.size()<<std::endl;
         alan_landing_planning::AlanPlannerMsg traj_discrete_pt;
         alan_landing_planning::Traj optiTraj;
         optiTraj.trajectory.clear();
@@ -159,7 +159,7 @@ namespace alan_traj
 
         for(int seg_i = 0; seg_i < _m; seg_i++)
         {
-            // cout<<"seg time size: "<<time_vector[seg_i].size()<<endl;
+            // std::cout<<"seg time size: "<<time_vector[seg_i].size()<<std::endl;
 
             for(int i = 0; i < time_vector[seg_i].size(); i++)
             {
@@ -191,12 +191,12 @@ namespace alan_traj
 
         
     void traj_sampling::set_prerequisite(
-        vector<double> time_minmax, 
+        std::vector<double> time_minmax, 
         int total_time_sample_no,
         int seg_time_sample_no
     )
     {
-        vector<vector<double>> sampling_time;
+        std::vector<std::vector<double>> sampling_time;
 
         bernstein bezier_base;
 
@@ -214,14 +214,14 @@ namespace alan_traj
 
         // for(auto what : sampling_time)
         // {
-        //     cout<<what[0]<<" "<<what[1]<<endl;
+        //     std::cout<<what[0]<<" "<<what[1]<<std::endl;
         // }
 
     }
 
     void traj_sampling::setSampling_time(
-        vector<vector<double>>& sampling_time,
-        vector<double> time_minmax, 
+        std::vector<std::vector<double>>& sampling_time,
+        std::vector<double> time_minmax, 
         int total_time_sample_no, 
         int seg_time_sample_no
     )
@@ -242,35 +242,35 @@ namespace alan_traj
         double time_min = time_minmax[0];
         double time_max = time_minmax[1];
 
-        // cout<<time_min<<endl;
-        // cout<<time_max<<endl;
+        // std::cout<<time_min<<std::endl;
+        // std::cout<<time_max<<std::endl;
 
         for(int i = 0; i < total_time_sample_no ; i++)
         {
             double total_time_per_sample = 
                 (1.0 / (total_time_sample_no - 1)) * i * time_min + 
                 (1.0 / (total_time_sample_no - 1)) * ((total_time_sample_no - 1) - i) * time_max;
-            // cout<<total_time_per_sample<<endl;
+            // std::cout<<total_time_per_sample<<std::endl;
 
             for(int j = 0; j < seg_time_sample_no; j++)
             {
-                // cout<<"hi"<<endl;
-                // cout<<total_time_per_sample<<endl;
+                // std::cout<<"hi"<<std::endl;
+                // std::cout<<total_time_per_sample<<std::endl;
                 double time_seg_0 = 
                     (1.0 / (seg_time_sample_no + 1)) * (j + 1) * total_time_per_sample;
                 double time_seg_1 = total_time_per_sample - time_seg_0;
 
             
-                vector<double> temp_sample = {time_seg_0, time_seg_1};
-                // cout<<time_seg_0<<" "<<time_seg_1<<endl<<endl;;
+                std::vector<double> temp_sample = {time_seg_0, time_seg_1};
+                // std::cout<<time_seg_0<<" "<<time_seg_1<<std::endl<<std::endl;;
                 sampling_time.emplace_back(temp_sample);
             }
         }
         trajSolver.set_time_sampling(sampling_time);
-        // cout<<"final sampling size..."<<sampling_time.size()<<endl;
+        // std::cout<<"final sampling size..."<<sampling_time.size()<<std::endl;
     }
 
-    void traj_sampling::setMatrices(bernstein& bezier_base, vector<vector<double>>& sampling_time)
+    void traj_sampling::setMatrices(bernstein& bezier_base, std::vector<std::vector<double>>& sampling_time)
     {
         for(auto& what : sampling_time)
         {
@@ -296,11 +296,11 @@ namespace alan_traj
 
     void traj_sampling::setBoundary(bernstein& bezier_base)
     {
-        tuple<Eigen::VectorXd, Eigen::VectorXd> temp_tuple
+        std::tuple<Eigen::VectorXd, Eigen::VectorXd> temp_tuple
             = bezier_base.set_ub_lb(_axis_dim, _n_order, _m, _d_order, _d_constraints);
 
-        _ub = get<0>(temp_tuple);
-        _lb = get<1>(temp_tuple);
+        _ub = std::get<0>(temp_tuple);
+        _lb = std::get<1>(temp_tuple);
     }
 
     void traj_sampling::updateBoundary(
@@ -314,7 +314,7 @@ namespace alan_traj
         for(int axis_i = 0; axis_i < _axis_dim; axis_i++)
         {
             starto = _axis_dim * 2 + _d_order;
-            // cout<<axis_i * starto<<endl;
+            // std::cout<<axis_i * starto<<std::endl;
             _ub(axis_i * starto) = posi_start(axis_i);
             _lb(axis_i * starto) = posi_start(axis_i);
 
@@ -323,8 +323,8 @@ namespace alan_traj
 
         }
 
-        // cout<<_ub<<endl;
-        // cout<<_lb<<endl;
+        // std::cout<<_ub<<std::endl;
+        // std::cout<<_lb<<std::endl;
         trajSolver.update_b_vectors(_ub, _lb);
     }
 
@@ -332,11 +332,11 @@ namespace alan_traj
     {
         _optiTrajArray.trajectory_array.clear();
 
-        vector<Eigen::VectorXd> qpsol_array;
-        vector<vector<double>> sample_time_array;
-        vector<Eigen::MatrixXd> MQM_opti_array;
-        vector<Eigen::MatrixXd> A_opti_array;
-        vector<double> optimal_time_allocation;
+        std::vector<Eigen::VectorXd> qpsol_array;
+        std::vector<std::vector<double>> sample_time_array;
+        std::vector<Eigen::MatrixXd> MQM_opti_array;
+        std::vector<Eigen::MatrixXd> A_opti_array;
+        std::vector<double> optimal_time_allocation;
         int optimal_index;
 
         bool sample_success = trajSolver.qp_opt_samples(
@@ -364,19 +364,19 @@ namespace alan_traj
                 ROS_ERROR("OPTIMIZATION WENT WRONG...");
             }
 
-            cout<<"Total Sample Size: "<<_optiTrajArray.trajectory_array.size()<<endl;
+            std::cout<<"Total Sample Size: "<<_optiTrajArray.trajectory_array.size()<<std::endl;
             _optiTraj = _optiTrajArray.trajectory_array[optimal_index];
             _ctrl_pts_optimal = qpsol_array[optimal_index];
 
-            string temp = _log_path + "coeeff.txt";
+            std::string temp = _log_path + "coeeff.txt";
             int no_of_ctrl = _ctrl_pts_optimal.size() / 3;
             remove(temp.c_str());
-            ofstream save(temp ,ios::app);
+            std::ofstream save(temp ,std::ios::app);
             for(int i = 0; i < no_of_ctrl; i++)
             {
                 save<<_ctrl_pts_optimal(i)<<" "
                     <<_ctrl_pts_optimal(i + no_of_ctrl)<<" "
-                    <<_ctrl_pts_optimal(i + no_of_ctrl * 2)<<endl<<endl;
+                    <<_ctrl_pts_optimal(i + no_of_ctrl * 2)<<std::endl<<std::endl;
             }
             save.close();
 
@@ -421,7 +421,7 @@ namespace alan_traj
         }
 
         
-        cout<<"execute this..."<<_optiTraj.trajectory.size()<<endl;
+        std::cout<<"execute this..."<<_optiTraj.trajectory.size()<<std::endl;
         return _optiTraj;
     }
 
@@ -447,31 +447,31 @@ namespace alan_traj
     void traj_sampling::log()
     {
         //b_traj info log...
-        string temp = _log_path + "b_traj.txt";
+        std::string temp = _log_path + "b_traj.txt";
         remove(temp.c_str()); 
-        ofstream save(temp ,ios::app);
+        std::ofstream save(temp ,std::ios::app);
 
-        save<<"log of trajectory optimization..."<<endl;
-        save<<endl<<"log start..."<<endl<<endl;
-        save<<"_axis_dim:\n"<<_axis_dim<<endl<<endl;
-        save<<"_n_dim:\n"<<_n_dim<<endl<<endl;
-        save<<"_n_dim_per_axis:\n"<<_n_dim_per_axis<<endl<<endl;
-        save<<"_start_posi:\n"<<_start.posi<<endl<<endl;
-        save<<"_start_velo:\n"<<_start.velo<<endl<<endl;
-        save<<"_start_accl:\n"<<_start.accl<<endl<<endl;
+        save<<"log of trajectory optimization..."<<std::endl;
+        save<<std::endl<<"log start..."<<std::endl<<std::endl;
+        save<<"_axis_dim:\n"<<_axis_dim<<std::endl<<std::endl;
+        save<<"_n_dim:\n"<<_n_dim<<std::endl<<std::endl;
+        save<<"_n_dim_per_axis:\n"<<_n_dim_per_axis<<std::endl<<std::endl;
+        save<<"_start_posi:\n"<<_start.posi<<std::endl<<std::endl;
+        save<<"_start_velo:\n"<<_start.velo<<std::endl<<std::endl;
+        save<<"_start_accl:\n"<<_start.accl<<std::endl<<std::endl;
         save<<"_sfc_list:\n";
         for(auto what : _sfc_list)
-            save<<"here is one corridor...: "<<what.PolyhedronTangentArray.size()<<endl;
-        save<<endl;
-        save<<"_d_constraints v:\n"<<_d_constraints.v_max<<endl<<endl;
-        save<<"_d_constraints a:\n"<<_d_constraints.a_max<<endl<<endl;
-        save<<"_n_order\n"<<_n_order<<endl<<endl;
-        save<<"_m\n"<<_m<<endl<<endl;
-        save<<"_d_order\n"<<_d_order<<endl<<endl;
+            save<<"here is one corridor...: "<<what.PolyhedronTangentArray.size()<<std::endl;
+        save<<std::endl;
+        save<<"_d_constraints v:\n"<<_d_constraints.v_max<<std::endl<<std::endl;
+        save<<"_d_constraints a:\n"<<_d_constraints.a_max<<std::endl<<std::endl;
+        save<<"_n_order\n"<<_n_order<<std::endl<<std::endl;
+        save<<"_m\n"<<_m<<std::endl<<std::endl;
+        save<<"_d_order\n"<<_d_order<<std::endl<<std::endl;
 
         for(auto what : _s)
-            save<<"_s\n"<<what<<endl;
-        save<<endl<<"log end..."<<endl;
+            save<<"_s\n"<<what<<std::endl;
+        save<<std::endl<<"log end..."<<std::endl;
         
         save.close();
 
@@ -479,26 +479,26 @@ namespace alan_traj
         //matrix log...
         temp = _log_path + "MQM_matrix.txt";
         remove(temp.c_str()); 
-        save = ofstream(temp ,ios::app);
-        save<<_MQM<<endl;
+        save = std::ofstream(temp ,std::ios::app);
+        save<<_MQM<<std::endl;
         save.close();
 
         temp = _log_path + "A_matrix.txt";
         remove(temp.c_str()); 
-        save = ofstream(temp ,ios::app);
-        save<<_A<<endl;
+        save = std::ofstream(temp ,std::ios::app);
+        save<<_A<<std::endl;
         save.close();
 
         temp = _log_path + "ub.txt";
         remove(temp.c_str()); 
-        save = ofstream(temp ,ios::app);
-        save<<_ub<<endl;
+        save = std::ofstream(temp ,std::ios::app);
+        save<<_ub<<std::endl;
         save.close();
 
         temp = _log_path + "lb.txt";
         remove(temp.c_str()); 
-        save = ofstream(temp ,ios::app);
-        save<<_lb<<endl;
+        save = std::ofstream(temp ,std::ios::app);
+        save<<_lb<<std::endl;
         save.close();
     }
 

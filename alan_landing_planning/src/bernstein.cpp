@@ -5,9 +5,9 @@ namespace alan_traj
     //for cube_list
     bernstein::bernstein(
     int axis_dim,
-    int n_order, int m, int d_order, vector<double> s,
+    int n_order, int m, int d_order, std::vector<double> s,
     endpt start, endpt end,
-    vector<corridor> cube_list, 
+    std::vector<corridor> cube_list, 
     dynamic_constraints d_constraints
     )
     {        
@@ -22,7 +22,7 @@ namespace alan_traj
 
         if(m == cube_list.size() && m == s.size())
         {
-            cout<<"hi: now in bernstein..."<<endl;
+            std::cout<<"hi: now in bernstein..."<<std::endl;
             A_array.clear();
             ub_array.clear();
             lb_array.clear();
@@ -58,12 +58,12 @@ namespace alan_traj
                 setUB1D();
                 setLB1D();
 
-                // cout<<"\nhere!"<<endl;
+                // std::cout<<"\nhere!"<<std::endl;
 
-                // cout<<A.rows()<<endl;
-                // cout<<A.cols()<<endl;
-                // cout<<ub.size()<<endl;
-                // cout<<lb.size()<<endl;
+                // std::cout<<A.rows()<<std::endl;
+                // std::cout<<A.cols()<<std::endl;
+                // std::cout<<ub.size()<<std::endl;
+                // std::cout<<lb.size()<<std::endl;
 
                 // printf("pass 3\n");
                 setMQM1D(axis_i, n_order, m, d_order, s);
@@ -75,19 +75,19 @@ namespace alan_traj
                 lb_array.emplace_back(lb);
                 MQM_array.emplace_back(MQM);
 
-                // cout<<"finish 1D"<<endl;
+                // std::cout<<"finish 1D"<<std::endl;
 
             }
 
 
             setMQMFinal();
-            // cout<<1<<endl;
+            // std::cout<<1<<std::endl;
             setAFinal();
-            // cout<<2<<endl;
+            // std::cout<<2<<std::endl;
             setUbFinal();
-            // cout<<3<<endl;
+            // std::cout<<3<<std::endl;
             setLbFinal();
-            // cout<<4<<endl;
+            // std::cout<<4<<std::endl;
 
         }
         else
@@ -100,9 +100,9 @@ namespace alan_traj
     //for polyh list
     bernstein::bernstein(
     int axis_dim,
-    int n_order, int m, int d_order, vector<double> s,
+    int n_order, int m, int d_order, std::vector<double> s,
     endpt start, endpt end,
-    vector<alan_visualization::Polyhedron> sfc_list,
+    std::vector<alan_visualization::Polyhedron> sfc_list,
     dynamic_constraints d_constraints
     )
     {        
@@ -157,10 +157,10 @@ namespace alan_traj
                 
                 printf("eq matrices: pass\n");                
 
-                // cout<<axis_i<<" dimension:\n";
-                // cout<<A_eq.rows()<<" "<<A_eq.cols()<<endl<<endl;
-                // cout<<ub_eq<<endl<<endl;
-                // cout<<lb_eq<<endl<<endl<<endl;
+                // std::cout<<axis_i<<" dimension:\n";
+                // std::cout<<A_eq.rows()<<" "<<A_eq.cols()<<std::endl<<std::endl;
+                // std::cout<<ub_eq<<std::endl<<std::endl;
+                // std::cout<<lb_eq<<std::endl<<std::endl<<std::endl;
 
                 //----------------------------------------------------------------------------------------------
 
@@ -176,19 +176,19 @@ namespace alan_traj
 
                 printf("ieq matriaces: pass\n");
 
-                // cout<<axis_i<<" dimension:\n\n";
-                // cout<<A_ieq<<endl;
-                // cout<<A_ieq.rows()<<" "<<A_ieq.cols()<<endl<<endl;
+                // std::cout<<axis_i<<" dimension:\n\n";
+                // std::cout<<A_ieq<<std::endl;
+                // std::cout<<A_ieq.rows()<<" "<<A_ieq.cols()<<std::endl<<std::endl;
                 
-                // cout<<ub_ieq<<endl<<endl;
-                // cout<<lb_ieq<<endl<<endl<<endl;
+                // std::cout<<ub_ieq<<std::endl<<std::endl;
+                // std::cout<<lb_ieq<<std::endl<<std::endl<<std::endl;
 
                 //----------------------------------------------------------------------------------------------
 
                 setMQM1D(axis_i, n_order, m, d_order, s);
                 MQM_array.emplace_back(MQM);
 
-                // cout<<"that's one dimension\n\n\n";
+                // std::cout<<"that's one dimension\n\n\n";
             }
 
             printf("\n---------------------- now set all dimension ----------------------\n");
@@ -196,20 +196,20 @@ namespace alan_traj
 
             setAieqBieqsfc(axis_dim, sfc_list, n_order, m, d_order, s);
 
-            // cout<<0<<endl;
+            // std::cout<<0<<std::endl;
             setMQMFinal();
             
 
-            cout<<"set final AFinal_polyh..."<<endl;
+            std::cout<<"set final AFinal_polyh..."<<std::endl;
             setAFinal_polyh();
             setUbFinal_polyh();
             setLbFinal_polyh();
-            cout<<"A_Final size  = "<<A_final.rows()<<" "<<A_final.cols()<<endl;
-            cout<<"ub_final size = "<<ub_final.rows()<<endl;;
+            std::cout<<"A_Final size  = "<<A_final.rows()<<" "<<A_final.cols()<<std::endl;
+            std::cout<<"ub_final size = "<<ub_final.rows()<<std::endl;;
 
-            // cout<<"Aieq_sfc size: "<<A_ieqsfc.rows()<<" "<<A_ieqsfc.cols()<<endl;
-            // cout<<"ub_ieqsfc size: "<<ub_ieqsfc.size()<<endl;
-            // cout<<"lb_ieqsfc size: "<<lb_ieqsfc.size()<<endl<<endl;
+            // std::cout<<"Aieq_sfc size: "<<A_ieqsfc.rows()<<" "<<A_ieqsfc.cols()<<std::endl;
+            // std::cout<<"ub_ieqsfc size: "<<ub_ieqsfc.size()<<std::endl;
+            // std::cout<<"lb_ieqsfc size: "<<lb_ieqsfc.size()<<std::endl<<std::endl;
         }
         else
         {
@@ -225,11 +225,11 @@ namespace alan_traj
         ROS_INFO("Bernstein bases settings for ALAN_LANDING...ready to set pre-requisite\n");
     }
 
-    void bernstein::setAeq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    void bernstein::setAeq1D(int axis_dim, int n_order, int m, int d_order, std::vector<double> s)
     {    
         int n_cond = 0;
         int _dim = (n_order + 1) * m; //how many control points
-        vector<double> pascal;
+        std::vector<double> pascal;
 
         //Aeq_start
         Eigen::MatrixXd Aeq_start;
@@ -278,10 +278,10 @@ namespace alan_traj
         int i_m = (m - 1) ; //how many continuity should there be? A: m - 1 points, indicator m-1 -1 
         int starto_col = 0, starto_row = 0;
 
-        // cout<<Aeq_cont<<endl;
-        // cout<<Aeq_cont.rows()<<endl;
-        // cout<<Aeq_cont.cols()<<endl;
-        // cout<<"below show matrix"<<endl<<endl;
+        // std::cout<<Aeq_cont<<std::endl;
+        // std::cout<<Aeq_cont.rows()<<std::endl;
+        // std::cout<<Aeq_cont.cols()<<std::endl;
+        // std::cout<<"below show matrix"<<std::endl<<std::endl;
 
         for(int i = 0; i < i_m; i++) //each intersection point condition
         {
@@ -293,11 +293,11 @@ namespace alan_traj
 
                 double p = permutation(n_order, n_order - j);
 
-                // cout<<starto_col<<endl;
-                // cout<<starto_row<<endl;
+                // std::cout<<starto_col<<std::endl;
+                // std::cout<<starto_row<<std::endl;
 
-                // cout<<"p"<<endl;
-                // cout<<p<<endl;
+                // std::cout<<"p"<<std::endl;
+                // std::cout<<p<<std::endl;
 
                 switch (j)
                 {
@@ -308,8 +308,8 @@ namespace alan_traj
                     break;
                 
                 case 1://v
-                    // cout<<"vel: "<<endl;
-                    // cout<<p * pascal[0] * pow(s[i+0], 1-j)<<endl;
+                    // std::cout<<"vel: "<<std::endl;
+                    // std::cout<<p * pascal[0] * pow(s[i+0], 1-j)<<std::endl;
 
                     Aeq_cont(starto_row, starto_col - 1) = p * pascal[0] * pow(s[i+0], 1-j);
                     Aeq_cont(starto_row, starto_col - 0) = p * pascal[1] * pow(s[i+0], 1-j);
@@ -348,21 +348,21 @@ namespace alan_traj
             }
             
         }
-        // cout<<"hi..."<<endl;
-        // cout<<Aeq_start<<endl;
-        // cout<<Aeq_end<<endl<<endl;;
+        // std::cout<<"hi..."<<std::endl;
+        // std::cout<<Aeq_start<<std::endl;
+        // std::cout<<Aeq_end<<std::endl<<std::endl;;
         A_eq.resize(Aeq_start.rows() + Aeq_end.rows() + Aeq_cont.rows(), _dim);
         
         A_eq << Aeq_start,
                 Aeq_end,
                 Aeq_cont;
 
-        // cout<<"Aeq in setAeq1D!:\n"<<A_eq.rows()<<endl<<endl;
+        // std::cout<<"Aeq in setAeq1D!:\n"<<A_eq.rows()<<std::endl<<std::endl;
     }
 
     void bernstein::setUBeq1D(int axis_dim, endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
     {
-        // cout<<"setUBeq1D"<<endl;
+        // std::cout<<"setUBeq1D"<<std::endl;
         //set BUeq_start/end
         Eigen::VectorXd BUeq_start;
         Eigen::VectorXd BUeq_end;
@@ -429,13 +429,13 @@ namespace alan_traj
                 BUeq_end,
                 BUeq_cont;
         
-        // cout<<"ub_eq!\n"<<ub_eq<<endl;;
+        // std::cout<<"ub_eq!\n"<<ub_eq<<std::endl;;
 
     }
 
     void bernstein::setLBeq1D(int axis_dim, endpt_cond start, endpt_cond end, int n_order, int m, int d_order)
     {
-        // cout<<"setLBeq"<<endl;
+        // std::cout<<"setLBeq"<<std::endl;
 
         //set BLeq_start/end
         Eigen::VectorXd BLeq_start;
@@ -502,10 +502,10 @@ namespace alan_traj
                 BLeq_end,
                 BLeq_cont;
 
-        // cout<<"ub_eq!\n"<<lb_eq<<endl;;
+        // std::cout<<"ub_eq!\n"<<lb_eq<<std::endl;;
     }
 
-    void bernstein::setAieq1D(int axis_dim, int n_order, int m, int d_order, vector<double> s, string corridor_type)
+    void bernstein::setAieq1D(int axis_dim, int n_order, int m, int d_order, std::vector<double> s, std::string corridor_type)
     {
         int _dim_crtl_pts = m * (n_order + 1);
         int _dim_p = m * (n_order + 1 - 0);
@@ -523,26 +523,26 @@ namespace alan_traj
         for(int i = 0; i < s.size(); i++)
         {
             starto_row_col = i * (n_order + 1);   
-            // cout<<"starto_row_col = "<<starto_row_col  <<endl;
+            // std::cout<<"starto_row_col = "<<starto_row_col  <<std::endl;
 
             Aieq_p.block(starto_row_col, starto_row_col, (n_order + 1), (n_order + 1)) = Aieq_p.block(starto_row_col, starto_row_col, (n_order + 1), (n_order + 1)) * pow(s[i], 1);
         }
 
-        // cout<<"should be fine..."<<endl;
+        // std::cout<<"should be fine..."<<std::endl;
 
         //Aieq_v
         Eigen::MatrixXd Aieq_v;
         Aieq_v.resize(_dim_v, _dim_crtl_pts);
         Aieq_v.setZero();
 
-        // cout<<Aieq_v<<endl;
-        // cout<<Aieq_v.rows()<<endl;
-        // cout<<Aieq_v.cols()<<endl<<endl;;
+        // std::cout<<Aieq_v<<std::endl;
+        // std::cout<<Aieq_v.rows()<<std::endl;
+        // std::cout<<Aieq_v.cols()<<std::endl<<std::endl;;
         
         int i_m = m;//each segment velocity
         int i_v_seg = n_order + 1 - 1;
 
-        vector<double> pascal = pascal_triangle(2);
+        std::vector<double> pascal = pascal_triangle(2);
         double p = permutation(n_order, n_order - 1);
         int starto_col = 0, starto_row = 0;
 
@@ -559,9 +559,9 @@ namespace alan_traj
         }
         pascal.clear();
 
-        // cout<<Aieq_v<<endl;
+        // std::cout<<Aieq_v<<std::endl;
 
-        // cout<<"that's Aieq_v"<<endl;
+        // std::cout<<"that's Aieq_v"<<std::endl;
 
         //Aieq_a
         Eigen::MatrixXd Aieq_a;
@@ -589,9 +589,9 @@ namespace alan_traj
             }
             
         }
-        // cout<<Aieq_a<<endl;
+        // std::cout<<Aieq_a<<std::endl;
 
-        // cout<<"that's Aieq_a"<<endl;
+        // std::cout<<"that's Aieq_a"<<std::endl;
 
         //Aieq_j
         Eigen::MatrixXd Aieq_j;
@@ -622,9 +622,9 @@ namespace alan_traj
             }
 
         }
-        // cout<<Aieq_j<<endl;
+        // std::cout<<Aieq_j<<std::endl;
 
-        // cout<<"that's Aieq_j"<<endl;
+        // std::cout<<"that's Aieq_j"<<std::endl;
 
         //combine
         if(corridor_type == "CUBE")
@@ -695,18 +695,18 @@ namespace alan_traj
 
         
 
-        // cout<<"Aieq in setAieq1D !:\n"<<A_ieq.rows()<<endl<<endl;;
+        // std::cout<<"Aieq in setAieq1D !:\n"<<A_ieq.rows()<<std::endl<<std::endl;;
 
     }
 
-    void bernstein::setUBieq1D(int axis_dim, vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
+    void bernstein::setUBieq1D(int axis_dim, std::vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
     {
-        cout<<"setUBieq1D"<<endl;
+        std::cout<<"setUBieq1D"<<std::endl;
         // for(auto what : cube_list)
         // {
-        //     cout<<"corridor one"<<endl;
-        //     cout<<what.p_max<<endl;
-        //     cout<<what.p_min<<endl;
+        //     std::cout<<"corridor one"<<std::endl;
+        //     std::cout<<what.p_max<<std::endl;
+        //     std::cout<<what.p_min<<std::endl;
 
             
         // }
@@ -722,14 +722,14 @@ namespace alan_traj
             for(int j = 0; j < n_order + 1; j++) //each control point, n_order + 1 = size of ctrl_pts per segment
             {
                 int _i = starto + j;
-                // cout<<"what's the big deal?: "<<axis_dim - 1<<endl;
+                // std::cout<<"what's the big deal?: "<<axis_dim - 1<<std::endl;
                 UBieq_p(_i) = cube_list[i].p_max(axis_dim);//remember other dimension
             }
             
             starto = starto + (n_order + 1);
         }
 
-        cout<<"seUBieq_v"<<endl;
+        std::cout<<"seUBieq_v"<<std::endl;
 
 
         //UBieq_v
@@ -787,7 +787,7 @@ namespace alan_traj
         }
     }
 
-    void bernstein::setLBieq1D(int axis_dim, vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
+    void bernstein::setLBieq1D(int axis_dim, std::vector<corridor> cube_list, dynamic_constraints d_constraints, int n_order, int m, int d_order)
     {
         Eigen::VectorXd LBieq_p;
         int _dim_p = m * (n_order + 1 - 0);
@@ -863,10 +863,10 @@ namespace alan_traj
 
     void bernstein::setUBieq1D_polyh(int axis_dim, dynamic_constraints d_constraints, int n_order, int m, int d_order)
     {
-        // cout<<"setUBieq1D"<<endl;
+        // std::cout<<"setUBieq1D"<<std::endl;
         
 
-        // cout<<"seUBieq_v"<<endl;
+        // std::cout<<"seUBieq_v"<<std::endl;
 
 
         //UBieq_v
@@ -975,7 +975,7 @@ namespace alan_traj
 
     }
 
-    void bernstein::setMQM1D(int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    void bernstein::setMQM1D(int axis_dim, int n_order, int m, int d_order, std::vector<double> s)
     {
         setQM1D(axis_dim, n_order, m, d_order, s);
         
@@ -986,20 +986,20 @@ namespace alan_traj
         MQM = M.transpose() * Q * M;
 
 
-        // cout<<Q.rows()<<endl;
-        // cout<<Q.cols()<<endl;
+        // std::cout<<Q.rows()<<std::endl;
+        // std::cout<<Q.cols()<<std::endl;
 
-        // cout<<M.rows()<<endl;
-        // cout<<M.cols()<<endl;
+        // std::cout<<M.rows()<<std::endl;
+        // std::cout<<M.cols()<<std::endl;
         
-        // cout<<Q<<endl;
-        // cout<<M<<endl;
-        // cout<<MQM<<endl;
+        // std::cout<<Q<<std::endl;
+        // std::cout<<M<<std::endl;
+        // std::cout<<MQM<<std::endl;
         // MQM_spd = getSPD(MQM);
 
     }
 
-    void bernstein::setQM1D(int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    void bernstein::setQM1D(int axis_dim, int n_order, int m, int d_order, std::vector<double> s)
     {
         int n_dim = (n_order + 1) * m;
 
@@ -1007,8 +1007,8 @@ namespace alan_traj
         Q.setZero();
         M.resize(n_dim, n_dim);
         M.setZero();
-        // cout<<Q.rows()<<endl;
-        // cout<<Q.cols()<<endl;
+        // std::cout<<Q.rows()<<std::endl;
+        // std::cout<<Q.cols()<<std::endl;
 
         Q_temp.resize(n_order + 1, n_order + 1);
         Q_temp.setZero();
@@ -1038,8 +1038,8 @@ namespace alan_traj
 
             Q.block(starto, starto, n_order + 1, n_order + 1) = Q_temp;
             
-            // cout<<"that's one"<<endl;
-            // cout<<Q<<endl;
+            // std::cout<<"that's one"<<std::endl;
+            // std::cout<<Q<<std::endl;
         }
 
     }
@@ -1055,7 +1055,7 @@ namespace alan_traj
             A_ieq;//,
             //  A_ieq;
 
-        cout<<"A in setA1D!:\n"<<A.rows()<<endl<<endl;
+        std::cout<<"A in setA1D!:\n"<<A.rows()<<std::endl<<std::endl;
 
     }
 
@@ -1068,7 +1068,7 @@ namespace alan_traj
             ub_ieq;//,
             //   ub_ieq;
 
-        // cout<<"ub!:\n"<<ub<<endl;
+        // std::cout<<"ub!:\n"<<ub<<std::endl;
 
     }
 
@@ -1082,7 +1082,7 @@ namespace alan_traj
             //   lb_ieq;
             //
 
-        // cout<<"lb!:\n"<<lb<<endl;
+        // std::cout<<"lb!:\n"<<lb<<std::endl;
 
     };
 
@@ -1244,11 +1244,11 @@ namespace alan_traj
 
     void bernstein::setAieqBieqsfc(
         int axis_dim,
-        vector<alan_visualization::Polyhedron> corridor, 
+        std::vector<alan_visualization::Polyhedron> corridor, 
         int n_order, 
         int m, 
         int d_order, 
-        vector<double> s
+        std::vector<double> s
         )
     {
         // this is for A_ieq_sfc
@@ -1266,8 +1266,8 @@ namespace alan_traj
         for(int i = 0; i < corridor.size(); i++)//  corridor.size()
             tangent_plane_no = tangent_plane_no + corridor[i].PolyhedronTangentArray.size();        
         
-        // cout<<"onedim_ctrl_pts_per_seg: "<<onedim_ctrl_pts_per_seg<<endl;
-        // cout<<"tangent_plane_no: "<<tangent_plane_no<<endl<<endl;
+        // std::cout<<"onedim_ctrl_pts_per_seg: "<<onedim_ctrl_pts_per_seg<<std::endl;
+        // std::cout<<"tangent_plane_no: "<<tangent_plane_no<<std::endl<<std::endl;
         
         total_constraint_no = tangent_plane_no * onedim_ctrl_pts_per_seg;    
 
@@ -1339,8 +1339,8 @@ namespace alan_traj
 
                     for(int k = 0; k < corridor[i].PolyhedronTangentArray.size(); k++)                    
                     {
-                        // cout<<s[i]<<endl;
-                        // cout<<"hi: "<<starto_row_for_each_segment<<" "<<starto_col<<endl;                        
+                        // std::cout<<s[i]<<std::endl;
+                        // std::cout<<"hi: "<<starto_row_for_each_segment<<" "<<starto_col<<std::endl;                        
                         A_ieqsfc(starto_row_for_each_segment, starto_col + j) = corridor[i].PolyhedronTangentArray[k].n.X * s[i];
                         A_ieqsfc(starto_row_for_each_segment, starto_col + j + 1 * onedim_ctrl_pts_per_dim) = corridor[i].PolyhedronTangentArray[k].n.Y * s[i];
                         A_ieqsfc(starto_row_for_each_segment, starto_col + j + 2 * onedim_ctrl_pts_per_dim) = corridor[i].PolyhedronTangentArray[k].n.Z * s[i];
@@ -1367,13 +1367,13 @@ namespace alan_traj
             }
         }
 
-        // cout<<A_ieqsfc<<endl<<endl;
+        // std::cout<<A_ieqsfc<<std::endl<<std::endl;
 
     }
 
     void bernstein::setMQMFinal()
     {
-        cout<<"now in setMQMFinal: "<<MQM_array.size()<<endl;
+        std::cout<<"now in setMQMFinal: "<<MQM_array.size()<<std::endl;
 
         int MQM_final_rows = MQM_array.size() * MQM_array[0].rows();
         int MQM_final_cols = MQM_array.size() * MQM_array[0].cols();
@@ -1388,19 +1388,19 @@ namespace alan_traj
         // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/MQM_matrix.txt");
 
         // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/MQM_matrix.txt",ios::app);
-        // save<<MQM_final<<endl;
+        // save<<MQM_final<<std::endl;
     }
 
     void bernstein::setAFinal()
     {
-        // cout<<A_array[0]<<endl;
+        // std::cout<<A_array[0]<<std::endl;
         int A_final_rows = A_array.size() * A_array[0].rows();
         int A_final_cols = A_array.size() * A_array[0].cols();
 
-        // cout<<"setAFianl"<<endl;
+        // std::cout<<"setAFianl"<<std::endl;
 
-        // cout<<A_final_rows<<endl;
-        // cout<<A_final_cols<<endl;
+        // std::cout<<A_final_rows<<std::endl;
+        // std::cout<<A_final_cols<<std::endl;
 
         A_final.resize(A_final_rows, A_final_cols);
 
@@ -1433,7 +1433,7 @@ namespace alan_traj
 
     void bernstein::setAFinal_polyh()
     {
-        cout<<"\n\nhi now in AFinal_polyh..."<<endl;
+        std::cout<<"\n\nhi now in AFinal_polyh..."<<std::endl;
         
         int A_final_rows = A_sfc_eq_array.size() * A_sfc_eq_array[0].rows()
                             + A_ieqsfc.rows()
@@ -1444,12 +1444,12 @@ namespace alan_traj
         
         A_final.resize(A_final_rows, A_final_cols);
         A_final.setZero();
-        cout<<"here are the final sizes of constraints...\n";
-        cout<<A_sfc_eq_array.size() * A_sfc_eq_array[0].rows()<<endl;
-        cout<<A_ieqsfc.rows()<<endl;
-        cout<<A_sfc_ieq_dyn_array.size() * A_sfc_ieq_dyn_array[0].rows()<<endl;
+        std::cout<<"here are the final sizes of constraints...\n";
+        std::cout<<A_sfc_eq_array.size() * A_sfc_eq_array[0].rows()<<std::endl;
+        std::cout<<A_ieqsfc.rows()<<std::endl;
+        std::cout<<A_sfc_ieq_dyn_array.size() * A_sfc_ieq_dyn_array[0].rows()<<std::endl;
 
-        cout<<"A_final_polyh size: "<<A_final.rows()<<"  "<<A_final.cols()<<endl;
+        std::cout<<"A_final_polyh size: "<<A_final.rows()<<"  "<<A_final.cols()<<std::endl;
 
         for(int i = 0 ; i < A_sfc_eq_array.size(); i++)
         {
@@ -1472,7 +1472,7 @@ namespace alan_traj
         // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/A_matrix.txt");
 
         // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/A_matrix.txt",ios::app);
-        // save<<A_final<<endl;
+        // save<<A_final<<std::endl;
         // save.close();
     }
 
@@ -1498,7 +1498,7 @@ namespace alan_traj
         // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/ub.txt");
 
         // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/ub.txt",ios::app);
-        // save<<ub_final<<endl;
+        // save<<ub_final<<std::endl;
         // save.close();
     }
 
@@ -1525,26 +1525,26 @@ namespace alan_traj
         // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/lb.txt");
 
         // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/log/lb.txt",ios::app);
-        // save<<lb_final<<endl;
+        // save<<lb_final<<std::endl;
         // save.close();
 
     }
 
-    Eigen::MatrixXd bernstein::set_1_MQMSample(int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    Eigen::MatrixXd bernstein::set_1_MQMSample(int axis_dim, int n_order, int m, int d_order, std::vector<double> s)
     // set 1 MQM sample
     // with different time allocations
     // utilize it in pre-requisite
     {
         Eigen::MatrixXd MQM_return;
 
-        vector<Eigen::MatrixXd> MQM_array;
+        std::vector<Eigen::MatrixXd> MQM_array;
 
-        // cout<<endl<<endl;
-        // cout<<"hi now in setMQMSample"<<endl;
+        // std::cout<<std::endl<<std::endl;
+        // std::cout<<"hi now in setMQMSample"<<std::endl;
 
-        // cout<<axis_dim<<endl;
-        // cout<<n_order<<endl;
-        // cout<<m<<endl;
+        // std::cout<<axis_dim<<std::endl;
+        // std::cout<<n_order<<std::endl;
+        // std::cout<<m<<std::endl;
 
         MQM_array.clear();
 
@@ -1562,7 +1562,7 @@ namespace alan_traj
         for(int i = 0; i < MQM_array.size(); i++)
             MQM_return.block(i * MQM_array[i].rows(), i * MQM_array[i].cols(), MQM_array[i].rows(), MQM_array[i].cols()) = MQM_array[i];
 
-        // cout<<"hi: "<<MQM_return.rows()<<" "<<MQM_return.cols()<<endl;
+        // std::cout<<"hi: "<<MQM_return.rows()<<" "<<MQM_return.cols()<<std::endl;
         return MQM_return;
     }
 
@@ -1571,8 +1571,8 @@ namespace alan_traj
         int n_order, 
         int m, 
         int d_order,  
-        vector<alan_visualization::Polyhedron> sfc_list,
-        vector<double> s
+        std::vector<alan_visualization::Polyhedron> sfc_list,
+        std::vector<double> s
     )
     {
         Eigen::MatrixXd Aeq_1_sample = set_1_AeqSample(axis_dim, n_order, m, d_order, s);
@@ -1586,11 +1586,11 @@ namespace alan_traj
         
         
         // later after lunch, combine all these, and check dimension...
-        // cout<<Aeq_1_sample<<Aieqdyn_1_sample<<A_ieqsfc<<endl;
-        // cout<<"here!..."<<endl;
-        // cout<<Aeq_1_sample.rows()<<" "<<Aeq_1_sample.cols()<<endl;
-        // cout<<Aieqdyn_1_sample.rows()<<" "<<Aieqdyn_1_sample.cols()<<endl;
-        // cout<<A_ieqsfc.rows()<<" "<<A_ieqsfc.cols()<<endl<<endl;;
+        // std::cout<<Aeq_1_sample<<Aieqdyn_1_sample<<A_ieqsfc<<std::endl;
+        // std::cout<<"here!..."<<std::endl;
+        // std::cout<<Aeq_1_sample.rows()<<" "<<Aeq_1_sample.cols()<<std::endl;
+        // std::cout<<Aieqdyn_1_sample.rows()<<" "<<Aieqdyn_1_sample.cols()<<std::endl;
+        // std::cout<<A_ieqsfc.rows()<<" "<<A_ieqsfc.cols()<<std::endl<<std::endl;;
 
         Eigen::MatrixXd A_return;
         int A_return_rows = Aeq_1_sample.rows() + A_ieqsfc.rows() + Aieqdyn_1_sample.rows();
@@ -1614,27 +1614,27 @@ namespace alan_traj
         A_return.block(starto_row, starto_col, Aieqdyn_1_sample.rows(), Aieqdyn_1_sample.cols()) 
             = Aieqdyn_1_sample;
 
-        // cout<<A_return.rows()<<endl;
-        // cout<<A_return.cols()<<endl<<endl;
+        // std::cout<<A_return.rows()<<std::endl;
+        // std::cout<<A_return.cols()<<std::endl<<std::endl;
 
         return A_return;
     }
 
-    Eigen::MatrixXd bernstein::set_1_AeqSample(int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    Eigen::MatrixXd bernstein::set_1_AeqSample(int axis_dim, int n_order, int m, int d_order, std::vector<double> s)
     // set 1 Aeq sample
     // with different time allocations
     // utilize it in pre-requisite
     {
         Eigen::MatrixXd Aeq_return;
 
-        vector<Eigen::MatrixXd> Aeq_array;
+        std::vector<Eigen::MatrixXd> Aeq_array;
 
-        // cout<<endl<<endl;
-        // cout<<"hi now in setAeqSample"<<endl;
+        // std::cout<<std::endl<<std::endl;
+        // std::cout<<"hi now in setAeqSample"<<std::endl;
 
-        // cout<<axis_dim<<endl;
-        // cout<<n_order<<endl;
-        // cout<<m<<endl;
+        // std::cout<<axis_dim<<std::endl;
+        // std::cout<<n_order<<std::endl;
+        // std::cout<<m<<std::endl;
 
         Aeq_array.clear();
 
@@ -1653,22 +1653,22 @@ namespace alan_traj
         for(int i = 0; i < Aeq_array.size(); i++)
             Aeq_return.block(i * Aeq_array[i].rows(), i * Aeq_array[i].cols(), Aeq_array[i].rows(), Aeq_array[i].cols()) = Aeq_array[i];
         
-        // cout<<"hi...: "<<Aeq_return.rows()<<" "<<Aeq_return.cols()<<endl; 
+        // std::cout<<"hi...: "<<Aeq_return.rows()<<" "<<Aeq_return.cols()<<std::endl; 
         return Aeq_return;
     }
 
-    Eigen::MatrixXd bernstein::set_1_AieqDynSample(int axis_dim, int n_order, int m, int d_order, vector<double> s)
+    Eigen::MatrixXd bernstein::set_1_AieqDynSample(int axis_dim, int n_order, int m, int d_order, std::vector<double> s)
     {
         Eigen::MatrixXd Aieq_return;
 
-        vector<Eigen::MatrixXd> Aieq_array;
+        std::vector<Eigen::MatrixXd> Aieq_array;
 
-        // cout<<endl<<endl;
-        // cout<<"hi now in setAeqSample"<<endl;
+        // std::cout<<std::endl<<std::endl;
+        // std::cout<<"hi now in setAeqSample"<<std::endl;
 
-        // cout<<axis_dim<<endl;
-        // cout<<n_order<<endl;
-        // cout<<m<<endl;
+        // std::cout<<axis_dim<<std::endl;
+        // std::cout<<n_order<<std::endl;
+        // std::cout<<m<<std::endl;
 
         Aieq_array.clear();
 
@@ -1687,12 +1687,12 @@ namespace alan_traj
         for(int i = 0; i < Aieq_array.size(); i++)
             Aieq_return.block(i * Aieq_array[i].rows(), i * Aieq_array[i].cols(), Aieq_array[i].rows(), Aieq_array[i].cols()) = Aieq_array[i];
         
-        // cout<<"hi...: "<<Aieq_return.rows()<<" "<<Aieq_return.cols()<<endl; 
-        // cout<<Aieq_return<<endl;
+        // std::cout<<"hi...: "<<Aieq_return.rows()<<" "<<Aieq_return.cols()<<std::endl; 
+        // std::cout<<Aieq_return<<std::endl;
         return Aieq_return;
     }
 
-    tuple<Eigen::VectorXd, Eigen::VectorXd> bernstein::set_ub_lb(
+    std::tuple<Eigen::VectorXd, Eigen::VectorXd> bernstein::set_ub_lb(
         int axis_dim, 
         int n_order, 
         int m, 
@@ -1733,7 +1733,7 @@ namespace alan_traj
         setUbFinal_polyh();
         setLbFinal_polyh();
 
-        return tuple<Eigen::VectorXd, Eigen::VectorXd>(ub_final, lb_final);
+        return std::tuple<Eigen::VectorXd, Eigen::VectorXd>(ub_final, lb_final);
 
     }
 
@@ -1752,9 +1752,9 @@ namespace alan_traj
         return _r;
     }
 
-    vector<double> bernstein::pascal_triangle(int level)
+    std::vector<double> bernstein::pascal_triangle(int level)
     {
-        vector<double> _array;
+        std::vector<double> _array;
         switch(level)
         {
         case 1: 

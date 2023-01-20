@@ -12,16 +12,16 @@ private:
 
     //solutions
     Eigen::VectorXd qpsol;
-    vector<Eigen::VectorXd> _qpsol_array;
+    std::vector<Eigen::VectorXd> _qpsol_array;
 
     //sampling
-    vector<Eigen::MatrixXd> _MQM_array;
-    vector<Eigen::SparseMatrix<double>> _Hessian_array;
-    vector<Eigen::SparseMatrix<double>> _Alinear_array;
+    std::vector<Eigen::MatrixXd> _MQM_array;
+    std::vector<Eigen::SparseMatrix<double>> _Hessian_array;
+    std::vector<Eigen::SparseMatrix<double>> _Alinear_array;
     Eigen::VectorXd _ub;
     Eigen::VectorXd _lb;
-    vector<vector<double>> _time_samples;
-    vector<double> _cost_array;
+    std::vector<std::vector<double>> _time_samples;
+    std::vector<double> _cost_array;
 
     inline void initiate_qpsolve(int nV, int nC)
     {
@@ -37,22 +37,22 @@ private:
         _qpsolver.data()->setNumberOfConstraints(nC);
 
         if(!_qpsolver.data()->setHessianMatrix(_Hessian_array[0]))
-        cout<<"Hessian not set!"<<endl;
+        std::cout<<"Hessian not set!"<<std::endl;
 
         if(!_qpsolver.data()->setGradient(g))
-            cout<<"gradient not set!"<<endl;
+            std::cout<<"gradient not set!"<<std::endl;
         
         if(!_qpsolver.data()->setLinearConstraintsMatrix(_Alinear_array[0]))
-            cout<<"linear matrix not set!"<<endl;
+            std::cout<<"linear matrix not set!"<<std::endl;
         
         if(!_qpsolver.data()->setLowerBound(_lb))
-            cout<<"lb not set!!"<<endl;
+            std::cout<<"lb not set!!"<<std::endl;
         
         if(!_qpsolver.data()->setUpperBound(_ub))
-            cout<<"ub not set!"<<endl;
+            std::cout<<"ub not set!"<<std::endl;
         
         if(!_qpsolver.initSolver())
-            cout<<"please initialize solver!!"<<endl;
+            std::cout<<"please initialize solver!!"<<std::endl;
 
     }
 
@@ -89,17 +89,17 @@ public:
     
     // sampling traj
     bool qp_opt_samples(
-        vector<Eigen::VectorXd>& qpsol_array,
-        vector<vector<double>>& sample_time_array,
-        vector<Eigen::MatrixXd>& MQM_opti_array,
-        vector<Eigen::MatrixXd>& A_opti_array,
-        vector<double>& optimal_time_allocation,
+        std::vector<Eigen::VectorXd>& qpsol_array,
+        std::vector<std::vector<double>>& sample_time_array,
+        std::vector<Eigen::MatrixXd>& MQM_opti_array,
+        std::vector<Eigen::MatrixXd>& A_opti_array,
+        std::vector<double>& optimal_time_allocation,
         int& optimal_index
     );
 
     inline void set_sampling_matrices(
-        vector<Eigen::MatrixXd>& MQM_array,
-        vector<Eigen::MatrixXd>& A_array,
+        std::vector<Eigen::MatrixXd>& MQM_array,
+        std::vector<Eigen::MatrixXd>& A_array,
         Eigen::VectorXd& ub,
         Eigen::VectorXd& lb
     )
@@ -123,13 +123,13 @@ public:
         int nV = MQM_array[0].rows();
         int nC = A_array[0].rows();
 
-        // cout<<"hi we now in osqpsolver class..."<<endl;
-        // cout<<_Hessian_array.size()<<endl;
+        // std::cout<<"hi we now in osqpsolver class..."<<std::endl;
+        // std::cout<<_Hessian_array.size()<<std::endl;
 
         initiate_qpsolve(nV, nC);
     };
 
-    inline void set_time_sampling(vector<vector<double>> time_samples){_time_samples = time_samples;}
+    inline void set_time_sampling(std::vector<std::vector<double>> time_samples){_time_samples = time_samples;}
 
 
     

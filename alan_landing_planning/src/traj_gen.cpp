@@ -13,7 +13,7 @@ namespace alan_traj
         bezier_info b_info,  
         bezier_constraints b_constraints, 
         int discrete_freq,
-        string log_path)
+        std::string log_path)
         //for variable set
         :
         _axis_dim(b_info.axis_dim), 
@@ -62,7 +62,7 @@ namespace alan_traj
                 _sfc_list, _d_constraints
             );
             printf("1. variable set: ");
-            cout<<_n_dim<<endl;
+            std::cout<<_n_dim<<std::endl;
 
             //2. constraints set
             //should get everything (all axis) here
@@ -71,8 +71,8 @@ namespace alan_traj
             _lb = bezier_base.getLB();
 
             printf("2. constraints set: ");
-            // cout<<"_A:"<<endl;
-            cout<<_A.rows()<<endl;
+            // std::cout<<"_A:"<<std::endl;
+            std::cout<<_A.rows()<<std::endl;
 
 
 
@@ -104,7 +104,7 @@ namespace alan_traj
             //1. variable set
             // _n_dim = (b_info.n_order + 1) + b_info.m
             // printf("1. variable set: ");
-            // cout<<_n_dim<<endl;
+            // std::cout<<_n_dim<<std::endl;
 
             //2. constraints set
             //should be containing all axises matrices
@@ -113,28 +113,28 @@ namespace alan_traj
             _lb = bezier_base.getLB();
 
             // printf("2. constraints set: ");
-            // cout<<_A.rows()<<endl;
+            // std::cout<<_A.rows()<<std::endl;
 
-            // cout<<"_lb:"<<endl;
-            // cout<<_lb.size()<<endl;
-
-
+            // std::cout<<"_lb:"<<std::endl;
+            // std::cout<<_lb.size()<<std::endl;
 
 
 
 
 
-            // cout<<"_ub:"<<endl;
-            // cout<<_ub<<endl;
 
-            // cout<<"\nsummary:\n";
-            // cout<<"A size:\n";
-            // cout<<_A.rows()<<endl;
-            // cout<<_A.cols()<<endl;
-            // cout<<"upper bound size:\n";
-            // cout<<_ub.size()<<endl;
-            // cout<<"lower bound size:\n";
-            // cout<<_lb.size()<<endl;
+
+            // std::cout<<"_ub:"<<std::endl;
+            // std::cout<<_ub<<std::endl;
+
+            // std::cout<<"\nsummary:\n";
+            // std::cout<<"A size:\n";
+            // std::cout<<_A.rows()<<std::endl;
+            // std::cout<<_A.cols()<<std::endl;
+            // std::cout<<"upper bound size:\n";
+            // std::cout<<_ub.size()<<std::endl;
+            // std::cout<<"lower bound size:\n";
+            // std::cout<<_lb.size()<<std::endl;
 
 
             
@@ -143,7 +143,7 @@ namespace alan_traj
             _MQM = bezier_base.getMQM();
 
             
-            // cout<<_MQM<<endl;
+            // std::cout<<_MQM<<std::endl;
             // _MQM = get_nearest_SPD(_MQM);
 
         }
@@ -169,31 +169,31 @@ namespace alan_traj
         // _ub = _ub * 100;
         // _lb = _lb * 100;
 
-        // cout<<_A<<endl;
-        // cout<<_ub<<endl;
-        // cout<<"\n-----------------------------------------------lalalalalalalalala\n";
-        // cout<<_MQM<<endl;
-        // cout<<_MQM.rows()<<"  "<<_MQM.cols()<<endl<<endl;;
+        // std::cout<<_A<<std::endl;
+        // std::cout<<_ub<<std::endl;
+        // std::cout<<"\n-----------------------------------------------lalalalalalalalala\n";
+        // std::cout<<_MQM<<std::endl;
+        // std::cout<<_MQM.rows()<<"  "<<_MQM.cols()<<std::endl<<std::endl;;
         
 
 
         trajSolver.qp_opt(_MQM, _A, _ub, _lb);
         PolyCoeff = trajSolver.getQpsol();
 
-        string temp = _log_path + "polycoef.txt";
+        std::string temp = _log_path + "polycoef.txt";
         remove(temp.c_str()); 
-        ofstream save(temp ,ios::app);
-        save<<PolyCoeff<<endl;
+        std::ofstream save(temp ,std::ios::app);
+        save<<PolyCoeff<<std::endl;
         save.close();
 
-        cout<<"\n----------------results here-------------------------\n";
-        cout<<PolyCoeff<<endl<<endl<<endl;
+        std::cout<<"\n----------------results here-------------------------\n";
+        std::cout<<PolyCoeff<<std::endl<<std::endl<<std::endl;
 
-        cout<<"size of ctrl pts..."<<PolyCoeff.size()<<endl;
+        std::cout<<"size of ctrl pts..."<<PolyCoeff.size()<<std::endl;
 
-        cout<<"enter set Time Discrete..."<<endl;
+        std::cout<<"enter set Time Discrete..."<<std::endl;
         setTimeDiscrete();
-        cout<<"enter set Opti Traj..."<<endl;
+        std::cout<<"enter set Opti Traj..."<<std::endl;
         setOptiTraj();
 
 
@@ -233,23 +233,23 @@ namespace alan_traj
         bool psd_or_not = false;
         double k = 0;
 
-        // cout<<"spd:"<<endl<<spd<<endl;
+        // std::cout<<"spd:"<<std::endl<<spd<<std::endl;
 
         while(!psd_or_not && k < 10)
         {
-            cout<<k<<endl;
+            std::cout<<k<<std::endl;
             Eigen::LLT<Eigen::MatrixXd> llt_check(spd);
             if(llt_check.info() == Eigen::NumericalIssue)//
             //try to do cholesky decomposition
             //as if A has A=LL^T
             //A is Hermitian & Positive (semi-)Definite
             {
-                // cout<<"Possibly non semi-positive definitie matrix!"<<endl;;
+                // std::cout<<"Possibly non semi-positive definitie matrix!"<<std::endl;;
             }   
             else
             {
                 psd_or_not = true;
-                // cout<<"we got it semi-positive definte!"<<endl;
+                // std::cout<<"we got it semi-positive definte!"<<std::endl;
                 continue;
             }
 
@@ -262,9 +262,9 @@ namespace alan_traj
 
             for(int i = 0; i < spd_eigen_vector.size(); i++)
             {
-                // cout<<"here's one:"<<endl;
-                // cout<<mineig<<endl;
-                // cout<<spd_eigen_vector(i)<<endl<<endl;;;
+                // std::cout<<"here's one:"<<std::endl;
+                // std::cout<<mineig<<std::endl;
+                // std::cout<<spd_eigen_vector(i)<<std::endl<<std::endl;;;
 
                 if(spd_eigen_vector(i) < mineig)
                     mineig = spd_eigen_vector(i);
@@ -303,17 +303,17 @@ namespace alan_traj
         remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt");
         // remove("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/p_base.txt");
 
-        // cout<<"seg_i: "<<_m<<endl;
-        // cout<<"_n_order: "<<_n_order<<endl;
+        // std::cout<<"seg_i: "<<_m<<std::endl;
+        // std::cout<<"_n_order: "<<_n_order<<std::endl;
 
 
-        // cout<<time_vector.size()<<endl;
+        // std::cout<<time_vector.size()<<std::endl;
 
 
         for(int seg_i = 0; seg_i < _m; seg_i++)
         {
 
-            cout<<"seg time size: "<<time_vector[seg_i].size()<<endl;
+            std::cout<<"seg time size: "<<time_vector[seg_i].size()<<std::endl;
 
             for(int i = 0; i < time_vector[seg_i].size(); i++)
             {
@@ -323,29 +323,29 @@ namespace alan_traj
                 
                 for(int k = 0; k < _n_order + 1; k++)
                 {
-                    // cout<<"here: "<<seg_i<<" "<<i<<" "<<k<<endl;
-                    // cout<<"here: "<<_n_order<<"  "<<k<<endl;
+                    // std::cout<<"here: "<<seg_i<<" "<<i<<" "<<k<<std::endl;
+                    // std::cout<<"here: "<<_n_order<<"  "<<k<<std::endl;
 
-                    // cout<<nchoosek(_n_order, k)<<endl;
+                    // std::cout<<nchoosek(_n_order, k)<<std::endl;
 
                     
 
                     p_base = nchoosek(_n_order, k) 
                         * pow(time_vector[seg_i][i], k) 
                         * pow(1 - time_vector[seg_i][i], _n_order - k);
-                    // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/p_base.txt",ios::app);
-                    // save<<p_base<<endl;
+                    // std::ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/p_base.txt",std::ios::app);
+                    // save<<p_base<<std::endl;
                 
                 
                     // save.close();
                     
-                    // cout<<"p_Base: "<<p_base<<endl;
+                    // std::cout<<"p_Base: "<<p_base<<std::endl;
 
-                    // cout<< seg_i * (_n_order + 1) + k<<endl;
-                    // cout<< seg_i * (_n_order + 1) + k + _n_dim_per_axis<<endl;
+                    // std::cout<< seg_i * (_n_order + 1) + k<<std::endl;
+                    // std::cout<< seg_i * (_n_order + 1) + k + _n_dim_per_axis<<std::endl;
 
-                    // cout<<PolyCoeff(seg_i * (_n_order + 1) + k)<<endl;
-                    // cout<<PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis)<<endl;
+                    // std::cout<<PolyCoeff(seg_i * (_n_order + 1) + k)<<std::endl;
+                    // std::cout<<PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis)<<std::endl;
                     
                     x_pos = x_pos + PolyCoeff(seg_i * (_n_order + 1) + k) * p_base;
                     y_pos = y_pos + PolyCoeff(seg_i * (_n_order + 1) + k + _n_dim_per_axis) * p_base;
@@ -362,10 +362,10 @@ namespace alan_traj
 
                 
 
-                // ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt",ios::app);
-                // save<<x_pos<<endl;
-                // save<<y_pos<<endl;
-                // save<<endl;
+                // std::ofstream save("/home/patty/alan_ws/src/alan/alan_landing_planning/src/test/traj.txt",std::ios::app);
+                // save<<x_pos<<std::endl;
+                // save<<y_pos<<std::endl;
+                // save<<std::endl;
                 // save.close();
 
                 optiTraj.trajectory.emplace_back(traj_discrete_pt);                
@@ -374,13 +374,13 @@ namespace alan_traj
 
 
         
-        cout<<"here are the traj size...: "<<optiTraj.trajectory.size()<<endl;
+        std::cout<<"here are the traj size...: "<<optiTraj.trajectory.size()<<std::endl;
 
     }
 
     void traj_gen::setTimeDiscrete()
     {
-        vector<double> time_vector_per_seg;
+        std::vector<double> time_vector_per_seg;
         double discrete_time_step;
         double seg_time;
 
@@ -396,7 +396,7 @@ namespace alan_traj
 
             for(double j = 0; j < discrete_time_step; j++)
             {
-                // cout<<1 * j / discrete_time_step + 1 / discrete_time_step<<endl;
+                // std::cout<<1 * j / discrete_time_step + 1 / discrete_time_step<<std::endl;
                 time_vector_per_seg.emplace_back(1 * j / discrete_time_step + 1 / discrete_time_step);
             }            
 
@@ -415,31 +415,31 @@ namespace alan_traj
     void traj_gen::log()
     {
         //b_traj info log...
-        string temp = _log_path + "b_traj.txt";
+        std::string temp = _log_path + "b_traj.txt";
         remove(temp.c_str()); 
-        ofstream save(temp ,ios::app);
+        std::ofstream save(temp ,std::ios::app);
 
-        save<<"log of trajectory optimization..."<<endl;
-        save<<endl<<"log start..."<<endl<<endl;
-        save<<"_axis_dim:\n"<<_axis_dim<<endl<<endl;
-        save<<"_n_dim:\n"<<_n_dim<<endl<<endl;
-        save<<"_n_dim_per_axis:\n"<<_n_dim_per_axis<<endl<<endl;
-        save<<"_start_posi:\n"<<_start.posi<<endl<<endl;
-        save<<"_start_velo:\n"<<_start.velo<<endl<<endl;
-        save<<"_start_accl:\n"<<_start.accl<<endl<<endl;
+        save<<"log of trajectory optimization..."<<std::endl;
+        save<<std::endl<<"log start..."<<std::endl<<std::endl;
+        save<<"_axis_dim:\n"<<_axis_dim<<std::endl<<std::endl;
+        save<<"_n_dim:\n"<<_n_dim<<std::endl<<std::endl;
+        save<<"_n_dim_per_axis:\n"<<_n_dim_per_axis<<std::endl<<std::endl;
+        save<<"_start_posi:\n"<<_start.posi<<std::endl<<std::endl;
+        save<<"_start_velo:\n"<<_start.velo<<std::endl<<std::endl;
+        save<<"_start_accl:\n"<<_start.accl<<std::endl<<std::endl;
         save<<"_sfc_list:\n";
         for(auto what : _sfc_list)
-            save<<"here is one corridor...: "<<what.PolyhedronTangentArray.size()<<endl;
-        save<<endl;
-        save<<"_d_constraints v:\n"<<_d_constraints.v_max<<endl<<endl;
-        save<<"_d_constraints a:\n"<<_d_constraints.a_max<<endl<<endl;
-        save<<"_n_order\n"<<_n_order<<endl<<endl;
-        save<<"_m\n"<<_m<<endl<<endl;
-        save<<"_d_order\n"<<_d_order<<endl<<endl;
+            save<<"here is one corridor...: "<<what.PolyhedronTangentArray.size()<<std::endl;
+        save<<std::endl;
+        save<<"_d_constraints v:\n"<<_d_constraints.v_max<<std::endl<<std::endl;
+        save<<"_d_constraints a:\n"<<_d_constraints.a_max<<std::endl<<std::endl;
+        save<<"_n_order\n"<<_n_order<<std::endl<<std::endl;
+        save<<"_m\n"<<_m<<std::endl<<std::endl;
+        save<<"_d_order\n"<<_d_order<<std::endl<<std::endl;
 
         for(auto what : _s)
-            save<<"_s\n"<<what<<endl;
-        save<<endl<<"log end..."<<endl;
+            save<<"_s\n"<<what<<std::endl;
+        save<<std::endl<<"log end..."<<std::endl;
         
         save.close();
 
@@ -447,26 +447,26 @@ namespace alan_traj
         //matrix log...
         temp = _log_path + "MQM_matrix.txt";
         remove(temp.c_str()); 
-        save = ofstream(temp ,ios::app);
-        save<<_MQM<<endl;
+        save = std::ofstream(temp ,std::ios::app);
+        save<<_MQM<<std::endl;
         save.close();
 
         temp = _log_path + "A_matrix.txt";
         remove(temp.c_str()); 
-        save = ofstream(temp ,ios::app);
-        save<<_A<<endl;
+        save = std::ofstream(temp ,std::ios::app);
+        save<<_A<<std::endl;
         save.close();
 
         temp = _log_path + "ub.txt";
         remove(temp.c_str()); 
-        save = ofstream(temp ,ios::app);
-        save<<_ub<<endl;
+        save = std::ofstream(temp ,std::ios::app);
+        save<<_ub<<std::endl;
         save.close();
 
         temp = _log_path + "lb.txt";
         remove(temp.c_str()); 
-        save = ofstream(temp ,ios::app);
-        save<<_lb<<endl;
+        save = std::ofstream(temp ,std::ios::app);
+        save<<_lb<<std::endl;
         save.close();
     }
 }
