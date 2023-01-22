@@ -404,11 +404,13 @@ bool planner_server::land()
         plan_traj = false;
     }
 
+
     return false;
 }
 
 bool planner_server::shutdown()
 {
+    
     return false;
 }
 
