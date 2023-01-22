@@ -212,7 +212,7 @@ void planner_server::fsm_manager()
             target_traj_pose(0) = takeoff_hover_pt.x;
             target_traj_pose(1) = takeoff_hover_pt.y;
             target_traj_pose(2) = takeoff_hover_pt.z;
-            target_traj_pose(3) = uav_traj_pose(3);
+            target_traj_pose(3) = ugv_traj_pose(3);
 
             std::cout<<"target takeoff position\n"<<target_traj_pose<<std::endl<<std::endl;
         }
@@ -365,7 +365,7 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     //follow dynamic
     target_traj_pose = set_following_target_pose();
     
-    //perform block traj
+    //perform block traj during experiment
     // target_traj_pose = set_uav_block_pose();
 
     //decide whether to land based on following quality
@@ -404,13 +404,30 @@ bool planner_server::land()
         plan_traj = false;
     }
 
+    if(traj_i < optimal_traj_info_obj.optiTraj.trajectory.size())
+    {
+        target_traj_pose(0) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.x;
+        target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.y;
+        target_traj_pose(2) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.z;
 
-    return false;
+        target_traj_pose.head<3>() 
+            = ugvOdomPose.rotation() * target_traj_pose.head<3>() + ugvOdomPose.translation();
+
+        target_traj_pose(3) = ugv_traj_pose(3);
+
+
+        traj_i++;
+
+        return false;
+    }
+    else
+        return true;
+
 }
 
 bool planner_server::shutdown()
 {
-    
+
     return false;
 }
 
@@ -663,7 +680,7 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
         landing_hover_pt.x = uav_traj_pose(0);
         landing_hover_pt.y = uav_traj_pose(1);
         landing_hover_pt.z = uav_traj_pose(2);
-        landing_hover_pt.yaw = uav_traj_pose(3);
+        landing_hover_pt.yaw = ugv_traj_pose(3);
     }
         
     
@@ -913,6 +930,8 @@ void planner_server::set_alan_b_traj_online()
         posi_current,
         posi_goal
     );
+
+    traj_i = 0;
 
 }
 

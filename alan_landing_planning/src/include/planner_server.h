@@ -151,7 +151,6 @@ private:
     int sample_square_root = 0;
 
 
-
 //rotation function
     Eigen::Vector3d q2rpy(Eigen::Quaterniond q) {
         return q.toRotationMatrix().eulerAngles(1,0,2);
