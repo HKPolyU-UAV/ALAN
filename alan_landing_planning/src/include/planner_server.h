@@ -47,6 +47,7 @@ private:
     ros::Publisher traj_pub;
     ros::Publisher trajArray_pub;
     ros::Publisher ctrl_pt_pub;
+    ros::Publisher kill_attitude_target_pub;
     
     //service
     ros::ServiceClient uav_arming_client;
@@ -77,7 +78,9 @@ private:
     mavros_msgs::SetMode uav_set_mode;
     mavros_msgs::CommandBool arm_cmd;
     mavros_msgs::State uav_current_state;
+    mavros_msgs::AttitudeTarget attitude_target_for_kill;
     bool uav_current_state_inititaed = false;
+    bool kill_or_not = false;
     alan_landing_planning::AlanPlannerMsg uav_current_AlanPlannerMsg, ugv_current_AlanPlannerMsg;
     geometry_msgs::PoseStamped cam_current_PoseMsg;
     geometry_msgs::PoseStamped pose;

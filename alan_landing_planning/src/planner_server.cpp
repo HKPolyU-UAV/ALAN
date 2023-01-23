@@ -19,13 +19,13 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 
     //publish
     pub_fsm = nh.advertise<alan_landing_planning::StateMachine>
-            ("/alan_fsm", 1);
+            ("/alan_fsm", 1, true);
 
     local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>
-            ("/uav/mavros/setpoint_position/local", 1);
+            ("/uav/mavros/setpoint_position/local", 1, true);
         //   /mavros/setpoint_position/local
     local_vel_pub = nh.advertise<geometry_msgs::Twist>
-            ("/uav/mavros/setpoint_velocity/cmd_vel_unstamped", 5);
+            ("/uav/mavros/setpoint_velocity/cmd_vel_unstamped", 5, true);
 
     traj_pub = nh.advertise<alan_landing_planning::Traj>
             ("/alan_visualization/traj", 1, true);
@@ -35,6 +35,9 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 
     ctrl_pt_pub = nh.advertise<alan_landing_planning::Traj>
             ("/alan_visualization/ctrlPts", 1, true);
+    
+    kill_attitude_target_pub = nh.advertise<mavros_msgs::AttitudeTarget>
+            ("/uav/mavros/setpoint_raw/attitude", 1, true);
         
     //client
     uav_arming_client = nh.serviceClient<mavros_msgs::CommandBool>
@@ -427,31 +430,18 @@ bool planner_server::land()
 
 bool planner_server::shutdown()
 {
+    kill_or_not = true;
+    ROS_WARN("UAV NOW SHUTDOWN...");
+    attitude_target_for_kill.thrust = 0;
 
-    return false;
+    if(uav_in_ugv_frame_posi.norm() < 0.1)
+        return true;
+    else
+        return false;
 }
 
 void planner_server::planner_pub()
 {
-    // std::cout<<uav_traj_desired.pose.position.x<<std::endl;
-
-    Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
-
-    uav_traj_twist_desired.linear.x = twist_result(0);
-    uav_traj_twist_desired.linear.y = twist_result(1);
-    uav_traj_twist_desired.linear.z = twist_result(2);
-    uav_traj_twist_desired.angular.z = twist_result(3);
-
-    // std::cout<<target_traj_pose<<std::endl;
-    // std::cout<<twist_result<<std::endl<<std::endl;
-
-    local_vel_pub.publish(uav_traj_twist_desired);
-
-    // if(fsm_state == FOLLOW || fsm_state == LAND)
-    //     local_vel_pub.publish(uav_traj_twist_desired);
-    // else
-    //     local_pos_pub.publish(uav_traj_pose_desired);
-
     alan_fsm_object.finite_state_machine = fsm_state;
     pub_fsm.publish(alan_fsm_object);
 
@@ -462,7 +452,20 @@ void planner_server::planner_pub()
         trajArray_pub.publish(optimal_traj_info_obj.optiTrajArray);        
         ctrl_pt_pub.publish(optimal_traj_info_obj.ctrl_pts_optimal);
     }
+    // std::cout<<uav_traj_desired.pose.position.x<<std::endl;
 
+    Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
+
+    uav_traj_twist_desired.linear.x = twist_result(0);
+    uav_traj_twist_desired.linear.y = twist_result(1);
+    uav_traj_twist_desired.linear.z = twist_result(2);
+    uav_traj_twist_desired.angular.z = twist_result(3);
+
+
+    if(fsm_state != SHUTDOWN)
+        local_vel_pub.publish(uav_traj_twist_desired);
+    else
+        kill_attitude_target_pub.publish(attitude_target_for_kill);
 }
 
 Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vector4d setpoint)
