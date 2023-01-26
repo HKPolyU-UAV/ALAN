@@ -21,14 +21,14 @@ sample_square_root: 31
 
 PID_gain:
 #kp
-  - x: 2.0
-    y: 2.0
+  - x: 2.5
+    y: 2.5
     z: 1.5
     yaw: 1.0
 #ki
-  - x: 0.05
-    y: 0.05
-    z: 0.05
+  - x: 0.2
+    y: 0.2
+    z: 0.2
     yaw: 0.05
 #kd:
   - x: 0.0

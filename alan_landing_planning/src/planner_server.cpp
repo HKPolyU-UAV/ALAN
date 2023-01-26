@@ -397,6 +397,12 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     //     return false;
     // }
     // if(set_alan_b_traj_prerequisite)
+
+
+
+    std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
+
+    
     if(
         uav_in_ugv_frame_posi.norm() - following_norm < 0.20 &&
         prerequisite_set
@@ -993,7 +999,7 @@ void planner_server::set_alan_b_traj_online()
     );
 
     //set landing trajectory indicator to 0
-    traj_i = 0;
+    traj_i = 4;
 
 }
 
