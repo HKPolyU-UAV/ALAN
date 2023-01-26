@@ -287,13 +287,24 @@ void planner_server::fsm_manager()
     {
         if(print_or_not)
         {
-            ROS_GREEN_STREAM(SHUTDOWN);
+            ROS_YELLOW_STREAM(SHUTDOWN);
             print_or_not = false;
         }
         if(shutdown())
         {
-            
+            fsm_state = MISSION_COMPLETE;
+            print_or_not = true;
+            last_request = ros::Time::now().toSec();
         }
+    }
+    else if(fsm_state == MISSION_COMPLETE)
+    {
+        if(print_or_not)
+        {
+            ROS_GREEN_STREAM(MISSION_COMPLETE);
+            print_or_not = false;
+        }
+        ROS_GREEN_STREAM("NOW WAIT FOR EXIT...");
     }
     else
     {
@@ -342,20 +353,20 @@ bool planner_server::get_ready()
 bool planner_server::taking_off()
 {
     double dis = 
-        pow(
+        std::pow(
             uav_current_AlanPlannerMsg.position.x - takeoff_hover_pt.x,
             2
         )
-        + pow(
+        + std::pow(
             uav_current_AlanPlannerMsg.position.y - takeoff_hover_pt.y,
             2
         )
-        + pow(
+        + std::pow(
             uav_current_AlanPlannerMsg.position.z - takeoff_hover_pt.z,
             2
         );
     
-    dis = sqrt(dis);
+    dis = std::sqrt(dis);
     // std::cout<<dis<<std::endl;
     if(dis < 0.15)
         return true;
@@ -385,8 +396,15 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     //     // std::cout<<"not good to fly"<<std::endl;
     //     return false;
     // }
+    // if(set_alan_b_traj_prerequisite)
+    if(
+        uav_in_ugv_frame_posi.norm() - following_norm < 0.15 &&
+        prerequisite_set
+    )
+        return true;
+    else
+        return false;        
 
-    return false;
 }
 
 bool planner_server::hover()
@@ -434,7 +452,9 @@ bool planner_server::shutdown()
     ROS_WARN("UAV NOW SHUTDOWN...");
     attitude_target_for_kill.thrust = 0;
 
-    if(uav_in_ugv_frame_posi.norm() < 0.1)
+    Eigen::Vector2d temp = uav_in_ugv_frame_posi.head<2>();
+
+    if(temp.norm() < 0.1)
         return true;
     else
         return false;
@@ -462,7 +482,7 @@ void planner_server::planner_pub()
     uav_traj_twist_desired.angular.z = twist_result(3);
 
 
-    if(fsm_state != SHUTDOWN)
+    if(fsm_state != SHUTDOWN && fsm_state != MISSION_COMPLETE)
         local_vel_pub.publish(uav_traj_twist_desired);
     else
         kill_attitude_target_pub.publish(attitude_target_for_kill);
@@ -750,9 +770,11 @@ void planner_server::config(ros::NodeHandle& _nh)
     landing_time_duration_max 
         = (take_off_height - touch_down_height + landing_horizontal) / uav_landing_velocity;
     landing_time_duration_min 
-        = (sqrt(pow(take_off_height - touch_down_height,2) + pow(landing_horizontal,2))) / v_max;
+        = (std::sqrt(std::pow(take_off_height - touch_down_height,2) + std::pow(landing_horizontal,2))) / v_max;
     std::cout<<"time here: "<<landing_time_duration_max<<" "<<landing_time_duration_min<<std::endl;
-    
+    following_norm = std::pow(landing_horizontal,2) + std::pow(take_off_height,2);
+    following_norm = std::sqrt(following_norm);
+
     nh.getParam("/alan_master_planner_node/log_path", log_path);
 
     std::cout<<"v_max: "<<v_max<<std::endl;
@@ -934,6 +956,7 @@ void planner_server::set_alan_b_traj_online()
         posi_goal
     );
 
+    //set landing trajectory indicator to 0
     traj_i = 0;
 
 }

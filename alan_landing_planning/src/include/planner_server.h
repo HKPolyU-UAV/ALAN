@@ -18,6 +18,7 @@
 #define FOLLOW "FOLLOW"
 #define LAND "LAND"
 #define SHUTDOWN "SHUTDOWN"
+#define MISSION_COMPLETE "MISSION_COMPLETE"
 
 // #define REPLAN "IDLE"
 
@@ -97,6 +98,7 @@ private:
     double last_request;
     double pid_last_request = 0;
     bool print_or_not = true;
+    double following_norm = 0;
 
     Eigen::Vector4d kp, ki, kd;
     Eigen::Vector4d last_error, integral;
