@@ -755,6 +755,29 @@ void planner_server::config(ros::NodeHandle& _nh)
     nh.getParam("/alan_master_planner_node/m", m);
     nh.getParam("/alan_master_planner_node/d_order", d_order);
 
+    nh.getParam("/alan_master_planner_node/PID_gain", pid_gain_list);
+
+
+    // kp(0) = pid_gain_list[0]["kp"];
+    // kp(1) = pid_gain_list["kp"]["y"];
+    // kp(2) = pid_gain_list["kp"]["z"];
+    // kp(3) = pid_gain_list["kp"]["yaw"];
+
+    // ki(0) = pid_gain_list["ki"]["x"];
+    // ki(1) = pid_gain_list["ki"]["y"];
+    // ki(2) = pid_gain_list["ki"]["z"];
+    // ki(3) = pid_gain_list["ki"]["yaw"];
+
+    // kd(0) = pid_gain_list["kd"]["x"];
+    // kd(1) = pid_gain_list["kd"]["y"];
+    // kd(2) = pid_gain_list["kd"]["z"];
+    // kd(3) = pid_gain_list["kd"]["yaw"];
+
+    std::cout<<kp<<std::endl<<std::endl;
+    std::cout<<ki<<std::endl;
+    std::cout<<kd<<std::endl;
+    
+
     nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
     nh.getParam("/alan_master_planner_node/ugv_height", ugv_height);
     
