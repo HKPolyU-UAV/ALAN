@@ -398,7 +398,7 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     // }
     // if(set_alan_b_traj_prerequisite)
     if(
-        uav_in_ugv_frame_posi.norm() - following_norm < 0.10 &&
+        uav_in_ugv_frame_posi.norm() - following_norm < 0.20 &&
         prerequisite_set
     )
         return true;
@@ -500,58 +500,58 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
         return Eigen::Vector4d(0, 0, 0, 0);
     }
         
-    Eigen::Vector4d K_p(2.0, 2.0, 1.5, 1);
-    Eigen::Vector4d K_i(0.05, 0.05, 0.05, 0.05);
-    Eigen::Vector4d K_d(0, 0, 0, 0);
+    // Eigen::Vector4d K_p(2.0, 2.0, 1.5, 1);
+    // Eigen::Vector4d K_i(0.05, 0.05, 0.05, 0.05);
+    // Eigen::Vector4d K_d(0, 0, 0, 0);
 
     error = setpoint - pose;
 
 
-    if (error[3] >= M_PI)
+    if (error(3) >= M_PI)
     {
-        error[3] -= 2 * M_PI;
+        error(3) -= 2 * M_PI;
     }
 
-    if (error[3] <= -M_PI)
+    if (error(3) <= -M_PI)
     {
-        error[3] += 2  *M_PI;
+        error(3) += 2  *M_PI;
     }
 
     for (int i = 0; i < 4; i++)
     { 
         //i = x,y,z
-        integral[i] += (error[i] * iteration_time);
+        integral(i) += (error(i) * iteration_time);
 
-        if(integral[i] >  1)
+        if(integral(i) >  1)
         { 
-            integral[i] = 1;
+            integral(i) = 1;
         }
 
-        if(integral[i] < -1)
+        if(integral(i) < -1)
         { 
-            integral[i] = -1;
+            integral(i) = -1;
         }
 
-        derivative[i] = (error[i] - last_error[i]) / (iteration_time + 1e-10);
+        derivative(i) = (error(i) - last_error(i)) / (iteration_time + 1e-10);
 
-        u_p[i] = error[i] * K_p[i];        //P controller
-        u_i[i] = integral[i] * K_i[i];     //I controller
-        u_d[i] = derivative[i] * K_d[i];   //D controller
+        u_p(i) = error(i) * kp(i);        //P controller
+        u_i(i) = integral(i) * ki(i);     //I controller
+        u_d(i) = derivative(i) * kd(i);   //D controller
 
-        output[i] = u_p[i] + u_i[i] + u_d[i];
+        output(i) = u_p(i) + u_i(i) + u_d(i);
         
     }
 
     for (int i = 0; i < 3; i++)
     {
-        if(output[i] >  v_max)
+        if(output(i) >  v_max)
             { 
-                output[i] =  v_max;
+                output(i) =  v_max;
             }
 
-        if(output[i] < -v_max)
+        if(output(i) < -v_max)
         { 
-            output[i] = -v_max;
+            output(i) = -v_max;
         }
     }
 
@@ -757,26 +757,39 @@ void planner_server::config(ros::NodeHandle& _nh)
 
     nh.getParam("/alan_master_planner_node/PID_gain", pid_gain_list);
 
+    std::cout<<pid_gain_list.size()<<std::endl;
+    std::cout<<"here! hi:..."<<std::endl;
+    for(int i = 0; i < pid_gain_list.size(); i++)
+    {
+        std::cout<<"hi...."<<i<<std::endl;
+        if(i == 0)
+        {
+            kp(0) = pid_gain_list[i]["x"];
+            kp(1) = pid_gain_list[i]["y"];
+            kp(2) = pid_gain_list[i]["z"];
+            kp(3) = pid_gain_list[i]["yaw"];
+        }
+        else if(i == 1)
+        {
+            ki(0) = pid_gain_list[i]["x"];
+            ki(1) = pid_gain_list[i]["y"];
+            ki(2) = pid_gain_list[i]["z"];
+            ki(3) = pid_gain_list[i]["yaw"];
+        }
+        else if(i == 2)
+        {
+            kd(0) = pid_gain_list[i]["x"];
+            kd(1) = pid_gain_list[i]["y"];
+            kd(2) = pid_gain_list[i]["z"];
+            kd(3) = pid_gain_list[i]["yaw"];
+        }
+        std::cout<<i<<std::endl;            
+    }
 
-    // kp(0) = pid_gain_list[0]["kp"];
-    // kp(1) = pid_gain_list["kp"]["y"];
-    // kp(2) = pid_gain_list["kp"]["z"];
-    // kp(3) = pid_gain_list["kp"]["yaw"];
-
-    // ki(0) = pid_gain_list["ki"]["x"];
-    // ki(1) = pid_gain_list["ki"]["y"];
-    // ki(2) = pid_gain_list["ki"]["z"];
-    // ki(3) = pid_gain_list["ki"]["yaw"];
-
-    // kd(0) = pid_gain_list["kd"]["x"];
-    // kd(1) = pid_gain_list["kd"]["y"];
-    // kd(2) = pid_gain_list["kd"]["z"];
-    // kd(3) = pid_gain_list["kd"]["yaw"];
-
+    std::cout<<"pid_gains..."<<std::endl;
     std::cout<<kp<<std::endl<<std::endl;
-    std::cout<<ki<<std::endl;
-    std::cout<<kd<<std::endl;
-    
+    std::cout<<ki<<std::endl<<std::endl;
+    std::cout<<kd<<std::endl<<std::endl;
 
     nh.getParam("/alan_master_planner_node/landing_velocity", uav_landing_velocity);
     nh.getParam("/alan_master_planner_node/ugv_height", ugv_height);
