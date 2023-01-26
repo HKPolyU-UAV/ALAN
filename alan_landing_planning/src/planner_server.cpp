@@ -398,7 +398,7 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     // }
     // if(set_alan_b_traj_prerequisite)
     if(
-        uav_in_ugv_frame_posi.norm() - following_norm < 0.15 &&
+        uav_in_ugv_frame_posi.norm() - following_norm < 0.10 &&
         prerequisite_set
     )
         return true;
@@ -544,14 +544,14 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
 
     for (int i = 0; i < 3; i++)
     {
-        if(output[i] >  1)
+        if(output[i] >  v_max)
             { 
-                output[i] =  1;
+                output[i] =  v_max;
             }
 
-        if(output[i] < -1)
+        if(output[i] < -v_max)
         { 
-            output[i] = -1;
+            output[i] = -v_max;
         }
     }
 
