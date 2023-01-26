@@ -400,9 +400,9 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 
 
 
-    std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
+    // std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
 
-    
+
     if(
         uav_in_ugv_frame_posi.norm() - following_norm < 0.20 &&
         prerequisite_set
