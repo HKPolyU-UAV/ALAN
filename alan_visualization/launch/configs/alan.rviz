@@ -34,6 +34,7 @@ Panels:
   - Class: rviz/Views
     Expanded:
       - /Current View1
+      - /Current View1/Focal Point1
     Name: Views
     Splitter Ratio: 0.5
   - Class: rviz/Time
@@ -105,7 +106,7 @@ Visualization Manager:
           Queue Size: 500
           Value: true
         - Alpha: 0.10000000149011612
-          BoundColor: 252; 233; 79
+          BoundColor: 255; 25; 0
           Class: decomp_rviz_plugins/PolyhedronArray
           Enabled: true
           MeshColor: 46; 52; 54
@@ -331,7 +332,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 8.431295394897461
+      Distance: 0.0031054834835231304
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -339,17 +340,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -1.4754961729049683
-        Y: -0.35399675369262695
-        Z: 0.5910764932632446
+        X: 8.52443790435791
+        Y: -8.741294860839844
+        Z: 0.3320085406303406
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2947961986064911
-      Target Frame: <Fixed Frame>
-      Yaw: 4.553514003753662
+      Pitch: 0.1097959652543068
+      Target Frame: body
+      Yaw: 5.5963029861450195
     Saved:
       - Class: rviz/Orbit
         Distance: 19.586559295654297
