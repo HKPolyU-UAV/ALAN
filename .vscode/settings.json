@@ -79,7 +79,8 @@
         "*.ipp": "cpp",
         "core": "cpp",
         "specialfunctions": "cpp",
-        "*.tpp": "cpp"
+        "*.tpp": "cpp",
+        "*.txx": "cpp"
     },
     "python.analysis.extraPaths": [
         "/home/patty/vio_ws/devel/lib/python3/dist-packages",

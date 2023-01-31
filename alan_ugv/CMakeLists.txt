@@ -101,7 +101,7 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
   ${Sophus_INCLUDE_DIRS}
   ${IPOPT_LIBRARIES}
-  ${DECOMP_UTIL_INCLUDE_DIRS}
+  ${DECOMP_UTIL_INCLUDE_DIRS} 
 
 # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
@@ -112,6 +112,23 @@ add_executable(virtual_car
 )
 
 target_link_libraries(virtual_car
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${OSQP_LIBRARIES}
+  # mosek64
+  # qpOASES
+  osqp::osqp
+  OsqpEigen#::OsqpEigen
+)
+
+
+add_executable(physique_car
+  src/physique_car.cpp
+  src/RosTopicConfigs.cpp
+)
+
+target_link_libraries(physique_car
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
