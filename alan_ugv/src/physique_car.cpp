@@ -45,6 +45,7 @@ static vector<Eigen::Vector2d> lin_traj;
 
 static bool notyetfinish = false;
 
+static double PID_last_time;
 
 Eigen::Vector3d q2rpy(Eigen::Quaterniond q) {
     return q.toRotationMatrix().eulerAngles(2,1,0);
@@ -64,20 +65,10 @@ Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v){
     return q * v;
 }
 
-void test_callback(const gazebo_msgs::ModelStates::ConstPtr& msg)
-{
-    msg->name.size();
-    msg->pose[2].position.x;
-    msg->pose[2].orientation.w;
-    
-}
-
-
-static Eigen::Vector3d physique_car_state; //x y yaw
-
+static Eigen::VectorXd physique_car_state(7); //x y z r p y
+static Eigen::VectorXd physique_car_state_xyyaw(3);
 static int indi = 0;
 static int state_i = 0;
-
 
 template<typename T>
 void physique_car_state_callback_impl(const T& msg, std::true_type)
@@ -98,19 +89,23 @@ void physique_car_state_callback_impl(const T& msg, std::true_type)
 
     physique_car_state(0) = state.pose[state_i].position.x;
     physique_car_state(1) = state.pose[state_i].position.y;
+    physique_car_state(2) = state.pose[state_i].position.z;
 
-    physique_car_state(2) = q2rpy(Eigen::Quaterniond(
-            state.pose[state_i].orientation.w,
-            state.pose[state_i].orientation.x,
-            state.pose[state_i].orientation.y,
-            state.pose[state_i].orientation.z
-        )
-    ).x();
+    physique_car_state(3) = state.pose[state_i].orientation.w;
+    physique_car_state(4) = state.pose[state_i].orientation.x;
+    physique_car_state(5) = state.pose[state_i].orientation.y;
+    physique_car_state(6) = state.pose[state_i].orientation.z;
 
-    std::cout<<physique_car_state(2)<<std::endl;
-    
-    std::cout<<"gazebo"<<std::endl;
-    
+    physique_car_state_xyyaw(0) = state.pose[state_i].position.x;
+    physique_car_state_xyyaw(1) = state.pose[state_i].position.y;
+
+    Eigen::Quaterniond q_(
+        state.pose[state_i].orientation.w,
+        state.pose[state_i].orientation.x,
+        state.pose[state_i].orientation.y,
+        state.pose[state_i].orientation.z
+    );
+    physique_car_state_xyyaw(2) =  atan2(q_.toRotationMatrix()(1,0), q_.toRotationMatrix()(0,0));
 }
 
 template<typename T>
@@ -129,7 +124,7 @@ void physique_car_state_callback_impl(const T& msg, std::false_type)
         )
     ).x();
 
-    std::cout<<physique_car_state(2)<<std::endl;
+    // std::cout<<physique_car_state(2)<<std::endl;
     
     std::cout<<"not gazebo"<<std::endl;
         
@@ -141,6 +136,134 @@ void physique_car_state_callback(const T& msg)
     physique_car_state_callback_impl(msg, std::is_same<T, gazebo_msgs::ModelStates::ConstPtr>());        
 }
 
+void set_physique_car_pose(Eigen::VectorXd xyzrpy)
+{
+    physique_car_pose.pose.position.x = xyzrpy(0);
+    physique_car_pose.pose.position.y = xyzrpy(1);
+    physique_car_pose.pose.position.z = xyzrpy(2);
+    
+    physique_car_pose.pose.orientation.w = xyzrpy(3);
+    physique_car_pose.pose.orientation.x = xyzrpy(4);
+    physique_car_pose.pose.orientation.y = xyzrpy(5);
+    physique_car_pose.pose.orientation.z = xyzrpy(6);
+
+    physique_car_pose.header.stamp = ros::Time::now();
+
+}
+
+void set_physique_car_twist(Eigen::VectorXd xyzrpy)
+{
+    std::default_random_engine generator;
+    std::normal_distribution<double> dist(0, 0.0001);
+
+    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+
+    physique_car_twist.twist.linear.x = 0 + dist(generator);
+    physique_car_twist.twist.linear.y = 0 + dist(generator);
+    physique_car_twist.twist.linear.z = 0 + dist(generator);
+    
+    physique_car_twist.twist.angular.x = 0 + dist(generator);
+    physique_car_twist.twist.angular.y = 0 + dist(generator);
+    physique_car_twist.twist.angular.z = 0 + dist(generator);
+}
+
+void set_physique_car_imu(Eigen::VectorXd xyzrpy)
+{        
+    std::default_random_engine generator;
+    std::normal_distribution<double> dist(0, 0.001);
+
+    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+
+    physique_car_imu.orientation.w = 0.0;
+    physique_car_imu.orientation.x = 0.0;
+    physique_car_imu.orientation.y = 0.0;
+    physique_car_imu.orientation.z = 0.0;
+
+    physique_car_imu.angular_velocity.x = 0.0;
+    physique_car_imu.angular_velocity.y = 0.0;
+    physique_car_imu.angular_velocity.z = 0.0;
+
+    physique_car_imu.linear_acceleration.x = 0.0 + dist(generator);
+    physique_car_imu.linear_acceleration.y = 0.0 + dist(generator);
+    physique_car_imu.linear_acceleration.z = 9.8 + dist(generator);
+
+}
+
+void set_physique_pose_twist_imu(Eigen::VectorXd xyzrpy)
+{        
+    set_physique_car_pose(xyzrpy);
+    set_physique_car_twist(xyzrpy);
+    set_physique_car_imu(xyzrpy);
+}
+
+Eigen::Vector2d ugv_poistion_controller_PID(Eigen::Vector3d pose_XYyaw, Eigen::Vector2d setpoint)
+{ // From VRPN XY position
+    
+    double err_dist = sqrt(pow((setpoint(0) - pose_XYyaw(0)), 2) +
+                           pow((setpoint(1) - pose_XYyaw(1)), 2));
+    
+    Eigen::Vector2d diff_XY =  Eigen::Vector2d(setpoint(0) - pose_XYyaw(0), setpoint(1) - pose_XYyaw(1));
+    
+    double des_yaw = atan2(diff_XY(1), diff_XY(0));
+    double err_yaw = des_yaw - pose_XYyaw(2);
+
+    if (err_yaw >= M_PI){
+        err_yaw -= 2 * M_PI;
+    }
+
+    if (err_yaw <= -M_PI){
+        err_yaw += 2 * M_PI;
+    }
+    // cout << "err_yaw: " << err_yaw << endl;
+    if (err_dist < 0.2){
+        err_dist = 0;
+        err_yaw = 0;
+        // Mission_stage++;
+    }            // Stop if the error is within 10 cm
+
+    if (err_yaw > M_PI * 0.1 || err_yaw < M_PI * -0.1){ 
+        err_dist = 0; 
+    }   //Turn before going straight
+    
+    Eigen::Vector2d error, last_error, u_p, u_i, u_d, output; // Dist Yaw Error
+
+    double iteration_time = ros::Time::now().toSec() - PID_last_time;
+    Eigen::Vector2d K_p(0.8, 1);
+    Eigen::Vector2d K_i(0.2, 0);
+    Eigen::Vector2d K_d(0  , 0);
+
+    error =  Eigen::Vector2d(err_dist, err_yaw);
+
+    last_error = error;
+
+    Eigen::Vector2d integral = integral + (error * iteration_time);
+    Eigen::Vector2d derivative = (error - last_error) / (iteration_time + 1e-10);
+
+    for (int i = 0; i < 2; i++){                //i = err_dist,err_yaw
+        u_p(i) = error(i) * K_p(i);           //P controller
+        u_i(i) = integral(i) * K_i(i);        //I controller
+        u_d(i) = derivative(i) * K_d(i);      //D controller
+        // cout << "u_p[" << i << "]=" << u_p(i) << " u_i[" << i << "]=" << u_i(i) << " u_d[" << i << "]=" << u_d(i) << endl;
+        output(i) = u_p(i) + u_i(i) + u_d(i);
+    }
+    
+    if(output(0) >  max_vel_lin){ 
+        output(0) = max_vel_lin;
+    }  //Clamp the forward speed to MaxVelocity
+
+    if(output(1) >  max_vel_ang){ 
+        output(1) = max_vel_ang;
+    }
+
+    if(output(1) <  max_vel_ang * -1){ 
+        output(1) = max_vel_ang * -1;
+    }
+
+    PID_last_time = ros::Time::now().toSec();
+
+    return output;
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "physique_car");
@@ -150,15 +273,14 @@ int main(int argc, char** argv)
     nh.getParam("/physique_car/max_vel_ang", max_vel_ang);
     nh.getParam("/physique_car/pub_freq", pub_freq);
     nh.getParam("/physique_car/environs", environs);
-    
-    // ros::Subscriber 
 
+    RosTopicConfigs configs(nh, "/physique_car");
  
     const char* temp1 = environs.c_str();
     const char* temp2 = GAZEBO_.c_str();
 
-    std::cout<<temp1<<std::endl;
-    std::cout<<temp2<<std::endl;
+    // std::cout<<temp1<<std::endl;
+    // std::cout<<temp2<<std::endl;
     std::cout<<std::strcmp(temp1, temp2)<<std::endl;
     
     ros::Subscriber physique_car_state_sub;
@@ -184,21 +306,60 @@ int main(int argc, char** argv)
 
     }
     
-    // ros::Publisher physique_car_vel_pub = nh.advertise<geometry_msgs::TwistStamped>
-    //                     (configs.getTopicName(POSE_PUB_TOPIC_A), 1, true);
+    ros::Publisher physique_car_vel_pub = nh.advertise<geometry_msgs::Twist>
+                        ("/cmd_vel", 1, true);
 
-    // ros::Publisher physique_car_twist_pub = nh.advertise<geometry_msgs::TwistStamped>
-    //                     (configs.getTopicName(TWIST_PUB_TOPIC_A), 1, true);
+    ros::Publisher physique_car_pose_pub = nh.advertise<geometry_msgs::PoseStamped>
+                        (configs.getTopicName(POSE_PUB_TOPIC_A), 1, true);
+
+    ros::Publisher physique_car_twist_pub = nh.advertise<geometry_msgs::TwistStamped>
+                        (configs.getTopicName(TWIST_PUB_TOPIC_A), 1, true);
     
-    // ros::Publisher physique_car_imu_pub = nh.advertise<sensor_msgs::Imu>
-    //                     (configs.getTopicName(IMU_PUB_TOPIC_A), 1, true);
-    
+    ros::Publisher physique_car_imu_pub = nh.advertise<sensor_msgs::Imu>
+                        (configs.getTopicName(IMU_PUB_TOPIC_A), 1, true);
+
 
     ros::Rate physique_car_rate(pub_freq);
 
-    ugv::ugv_traj_info_circle circle_traj_info;
+    Eigen::Vector2d center = Eigen::Vector2d(0,0);
+    Eigen::Vector2d target_posi(2, 2);    
 
-    ugv::ugvpath<ugv::ugv_traj_info_circle> circle_traj(circle_traj_info);
+    ugv::ugvpath circle_traj(
+        center,
+        10.0,
+        pub_freq,
+        1.0,
+        10,
+        CIRCLE_TRAJ
+    );
+
+    ugv::ugvpath block_traj(
+        center,
+        10.0,
+        1.0,
+        0.0,
+        pub_freq,
+        1.0,
+        10,
+        BLOCK_TRAJ
+    );
+
+    ugv::ugvpath straight_traj(
+        target_posi,
+        pub_freq,
+        1.0,
+        STRAIGHT_TRAJ
+    );
+
+    ugv::ugvpath eight_traj(
+        center,
+        6.0,
+        0.0,
+        pub_freq,
+        1.0,
+        10,
+        EIGHT_TRAJ
+    );
     
 
     cal_new_traj = true;
@@ -212,15 +373,24 @@ int main(int argc, char** argv)
     current_traj_wp(4) = 0.0;
     current_traj_wp(5) = 0.0;
 
+    Eigen::Vector2d twist_final;
+    geometry_msgs::Twist twist_pub_object;
+    
 
     while (ros::ok())    
     {         
         // set_current_traj_wp(current_traj_wp);
-        // set_virtual_pose_twist_imu(current_traj_wp);
+        set_physique_pose_twist_imu(physique_car_state);
 
-        // physique_car_pose_pub.publish(physique_car_pose);
-        // physique_car_twist_pub.publish(physique_car_twist);
-        // physique_car_imu_pub.publish(physique_car_imu);
+        physique_car_pose_pub.publish(physique_car_pose);
+        physique_car_twist_pub.publish(physique_car_twist);
+        physique_car_imu_pub.publish(physique_car_imu);
+
+        twist_final = ugv_poistion_controller_PID(physique_car_state_xyyaw, target_posi);
+        twist_pub_object.linear.x = twist_final(0);
+        twist_pub_object.angular.z = twist_final(1);
+
+        physique_car_vel_pub.publish(twist_pub_object);
                   
         ros::spinOnce();
         physique_car_rate.sleep();
