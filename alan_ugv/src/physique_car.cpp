@@ -281,7 +281,7 @@ int main(int argc, char** argv)
 
     // std::cout<<temp1<<std::endl;
     // std::cout<<temp2<<std::endl;
-    std::cout<<std::strcmp(temp1, temp2)<<std::endl;
+    // std::cout<<std::strcmp(temp1, temp2)<<std::endl;
     
     ros::Subscriber physique_car_state_sub;
 
@@ -326,11 +326,11 @@ int main(int argc, char** argv)
 
     ugv::ugvpath circle_traj(
         center,
-        10.0,
+        4.0,
         pub_freq,
-        1.0,
+        6.0,
         10,
-        CIRCLE_TRAJ
+        true
     );
 
     ugv::ugvpath block_traj(
@@ -341,14 +341,13 @@ int main(int argc, char** argv)
         pub_freq,
         1.0,
         10,
-        BLOCK_TRAJ
+        true
     );
 
     ugv::ugvpath straight_traj(
         target_posi,
         pub_freq,
-        1.0,
-        STRAIGHT_TRAJ
+        1.0
     );
 
     ugv::ugvpath eight_traj(
@@ -358,7 +357,7 @@ int main(int argc, char** argv)
         pub_freq,
         1.0,
         10,
-        EIGHT_TRAJ
+        true
     );
     
 

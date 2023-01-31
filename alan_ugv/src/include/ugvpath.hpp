@@ -15,8 +15,9 @@ namespace ugv
         Eigen::Vector2d center; 
         double radius; 
         int pub_freq; 
-        double velo;
+        double velo; // dg/s
         int lap;
+        bool ccw;
     }ugv_traj_info_circle;
 
     typedef struct ugv_traj_info_block
@@ -27,6 +28,7 @@ namespace ugv
         int pub_freq;
         double velo;
         int lap;
+        bool ccw;
     }ugv_traj_info_block;
 
     typedef struct ugv_traj_info_straight
@@ -44,12 +46,17 @@ namespace ugv
         int pub_freq;
         double velo;
         int lap;
+        bool ccw; // ∞ (RHS ccw true or not)
     }ugv_traj_info_eight;
 
     class ugvpath
     {
     private:
+        int traj_i = 0;
+        bool start_trajectory = false;
+        std::vector<Eigen::Vector2d> trajectory;
         std::string _traj_type;
+
         ugv_traj_info_circle circle_traj_info;
         ugv_traj_info_block block_traj_info;
         ugv_traj_info_straight straight_traj_info;
@@ -59,6 +66,26 @@ namespace ugv
         {
             if(_traj_type == CIRCLE_TRAJ)
             {
+                int traj_total_no = (360 / circle_traj_info.velo) * circle_traj_info.pub_freq;
+
+                std::cout<<traj_total_no<<std::endl;
+
+                for(int i = 0; i < circle_traj_info.lap; i++)
+                {                
+                    Eigen::Vector2d traj_pt_temp;
+                    for(int j = 0; j < traj_total_no; j++)
+                    {
+                        traj_pt_temp.x() = 
+                            circle_traj_info.radius * cos(j / traj_total_no * 2 * M_PI);
+
+                        traj_pt_temp.y() = 
+                            circle_traj_info.radius * sin(j / traj_total_no * 2 * M_PI);
+
+                        trajectory.emplace_back(traj_pt_temp);
+                    }
+                }     
+
+                std::cout<<"final size: "<<trajectory.size()<<std::endl;           
 
             }
             else if(_traj_type == BLOCK_TRAJ)
@@ -89,6 +116,7 @@ namespace ugv
             int pub_freq,
             double velo,
             int lap,
+            bool ccw,
             std::string traj_type = CIRCLE_TRAJ
         )  // circle
         : _traj_type(traj_type)
@@ -98,11 +126,13 @@ namespace ugv
             circle_traj_info.pub_freq = pub_freq;
             circle_traj_info.velo = velo;
             circle_traj_info.lap = lap;
+            circle_traj_info.ccw = ccw;
+
+            std::cout<<CIRCLE_TRAJ<<std::endl;
 
             set_traj();
         };
 
-       // block
         ugvpath(            
             Eigen::Vector2d center, 
             double length,
@@ -111,6 +141,7 @@ namespace ugv
             int pub_freq,
             double velo,
             int lap,
+            bool ccw,
             std::string traj_type = BLOCK_TRAJ
         )  // block
         : _traj_type(traj_type)
@@ -121,6 +152,9 @@ namespace ugv
             block_traj_info.pub_freq = pub_freq;
             block_traj_info.velo = velo;
             block_traj_info.lap = lap;
+            block_traj_info.ccw = ccw;
+
+            std::cout<<BLOCK_TRAJ<<std::endl;
 
             set_traj();
         };
@@ -138,6 +172,8 @@ namespace ugv
             straight_traj_info.pub_freq = pub_freq;
             straight_traj_info.velo = velo;
 
+            std::cout<<STRAIGHT_TRAJ<<std::endl;
+
             set_traj();
         };
 
@@ -149,6 +185,7 @@ namespace ugv
             int pub_freq,
             double velo,
             int lap,
+            bool ccw,
             std::string traj_type = EIGHT_TRAJ
         ) // eight
         : _traj_type(traj_type)
@@ -159,6 +196,9 @@ namespace ugv
             eight_traj_info.pub_freq = pub_freq;
             eight_traj_info.velo = velo;
             eight_traj_info.lap = lap;
+            eight_traj_info.ccw = ccw;
+
+            std::cout<<EIGHT_TRAJ<<std::endl;
 
             set_traj();
         };
