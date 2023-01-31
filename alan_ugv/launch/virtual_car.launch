@@ -1,0 +1,9 @@
+<launch>
+    <node name="virtual_car" pkg="alan_ugv" type="virtual_car" output="screen">
+        <rosparam command="load" file="$(find alan_ugv)/launch/configs/VIRTUAL_CAR_SUBPUB_topics.yaml" />
+        <param name="/pathcsv" type="string" value="$(find alan_ugv)/launch/configs/virtual_car_path/ugv_block_path.csv"/>
+        <param name="/max_vel_lin" type="double" value="0.75"/>
+        <param name="/max_vel_ang" type="double" value="15"/>
+        <param name="/pub_freq" type="int" value="200"/>
+    </node>
+</launch>

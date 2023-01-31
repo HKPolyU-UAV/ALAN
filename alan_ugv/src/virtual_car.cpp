@@ -3,8 +3,8 @@
     do not launch this in VICON!
 */
 
-#include "../include/tools/essential.h"
-#include "../include/tools/RosTopicConfigs.h"
+#include "./include/essential.h"
+#include "./include/RosTopicConfigs.h"
 #include <cmath>
 #include <random>
 
