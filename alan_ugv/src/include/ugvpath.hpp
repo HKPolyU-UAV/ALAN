@@ -204,9 +204,23 @@ namespace ugv
 
             set_traj();
         };
-
                         
         ~ugvpath(){};
+
+        Eigen::Vector2d get_traj_wp(int& traj_i)
+        {
+            if(traj_i < trajectory.size())
+            {
+                Eigen::Vector2d traj_now = trajectory[traj_i];
+                traj_i ++;
+
+                return traj_now;
+            }
+            else
+            {
+                return trajectory[trajectory.size() - 1];
+            }
+        }
     };  
 
 }
