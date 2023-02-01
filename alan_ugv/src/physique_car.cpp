@@ -221,9 +221,9 @@ Eigen::Vector2d ugv_poistion_controller_PID(Eigen::Vector3d pose_XYyaw, Eigen::V
         // Mission_stage++;
     }            // Stop if the error is within 10 cm
 
-    if (err_yaw > M_PI * 0.1 || err_yaw < M_PI * -0.1){ 
-        err_dist = 0; 
-    }   //Turn before going straight
+    // if (err_yaw > M_PI * 0.1 || err_yaw < M_PI * -0.1){ 
+    //     err_dist = 0; 
+    // }   //Turn before going straight
     
     Eigen::Vector2d error, last_error, u_p, u_i, u_d, output; // Dist Yaw Error
 
@@ -328,37 +328,37 @@ int main(int argc, char** argv)
         center,
         4.0,
         pub_freq,
-        6.0,
+        12,
         10,
         true
     );
 
-    ugv::ugvpath block_traj(
-        center,
-        10.0,
-        1.0,
-        0.0,
-        pub_freq,
-        1.0,
-        10,
-        true
-    );
+    // ugv::ugvpath block_traj(
+    //     center,
+    //     10.0,
+    //     1.0,
+    //     0.0,
+    //     pub_freq,
+    //     1.0,
+    //     10,
+    //     true
+    // );
 
-    ugv::ugvpath straight_traj(
-        target_posi,
-        pub_freq,
-        1.0
-    );
+    // ugv::ugvpath straight_traj(
+    //     target_posi,
+    //     pub_freq,
+    //     1.0
+    // );
 
-    ugv::ugvpath eight_traj(
-        center,
-        6.0,
-        0.0,
-        pub_freq,
-        1.0,
-        10,
-        true
-    );
+    // ugv::ugvpath eight_traj(
+    //     center,
+    //     6.0,
+    //     0.0,
+    //     pub_freq,
+    //     1.0,
+    //     10,
+    //     true
+    // );
     
 
     cal_new_traj = true;
@@ -374,6 +374,8 @@ int main(int argc, char** argv)
 
     Eigen::Vector2d twist_final;
     geometry_msgs::Twist twist_pub_object;
+
+    int traj_i = 0;
     
 
     while (ros::ok())    
@@ -384,6 +386,10 @@ int main(int argc, char** argv)
         physique_car_pose_pub.publish(physique_car_pose);
         physique_car_twist_pub.publish(physique_car_twist);
         physique_car_imu_pub.publish(physique_car_imu);
+
+        target_posi = circle_traj.get_traj_wp(traj_i);
+
+        // std::cout<<target_posi<<std::endl;
 
         twist_final = ugv_poistion_controller_PID(physique_car_state_xyyaw, target_posi);
         twist_pub_object.linear.x = twist_final(0);

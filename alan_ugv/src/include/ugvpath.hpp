@@ -81,7 +81,7 @@ namespace ugv
                         traj_pt_temp.y() = 
                             circle_traj_info.radius * sin(j / double(traj_total_no) * 2.0 * M_PI);
                         
-                        std::cout<<traj_pt_temp<<std::endl;
+                        // std::cout<<traj_pt_temp<<std::endl;
 
                         trajectory.emplace_back(traj_pt_temp);
                     }

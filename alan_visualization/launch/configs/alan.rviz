@@ -86,7 +86,7 @@ Visualization Manager:
           Marker Topic: /gt_points/traj
           Name: Marker_opti
           Namespaces:
-            GT_points: true
+            {}
           Queue Size: 500
           Value: true
         - Class: rviz/Marker
@@ -94,7 +94,7 @@ Visualization Manager:
           Marker Topic: /gt_points/trajCtrlpts
           Name: Marker_ctrl
           Namespaces:
-            GT_points: true
+            {}
           Queue Size: 500
           Value: true
         - Class: rviz/Marker
@@ -102,7 +102,7 @@ Visualization Manager:
           Marker Topic: /gt_points/trajSamples
           Name: Marker_sample
           Namespaces:
-            GT_points: true
+            {}
           Queue Size: 500
           Value: true
         - Alpha: 0.10000000149011612
@@ -332,7 +332,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.0031054834835231304
+      Distance: 2.6931416988372803
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -340,17 +340,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 8.52443790435791
-        Y: -8.741294860839844
-        Z: 0.3320085406303406
+        X: 7.907914161682129
+        Y: -7.257851600646973
+        Z: 5.0071702003479
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.1097959652543068
+      Pitch: 0.2897958755493164
       Target Frame: body
-      Yaw: 5.5963029861450195
+      Yaw: 5.626303672790527
     Saved:
       - Class: rviz/Orbit
         Distance: 19.586559295654297

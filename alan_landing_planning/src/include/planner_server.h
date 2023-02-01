@@ -14,8 +14,8 @@
 #define IDLE "IDLE"
 #define ARMED "ARMED"
 #define TOOKOFF "TOOKOFF"
-#define RENDEZVOUS "RENDEZVOUS"
 #define FOLLOW "FOLLOW"
+#define RENDEZVOUS "RENDEZVOUS"
 #define LAND "LAND"
 #define SHUTDOWN "SHUTDOWN"
 #define MISSION_COMPLETE "MISSION_COMPLETE"
@@ -67,6 +67,7 @@ private:
     bool get_ready();
     bool taking_off();
     bool go_to_rendezvous_pt_and_follow();
+    bool rendezvous();
     bool hover();
     bool land();
     bool shutdown();

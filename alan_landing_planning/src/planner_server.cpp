@@ -259,6 +259,21 @@ void planner_server::fsm_manager()
         }
         if(go_to_rendezvous_pt_and_follow())
         {
+            fsm_state = RENDEZVOUS;
+            print_or_not = true;
+            last_request = ros::Time::now().toSec();            
+        }
+
+    }
+    else if(fsm_state == RENDEZVOUS)
+    {
+        if(print_or_not)
+        {
+            ROS_GREEN_STREAM(RENDEZVOUS);
+            print_or_not = false;
+        }        
+        if(rendezvous())
+        {
             fsm_state = LAND;
             print_or_not = true;
             last_request = ros::Time::now().toSec();
@@ -400,16 +415,27 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 
 
 
-    // std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
+    std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
 
 
     if(
-        uav_in_ugv_frame_posi.norm() - following_norm < 0.20 &&
+        uav_in_ugv_frame_posi.norm() - following_norm < 0.4 &&
         prerequisite_set
     )
         return true;
     else
         return false;        
+
+}
+
+bool planner_server::rendezvous()
+{
+    target_traj_pose = set_following_target_pose();
+    
+    if(ros::Time::now().toSec() - last_request > ros::Duration(4.0).toSec())
+        return true;
+    else 
+        return false;
 
 }
 

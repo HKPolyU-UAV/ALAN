@@ -13,16 +13,16 @@ final_landing_x: 1.0
 
 landing_velocity: 1.2
 
-v_max: 2.5
+v_max: 4.0
 
-a_max: 5.0
+a_max: 8.0
 
 sample_square_root: 31
 
 PID_gain:
 #kp
-  - x: 2.5
-    y: 2.5
+  - x: 2.4
+    y: 2.4
     z: 1.5
     yaw: 1.0
 #ki

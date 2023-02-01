@@ -22,10 +22,10 @@ find_package(catkin COMPONENTS
   visualization_msgs
   pcl_conversions
   pcl_ros 
-  # ifopt
-  # nlopt
-  # qpOASES
-  # OsqpEigen
+# ifopt
+# nlopt
+# qpOASES
+# OsqpEigen
 
 )
 
@@ -57,28 +57,28 @@ roslaunch_add_file_check(launch)
 
 
 add_message_files(
- FILES
- alan_state_blank.msg
-#  AlanPlannerMsg.msg 
-#  StateMachine.msg
-#  Target.msg
-#  vector3D.msg
-#  vector4D.msg
+  FILES
+  alan_state_blank.msg
+  # AlanPlannerMsg.msg 
+  # StateMachine.msg
+  # Target.msg
+  # vector3D.msg
+  # vector4D.msg
 )
 
 
 generate_messages(DEPENDENCIES std_msgs sensor_msgs)
 
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES offb
+  #  INCLUDE_DIRS include
+  #  LIBRARIES offb
   CATKIN_DEPENDS 
   geometry_msgs 
   mavros_msgs 
   roscpp
   std_msgs
   message_generation
-#  DEPENDS system_lib
+  #  DEPENDS system_lib
 )
 
 # for ncnn
@@ -96,7 +96,7 @@ set(Sophus_LIBRARIES libSophus.so)
 # include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/alan_landing_planning/third_party/mosek/include)
 
 include_directories(
-# include
+  # include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${Sophus_INCLUDE_DIRS}
@@ -109,13 +109,13 @@ include_directories(
 
 
 add_library(alan
-    src/aruco.cpp
-    src/yolo.cpp
-    src/led.cpp
-    src/msgsync.cpp
-    # src/failsafe.cpp
-    src/tools/RosTopicConfigs.cpp
-    )
+  src/aruco.cpp
+  src/yolo.cpp
+  src/led.cpp
+  src/msgsync.cpp
+  # src/failsafe.cpp
+  src/tools/RosTopicConfigs.cpp
+  )
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
@@ -128,90 +128,55 @@ target_link_libraries(
 
 )
 
-# add_executable(virtual_car
-#    src/tools/virtual_car.cpp
-#    src/tools/RosTopicConfigs.cpp
-# )
-
-# target_link_libraries(virtual_car
-#   ${OpenCV_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   ${PCL_LIBRARIES}
-#   ${OSQP_LIBRARIES}
-#   # mosek64
-#   # qpOASES
-#   osqp::osqp
-#   OsqpEigen#::OsqpEigen
-  
-  
-#   )
-
-  add_executable(poselala
+add_executable(poselala
   src/tools/poselala.cpp
 )
 
 target_link_libraries(poselala
- ${OpenCV_LIBRARIES}
- ${catkin_LIBRARIES}
- ${PCL_LIBRARIES}
- ${OSQP_LIBRARIES}
- # mosek64
- # qpOASES
- osqp::osqp
- OsqpEigen#::OsqpEigen
- 
- 
- )
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${OSQP_LIBRARIES}
+  # mosek64
+  # qpOASES
+  osqp::osqp
+  OsqpEigen#::OsqpEigen
+)
 
 
- add_executable(calibrate
+add_executable(calibrate
   src/tools/calibrate.cpp
 )
 
 target_link_libraries(calibrate
- ${OpenCV_LIBRARIES}
- ${catkin_LIBRARIES}
- ${PCL_LIBRARIES}
- ${OSQP_LIBRARIES}
- # mosek64
- # qpOASES
- osqp::osqp
- OsqpEigen#::OsqpEigen
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${OSQP_LIBRARIES}
+  # mosek64
+  # qpOASES
+  osqp::osqp
+  OsqpEigen#::OsqpEigen
 
- )
+)
+
+add_executable(gazebo_uav
+  src/tools/gazebo_uav.cpp
+)
+
+target_link_libraries(gazebo_uav
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${OSQP_LIBRARIES}
+  # mosek64
+  # qpOASES
+  osqp::osqp
+  OsqpEigen#::OsqpEigen
+
+)
 
 
-#  add_executable(lrgb
-#  src/lrgb.cpp
-# )
 
-# target_link_libraries(lrgb
-# ${OpenCV_LIBRARIES}
-# ${catkin_LIBRARIES}
-# ${PCL_LIBRARIES}
-# ${OSQP_LIBRARIES}
-# # mosek64
-# # qpOASES
-# osqp::osqp
-# OsqpEigen#::OsqpEigen
-
-# )
-
-#   add_executable(failsafe
-#    src/failsafe.cpp
-# )
-
-# target_link_libraries(failsafe
-#   ${OpenCV_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   ${PCL_LIBRARIES}
-#   ${OSQP_LIBRARIES}
-#   # mosek64
-#   # qpOASES
-#   osqp::osqp
-#   OsqpEigen#::OsqpEigen
-  
-  
-#   )
 
 
