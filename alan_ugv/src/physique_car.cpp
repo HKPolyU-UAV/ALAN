@@ -350,15 +350,15 @@ int main(int argc, char** argv)
     //     1.0
     // );
 
-    // ugv::ugvpath eight_traj(
-    //     center,
-    //     6.0,
-    //     0.0,
-    //     pub_freq,
-    //     1.0,
-    //     10,
-    //     true
-    // );
+    ugv::ugvpath eight_traj(
+        center,
+        4.0,
+        0.0,
+        pub_freq,
+        12.0,
+        10,
+        true
+    );
     
 
     cal_new_traj = true;
@@ -387,7 +387,7 @@ int main(int argc, char** argv)
         physique_car_twist_pub.publish(physique_car_twist);
         physique_car_imu_pub.publish(physique_car_imu);
 
-        target_posi = circle_traj.get_traj_wp(traj_i);
+        target_posi = eight_traj.get_traj_wp(traj_i);
 
         // std::cout<<target_posi<<std::endl;
 

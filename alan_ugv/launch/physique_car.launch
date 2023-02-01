@@ -1,8 +1,8 @@
 <launch>
     <node name="physique_car" pkg="alan_ugv" type="physique_car" output="screen">
         <rosparam command="load" file="$(find alan_ugv)/launch/configs/GAZEBO_CAR_SUBPUB_topics.yaml" />
-        <param name="/max_vel_lin" type="double" value="2.0"/>
-        <param name="/max_vel_ang" type="double" value="15"/>
+        <param name="/max_vel_lin" type="double" value="6.0"/>
+        <param name="/max_vel_ang" type="double" value="45"/>
         <param name="/pub_freq" type="int" value="50"/>
         <param name="/environs" type="string" value="GAZEBO"/>
     </node>
