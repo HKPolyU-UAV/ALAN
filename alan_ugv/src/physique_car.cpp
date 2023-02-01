@@ -34,6 +34,10 @@ static double max_vel_lin = 0;
 static double max_vel_ang = 0;
 static int pub_freq = 0;
 static std::string environs;
+static double ang_vel;
+static double radius;
+static double center_x;
+static double center_y;
 static std::string GAZEBO_ = "GAZEBO";
 
 static int fsm = TURN;
@@ -115,24 +119,37 @@ void physique_car_state_callback_impl(const T& msg, std::false_type)
 
     physique_car_state(0) = state.pose.position.x;
     physique_car_state(1) = state.pose.position.y;
+    physique_car_state(2) = state.pose.position.z;
 
-    physique_car_state(2) = q2rpy(Eigen::Quaterniond(
-            state.pose.orientation.w,
-            state.pose.orientation.x,
-            state.pose.orientation.y,
-            state.pose.orientation.z
-        )
-    ).x();
+    physique_car_state(3) = state.pose.orientation.w;
+    physique_car_state(4) = state.pose.orientation.x;
+    physique_car_state(5) = state.pose.orientation.y;
+    physique_car_state(6) = state.pose.orientation.z;
 
-    // std::cout<<physique_car_state(2)<<std::endl;
     
-    std::cout<<"not gazebo"<<std::endl;
+    physique_car_state_xyyaw(0) = state.pose.position.x;
+    physique_car_state_xyyaw(1) = state.pose.position.y;
+
+    Eigen::Quaterniond q_(
+        state.pose.orientation.w,
+        state.pose.orientation.x,
+        state.pose.orientation.y,
+        state.pose.orientation.z
+    );
+    physique_car_state_xyyaw(2) =  atan2(q_.toRotationMatrix()(1,0), q_.toRotationMatrix()(0,0));
+    
+    // std::cout<<physique_car_state(2)<<std::endl;
+
+    // std::cout<<physique_car_state_xyyaw<<std::endl;
+    
+    // std::cout<<"not gazebo"<<std::endl;
         
 }
 
 template <typename T>
 void physique_car_state_callback(const T& msg)
 {
+    // std::cout<<std::is_same<T, gazebo_msgs::ModelStates::ConstPtr>()<<std::endl;
     physique_car_state_callback_impl(msg, std::is_same<T, gazebo_msgs::ModelStates::ConstPtr>());        
 }
 
@@ -272,7 +289,14 @@ int main(int argc, char** argv)
     nh.getParam("/physique_car/max_vel_lin", max_vel_lin);
     nh.getParam("/physique_car/max_vel_ang", max_vel_ang);
     nh.getParam("/physique_car/pub_freq", pub_freq);
+    
+    nh.getParam("/physique_car/ang_vel", ang_vel);
+    nh.getParam("/physique_car/radius", radius);
+    nh.getParam("/physique_car/center_x", center_x);
+    nh.getParam("/physique_car/center_y", center_y);
+
     nh.getParam("/physique_car/environs", environs);
+    
 
     RosTopicConfigs configs(nh, "/physique_car");
  
@@ -297,9 +321,10 @@ int main(int argc, char** argv)
     }
     else
     {
+        std::cout<<"hi...here...lala"<<std::endl;
         physique_car_state_sub = 
             nh.subscribe<geometry_msgs::PoseStamped>(
-                "/uav/mavros/vision_pose/pose", 
+                "/vrpn_client_node/gh034_car/pose", 
                 1, 
                 physique_car_state_callback<geometry_msgs::PoseStamped::ConstPtr>
             );
@@ -321,14 +346,14 @@ int main(int argc, char** argv)
 
     ros::Rate physique_car_rate(pub_freq);
 
-    Eigen::Vector2d center = Eigen::Vector2d(0,0);
+    Eigen::Vector2d center = Eigen::Vector2d(center_x,center_y);
     Eigen::Vector2d target_posi(2, 2);    
 
     ugv::ugvpath circle_traj(
         center,
-        4.0,
+        radius,
         pub_freq,
-        12,
+        ang_vel,
         10,
         true
     );
@@ -350,15 +375,15 @@ int main(int argc, char** argv)
     //     1.0
     // );
 
-    ugv::ugvpath eight_traj(
-        center,
-        4.0,
-        0.0,
-        pub_freq,
-        12.0,
-        10,
-        true
-    );
+    // ugv::ugvpath eight_traj(
+    //     center,
+    //     4.0,
+    //     0.0,
+    //     pub_freq,
+    //     12.0,
+    //     10,
+    //     true
+    // );
     
 
     cal_new_traj = true;
@@ -387,7 +412,7 @@ int main(int argc, char** argv)
         physique_car_twist_pub.publish(physique_car_twist);
         physique_car_imu_pub.publish(physique_car_imu);
 
-        target_posi = eight_traj.get_traj_wp(traj_i);
+        target_posi = circle_traj.get_traj_wp(traj_i);
 
         // std::cout<<target_posi<<std::endl;
 
