@@ -2,7 +2,7 @@ TOPICLIST:
 #msgsync.cpp
   #sub
   - TOPICTYPE: "POSE_SUB_TOPIC_A"
-    TOPICNAME: "/uav_gazebo/mavros/local_position/pose"
+    TOPICNAME: "/uav/mavros/vision_pose/pose"
     #gazebo-> /uav_gazebo/mavros/local_position/pose
     #vicon -> /uav/mavros/vision_pose/pose
     #field -> /uav/mavros/local_position/pose
