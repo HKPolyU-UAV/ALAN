@@ -34,7 +34,7 @@
         <rosparam command="load" file="$(find alan_state_estimation)/launch/configs/MSGSYNC_SUBPUB_topics.yaml" />
     </node> 
 
-    <node name="gazebo_uav" pkg="alan_state_estimation" type="gazebo_uav" output="screen">
-    </node>
+    <!-- <node name="gazebo_uav" pkg="alan_state_estimation" type="gazebo_uav" output="screen">
+    </node> -->
 
 </launch>

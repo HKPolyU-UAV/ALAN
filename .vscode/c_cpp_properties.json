@@ -8,7 +8,7 @@
             "includePath": [
                 "../../devel/include/**",
                 "../../devel/include/**",
-                "/opt/ros/noetic/include/**",
+                "/opt/ros/melodic/include/**",
                 "./cv_bridge/include/**",
                 "/usr/include/**",
                 "/usr/local/include/osqp"

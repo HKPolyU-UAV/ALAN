@@ -6,8 +6,8 @@
         <param name="/pub_freq" type="int" value="50"/>
         
         <!-- circle_traj -->
-        <param name="/ang_vel" type="double" value="72"/>
-        <param name="/radius" type="double" value="1.4"/>
+        <param name="/ang_vel" type="double" value="84"/>
+        <param name="/radius" type="double" value="1.64"/>
         <param name="/center_x" type="double" value="0.0"/>
         <param name="/center_y" type="double" value="0.36"/>
         <param name="/environs" type="string" value="VICON"/>

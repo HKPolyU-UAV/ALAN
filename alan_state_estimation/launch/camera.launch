@@ -4,7 +4,9 @@
   <arg name="usb_port_id"         default=""/>
   <arg name="device_type"         default=""/>
   <!-- <arg name="json_file_path"      default="$(find realsense2_camera)/launch/d455_param_default.json"/> -->
-  <arg name="json_file_path"      default="$(find alan_state_estimation)/launch/configs/alan.json"/>
+  <arg name="json_file_path"      default=""/>
+
+  <!-- <arg name="json_file_path"      default="$(find alan_state_estimation)/launch/configs/alan.json"/> -->
   <arg name="camera"              default="camera"/>
   <arg name="tf_prefix"           default="$(arg camera)"/>
   <arg name="external_manager"    default="false"/>

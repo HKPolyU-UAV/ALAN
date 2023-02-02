@@ -153,6 +153,17 @@ void physique_car_state_callback(const T& msg)
     physique_car_state_callback_impl(msg, std::is_same<T, gazebo_msgs::ModelStates::ConstPtr>());        
 }
 
+void physique_car_vel_callback(const geometry_msgs::TwistStamped::ConstPtr& msg)
+{
+    Eigen::Vector3d vel(
+        msg->twist.linear.x,
+        msg->twist.linear.y,
+        msg->twist.linear.z
+    );
+
+    std::cout<<"current velocity..."<<vel.norm()<<std::endl;
+}
+
 void set_physique_car_pose(Eigen::VectorXd xyzrpy)
 {
     physique_car_pose.pose.position.x = xyzrpy(0);
@@ -330,6 +341,9 @@ int main(int argc, char** argv)
             );
 
     }
+
+    ros::Subscriber physique_car_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>
+                        ("/vrpn_client_node/gh034_car/twist", 1, &physique_car_vel_callback);
     
     ros::Publisher physique_car_vel_pub = nh.advertise<geometry_msgs::Twist>
                         ("/cmd_vel", 1, true);
