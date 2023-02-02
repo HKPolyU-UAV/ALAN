@@ -457,7 +457,9 @@ bool planner_server::land()
         plan_traj = false;
     }
 
-    if(traj_i < optimal_traj_info_obj.optiTraj.trajectory.size())
+    if(
+        traj_i < optimal_traj_info_obj.optiTraj.trajectory.size()
+    )
     {
         target_traj_pose(0) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.x;
         target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.y;
@@ -474,7 +476,25 @@ bool planner_server::land()
         return false;
     }
     else
-        return true;
+    {
+        std::cout<<uav_in_ugv_frame_posi.head<2>().norm()<<std::endl;
+
+        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.14)
+        {
+            target_traj_pose(0) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.x;
+            target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.y;
+            target_traj_pose(2) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.z;
+
+            target_traj_pose.head<3>() 
+            = ugvOdomPose.rotation() * target_traj_pose.head<3>() + ugvOdomPose.translation();
+            
+            target_traj_pose(3) = ugv_traj_pose(3);
+
+            return false;
+        }
+        else 
+            return true;
+    }
 
 }
 
