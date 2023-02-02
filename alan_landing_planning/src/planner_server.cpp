@@ -14,6 +14,9 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
     ugv_AlanPlannerMsg_sub = nh.subscribe<alan_landing_planning::AlanPlannerMsg>
             ("/alan_state_estimation/msgsync/ugv/alan_planner_msg", 1, &planner_server::ugvAlanMsgCallback, this);
 
+    ugv_pose_predict_sub = nh.subscribe<geometry_msgs::PoseStamped>
+            ("/alan_ugv/pose_predicted", 1, &planner_server::ugvPosePredictedMsgCallback, this);
+
     sfc_sub = nh.subscribe<alan_visualization::PolyhedronArray>
             ("/alan_state_estimation/msgsync/polyhedron_array", 1, &planner_server::sfcMsgCallback, this);
 
@@ -183,6 +186,28 @@ void planner_server::setRelativePose()
         (uavOdomPose.translation() - ugvOdomPose.translation());
 
     // std::cout<<uav_in_ugv_frame_posi<<std::endl<<std::endl;
+}
+
+void planner_server::ugvPosePredictedMsgCallback(const geometry_msgs::PoseStamped::ConstPtr& msg)
+{
+    Eigen::Translation3d t_(
+        msg->pose.position.x,
+        msg->pose.position.y,
+        msg->pose.position.z
+    );
+
+    Eigen::Quaterniond q_(
+        msg->pose.orientation.w,
+        msg->pose.orientation.x,
+        msg->pose.orientation.y,
+        msg->pose.orientation.z
+    );
+
+    ugvOdomPose_predicted = t_ * q_;
+    
+    ugv_traj_predict_pose.head<3>() = t_.translation();
+    ugv_traj_predict_pose(3) = atan2(q_.toRotationMatrix()(1,0), q_.toRotationMatrix()(0,0));
+
 }
 
 void planner_server::sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& msg)
@@ -461,39 +486,52 @@ bool planner_server::land()
         traj_i < optimal_traj_info_obj.optiTraj.trajectory.size()
     )
     {
-        target_traj_pose(0) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.x;
-        target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.y;
-        target_traj_pose(2) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.z;
+        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.0)
+        {
+            target_traj_pose(0) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.x;
+            target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.y;
+            target_traj_pose(2) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.z;
 
-        target_traj_pose.head<3>() 
-            = ugvOdomPose.rotation() * target_traj_pose.head<3>() + ugvOdomPose.translation();
+            target_traj_pose.head<3>() 
+                = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
 
-        target_traj_pose(3) = ugv_traj_pose(3);
+            target_traj_pose(3) = ugv_traj_pose(3);
 
+            traj_i++;
+            
+            return false;
 
-        traj_i++;
+        }
+        else
+        {
+            ROS_GREEN_STREAM("CUT!!!!!!");
+            return true;
+        }        
 
-        return false;
     }
     else
     {
         std::cout<<uav_in_ugv_frame_posi.head<2>().norm()<<std::endl;
 
-        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.14)
+        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.16)
         {
             target_traj_pose(0) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.x;
             target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.y;
             target_traj_pose(2) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.z;
 
             target_traj_pose.head<3>() 
-            = ugvOdomPose.rotation() * target_traj_pose.head<3>() + ugvOdomPose.translation();
+            = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
             
             target_traj_pose(3) = ugv_traj_pose(3);
 
             return false;
         }
         else 
+        {
+            ROS_GREEN_STREAM("NEXT!!!");
             return true;
+        }
+            
     }
 
 }
@@ -849,6 +887,8 @@ void planner_server::config(ros::NodeHandle& _nh)
     nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
     nh.getParam("/alan_master_planner_node/landing_horizontal", landing_horizontal);
     nh.getParam("/alan_master_planner_node/touch_down_height", touch_down_height);
+    nh.getParam("/alan_master_planner_node/touch_down_height", touch_down_offset);
+
 
     nh.getParam("/alan_master_planner_node/v_max", v_max);
     nh.getParam("/alan_master_planner_node/a_max", a_max);
@@ -932,7 +972,7 @@ void planner_server::set_alan_b_traj_prerequisite()
         );
 
         Eigen::Vector3d posi_end(
-            0.0,
+            touch_down_offset,
             0.0,
             touch_down_height
         );
@@ -979,7 +1019,7 @@ void planner_server::set_alan_b_traj_prerequisite()
         std::cout<<"now online..."<<std::endl;
         // btraj_sampling.
         
-        Eigen::Vector3d posi_goal(0,0,touch_down_height);
+        Eigen::Vector3d posi_goal(touch_down_offset,0,touch_down_height);
         double tick2 = ros::Time::now().toSec();
         alan_landing_planning::Traj traj_execute_final_in_B = alan_btraj_sample->opt_traj_online(
             posi_start,
@@ -1037,7 +1077,7 @@ void planner_server::set_btraj_inequality_kinematic()
 void planner_server::set_alan_b_traj_online()
 {
     Eigen::Vector3d posi_current = uav_in_ugv_frame_posi;
-    Eigen::Vector3d posi_goal(0,0,touch_down_height);
+    Eigen::Vector3d posi_goal(touch_down_offset,0,touch_down_height);
 
     traj_execute_final_in_B = alan_btraj_sample->opt_traj_online(
         posi_current,

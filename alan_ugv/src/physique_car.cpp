@@ -10,6 +10,7 @@
 #include <random>
 #include <gazebo_msgs/ModelStates.h>
 #include <type_traits>
+#include <tf/tf.h>
 
 using namespace std;
 
@@ -21,6 +22,7 @@ static Eigen::VectorXd current_traj_wp;
 static nav_msgs::Odometry physique_car_odom;
 
 static geometry_msgs::PoseStamped physique_car_pose;
+static geometry_msgs::PoseStamped physique_car_pose_predicted;
 static geometry_msgs::TwistStamped physique_car_twist;
 static sensor_msgs::Imu physique_car_imu;
 static geometry_msgs::PoseStamped virual_pose;
@@ -56,7 +58,17 @@ static bool notyetfinish = false;
 static double PID_last_time;
 
 Eigen::Vector3d q2rpy(Eigen::Quaterniond q) {
-    return q.toRotationMatrix().eulerAngles(2,1,0);
+    tfScalar yaw, pitch, roll;
+    tf::Quaternion q_tf;
+    q_tf.setW(q.w());
+    q_tf.setX(q.x());
+    q_tf.setY(q.y());
+    q_tf.setZ(q.z());
+
+    tf::Matrix3x3 mat(q_tf);
+    mat.getEulerYPR(yaw, pitch, roll);
+
+    return Eigen::Vector3d(roll, pitch, yaw);
 };
 
 Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy){
@@ -228,6 +240,74 @@ void set_physique_pose_twist_imu(Eigen::VectorXd xyzrpy)
     set_physique_car_imu(xyzrpy);
 }
 
+void set_physique_pose_predicted(Eigen::Vector2d vel)
+{
+    // apply unicycle model
+    // x1' = u_s * cos (theta)
+    // x2' = u_s * sin (theta)
+    // theta' = u_w
+    // x' = [x1' x2' theta']^T 
+
+    // x = x0 + x't
+
+    double yaw = physique_car_state_xyyaw(2);
+
+    double x1_v = vel(0) * cos(yaw);
+    double x2_v = vel(0) * sin(yaw);
+    double omega = vel(1);
+
+    double delta_time = 1.0 / 50.0; // 0.02
+
+    Eigen::Vector3d x_v(
+        x1_v,
+        x2_v,
+        omega
+    );
+
+    Eigen::Vector3d t_temp;
+    Eigen::Quaterniond q_temp;
+    Eigen::Vector3d physique_car_state_xyyaw_predicted 
+        = physique_car_state_xyyaw;
+
+    for(int i = 0; i < 10; i++)
+    {
+        physique_car_state_xyyaw_predicted = 
+        physique_car_state_xyyaw_predicted + 
+        x_v * delta_time;
+
+        x_v(0) = vel(0) * cos(physique_car_state_xyyaw_predicted(2));
+        x_v(1) = vel(0) * sin(physique_car_state_xyyaw_predicted(2));
+    }
+
+    t_temp = Eigen::Vector3d(
+        physique_car_state_xyyaw_predicted.x(),
+        physique_car_state_xyyaw_predicted.y(),
+        physique_car_state(2)
+    );
+
+    q_temp = rpy2q(
+        Eigen::Vector3d(
+            0,
+            0,
+            physique_car_state_xyyaw_predicted(2)
+        )
+    );
+
+    
+
+    physique_car_pose_predicted.header = physique_car_pose.header;
+    physique_car_pose_predicted.header.frame_id = "world";
+    physique_car_pose_predicted.pose.position.x = t_temp.x();
+    physique_car_pose_predicted.pose.position.y = t_temp.y();
+    physique_car_pose_predicted.pose.position.z = t_temp.z();
+
+    physique_car_pose_predicted.pose.orientation.w = q_temp.w();
+    physique_car_pose_predicted.pose.orientation.x = q_temp.x();
+    physique_car_pose_predicted.pose.orientation.y = q_temp.y();
+    physique_car_pose_predicted.pose.orientation.z = q_temp.z();
+
+}
+
 Eigen::Vector2d ugv_poistion_controller_PID(Eigen::Vector3d pose_XYyaw, Eigen::Vector2d setpoint)
 { // From VRPN XY position
     
@@ -355,6 +435,9 @@ int main(int argc, char** argv)
     ros::Publisher physique_car_vel_pub = nh.advertise<geometry_msgs::Twist>
                         ("/cmd_vel", 1, true);
 
+    ros::Publisher physique_car_posi_predicted_pub = nh.advertise<geometry_msgs::PoseStamped>
+                        ("/alan_ugv/pose_predicted", 1, true);
+
     ros::Publisher physique_car_pose_pub = nh.advertise<geometry_msgs::PoseStamped>
                         (configs.getTopicName(POSE_PUB_TOPIC_A), 1, true);
 
@@ -428,6 +511,7 @@ int main(int argc, char** argv)
     {         
         // set_current_traj_wp(current_traj_wp);
         set_physique_pose_twist_imu(physique_car_state);
+        
 
         physique_car_pose_pub.publish(physique_car_pose);
         physique_car_twist_pub.publish(physique_car_twist);
@@ -438,17 +522,26 @@ int main(int argc, char** argv)
         // std::cout<<target_posi<<std::endl;
 
         if(static_ornot)
+        {
             twist_final.setZero();
+        }
         else
+        {
             twist_final = ugv_poistion_controller_PID(physique_car_state_xyyaw, target_posi);
+            
+            set_physique_pose_predicted(twist_final);
+        }
+            
         
 
         twist_pub_object.linear.x = twist_final(0);
         twist_pub_object.angular.z = twist_final(1);
 
         
-
         physique_car_vel_pub.publish(twist_pub_object);
+        physique_car_posi_predicted_pub.publish(physique_car_pose_predicted);
+
+    
                   
         ros::spinOnce();
         physique_car_rate.sleep();
