@@ -34,10 +34,14 @@ static double max_vel_lin = 0;
 static double max_vel_ang = 0;
 static int pub_freq = 0;
 static std::string environs;
+
+static bool static_ornot = false;
+
 static double ang_vel;
 static double radius;
 static double center_x;
 static double center_y;
+
 static std::string GAZEBO_ = "GAZEBO";
 
 static int fsm = TURN;
@@ -151,6 +155,17 @@ void physique_car_state_callback(const T& msg)
 {
     // std::cout<<std::is_same<T, gazebo_msgs::ModelStates::ConstPtr>()<<std::endl;
     physique_car_state_callback_impl(msg, std::is_same<T, gazebo_msgs::ModelStates::ConstPtr>());        
+}
+
+void physique_car_vel_callback(const geometry_msgs::TwistStamped::ConstPtr& msg)
+{
+    Eigen::Vector3d vel(
+        msg->twist.linear.x,
+        msg->twist.linear.y,
+        msg->twist.linear.z
+    );
+
+    // std::cout<<"current velocity..."<<vel.norm()<<std::endl;
 }
 
 void set_physique_car_pose(Eigen::VectorXd xyzrpy)
@@ -289,6 +304,9 @@ int main(int argc, char** argv)
     nh.getParam("/physique_car/max_vel_lin", max_vel_lin);
     nh.getParam("/physique_car/max_vel_ang", max_vel_ang);
     nh.getParam("/physique_car/pub_freq", pub_freq);
+
+    nh.getParam("/physique_car/static_ornot", static_ornot);
+
     
     nh.getParam("/physique_car/ang_vel", ang_vel);
     nh.getParam("/physique_car/radius", radius);
@@ -330,6 +348,9 @@ int main(int argc, char** argv)
             );
 
     }
+
+    ros::Subscriber physique_car_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>
+                        ("/vrpn_client_node/gh034_car/twist", 1, &physique_car_vel_callback);
     
     ros::Publisher physique_car_vel_pub = nh.advertise<geometry_msgs::Twist>
                         ("/cmd_vel", 1, true);
@@ -354,7 +375,7 @@ int main(int argc, char** argv)
         radius,
         pub_freq,
         ang_vel,
-        10,
+        100,
         true
     );
 
@@ -416,9 +437,16 @@ int main(int argc, char** argv)
 
         // std::cout<<target_posi<<std::endl;
 
-        twist_final = ugv_poistion_controller_PID(physique_car_state_xyyaw, target_posi);
+        if(static_ornot)
+            twist_final.setZero();
+        else
+            twist_final = ugv_poistion_controller_PID(physique_car_state_xyyaw, target_posi);
+        
+
         twist_pub_object.linear.x = twist_final(0);
         twist_pub_object.angular.z = twist_final(1);
+
+        
 
         physique_car_vel_pub.publish(twist_pub_object);
                   

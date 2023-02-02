@@ -4,7 +4,7 @@
         <param name="/max_vel_lin" type="double" value="4.0"/>
         <param name="/max_vel_ang" type="double" value="45"/>
         <param name="/pub_freq" type="int" value="50"/>
-        <param name="/environs" type="string" value="VICON"/>
+        <param name="/environs" type="string" value="GAZEBO"/>
 
         <!-- static -->
         <param name="/static_ornot" type="bool" value="false"/>
