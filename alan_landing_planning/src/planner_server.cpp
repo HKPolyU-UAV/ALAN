@@ -415,7 +415,7 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 
 
 
-    std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
+    // std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
 
 
     if(
@@ -632,6 +632,8 @@ Eigen::Vector4d planner_server::set_following_target_pose()
     following_target_pose(1) = uav_following_pt(1);
     following_target_pose(2) = uav_following_pt(2);
     following_target_pose(3) = ugv_traj_pose(3);
+
+    std::cout<<following_target_pose<<std::endl<<std::endl;
 
     return following_target_pose;
 }
