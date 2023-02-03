@@ -102,6 +102,7 @@ private:
     double pid_last_request = 0;
     bool print_or_not = true;
     double following_norm = 0;
+    int land_fix_count = 0;
 
     XmlRpc::XmlRpcValue pid_gain_list;
     Eigen::Vector4d kp, ki, kd;

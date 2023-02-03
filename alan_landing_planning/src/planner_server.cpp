@@ -54,6 +54,8 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
     ros::Rate rate(_pub_freq);
     while(ros::ok())
     {
+        // std::cout<<"hi...why"<<std::endl;
+
         if(
             land_traj_constraint_initiated
         )
@@ -486,7 +488,7 @@ bool planner_server::land()
         traj_i < optimal_traj_info_obj.optiTraj.trajectory.size()
     )
     {
-        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.0)
+        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.1)
         {
             target_traj_pose(0) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.x;
             target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.y;
@@ -513,7 +515,7 @@ bool planner_server::land()
     {
         std::cout<<uav_in_ugv_frame_posi.head<2>().norm()<<std::endl;
 
-        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.16)
+        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.20 || land_fix_count < 100)
         {
             target_traj_pose(0) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.x;
             target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.y;
@@ -523,6 +525,8 @@ bool planner_server::land()
             = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
             
             target_traj_pose(3) = ugv_traj_pose(3);
+
+            land_fix_count++;
 
             return false;
         }

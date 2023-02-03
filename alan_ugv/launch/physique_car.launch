@@ -7,12 +7,12 @@
         <param name="/environs" type="string" value="VICON"/>
 
         <!-- static -->
-        <param name="/static_ornot" type="bool" value="true"/>
+        <param name="/static_ornot" type="bool" value="false"/>
 
         
         <!-- circle_traj -->
         <param name="/ang_vel" type="double" value="36"/>
-        <param name="/radius" type="double" value="1.2"/>
+        <param name="/radius" type="double" value="1.44"/>
         <param name="/center_x" type="double" value="0.0"/>
         <param name="/center_y" type="double" value="0.36"/>
         
