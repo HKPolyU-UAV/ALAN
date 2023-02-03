@@ -39,6 +39,7 @@ private:
     //subscriber
     ros::Subscriber uav_state_sub;
     ros::Subscriber uav_AlanPlannerMsg_sub, ugv_AlanPlannerMsg_sub;
+    ros::Subscriber ugv_pose_predict_sub;
     ros::Subscriber sfc_sub;
 
     //publisher
@@ -58,6 +59,7 @@ private:
     void uavStateCallback(const mavros_msgs::State::ConstPtr& msg);
     void uavAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg);
     void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg);
+    void ugvPosePredictedMsgCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
     void sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& msg);
 
 
@@ -76,7 +78,7 @@ private:
     std::string fsm_state = IDLE;
     waypts takeoff_hover_pt = {0,0,1.2,0};
     waypts landing_hover_pt = {0,0,1.2,0};
-    Eigen::Isometry3d uavOdomPose, ugvOdomPose;
+    Eigen::Isometry3d uavOdomPose, ugvOdomPose, ugvOdomPose_predicted;
     mavros_msgs::SetMode uav_set_mode;
     mavros_msgs::CommandBool arm_cmd;
     mavros_msgs::State uav_current_state;
@@ -93,7 +95,7 @@ private:
 //position controller related
     Eigen::Vector4d pid_controller(Eigen::Vector4d pose, Eigen::Vector4d setpoint);
     void planner_pub();     
-    Eigen::Vector4d uav_traj_pose, ugv_traj_pose, target_traj_pose, ugv_target_traj_pose;
+    Eigen::Vector4d uav_traj_pose, ugv_traj_pose, ugv_traj_predict_pose, target_traj_pose, ugv_target_traj_pose;
     bool uav_traj_pose_initiated = false;
     bool ugv_traj_pose_initiated = false;
     double last_request;
@@ -130,6 +132,7 @@ private:
     double take_off_height = 0;
     double landing_horizontal = 0;
     double touch_down_height = 0;
+    double touch_down_offset = 0;
     double ugv_height = 0;
     double landing_time_duration_max = 0;
     double landing_time_duration_min = 0;

@@ -6,6 +6,7 @@ d_order: 3 # p v a j
 take_off_height: 0.4
 landing_horizontal: 1.2
 touch_down_height: 0.12
+touch_down_offset: 0.0
 ugv_height: 0.256
 
 
@@ -24,11 +25,11 @@ PID_gain:
   - x: 2.5
     y: 2.5
     z: 1.5
-    yaw: 1.2
+    yaw: 1.0
 #ki
-  - x: 0.1
-    y: 0.1
-    z: 0.1
+  - x: 0.3
+    y: 0.3
+    z: 0.3
     yaw: 0.05
 #kd:
   - x: 0.1
