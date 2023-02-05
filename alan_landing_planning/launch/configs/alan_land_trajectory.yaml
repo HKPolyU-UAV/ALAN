@@ -5,8 +5,8 @@ d_order: 3 # p v a j
 
 take_off_height: 0.4
 landing_horizontal: 1.2
-touch_down_height: 0.1
-touch_down_offset: 0.0
+touch_down_height: 0.08
+touch_down_offset: -0.0
 ugv_height: 0.256
 
 
@@ -22,18 +22,18 @@ sample_square_root: 31
 
 PID_gain:
 #kp
-  - x: 4.3
-    y: 4.3
+  - x: 5.2
+    y: 5.2
     z: 1.5
     yaw: 1.8
 #ki
   - x: 0.6
     y: 0.6
-    z: 0.1
+    z: 0.05
     yaw: 0.05
 #kd:
-  - x: 0.8
-    y: 0.8
-    z: 0.3
+  - x: 1.6
+    y: 1.6
+    z: 0.05
     yaw: 0.0
 

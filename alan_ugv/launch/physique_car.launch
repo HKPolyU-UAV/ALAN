@@ -11,10 +11,10 @@
 
         
         <!-- circle_traj -->
-        <param name="/ang_vel" type="double" value="36"/>
+        <param name="/ang_vel" type="double" value="84"/>
         <param name="/radius" type="double" value="1.44"/>
         <param name="/center_x" type="double" value="0.0"/>
-        <param name="/center_y" type="double" value="0.36"/>
+        <param name="/center_y" type="double" value="0.43"/>
         
 
     </node>

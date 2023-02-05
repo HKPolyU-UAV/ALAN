@@ -346,7 +346,7 @@ void planner_server::fsm_manager()
             ROS_GREEN_STREAM(MISSION_COMPLETE);
             print_or_not = false;
         }
-        ROS_GREEN_STREAM("NOW WAIT FOR EXIT...");
+        // ROS_GREEN_STREAM("NOW WAIT FOR EXIT...");
     }
     else
     {
@@ -497,7 +497,7 @@ bool planner_server::land()
             target_traj_pose.head<3>() 
                 = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
 
-            target_traj_pose(3) = ugv_traj_pose(3);
+            target_traj_pose(3) = set_yaw();
 
             traj_i++;
             
@@ -515,7 +515,7 @@ bool planner_server::land()
     {
         std::cout<<uav_in_ugv_frame_posi.head<2>().norm()<<std::endl;
 
-        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.20 || land_fix_count < 100)
+        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.20 || land_fix_count < 40)
         {
             target_traj_pose(0) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.x;
             target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.y;
@@ -524,7 +524,7 @@ bool planner_server::land()
             target_traj_pose.head<3>() 
             = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
             
-            target_traj_pose(3) = ugv_traj_pose(3);
+            target_traj_pose(3) = set_yaw();
 
             land_fix_count++;
 
@@ -543,7 +543,7 @@ bool planner_server::land()
 bool planner_server::shutdown()
 {
     kill_or_not = true;
-    ROS_WARN("UAV NOW SHUTDOWN...");
+    // ROS_WARN("UAV NOW SHUTDOWN...");
     attitude_target_for_kill.thrust = 0;
 
     Eigen::Vector2d temp = uav_in_ugv_frame_posi.head<2>();
@@ -657,7 +657,12 @@ Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vect
 
 Eigen::Vector4d planner_server::set_following_target_pose()
 {
-    Eigen::Vector3d uav_following_pt = Eigen::Vector3d(-landing_horizontal, 0.0, take_off_height);    
+    Eigen::Vector3d uav_following_pt = Eigen::Vector3d(
+        -landing_horizontal, 
+        0.0, 
+        take_off_height
+    );
+    
     uav_following_pt =  ugvOdomPose.rotation() * uav_following_pt 
         + Eigen::Vector3d(
             ugvOdomPose.translation().x(),
@@ -673,9 +678,22 @@ Eigen::Vector4d planner_server::set_following_target_pose()
     following_target_pose(0) = uav_following_pt(0);
     following_target_pose(1) = uav_following_pt(1);
     following_target_pose(2) = uav_following_pt(2);
-    following_target_pose(3) = ugv_traj_pose(3);
+    following_target_pose(3) = set_yaw();
 
     return following_target_pose;
+}
+
+double planner_server::set_yaw()
+{
+    Eigen::Vector2d uav_to_ugv_vector_horizontal_world;
+
+    uav_to_ugv_vector_horizontal_world = 
+        ugv_traj_pose.head<2>() - uav_traj_pose.head<2>();
+
+    return atan2(
+        uav_to_ugv_vector_horizontal_world.y(),
+        uav_to_ugv_vector_horizontal_world.x()
+    );
 }
 
 Eigen::Vector4d planner_server::set_uav_block_pose()
@@ -891,7 +909,7 @@ void planner_server::config(ros::NodeHandle& _nh)
     nh.getParam("/alan_master_planner_node/take_off_height", take_off_height);
     nh.getParam("/alan_master_planner_node/landing_horizontal", landing_horizontal);
     nh.getParam("/alan_master_planner_node/touch_down_height", touch_down_height);
-    nh.getParam("/alan_master_planner_node/touch_down_height", touch_down_offset);
+    nh.getParam("/alan_master_planner_node/touch_down_offset", touch_down_offset);
 
 
     nh.getParam("/alan_master_planner_node/v_max", v_max);

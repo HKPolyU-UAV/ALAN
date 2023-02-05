@@ -255,11 +255,24 @@ void set_physique_pose_predicted(Eigen::Vector2d vel)
 
     // x = x0 + x't
 
+    Eigen::Vector3d physique_car_state_xyyaw_predicted 
+        = physique_car_state_xyyaw;
+    
     double yaw = physique_car_state_xyyaw(2);
 
+    Eigen::Matrix2d ugv_T;
+    ugv_T <<
+        cos(yaw), -sin(yaw),
+        sin(yaw), cos(yaw);
+
+
+
+    
     double x1_v = vel(0) * cos(yaw);
     double x2_v = vel(0) * sin(yaw);
     double omega = vel(1);
+
+    // std::cout<<omega<<std::endl;
 
     double delta_time = 1.0 / 50.0; // 0.02
 
@@ -271,18 +284,36 @@ void set_physique_pose_predicted(Eigen::Vector2d vel)
 
     Eigen::Vector3d t_temp;
     Eigen::Quaterniond q_temp;
-    Eigen::Vector3d physique_car_state_xyyaw_predicted 
-        = physique_car_state_xyyaw;
+    
+
+    using namespace std;
+    cout<<"yaw: "<<yaw<<endl;
+    cout<<"x_v: "<<endl<<x_v<<endl<<endl;
+    cout<<"xyyaw_now:"<<endl<<physique_car_state_xyyaw_predicted<<endl<<endl;
+
+
+    // // while(physique_car_state_xyyaw_predicted(2) < 0)
+    // //     physique_car_state_xyyaw_predicted(2) = physique_car_state_xyyaw_predicted(2) + 2 * M_PI;
+
+
+    // double yaw_new;
+    
+
 
     for(int i = 0; i < 10; i++)
     {
         physique_car_state_xyyaw_predicted = 
-        physique_car_state_xyyaw_predicted + 
-        x_v * delta_time;
+            physique_car_state_xyyaw_predicted + 
+            x_v * delta_time;
 
         x_v(0) = vel(0) * cos(physique_car_state_xyyaw_predicted(2));
         x_v(1) = vel(0) * sin(physique_car_state_xyyaw_predicted(2));
     }
+
+    // cout<<physique_car_state_xyyaw_predicted - physique_car_state_xyyaw<<endl;
+    cout<<"xyyaw_after:"<<endl<<physique_car_state_xyyaw_predicted<<endl<<endl;
+    cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+
 
     t_temp = Eigen::Vector3d(
         physique_car_state_xyyaw_predicted.x(),
@@ -536,9 +567,9 @@ int main(int argc, char** argv)
         }
         else
         {
-            std::cout<<"here!"<<std::endl<<std::endl;
-            std::cout<<physique_car_state_xyyaw<<std::endl<<std::endl;
-            std::cout<<target_posi<<std::endl<<std::endl;
+            // std::cout<<"here!"<<std::endl<<std::endl;
+            // std::cout<<physique_car_state_xyyaw<<std::endl<<std::endl;
+            // std::cout<<target_posi<<std::endl<<std::endl;
             twist_final = ugv_poistion_controller_PID(physique_car_state_xyyaw, target_posi);
             
             set_physique_pose_predicted(twist_final);

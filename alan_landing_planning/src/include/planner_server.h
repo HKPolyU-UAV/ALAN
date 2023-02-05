@@ -10,6 +10,7 @@
 #include "alan_visualization/PolyhedronArray.h"
 
 #include <thread>
+#include <tf/tf.h>
 
 #define IDLE "IDLE"
 #define ARMED "ARMED"
@@ -164,7 +165,17 @@ private:
 
 //rotation function
     Eigen::Vector3d q2rpy(Eigen::Quaterniond q) {
-        return q.toRotationMatrix().eulerAngles(1,0,2);
+        tfScalar yaw, pitch, roll;
+        tf::Quaternion q_tf;
+        q_tf.setW(q.w());
+        q_tf.setX(q.x());
+        q_tf.setY(q.y());
+        q_tf.setZ(q.z());
+
+        tf::Matrix3x3 mat(q_tf);
+        mat.getEulerYPR(yaw, pitch, roll);
+
+        return Eigen::Vector3d(roll, pitch, yaw);
     };
 
     Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy){
@@ -188,6 +199,7 @@ private:
 
     //block trajectory (for data collection)
     Eigen::Vector4d set_following_target_pose();
+    double set_yaw();
     Eigen::Vector4d set_uav_block_pose();
     bool set_block_traj = true;
     std::vector<std::vector<Eigen::Vector3d>> block_traj_pts;
