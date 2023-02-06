@@ -242,7 +242,7 @@ void planner_server::fsm_manager()
             target_traj_pose(0) = takeoff_hover_pt.x;
             target_traj_pose(1) = takeoff_hover_pt.y;
             target_traj_pose(2) = takeoff_hover_pt.z;
-            target_traj_pose(3) = ugv_traj_pose(3);
+            target_traj_pose(3) = set_yaw();
 
             std::cout<<"target takeoff position\n"<<target_traj_pose<<std::endl<<std::endl;
         }
@@ -458,11 +458,20 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 bool planner_server::rendezvous()
 {
     target_traj_pose = set_following_target_pose();
-    
-    if(ros::Time::now().toSec() - last_request > ros::Duration(4.0).toSec())
-        return true;
-    else 
+
+    if(landornot)
+    {
+        if(ros::Time::now().toSec() - last_request > ros::Duration(4.0).toSec())
+            return true;
+        else 
+            return false;
+    }
+    else
+    {
         return false;
+    }
+    
+    
 
 }
 
@@ -515,7 +524,7 @@ bool planner_server::land()
     {
         std::cout<<uav_in_ugv_frame_posi.head<2>().norm()<<std::endl;
 
-        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.20 || land_fix_count < 40)
+        if(uav_in_ugv_frame_posi.head<2>().norm() > 0.20 || land_fix_count < 50)
         {
             target_traj_pose(0) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.x;
             target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.y;
@@ -678,7 +687,7 @@ Eigen::Vector4d planner_server::set_following_target_pose()
     following_target_pose(0) = uav_following_pt(0);
     following_target_pose(1) = uav_following_pt(1);
     following_target_pose(2) = uav_following_pt(2);
-    following_target_pose(3) = set_yaw();
+    following_target_pose(3) = ugv_traj_pose(3);
 
     return following_target_pose;
 }
@@ -916,7 +925,11 @@ void planner_server::config(ros::NodeHandle& _nh)
     nh.getParam("/alan_master_planner_node/a_max", a_max);
 
     nh.getParam("/alan_master_planner_node/sample_square_root", sample_square_root);
-    
+    nh.getParam("/alan_master_planner_node/landornot", landornot);
+
+    std::cout<<"landornot: "<<landornot<<std::endl;
+
+
     landing_time_duration_max 
         = (take_off_height - touch_down_height + landing_horizontal) / uav_landing_velocity;
     landing_time_duration_min 

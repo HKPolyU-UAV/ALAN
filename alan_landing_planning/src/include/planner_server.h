@@ -138,6 +138,7 @@ private:
     double ugv_height = 0;
     double landing_time_duration_max = 0;
     double landing_time_duration_min = 0;
+    bool landornot = false;
     alan_traj::bezier_constraints btraj_constraints;
     alan_visualization::Polyhedron temp_poly;
     std::vector<alan_visualization::Polyhedron> corridors;
