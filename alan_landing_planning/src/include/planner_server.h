@@ -9,6 +9,8 @@
 #include "alan_landing_planning/StateMachine.h"
 #include "alan_visualization/PolyhedronArray.h"
 
+#include "trajectory_msgs/MultiDOFJointTrajectoryPoint.h"
+
 #include <thread>
 
 #define IDLE "IDLE"
@@ -35,6 +37,8 @@ class planner_server
 private:
     ros::NodeHandle nh;
 
+    trajectory_msgs::MultiDOFJointTrajectoryPoint testlala;
+    // testlala.
 //ros related
     //subscriber
     ros::Subscriber uav_state_sub;

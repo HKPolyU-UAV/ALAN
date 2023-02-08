@@ -44,6 +44,15 @@ static double radius;
 static double center_x;
 static double center_y;
 
+static double starto_x;
+static double starto_y;
+static double endo_x;
+static double endo_y;
+static double straight_vel;
+static bool straight_repeat;
+static int straight_repeat_time;
+static bool yaw_control;
+
 static std::string GAZEBO_ = "GAZEBO";
 
 static int fsm = TURN;
@@ -333,9 +342,14 @@ Eigen::Vector2d ugv_poistion_controller_PID(Eigen::Vector3d pose_XYyaw, Eigen::V
         // Mission_stage++;
     }            // Stop if the error is within 10 cm
 
-    // if (err_yaw > M_PI * 0.1 || err_yaw < M_PI * -0.1){ 
-    //     err_dist = 0; 
-    // }   //Turn before going straight
+    if(yaw_control)
+    {
+        if (err_yaw > M_PI * 0.05 || err_yaw < M_PI * -0.05){ 
+            std::cout<<"turn before going straight"<<endl;
+            err_dist = 0; 
+        }   //Turn before going straight
+    }
+    
     
     Eigen::Vector2d error, last_error, u_p, u_i, u_d, output; // Dist Yaw Error
 
@@ -392,6 +406,18 @@ int main(int argc, char** argv)
     nh.getParam("/physique_car/radius", radius);
     nh.getParam("/physique_car/center_x", center_x);
     nh.getParam("/physique_car/center_y", center_y);
+
+    nh.getParam("/physique_car/starto_x", starto_x);
+    nh.getParam("/physique_car/starto_y", starto_y);
+    nh.getParam("/physique_car/endo_x", endo_x);
+    nh.getParam("/physique_car/endo_y", endo_y);
+    nh.getParam("/physique_car/straight_vel", straight_vel);
+    nh.getParam("/physique_car/straight_repeat", straight_repeat);
+    nh.getParam("/physique_car/straight_repeat_time", straight_repeat_time);
+    nh.getParam("/physique_car/yaw_control", yaw_control);
+
+
+
 
     nh.getParam("/physique_car/environs", environs);
     
@@ -473,11 +499,14 @@ int main(int argc, char** argv)
     //     true
     // );
 
-    // ugv::ugvpath straight_traj(
-    //     target_posi,
-    //     pub_freq,
-    //     1.0
-    // );
+    ugv::ugvpath straight_traj(
+        Eigen::Vector2d(starto_x, starto_y),
+        Eigen::Vector2d(endo_x, endo_y),
+        pub_freq,
+        straight_vel,
+        straight_repeat,
+        straight_repeat_time
+    );
 
     // ugv::ugvpath eight_traj(
     //     center,
@@ -517,9 +546,9 @@ int main(int argc, char** argv)
         physique_car_twist_pub.publish(physique_car_twist);
         physique_car_imu_pub.publish(physique_car_imu);
 
-        target_posi = circle_traj.get_traj_wp(traj_i);
-
-        // std::cout<<target_posi<<std::endl;
+        target_posi = straight_traj.get_traj_straight_wp(physique_car_state_xyyaw, traj_i);
+        // target_posi = Eigen::Vector2d(0,0);
+        std::cout<<target_posi<<std::endl<<std::endl<<std::endl;
 
         if(static_ornot)
         {

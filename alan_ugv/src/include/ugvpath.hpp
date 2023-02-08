@@ -33,9 +33,15 @@ namespace ugv
 
     typedef struct ugv_traj_info_straight
     {
+        Eigen::Vector2d starto;
         Eigen::Vector2d endo;
         int pub_freq;
         double velo;
+        bool repeat;
+        int repeat_time;
+
+        int traj_no_per_seg;
+        int counter;
     }ugv_traj_info_straight;
 
     typedef struct ugv_traj_info_eight
@@ -114,8 +120,51 @@ namespace ugv
             {
 
             }
-            else if(_traj_type == STRAIGHT_TRAJ)
+            else if(_traj_type == STRAIGHT_TRAJ) 
             {
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!        
+                straight_traj_info.counter = 1;
+
+                Eigen::Vector2d toward_vector = straight_traj_info.endo - straight_traj_info.starto;
+
+                double distance = toward_vector.norm();
+                double time = distance / straight_traj_info.velo;
+
+                int traj_total_no = straight_traj_info.pub_freq * time;
+
+                std::vector<Eigen::Vector2d> traj_per_seg;
+
+                for(int i = 0; i < traj_total_no; i++)
+                {
+                    Eigen::Vector2d temp = 
+                        straight_traj_info.starto + toward_vector * double(i) / traj_total_no;
+                    
+                    traj_per_seg.emplace_back(temp);
+                }
+
+                straight_traj_info.traj_no_per_seg = traj_per_seg.size();
+
+                std::vector<Eigen::Vector2d> traj_per_seg_reverse = traj_per_seg;
+                std::reverse(traj_per_seg_reverse.begin(), traj_per_seg_reverse.end());
+
+                if(straight_traj_info.repeat)
+                {
+                    for(int i = 0; i < straight_traj_info.repeat_time; i++)
+                    {
+                        for(auto& what : traj_per_seg)
+                            trajectory.emplace_back(what);
+                                            
+                        for(auto& what : traj_per_seg_reverse)
+                            trajectory.emplace_back(what);
+
+                    }
+
+                }   
+                else
+                {
+                    for(auto& what : traj_per_seg)
+                        trajectory.emplace_back(what);
+                }             
 
             }
             else if(_traj_type == EIGHT_TRAJ)
@@ -340,17 +389,23 @@ namespace ugv
         };
 
         
-        ugvpath(            
+        ugvpath(        
+            Eigen::Vector2d starto,    
             Eigen::Vector2d endo,
             int pub_freq,
             double velo,
+            bool repeat,
+            int repeat_time,
             std::string traj_type = STRAIGHT_TRAJ
         ) // straight
         : _traj_type(traj_type)
         {
+            straight_traj_info.starto = starto;
             straight_traj_info.endo = endo;
             straight_traj_info.pub_freq = pub_freq;
             straight_traj_info.velo = velo;
+            straight_traj_info.repeat = repeat;
+            straight_traj_info.repeat_time = repeat_time;
 
             std::cout<<STRAIGHT_TRAJ<<std::endl;
 
@@ -398,6 +453,101 @@ namespace ugv
             {
                 return trajectory[trajectory.size() - 1];
             }
+        }
+
+        Eigen::Vector2d get_traj_straight_wp(Eigen::VectorXd state, int& traj_i)
+        { 
+            using namespace std;
+
+            Eigen::Vector2d local_target;
+
+            if(straight_traj_info.counter % 2 == 1)
+                local_target = straight_traj_info.endo;
+            else
+                local_target = straight_traj_info.starto;
+
+            bool local_target_reach = false;
+
+            // if()
+
+            // cout<<traj_i<<endl;
+            // cout<<straight_traj_info.counter<<endl;
+            // cout<<traj_i - straight_traj_info.counter * straight_traj_info.traj_no_per_seg<<endl<<endl;
+            if(
+                traj_i - straight_traj_info.counter * straight_traj_info.traj_no_per_seg == 0
+                &&
+                (local_target - state.head<2>()).norm() < 0.5
+            )
+            {
+                local_target_reach = true;
+                straight_traj_info.counter++;
+            }
+
+            Eigen::Vector2d directional = local_target - state.head<2>();
+            double desired_yaw = atan2(directional.y(), directional.x());
+            double err_yaw = desired_yaw -  state(2);
+
+            while (err_yaw >= M_PI){
+                err_yaw -= 2 * M_PI;
+            }
+
+            while (err_yaw <= -M_PI){
+                err_yaw += 2 * M_PI;
+            }
+
+
+            // if(!local_target_reach)
+            // {
+            if (err_yaw > M_PI * 0.05 || err_yaw < M_PI * -0.05)
+            {
+                if(straight_traj_info.counter % 2 == 1)
+                    return straight_traj_info.endo;
+                else
+                    return straight_traj_info.starto;
+                
+            }
+            else
+            {
+                cout<<"GO!!!!!!!!!!"<<endl;
+                if(traj_i < trajectory.size())
+                {
+                    if(
+                        (traj_i - straight_traj_info.counter * straight_traj_info.traj_no_per_seg) < 0
+                    )
+                    traj_i ++;
+
+                    return trajectory[traj_i];
+                }
+                else
+                {
+                    return trajectory[trajectory.size() - 1];
+                }
+                
+            }                                
+            // }
+            // else
+            // {
+
+            // }
+                
+            
+
+            
+            // cout<<"desired_yaw: "<<desired_yaw<<endl;
+            // cout<<"current_yaw: "<<state(2)<<endl;
+
+            // cout<<"err_yaw: "<<err_yaw<<endl;
+            // cout<<M_PI * 0.054<<endl<<endl;
+
+            
+
+
+            
+
+
+
+            
+        
         }
     };  
 
