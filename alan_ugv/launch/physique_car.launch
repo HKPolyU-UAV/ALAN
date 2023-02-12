@@ -2,7 +2,7 @@
     <node name="physique_car" pkg="alan_ugv" type="physique_car" output="screen">
         <rosparam command="load" file="$(find alan_ugv)/launch/configs/GAZEBO_CAR_SUBPUB_topics.yaml" />
         <param name="/max_vel_lin" type="double" value="4.0"/>
-        <param name="/max_vel_ang" type="double" value="45"/>
+        <param name="/max_vel_ang" type="double" value="22.5"/>
         <param name="/pub_freq" type="int" value="50"/>
         <param name="/environs" type="string" value="VICON"/>
 
@@ -11,11 +11,35 @@
 
         
         <!-- circle_traj -->
-        <param name="/ang_vel" type="double" value="78"/>
-        <param name="/radius" type="double" value="1.28"/>
+        <param name="/ang_vel" type="double" value="60"/>
+        <param name="/radius" type="double" value="1.4"/>
         <param name="/center_x" type="double" value="0.0"/>
-        <param name="/center_y" type="double" value="0.43"/>
+        <param name="/center_y" type="double" value="0.38"/>
+
+        <!-- straight_traj -->
+        <param name="/starto_x" type="double" value="1.0"/>
+        <param name="/starto_y" type="double" value="1.0"/>
+        <param name="/endo_x" type="double" value="-1.0"/>
+        <param name="/endo_y" type="double" value="-1.0"/>
+        <param name="/straight_vel" type="double" value="4.0"/>
+        <param name="/straight_repeat" type="bool" value="true"/>
+        <param name="/straight_repeat_time" type="int" value="100"/>
+        <param name="/yaw_control" type="bool" value="false"/>
         
 
     </node>
+
+    <!-- <arg name="FSM_mission" default="true" />
+    <arg name="External_pos_setpoint" default="false" />
+    <arg name="MaxVelocity" default="2.0" />
+    <arg name="MaxTurnrate" default="0.32" />
+
+    <node name="vicon_car" pkg="alan_ugv" type="vicon_car" output="screen">
+        <param name="FSM_mission" type="bool" value="$(arg FSM_mission)" />
+        <param name="External_pos_setpoint" type="bool" value="$(arg External_pos_setpoint)" />
+        <param name="MaxVelocity" type="double" value="$(arg MaxVelocity)" />
+        <param name="MaxTurnrate" type="double" value="$(arg MaxTurnrate)" />
+    </node> -->
+
+    
 </launch>

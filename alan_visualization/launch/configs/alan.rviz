@@ -21,6 +21,8 @@ Panels:
         - /ledcpp_output1/UGVPose1
         - /ledcpp_output1/CAMPose1
         - /Pose1
+        - /Pose2
+        - /Pose3
       Splitter Ratio: 0.5
     Tree Height: 673
   - Class: rviz/Selection
@@ -86,7 +88,7 @@ Visualization Manager:
           Marker Topic: /gt_points/traj
           Name: Marker_opti
           Namespaces:
-            GT_points: true
+            {}
           Queue Size: 500
           Value: true
         - Class: rviz/Marker
@@ -94,7 +96,7 @@ Visualization Manager:
           Marker Topic: /gt_points/trajCtrlpts
           Name: Marker_ctrl
           Namespaces:
-            GT_points: true
+            {}
           Queue Size: 500
           Value: true
         - Class: rviz/Marker
@@ -102,20 +104,20 @@ Visualization Manager:
           Marker Topic: /gt_points/trajSamples
           Name: Marker_sample
           Namespaces:
-            GT_points: true
+            {}
           Queue Size: 500
           Value: true
         - Alpha: 0.10000000149011612
           BoundColor: 255; 25; 0
           Class: decomp_rviz_plugins/PolyhedronArray
-          Enabled: true
+          Enabled: false
           MeshColor: 46; 52; 54
           Name: PolyhedronArray
           Scale: 0.009999999776482582
           State: Both
           Topic: /polyhedron_array
           Unreliable: false
-          Value: true
+          Value: false
           VsColor: 0; 255; 0
           VsScale: 10
       Enabled: true
@@ -310,6 +312,36 @@ Visualization Manager:
       Topic: /alan_ugv/pose_predicted
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /planner_server/traj/pose
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 25; 255; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /uav/mavros/vision_pose/pose
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -353,10 +385,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2447954416275024
+      Pitch: 0.689795970916748
       Target Frame: body
       Value: Orbit (rviz)
-      Yaw: 1.0913022756576538
+      Yaw: 1.696301817893982
     Saved:
       - Class: rviz/Orbit
         Distance: 19.586559295654297

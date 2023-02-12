@@ -138,3 +138,19 @@ target_link_libraries(physique_car
   osqp::osqp
   OsqpEigen#::OsqpEigen
 )
+
+add_executable(vicon_car
+  src/vicon_car.cpp
+  # src/RosTopicConfigs.cpp
+)
+
+target_link_libraries(vicon_car
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${OSQP_LIBRARIES}
+  # mosek64
+  # qpOASES
+  osqp::osqp
+  OsqpEigen#::OsqpEigen
+)

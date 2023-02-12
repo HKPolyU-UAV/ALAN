@@ -1,5 +1,5 @@
 LANDING_DISTANCE:
-  4.0
+  2.0
 
 #fx fy cx cy
 cam_intrinsics_435: [607.4324951171875, 606.439697265625, 421.5857238769531, 243.94647216796875]
@@ -10,7 +10,7 @@ cam_ugv_extrinsics_d455: [0.54446, 0.0, 0.0307356, 0.0, -20.0, 180.0] #xyzrpy
 cam_FOV_H: 90
 cam_FOV_V: 65
 
-final_corridor_height: 0.15
+final_corridor_height: 0.2
 final_corridor_length: 1.2
 
 landing_horizontal: 1.2

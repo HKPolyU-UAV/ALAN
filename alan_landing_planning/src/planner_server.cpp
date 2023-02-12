@@ -25,7 +25,7 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
             ("/alan_fsm", 1, true);
 
     local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>
-            ("/uav/mavros/setpoint_position/local", 1, true);
+            ("/planner_server/traj/pose", 1, true);
         //   /mavros/setpoint_position/local
     local_vel_pub = nh.advertise<geometry_msgs::Twist>
             ("/uav/mavros/setpoint_velocity/cmd_vel_unstamped", 5, true);
@@ -242,7 +242,7 @@ void planner_server::fsm_manager()
             target_traj_pose(0) = takeoff_hover_pt.x;
             target_traj_pose(1) = takeoff_hover_pt.y;
             target_traj_pose(2) = takeoff_hover_pt.z;
-            target_traj_pose(3) = set_yaw();
+            target_traj_pose(3) = ugv_traj_pose(3);
 
             std::cout<<"target takeoff position\n"<<target_traj_pose<<std::endl<<std::endl;
         }
@@ -418,11 +418,12 @@ bool planner_server::taking_off()
 
 bool planner_server::go_to_rendezvous_pt_and_follow()
 {
-    //follow dynamic
-    target_traj_pose = set_following_target_pose();
+    
     
     //perform block traj during experiment
-    // target_traj_pose = set_uav_block_pose();
+    target_traj_pose = set_uav_block_pose();
+
+    return false;
 
     //decide whether to land based on following quality
     // if(
@@ -442,16 +443,19 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 
 
 
-    std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
+    //follow dynamic
+    // target_traj_pose = set_following_target_pose();
+
+    // std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
 
 
-    if(
-        uav_in_ugv_frame_posi.norm() - following_norm < 0.4 &&
-        prerequisite_set
-    )
-        return true;
-    else
-        return false;        
+    // if(
+    //     uav_in_ugv_frame_posi.norm() - following_norm < 0.4 &&
+    //     prerequisite_set
+    // )
+    //     return true;
+    // else
+    //     return false;        
 
 }
 
@@ -461,7 +465,7 @@ bool planner_server::rendezvous()
 
     if(landornot)
     {
-        if(ros::Time::now().toSec() - last_request > ros::Duration(4.0).toSec())
+        if(ros::Time::now().toSec() - last_request > ros::Duration(10.0).toSec())
             return true;
         else 
             return false;
@@ -506,7 +510,7 @@ bool planner_server::land()
             target_traj_pose.head<3>() 
                 = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
 
-            target_traj_pose(3) = set_yaw();
+            target_traj_pose(3) = ugv_traj_pose(3);// set_yaw();
 
             traj_i++;
             
@@ -533,7 +537,7 @@ bool planner_server::land()
             target_traj_pose.head<3>() 
             = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
             
-            target_traj_pose(3) = set_yaw();
+            target_traj_pose(3) = ugv_traj_pose(3);
 
             land_fix_count++;
 
@@ -572,7 +576,7 @@ void planner_server::planner_pub()
     {
         // std::cout<<"hi"<<std::endl;
         traj_pub.publish(optimal_traj_info_obj.optiTraj);
-        trajArray_pub.publish(optimal_traj_info_obj.optiTrajArray);        
+        // trajArray_pub.publish(optimal_traj_info_obj.optiTrajArray);        
         ctrl_pt_pub.publish(optimal_traj_info_obj.ctrl_pts_optimal);
     }
     // std::cout<<uav_traj_desired.pose.position.x<<std::endl;
@@ -584,11 +588,58 @@ void planner_server::planner_pub()
     uav_traj_twist_desired.linear.z = twist_result(2);
     uav_traj_twist_desired.angular.z = twist_result(3);
 
+    geometry_msgs::PoseStamped traj_pose;
+    traj_pose.header.frame_id = "world";
+    traj_pose.header.stamp = ros::Time::now();
+
+    
+
+
 
     if(fsm_state != SHUTDOWN && fsm_state != MISSION_COMPLETE)
+    {
+        traj_pose.pose.position.x = target_traj_pose(0);
+        traj_pose.pose.position.y = target_traj_pose(1);
+        traj_pose.pose.position.z = target_traj_pose(2);
+
+        Eigen::Quaterniond traj_q = rpy2q(
+            Eigen::Vector3d(
+                0,
+                0,
+                target_traj_pose(3)
+            )
+        );
+        traj_pose.pose.orientation.w = traj_q.w();
+        traj_pose.pose.orientation.x = traj_q.x();
+        traj_pose.pose.orientation.y = traj_q.y();
+        traj_pose.pose.orientation.z = traj_q.z();
+
+        local_pos_pub.publish(traj_pose);
         local_vel_pub.publish(uav_traj_twist_desired);
+    }        
     else
+    {
+        traj_pose.pose.position.x = ugv_traj_pose(0);
+        traj_pose.pose.position.y = ugv_traj_pose(1);
+        traj_pose.pose.position.z = ugv_traj_pose(2);
+
+        Eigen::Quaterniond traj_q = rpy2q(
+            Eigen::Vector3d(
+                0,
+                0,
+                ugv_traj_pose(3)
+            )
+        );
+        traj_pose.pose.orientation.w = traj_q.w();
+        traj_pose.pose.orientation.x = traj_q.x();
+        traj_pose.pose.orientation.y = traj_q.y();
+        traj_pose.pose.orientation.z = traj_q.z();
+
+        local_pos_pub.publish(traj_pose);
         kill_attitude_target_pub.publish(attitude_target_for_kill);
+
+    }
+        
 }
 
 Eigen::Vector4d planner_server::pid_controller(Eigen::Vector4d pose, Eigen::Vector4d setpoint)
@@ -672,11 +723,11 @@ Eigen::Vector4d planner_server::set_following_target_pose()
         take_off_height
     );
     
-    uav_following_pt =  ugvOdomPose.rotation() * uav_following_pt 
+    uav_following_pt =  ugvOdomPose_predicted.rotation() * uav_following_pt 
         + Eigen::Vector3d(
-            ugvOdomPose.translation().x(),
-            ugvOdomPose.translation().y(),
-            ugvOdomPose.translation().z()
+            ugvOdomPose_predicted.translation().x(),
+            ugvOdomPose_predicted.translation().y(),
+            ugvOdomPose_predicted.translation().z()
         );
 
     // uav_following_pt.x() = ugv_traj_pose(0);

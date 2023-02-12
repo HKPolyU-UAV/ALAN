@@ -11,8 +11,10 @@
 
 
     <!-- ArucoNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="aruco" args="load alan/ArucoNodelet alan_master" output="screen">
-    </node> -->
+    <node pkg="nodelet" type="nodelet" name="aruco" args="load alan/ArucoNodelet alan_master" output="screen">
+        <rosparam command="load" file="$(find alan_state_estimation)/launch/configs/ARUCO_SUBPUB_topics.yaml" />
+
+    </node>
     <!-- <nodec -->
 
     <!-- CnnNodelet -->
