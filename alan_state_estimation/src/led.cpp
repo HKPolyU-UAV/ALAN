@@ -58,7 +58,7 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
 void alan::LedNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
     ugv_pose_msg = *pose;
-    ugv_pose_msg.header.frame_id = "map";
+    ugv_pose_msg.header.frame_id = "world";
     
     Eigen::Translation3d t_(
         ugv_pose_msg.pose.position.x,
@@ -84,7 +84,7 @@ void alan::LedNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::Const
     cam_pose = Eigen::Translation3d(t_cam) * q_cam;
 
     geometry_msgs::PoseStamped pose_cam;
-    pose_cam.header.frame_id = "map";
+    pose_cam.header.frame_id = "world";
     pose_cam.pose.position.x = t_cam.x();
     pose_cam.pose.position.y = t_cam.y();
     pose_cam.pose.position.z = t_cam.z();
@@ -117,7 +117,7 @@ void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::Const
 
     uav_pose = t_ * q_;
 
-    uav_pose_msg.header.frame_id = "map";
+    uav_pose_msg.header.frame_id = "world";
 
     uavpose_pub.publish(uav_pose_msg);
 }
@@ -154,7 +154,7 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     
     //pose publish
     led_pose_estimated.header.stamp = led_pose_stamp;
-    led_pose_estimated.header.frame_id = "map";
+    led_pose_estimated.header.frame_id = "world";
 
     led_pose_estimated.pose.position.x = t_final.translation().x();
     led_pose_estimated.pose.position.y = t_final.translation().y();
@@ -169,7 +169,7 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 
     //odom publish
     led_odom_estimated.header.stamp = led_pose_stamp;
-    led_odom_estimated.header.frame_id = "map";
+    led_odom_estimated.header.frame_id = "world";
 
     led_odom_estimated.pose.pose.position.x = t_final.translation().x();
     led_odom_estimated.pose.pose.position.y = t_final.translation().y();
@@ -225,7 +225,10 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
         if(!LED_tracker_initiated_or_tracked)
         {
             ROS_RED_STREAM("TRACKER FAIL");
-            detect_no = 0;            
+            // cv::imwrite("/home/patty/alan_ws/haha.jpg", frame);
+            // cv::imwrite("/home/patty/alan_ws/lala.jpg", frame_input);
+            // detect_no = 0;            
+            // ros::shutdown();
         }
         else       
             map_SE3_to_pose(pose_global_sophus);
