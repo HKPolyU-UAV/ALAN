@@ -49,8 +49,11 @@
 #include <nodelet/nodelet.h>
 
 #include <pthread.h>
+#include <tf/tf.h>
+
 
 #include "tools/RosTopicConfigs.h"
+#include "alan_state_estimation/alan_log.h"
 // map definition for convinience
 #define COLOR_SUB_TOPIC CAMERA_SUB_TOPIC_A
 #define DEPTH_SUB_TOPIC CAMERA_SUB_TOPIC_B
@@ -142,7 +145,9 @@ namespace alan
         
         //publisher 
             //objects
-            ros::Publisher ledpose_pub, ledodom_pub, campose_pub, ugvpose_pub, uavpose_pub;
+            ros::Publisher ledpose_pub, ledodom_pub, 
+                           campose_pub, ugvpose_pub, uavpose_pub,
+                           record_led_pub, record_uav_pub;
             image_transport::Publisher pubimage;
             image_transport::Publisher pubimage_input;
             //functions
@@ -209,10 +214,12 @@ namespace alan
                 const sensor_msgs::CompressedImageConstPtr & rgbmsg
             );
             void terminal_msg_display(double hz);
+            void log(double ms);
             //functions
             Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
+            
 
         //below is the courtesy of UZH Faessler et al.
         //which was used for calculation of the twists in this project
@@ -423,6 +430,11 @@ namespace alan
                 //only used for validation stage
                                 (configs.getTopicName(CAM_POSE_PUB_TOPIC), 1, true);    
                 
+                record_led_pub = nh.advertise<alan_state_estimation::alan_log>
+                                ("/alan_state_estimation/led/led_log", 1);
+                
+                record_uav_pub = nh.advertise<alan_state_estimation::alan_log>
+                                ("/alan_state_estimation/led/uav_log", 1);
             }
 
 

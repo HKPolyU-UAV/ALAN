@@ -58,7 +58,7 @@ roslaunch_add_file_check(launch)
 
 add_message_files(
   FILES
-  alan_state_blank.msg
+  alan_log.msg
   # AlanPlannerMsg.msg 
   # StateMachine.msg
   # Target.msg

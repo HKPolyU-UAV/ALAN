@@ -44,6 +44,8 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
     terminal_msg_display(1 / (tock - tick));
 
     set_image_to_publish(1 / (tock - tick), rgbmsg);
+
+    log(tock - tick);
                     
     last_request = ros::Time::now().toSec();
 
@@ -165,10 +167,12 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     led_pose_estimated.pose.orientation.y = q_final.y();
     led_pose_estimated.pose.orientation.z = q_final.z();
 
-    Eigen::Vector3d axis(1,0,0);
-    Eigen::AngleAxisd attitude_angle_axis(q_final.toRotationMatrix());
+    // Eigen::AngleAxisd attitude_angle_axis_led(q_final.toRotationMatrix());
 
-    std::cout<<attitude_angle_axis.angle()<<std::endl;
+    // Eigen::AngleAxisd attitude_angle_axis_uav(uav_pose.rotation());
+
+    // std::cout<<attitude_angle_axis_led.angle()<<std::endl;
+    // std::cout<<attitude_angle_axis_uav.angle()<<std::endl;
 
     ledpose_pub.publish(led_pose_estimated);
 
@@ -196,7 +200,8 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     ledodom_pub.publish(led_odom_estimated);
 
     // Sophus::SE3d led_twist_sophus = Sophus::SE3d(led_twist_current);
-    // led_twist_estimated.twist.linear.x = led_twist_sophus.ro        
+    // led_twist_estimated.twist.linear.x = led_twist_sophus.ro       
+ 
 }
 
 void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
@@ -1290,7 +1295,17 @@ inline double alan::LedNodelet::calculate_MAD(std::vector<double> norm_of_points
 
 Eigen::Vector3d alan::LedNodelet::q2rpy(Eigen::Quaterniond q) 
 {
-    return q.toRotationMatrix().eulerAngles(2,1,0);
+    tfScalar yaw, pitch, roll;
+    tf::Quaternion q_tf;
+    q_tf.setW(q.w());
+    q_tf.setX(q.x());
+    q_tf.setY(q.y());
+    q_tf.setZ(q.z());
+
+    tf::Matrix3x3 mat(q_tf);
+    mat.getEulerYPR(yaw, pitch, roll);
+
+    return Eigen::Vector3d(roll, pitch, yaw);
 }
 
 Eigen::Quaterniond alan::LedNodelet::rpy2q(Eigen::Vector3d rpy)
@@ -1398,6 +1413,64 @@ void alan::LedNodelet::set_image_to_publish(double freq, const sensor_msgs::Comp
     this->pubimage_input.publish(for_visual_input.toImageMsg());   
     // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/in_camera_frame/"+ std::to_string(i)+ ".png", display); 
     // i++;
+}
+
+void alan::LedNodelet::log(double ms)
+{
+    alan_state_estimation::alan_log logdata_entry_led;
+    
+    logdata_entry_led.px = led_pose.translation().x();
+    logdata_entry_led.py = led_pose.translation().y();
+    logdata_entry_led.pz = led_pose.translation().z();
+    
+    Eigen::Vector3d rpy = q2rpy(
+        Eigen::Quaterniond(led_pose.rotation())
+    );
+
+    logdata_entry_led.roll  = rpy(0);
+    logdata_entry_led.pitch = rpy(1);
+    logdata_entry_led.yaw   = rpy(2);
+
+    logdata_entry_led.ms = ms;
+    logdata_entry_led.depth = abs(
+        sqrt(
+            pow(
+                ugv_pose.translation().x() - uav_pose.translation().x(),
+                2
+            ) +
+            pow(ugv_pose.translation().y() - uav_pose.translation().y(),
+                2
+            ) +
+            pow(ugv_pose.translation().z() - uav_pose.translation().z(),
+                2
+            )
+        )        
+    );
+
+    logdata_entry_led.time_stamp = ros::Time::now();
+
+    record_led_pub.publish(logdata_entry_led);
+
+    ///////////////////////////////////////////////////////////
+
+    alan_state_estimation::alan_log logdata_entry_uav;
+    
+    logdata_entry_uav.px = uav_pose.translation().x();
+    logdata_entry_uav.py = uav_pose.translation().y();
+    logdata_entry_uav.pz = uav_pose.translation().z();
+    
+    rpy = q2rpy(
+        Eigen::Quaterniond(uav_pose.rotation())
+    );
+
+    logdata_entry_uav.roll  = rpy(0);
+    logdata_entry_uav.pitch = rpy(1);
+    logdata_entry_uav.yaw   = rpy(2);
+
+    logdata_entry_uav.time_stamp = ros::Time::now();
+
+    record_uav_pub.publish(logdata_entry_uav);
+
 }
 
 void alan::LedNodelet::terminal_msg_display(double hz)

@@ -141,9 +141,9 @@ namespace alan
                 ros::NodeHandle& nh = getMTNodeHandle();
                 ROS_INFO("Aruco Nodelet Initiated...");
 
-                RosTopicConfigs configs(nh, "/alan_master");
+                RosTopicConfigs configs(nh, "/aruco");
 
-                std::cout<<"in oninit..."<<std::endl;
+                // std::cout<<"in oninit..."<<temp<<std::endl;
                 //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
@@ -238,7 +238,7 @@ namespace alan
                 // pthread_create(&tid, NULL, ArucoNodelet::PubMainLoop, (void*)this);
 
                 image_transport::ImageTransport image_transport_(nh);
-                pubimage = image_transport_.advertise(configs.getTopicName(IMAGE_PUB_TOPIC_A),1);
+                pubimage = image_transport_.advertise("lala",1);
 
                 //initialize subscribe
                 // subimage = nh.subscribe("/camera/color/image_raw/compressed", 1, &ArucoNodelet::camera_callback, this);
