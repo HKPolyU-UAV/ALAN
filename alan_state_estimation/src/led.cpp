@@ -165,6 +165,11 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     led_pose_estimated.pose.orientation.y = q_final.y();
     led_pose_estimated.pose.orientation.z = q_final.z();
 
+    Eigen::Vector3d axis(1,0,0);
+    Eigen::AngleAxisd attitude_angle_axis(q_final.toRotationMatrix());
+
+    std::cout<<attitude_angle_axis.angle()<<std::endl;
+
     ledpose_pub.publish(led_pose_estimated);
 
     //odom publish

@@ -143,7 +143,7 @@ namespace alan
 
                 RosTopicConfigs configs(nh, "/alan_master");
 
-                // std::cout<<"in oninit..."<<temp<<std::endl;
+                std::cout<<"in oninit..."<<std::endl;
                 //load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
