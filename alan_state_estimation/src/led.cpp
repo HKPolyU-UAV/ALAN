@@ -1,3 +1,28 @@
+/*
+    This file is part of ALan - the non-robocentric dynamic landing system for quadrotor
+
+    ALan is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    ALan is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with ALan.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * \file led.cpp
+ * \date 28/07/2022
+ * \author pattylo
+ * \copyright (c) AIRO-LAB, RCUAS of Hong Kong Polytechnic University
+ * \brief classes for vision-based relative localization for UAV and UGV based on LED markers
+ */
+
 #include "include/led.h"
 
 void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr & rgbmsg, const sensor_msgs::Image::ConstPtr & depthmsg)
@@ -39,7 +64,9 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
            
     solve_pose_w_LED(frame, depth);
     
-    double tock = ros::Time::now().toSec();    
+    double tock = ros::Time::now().toSec();  
+
+    std::cout<<tock - tick<<std::endl;  
 
     terminal_msg_display(1 / (tock - tick));
 
@@ -1435,19 +1462,19 @@ void alan::LedNodelet::log(double ms)
     logdata_entry_led.depth = abs(
         sqrt(
             pow(
-                ugv_pose.translation().x() - uav_pose.translation().x(),
+                cam_pose.translation().x() - uav_pose.translation().x(),
                 2
             ) +
-            pow(ugv_pose.translation().y() - uav_pose.translation().y(),
+            pow(cam_pose.translation().y() - uav_pose.translation().y(),
                 2
             ) +
-            pow(ugv_pose.translation().z() - uav_pose.translation().z(),
+            pow(cam_pose.translation().z() - uav_pose.translation().z(),
                 2
             )
         )        
     );
 
-    logdata_entry_led.time_stamp = ros::Time::now();
+    logdata_entry_led.header.stamp = led_pose_stamp;
 
     record_led_pub.publish(logdata_entry_led);
 
@@ -1467,7 +1494,7 @@ void alan::LedNodelet::log(double ms)
     logdata_entry_uav.pitch = rpy(1);
     logdata_entry_uav.yaw   = rpy(2);
 
-    logdata_entry_uav.time_stamp = ros::Time::now();
+    logdata_entry_uav.header.stamp = led_pose_stamp;
 
     record_uav_pub.publish(logdata_entry_uav);
 

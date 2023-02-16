@@ -1,4 +1,29 @@
-﻿#include "include/yolo.h"
+﻿/*
+    This file is part of ALan - the non-robocentric dynamic landing system for quadrotor
+
+    ALan is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    ALan is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with ALan.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * \file yolo.cpp
+ * \date 01/07/2022
+ * \author pattylo
+ * \copyright (c) AIRO-LAB, RCUAS of Hong Kong Polytechnic University
+ * \brief //legacy of AUTO (https://github.com/HKPolyU-UAV/AUTO) & previous 1st gen ALan (https://www.mdpi.com/1424-8220/22/1/404)
+ */
+
+#include "include/yolo.h"
 
 void alan::CnnNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 {

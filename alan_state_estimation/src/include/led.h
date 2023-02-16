@@ -16,7 +16,7 @@
 */
 
 /**
- * \file led.h + led.cpp
+ * \file led.h
  * \date 28/07/2022
  * \author pattylo
  * \copyright (c) RCUAS of Hong Kong Polytechnic University

@@ -135,16 +135,21 @@ target_link_libraries(vis
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
   ${OSQP_LIBRARIES}
-  # mosek64
-  # qpOASES
-  osqp::osqp
-  OsqpEigen#::OsqpEigen
-  # PkgConfig::gtk3
-  #   PkgConfig::gstreamer
-  #   PkgConfig::gstreamer-sdp
-  #   PkgConfig::gstreamer-app
-  #   PkgConfig::gstreamer-video
+
   )
+
+
+add_executable(data
+src/data.cpp
+)
+
+target_link_libraries(data
+# ${OpenCV_LIBRARIES}
+${catkin_LIBRARIES}
+${PCL_LIBRARIES}
+${OSQP_LIBRARIES}
+
+)
 ###################################################
 
 

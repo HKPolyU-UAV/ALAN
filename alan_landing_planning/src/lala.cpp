@@ -1,9 +1,27 @@
+/*
+    This file is part of ALan - the non-robocentric dynamic landing system for quadrotor
 
-// This executable is only for algorithm validation, 
-// DO NOT run it on a real physical UAV platform!
+    ALan is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-// Created on: Nov 9 2022
-// Author: Li-yu LO pattylo
+    ALan is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with ALan.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * \file osqpsolver.h
+ * \date 01/10/2022
+ * \author pattylo
+ * \copyright (c) AIRO-LAB, RCUAS of Hong Kong Polytechnic University
+ * \brief executable for algorithm tests
+ */
 
 #include <iostream>
 #include "include/bezier_lib/traj_gen.h"

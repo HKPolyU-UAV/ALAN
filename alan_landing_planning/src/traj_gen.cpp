@@ -1,9 +1,27 @@
+/*
+    This file is part of ALan - the non-robocentric dynamic landing system for quadrotor
 
+    ALan is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-// #include "../tools/essential.h"
-// #include "bernstein.hpp"
+    ALan is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-// #include "osqpsolver.hpp"
+    You should have received a copy of the GNU General Public License
+    along with ALan.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * \file traj_gen.cpp
+ * \date 01/10/2022
+ * \author pattylo
+ * \copyright (c) AIRO-LAB, RCUAS of Hong Kong Polytechnic University
+ * \brief classes for trajectory generation
+ */
 
 #include "include/bezier_lib/traj_gen.h"
 
