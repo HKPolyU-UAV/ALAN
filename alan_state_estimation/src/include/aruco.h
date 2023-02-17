@@ -73,6 +73,7 @@ namespace alan
     {
         private:
             pthread_t tid;
+            ros::Time aruco_pose_stamp;
 
             //publisher
             ros::Publisher nodelet_pub;
@@ -91,12 +92,15 @@ namespace alan
             void uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
             ros::Subscriber ugv_pose_sub, uav_pose_sub;
             geometry_msgs::PoseStamped ugv_pose_msg, uav_pose_msg;
+            geometry_msgs::PoseStamped aruco_pose_msg;
 
+            Eigen::Isometry3d aruco_pose;
             Eigen::Isometry3d ugv_pose;
             Eigen::Isometry3d cam_pose;
             Eigen::Translation3d ugvcam_t_;
             Eigen::Quaterniond ugvcam_q_;
             Eigen::VectorXd cameraEX;
+            Eigen::VectorXd LEDEX;
 
             Eigen::Quaterniond q_cam;
             Eigen::Vector3d t_cam;
@@ -119,6 +123,9 @@ namespace alan
             cv::Mat distCoeffs;
             std::vector<cv::Vec3d> rvecs, tvecs;
             Sophus::SE3d pose_aruco;
+
+            int error_no = 0;
+            int total_no = 0;
 
 
             //functions
@@ -182,23 +189,30 @@ namespace alan
                     0, intrinsics_value[1], intrinsics_value[3],
                     0, 0,  1;    
 
-                cameraMatrix.at<double>(0,0) = intrinsics_value[0];
-                cameraMatrix.at<double>(1,1) = intrinsics_value[1];
-                cameraMatrix.at<double>(0,2) = intrinsics_value[2];
-                cameraMatrix.at<double>(1,2) = intrinsics_value[3];
 
                 distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
 
                 cameraEX.resize(6);
                 XmlRpc::XmlRpcValue extrinsics_list;
-                nh.getParam("/alan_master/cam_extrinsics_d435", extrinsics_list);
+                
+                nh.getParam("/alan_master/cam_ugv_extrinsics", extrinsics_list);
 
                 for(int i = 0; i < 6; i++)
                 {
                     cameraEX(i) = extrinsics_list[i];
                 }
 
-                // std::cout<<cameraEX<<std::endl;
+                std::cout<<cameraEX<<std::endl;
+
+                LEDEX.resize(6);
+                XmlRpc::XmlRpcValue extrinsics_list_led;
+
+                nh.getParam("/alan_master/led_uav_extrinsics", extrinsics_list_led);
+
+                for(int i = 0; i < 6; i++)
+                {
+                    LEDEX(i) = extrinsics_list_led[i];
+                }
 
                 q_c2b = rpy2q(
                     Eigen::Vector3d(
@@ -253,8 +267,8 @@ namespace alan
                 arucopose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(ARUCO_POSE_PUB_TOPIC), 1);
 
                 ugvpose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(UGV_POSE_PUB_TOPIC), 1);
-                campose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(UAV_POSE_PUB_TOPIC), 1);
-                uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(CAM_POSE_PUB_TOPIC), 1);
+                campose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(CAM_POSE_PUB_TOPIC), 1);
+                uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(UAV_POSE_PUB_TOPIC), 1);
 
                 // pthread_create(&tid, NULL, ArucoNodelet::PubMainLoop, (void*)this);
 

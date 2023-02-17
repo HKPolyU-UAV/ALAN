@@ -163,7 +163,6 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     Eigen::Translation3d t_led = Eigen::Translation3d(pose.translation() );
 
     led_pose = t_led * q_led;//in {c} frame
-    // rpy2q()
 
     // transfer to {w} frame
     Eigen::Quaterniond q_final = Eigen::Quaterniond(cam_pose.rotation() * cam_to_body * led_pose.rotation());
@@ -177,6 +176,8 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     Eigen::Translation3d t_final = Eigen::Translation3d(uav_led_pose);
 
     led_pose = t_final * q_final;
+
+    //////////////////////////////
 
     Eigen::Vector3d temp(
         (uav_pose.translation() - led_pose.translation()).x(),

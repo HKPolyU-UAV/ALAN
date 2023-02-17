@@ -28,9 +28,12 @@
 void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConstPtr & rgbimage, const sensor_msgs::ImageConstPtr & depth)
 //void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr& rgbimage)
 {
+    total_no++;
     // std::cout<<rgbimage.size
     // std::cout<<depth->data.at<uchar>(0,0)<<std::endl;
     cv_bridge::CvImageConstPtr depth_ptr;
+    aruco_pose_stamp = rgbimage->header.stamp;
+
     try
     {
         depth_ptr  = cv_bridge::toCvCopy(depth, depth->encoding);
@@ -83,19 +86,12 @@ void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConst
 
 }
 
-void alan::ArucoNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
-{
-    uav_pose_msg = *pose;
-    uav_pose_msg.header.frame_id = "map";
-
-    uavpose_pub.publish(uav_pose_msg);
-}
-
 
 void alan::ArucoNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
+    // std::cout<<1<<std::endl;
     ugv_pose_msg = *pose;
-    ugv_pose_msg.header.frame_id = "map";
+    ugv_pose_msg.header.frame_id = "world";
     
     Eigen::Translation3d t_(
         ugv_pose_msg.pose.position.x,
@@ -119,13 +115,13 @@ void alan::ArucoNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::Con
     // q_cam =  q_ * q_c2b;
     // t_cam = q_.toRotationMatrix() * t_c2b.translation() + t_.translation();
 
-    q_cam =  q_;
-    t_cam = t_.translation();
+    q_cam =  q_ * q_c2b;
+    t_cam = q_.toRotationMatrix() * t_c2b.translation() + t_.translation();
 
     cam_pose = Eigen::Translation3d(t_cam) * q_cam;
 
     geometry_msgs::PoseStamped pose_cam;
-    pose_cam.header.frame_id = "map";
+    pose_cam.header.frame_id = "world";
     pose_cam.pose.position.x = t_cam.x();
     pose_cam.pose.position.y = t_cam.y();
     pose_cam.pose.position.z = t_cam.z();
@@ -139,118 +135,66 @@ void alan::ArucoNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::Con
     ugvpose_pub.publish(ugv_pose_msg);
 }
 
+void alan::ArucoNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    // std::cout<<1<<std::endl;
+    uav_pose_msg = *pose;
+    uav_pose_msg.header.frame_id = "world";
+
+    uavpose_pub.publish(uav_pose_msg);
+}
+
+
 void alan::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 {
-    geometry_msgs::PoseStamped aruco_pose_msg;
-
-    aruco_pose_msg.pose.position.x = pose_aruco.translation().x();
-    aruco_pose_msg.pose.position.y = pose_aruco.translation().y();
-    aruco_pose_msg.pose.position.z = pose_aruco.translation().z();
-
-    Eigen::Quaterniond q_aruco = Eigen::Quaterniond(pose_aruco.rotationMatrix());
-
-    // std::cout<<q2rpy(q_aruco) / M_PI * 180<<std::endl;
-
-
-    // std::cout<<q2rpy(q) / M_PI * 180<<std::endl;
-    // std::cout<<"-----------"<<std::endl;
-    aruco_pose_msg.pose.orientation.w = q_aruco.w();
-    aruco_pose_msg.pose.orientation.x = q_aruco.x();
-    aruco_pose_msg.pose.orientation.y = q_aruco.y();
-    aruco_pose_msg.pose.orientation.z = q_aruco.z();
-
-    aruco_pose_msg.header.frame_id = "map";
-
-    arucopose_pub.publish(aruco_pose_msg);
-
-
-
-
-
-    geometry_msgs::PoseStamped aruco_pose_my_msg;
-    //Sophus::SE3d pose in {camera} frame
-
-    // pose = pose.inverse();
-
-    Eigen::Vector3d my_pose_t_ = pose.translation();
-    Eigen::Quaterniond my_pose_q_ = Eigen::Quaterniond(pose.rotationMatrix());
-    
     Eigen::Matrix3d cam_to_body;
-    cam_to_body << 0,0,1,
+    cam_to_body << 
+        0,0,1,
         -1,0,0,
         0,-1,0;
-    
-    Eigen::Matrix3d mirrored;
-    mirrored << -1, 0, 0,
-    0, 1, 0,
-    -0, 0, -1;
-        
-    // my_pose_t_ =  q_cam.toRotationMatrix() * cam_to_body * my_pose_t_ + t_cam;
 
-    // my_pose_q_ = my_pose_q_ * Eigen::Quaterniond(mirrored) ;
-
-    // std::cout<<q2rpy(my_pose_q_) / M_PI * 180<<std::endl;
-    // std::cout<<"-----------"<<std::endl<<std::endl;;
+    // cam_to_body.setIdentity();
 
 
-    aruco_pose_my_msg.pose.position.x = my_pose_t_.x();
-    aruco_pose_my_msg.pose.position.y = my_pose_t_.y();
-    aruco_pose_my_msg.pose.position.z = my_pose_t_.z();
+    Eigen::Quaterniond q_aruco = Eigen::Quaterniond(pose.rotationMatrix() );
+    Eigen::Translation3d t_arcuo = Eigen::Translation3d(pose.translation() );
 
-    aruco_pose_my_msg.pose.orientation.w = my_pose_q_.w();
-    aruco_pose_my_msg.pose.orientation.x = my_pose_q_.x();
-    aruco_pose_my_msg.pose.orientation.y = my_pose_q_.y();
-    aruco_pose_my_msg.pose.orientation.z = my_pose_q_.z();
-    
-    aruco_pose_my_msg.header.frame_id = "map";
+    aruco_pose = t_arcuo * q_aruco;//in {c} frame
 
-    // mypose_pub.publish(aruco_pose_my_msg);
-
-    
-    
-    //my pose    
-    //cam_pose
-    // geometry_msgs::PoseStamped aruco_pose_my_msg;
-    // //Sophus::SE3d pose in {camera} frame
-
-    // Eigen::Vector3d my_pose_t_ = pose_aruco.translation();
-    // Eigen::Quaterniond my_pose_q_ = Eigen::Quaterniond(pose_aruco.rotationMatrix());
-    
-    // Eigen::Matrix3d cam_to_body;
-    // cam_to_body << 0,0,1,
-    //     -1,0,0,
-    //     0,-1,0;
-        
-    // my_pose_t_ =  q_cam.toRotationMatrix() * cam_to_body * my_pose_t_ + t_cam;
-    // //q_cam.toRotationMatrix() *
-    // // std::cout<<my_pose_t_<<std::endl;
-    // my_pose_q_ = q_cam * my_pose_q_;
-
-    // aruco_pose_my_msg.pose.position.x = my_pose_t_.x();
-    // aruco_pose_my_msg.pose.position.y = my_pose_t_.y();
-    // aruco_pose_my_msg.pose.position.z = my_pose_t_.z();
-
-    // // std::cout<<aruco_pose_my_msg.pose.position.x<<std::endl;
-
-    // aruco_pose_my_msg.pose.orientation.w = my_pose_q_.w();
-    // aruco_pose_my_msg.pose.orientation.x = my_pose_q_.x();
-    // aruco_pose_my_msg.pose.orientation.y = my_pose_q_.y();
-    // aruco_pose_my_msg.pose.orientation.z = my_pose_q_.z();
-    
-    // aruco_pose_my_msg.header.frame_id = "map";
-
-    // mypose_pub.publish(aruco_pose_my_msg);
+    // transfer to {w} frame
+    Eigen::Quaterniond q_final = Eigen::Quaterniond(cam_pose.rotation() * cam_to_body * aruco_pose.rotation());
+    Eigen::Vector3d led_in_world = cam_pose.rotation() * cam_to_body * aruco_pose.translation() + cam_pose.translation();// Eigen::Translation3d(led_pose.translation());
 
 
+    Eigen::Vector3d uav_led_pose = q_final.toRotationMatrix() 
+            * Eigen::Vector3d(LEDEX(0), LEDEX(1), LEDEX(2)) 
+            + led_in_world; //in {w} frame but with offset
 
+    Eigen::Translation3d t_final = Eigen::Translation3d(uav_led_pose);
+
+    aruco_pose = t_final * q_final;
+
+    //////////////////////////////
+    aruco_pose_msg.header.stamp = aruco_pose_stamp;
+    aruco_pose_msg.header.frame_id = "world";
+
+    aruco_pose_msg.pose.position.x = t_final.translation().x();
+    aruco_pose_msg.pose.position.y = t_final.translation().y();
+    aruco_pose_msg.pose.position.z = t_final.translation().z();
+
+    aruco_pose_msg.pose.orientation.w = q_final.w();
+    aruco_pose_msg.pose.orientation.x = q_final.x();
+    aruco_pose_msg.pose.orientation.y = q_final.y();
+    aruco_pose_msg.pose.orientation.z = q_final.z();
+
+    arucopose_pub.publish(aruco_pose_msg);
 
 }
 
 //pnp + BA implementation
 void alan::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
 {
-
-    std::vector<Eigen::Vector2d> pts_2d_detect;
+     std::vector<Eigen::Vector2d> pts_2d_detect;
     if(aruco_detect(frame, pts_2d_detect))
     {
         Eigen::Vector3d t;
@@ -432,20 +376,25 @@ void alan::ArucoNodelet::get_initial_pose(std::vector<Eigen::Vector2d> pts_2d, s
         rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
         rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
 
-    // std::cout<<"R_pnp:"<<std::endl;
-    // std::cout<<R<<std::endl<<std::endl;
+    Eigen::Matrix3d reverse_mat;
+    reverse_mat <<
+            1.0000000,  0.0000000,  0.0000000,
+            0.0000000, -1.0000000, -0.0000000,
+            0.0000000,  0.0000000, -1.0000000;
 
-    // R =  R * r_mirrored;
     
-    t <<
-        tvec(0),
-        tvec(1),
-        tvec(2); 
 
-    // if(t.z() < 0)
-    // {
-    //     t = t * -1;
-    // }
+    t =  Eigen::Vector3d(
+          tvec(0),
+          tvec(1),
+          tvec(2)  
+        );
+
+    if(tvec(2) < 0) //sometimes opencv yeilds reversed results, flip it 
+    {
+        R = R * reverse_mat;
+        t = (-1) * t;
+    }
 
 }
 
@@ -464,19 +413,7 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, std::vector<Eigen::Vector2
             double markerlength = 0.045;
 
             cv::aruco::estimatePoseSingleMarkers(markercorners, 0.045, cameraMatrix, distCoeffs, rvecs, tvecs);
-            // std::cout<<"how opencv solve:..."<<std::endl;
-
-            // for(auto what : markercorners)
-            // {
-            //     std::cout<<what<<std::endl;
-            // }
-            // std::cout<<"----------"<<std::endl;
-            // std::cout<<cv::Point2d(-markerlength / 2.f, markerlength / 2.f)<<std::endl;
-            // std::cout<<cv::Point2d(markerlength / 2.f, markerlength / 2.f)<<std::endl;
-            // std::cout<<cv::Point2d(markerlength / 2.f, -markerlength / 2.f)<<std::endl;
-            // std::cout<<cv::Point2d(-markerlength / 2.f, -markerlength / 2.f)<<std::endl<<std::endl;;
-
-            // cv::aruco::drawDetectedMarkers(frame, markercorners, markerids);
+      
             cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, rvecs[0], tvecs[0], 0.1);
             cv::Mat rmat = cv::Mat::eye(3,3,CV_64F);
             cv::Rodrigues(rvecs[0], rmat);
@@ -505,7 +442,6 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, std::vector<Eigen::Vector2
             pose_aruco = Sophus::SE3d(R,t);
         }
         
-        // rvecs.f
         for(auto& what : markercorners)
         {
             if(what.size() != 4)
