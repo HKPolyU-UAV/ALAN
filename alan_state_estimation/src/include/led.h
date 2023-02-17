@@ -102,6 +102,7 @@ namespace alan
             //LED config and correspondences
             std::vector<Eigen::Vector3d> pts_on_body_frame;
             std::vector<correspondence::matchid> corres_global;
+            Eigen::VectorXd LEDEX;
 
             //poses
             Sophus::SE3d pose_global_sophus;
@@ -204,6 +205,8 @@ namespace alan
             
         //publish
             //objects
+            int error_no = 0;
+            int total_no = 0;
             geometry_msgs::PoseStamped led_pose_estimated;
             geometry_msgs::TwistStamped led_twist_estimated;
             nav_msgs::Odometry led_odom_estimated;            
@@ -296,11 +299,21 @@ namespace alan
                 cameraEX.resize(6);
                 XmlRpc::XmlRpcValue extrinsics_list;
                 
-                nh.getParam("/alan_master/cam_ugv_extrinsics_d455", extrinsics_list);                
+                nh.getParam("/alan_master/cam_ugv_extrinsics", extrinsics_list);                
                 
                 for(int i = 0; i < 6; i++)
                 {                    
                     cameraEX(i) = extrinsics_list[i];                    
+                }
+
+                LEDEX.resize(6);
+                XmlRpc::XmlRpcValue extrinsics_list_led;
+
+                nh.getParam("/alan_master/led_uav_extrinsics", extrinsics_list_led);
+
+                for(int i = 0; i < 6; i++)
+                {
+                    LEDEX(i) = extrinsics_list_led[i];
                 }
 
 

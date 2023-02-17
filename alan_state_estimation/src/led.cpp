@@ -27,6 +27,7 @@
 
 void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr & rgbmsg, const sensor_msgs::Image::ConstPtr & depthmsg)
 {
+    total_no++;
     cv_bridge::CvImageConstPtr depth_ptr;
     led_pose_stamp = rgbmsg->header.stamp;
 
@@ -65,8 +66,6 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
     solve_pose_w_LED(frame, depth);
     
     double tock = ros::Time::now().toSec();  
-
-    std::cout<<tock - tick<<std::endl;  
 
     terminal_msg_display(1 / (tock - tick));
 
@@ -164,20 +163,51 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     Eigen::Translation3d t_led = Eigen::Translation3d(pose.translation() );
 
     led_pose = t_led * q_led;//in {c} frame
+    // rpy2q()
 
     // transfer to {w} frame
     Eigen::Quaterniond q_final = Eigen::Quaterniond(cam_pose.rotation() * cam_to_body * led_pose.rotation());
-    Eigen::Translation3d t_final = Eigen::Translation3d(cam_pose.rotation() * cam_to_body * led_pose.translation() + cam_pose.translation());// Eigen::Translation3d(led_pose.translation());
+    Eigen::Vector3d led_in_world = cam_pose.rotation() * cam_to_body * led_pose.translation() + cam_pose.translation();// Eigen::Translation3d(led_pose.translation());
+
+
+    Eigen::Vector3d uav_led_pose = q_final.toRotationMatrix() 
+            * Eigen::Vector3d(LEDEX(0), LEDEX(1), LEDEX(2)) 
+            + led_in_world; //in {w} frame but with offset
+
+    Eigen::Translation3d t_final = Eigen::Translation3d(uav_led_pose);
 
     led_pose = t_final * q_final;
-        
+
     Eigen::Vector3d temp(
         (uav_pose.translation() - led_pose.translation()).x(),
         (uav_pose.translation() - led_pose.translation()).y(),
         (uav_pose.translation() - led_pose.translation()).z()
     );
-    // cout<<"relative distance...";
-    // cout<< temp.norm()<<endl;
+
+    Eigen::Vector3d temp2(
+        uav_pose.translation().x() - uav_led_pose.x(),
+        uav_pose.translation().y() - uav_led_pose.y(),
+        uav_pose.translation().z() - uav_led_pose.z()
+    );
+
+    // std::
+
+    // std::cout<<"relative distance...\n";
+    // temp = led_pose.rotation().inverse() * (-temp);
+
+    
+    
+    // std::cout<< temp <<std::endl<<std::endl;;
+    // std::cout<<"relative distance...2\n";
+    // std::cout<< temp2.norm() <<std::endl<<std::endl;;
+
+    // if(depth_avg_of_all < 1.0)
+    // {
+    //     std::ofstream save("/home/patty/alan_ws/src/alan/alan_state_estimation/src/temp/lala.txt", std::ios::app);
+    //     save<<temp.x() <<","<<temp.y()<<","<<temp.z()<<std::endl;
+    // }
+    
+    
 
     set_twist_estimate(led_pose);
     
@@ -261,6 +291,7 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
 
         if(!LED_tracker_initiated_or_tracked)
         {
+            // error_no++;
             ROS_RED_STREAM("TRACKER FAIL");
             // cv::imwrite("/home/patty/alan_ws/haha.jpg", frame);
             // cv::imwrite("/home/patty/alan_ws/lala.jpg", frame_input);
@@ -1458,6 +1489,9 @@ void alan::LedNodelet::log(double ms)
     logdata_entry_led.pitch = rpy(1);
     logdata_entry_led.yaw   = rpy(2);
 
+    Eigen::AngleAxisd angle_axis_led = Eigen::AngleAxisd(led_pose.rotation());
+    logdata_entry_led.orientation = angle_axis_led.angle();
+
     logdata_entry_led.ms = ms;
     logdata_entry_led.depth = abs(
         sqrt(
@@ -1494,10 +1528,16 @@ void alan::LedNodelet::log(double ms)
     logdata_entry_uav.pitch = rpy(1);
     logdata_entry_uav.yaw   = rpy(2);
 
+    Eigen::AngleAxisd angle_axis_uav = Eigen::AngleAxisd(uav_pose.rotation());
+    logdata_entry_uav.orientation = angle_axis_uav.angle();
+
     logdata_entry_uav.header.stamp = led_pose_stamp;
 
     record_uav_pub.publish(logdata_entry_uav);
 
+    // std::cout<<"orientation: "<<abs(logdata_entry_led.orientation - logdata_entry_uav.orientation)<<std::endl;
+    // std::ofstream save("/home/patty/alan_ws/src/alan/alan_state_estimation/src/temp/lala.txt", std::ios::app);
+    // save<<abs(logdata_entry_led.orientation - logdata_entry_uav.orientation)<<std::endl;
 }
 
 void alan::LedNodelet::terminal_msg_display(double hz)
@@ -1535,8 +1575,9 @@ void alan::LedNodelet::terminal_msg_display(double hz)
     {
         final_msg = "LED BAD! || " + final_msg;
         ROS_RED_STREAM(final_msg);
+        error_no ++;
     }
-
+    std::cout<<"fail: "<< error_no<<" / "<<total_no<<std::endl;
 }
 
 //below is the courtesy of UZH Faessler et al.

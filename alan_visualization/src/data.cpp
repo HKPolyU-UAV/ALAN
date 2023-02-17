@@ -17,7 +17,7 @@
 
 /**
  * \file data.cpp
- * \date 16/02/2022
+ * \date 16/02/2023
  * \author pattylo
  * \copyright (c) AIRO-LAB, RCUAS of Hong Kong Polytechnic University
  * \brief executable to record data
@@ -31,15 +31,46 @@
 
 #include "alan_state_estimation/alan_log.h"
 
-static std::string log_file;
+static std::string log_file_1;
+static std::string log_file_2;
+static double starting_time;
 
 void msg_callback(
     const alan_state_estimation::alan_log::ConstPtr& ledmsg,
     const alan_state_estimation::alan_log::ConstPtr& uavmsg
 )
-{
+{    
+    std::ofstream save(log_file_1, std::ios::app);
+    // save<<"x,y,z,r,p,y,ori,ms,dpth,t"<<std::endl;
+    save << ledmsg->px << "," 
+         << ledmsg->py << "," 
+         << ledmsg->pz << ","
+         << ledmsg->roll  << ","
+         << ledmsg->pitch << ","
+         << ledmsg->yaw   << ","
+         << ledmsg->orientation << ","
+         << ledmsg->ms << ","
+         << ledmsg->depth << ","
+         << ledmsg->header.stamp.now().toSec() - starting_time << "," << std::endl;
+    
+    save.close();
 
-    // std::cout<<"hi"<<std::endl;
+
+    save = std::ofstream(log_file_2, std::ios::app);
+    // save<<"x,y,z,r,p,y,ori,ms,dpth,t"<<std::endl;
+    save << uavmsg->px << "," 
+         << uavmsg->py << "," 
+         << uavmsg->pz << ","
+         << uavmsg->roll  << ","
+         << uavmsg->pitch << ","
+         << uavmsg->yaw   << ","
+         << uavmsg->orientation << ","
+         << uavmsg->ms << ","
+         << uavmsg->depth << ","
+         << ledmsg->header.stamp.now().toSec() - starting_time << "," << std::endl;
+    
+    save.close();
+
 
 }
 
@@ -47,14 +78,6 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "data_log");
     ros::NodeHandle nh;
-
-    std::string path;
-    std::string filename;
-    nh.getParam("/data/log_path", path);
-    nh.getParam("/data/filename", filename);
-    log_file = path + filename;
-
-    std::cout<<log_file<<std::endl;
 
     message_filters::Subscriber<alan_state_estimation::alan_log> subled;
     message_filters::Subscriber<alan_state_estimation::alan_log> subuav;
@@ -65,7 +88,41 @@ int main(int argc, char** argv)
     subled.subscribe(nh, "/alan_state_estimation/led/led_log", 1);                
     subuav.subscribe(nh, "/alan_state_estimation/led/uav_log", 1);                
     sync_.reset(new sync( MySyncPolicy(10), subled, subuav));
-    sync_->registerCallback(boost::bind(&msg_callback, _1, _2));                                
+    sync_->registerCallback(boost::bind(&msg_callback, _1, _2));   
+
+    std::string path;
+    std::string filename;
+
+//// led path
+    nh.getParam("/data/log_path", path);
+    nh.getParam("/data/filename1", filename);
+    log_file_1 = path + filename;
+
+    remove(log_file_1.c_str());
+
+    std::cout<<log_file_1<<std::endl;
+
+    std::ofstream save(log_file_1, std::ios::app);
+    save<<filename<<std::endl;
+    save<<"x,y,z,r,p,y,ori,ms,dpth,t"<<std::endl;
+    save.close();
+
+//// uav path
+    nh.getParam("/data/log_path", path);
+    nh.getParam("/data/filename2", filename);
+    log_file_2 = path + filename;
+
+    remove(log_file_2.c_str());
+
+    std::cout<<log_file_2<<std::endl;
+
+    save = std::ofstream(log_file_2, std::ios::app);
+    save<<filename<<std::endl;
+    save<<"x,y,z,r,p,y,ori,ms,dpth,t"<<std::endl;
+    save.close();
+     
+
+    starting_time = ros::Time::now().toSec();                        
 
     ros::spin();
     return 0;

@@ -128,21 +128,6 @@ target_link_libraries(
 
 )
 
-add_executable(poselala
-  src/tools/poselala.cpp
-)
-
-target_link_libraries(poselala
-  ${OpenCV_LIBRARIES}
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-  ${OSQP_LIBRARIES}
-  # mosek64
-  # qpOASES
-  osqp::osqp
-  OsqpEigen#::OsqpEigen
-)
-
 
 add_executable(calibrate
   src/tools/calibrate.cpp

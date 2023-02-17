@@ -369,9 +369,6 @@ void alan::ArucoNodelet::get_initial_pose(std::vector<Eigen::Vector2d> pts_2d, s
     cv::Point3d temp3d;
     cv::Point2d temp2d;
 
-
-
-
     // std::cout<<"body_frame_pts..."<<std::endl;
     for(auto what : body_frame_pts)
     {
@@ -435,8 +432,8 @@ void alan::ArucoNodelet::get_initial_pose(std::vector<Eigen::Vector2d> pts_2d, s
         rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
         rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
 
-    std::cout<<"R_pnp:"<<std::endl;
-    std::cout<<R<<std::endl<<std::endl;
+    // std::cout<<"R_pnp:"<<std::endl;
+    // std::cout<<R<<std::endl<<std::endl;
 
     // R =  R * r_mirrored;
     
@@ -497,8 +494,8 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, std::vector<Eigen::Vector2
                 rmat.at<double>(0,0), rmat.at<double>(0,1), rmat.at<double>(0,2),
                 rmat.at<double>(1,0), rmat.at<double>(1,1), rmat.at<double>(1,2),
                 rmat.at<double>(2,0), rmat.at<double>(2,1), rmat.at<double>(2,2);
-            std::cout<<"R_aruco:"<<std::endl;
-            std::cout<<R<<std::endl;
+            // std::cout<<"R_aruco:"<<std::endl;
+            // std::cout<<R<<std::endl;
 
             t <<
                 tvecs[0](0),
@@ -644,9 +641,9 @@ void alan::ArucoNodelet::optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3
             break;
     }
 
-    std::cout<<"BA: "<<lastcost<<std::endl;
+    // std::cout<<"BA: "<<lastcost<<std::endl;
 
-    std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
+    // std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
 
 }
 
