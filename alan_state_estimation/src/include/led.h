@@ -54,6 +54,7 @@
 
 #include "tools/RosTopicConfigs.h"
 #include "alan_state_estimation/alan_log.h"
+
 // map definition for convinience
 #define COLOR_SUB_TOPIC CAMERA_SUB_TOPIC_A
 #define DEPTH_SUB_TOPIC CAMERA_SUB_TOPIC_B

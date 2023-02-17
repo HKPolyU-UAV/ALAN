@@ -204,7 +204,7 @@ void alan::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     
     aruco_pose_my_msg.header.frame_id = "map";
 
-    mypose_pub.publish(aruco_pose_my_msg);
+    // mypose_pub.publish(aruco_pose_my_msg);
 
     
     

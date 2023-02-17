@@ -50,9 +50,21 @@
 
 
 #include <pthread.h>
+#include <tf/tf.h>
 #include <boost/thread.hpp>
 
 #include "tools/RosTopicConfigs.h"
+
+// map definition for convinience
+#define COLOR_SUB_TOPIC CAMERA_SUB_TOPIC_A
+#define DEPTH_SUB_TOPIC CAMERA_SUB_TOPIC_B
+#define UAV_POSE_SUB_TOPIC POSE_SUB_TOPIC_A
+#define UGV_POSE_SUB_TOPIC POSE_SUB_TOPIC_B
+
+#define ARUCO_POSE_PUB_TOPIC POSE_PUB_TOPIC_A
+#define UGV_POSE_PUB_TOPIC POSE_PUB_TOPIC_B
+#define UAV_POSE_PUB_TOPIC POSE_PUB_TOPIC_C
+#define CAM_POSE_PUB_TOPIC POSE_PUB_TOPIC_D
 
 
 namespace alan
@@ -238,28 +250,26 @@ namespace alan
                 std::cout<<std::endl;
                 
                 //initialize publisher
-                arucopose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_A), 1);
-                mypose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_B), 1);
+                arucopose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(ARUCO_POSE_PUB_TOPIC), 1);
 
-                ugvpose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_C), 1);
-                campose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_D), 1);
-                uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(POSE_PUB_TOPIC_E), 1);
-                // test_pub = nh.advertise<std_msgs::Bool>("/ob_found",1);
+                ugvpose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(UGV_POSE_PUB_TOPIC), 1);
+                campose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(UAV_POSE_PUB_TOPIC), 1);
+                uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>(configs.getTopicName(CAM_POSE_PUB_TOPIC), 1);
 
                 // pthread_create(&tid, NULL, ArucoNodelet::PubMainLoop, (void*)this);
 
                 image_transport::ImageTransport image_transport_(nh);
-                pubimage = image_transport_.advertise("lala",1);
+                pubimage = image_transport_.advertise("/processed_image",1);
 
                 //initialize subscribe
                 // subimage = nh.subscribe("/camera/color/image_raw/compressed", 1, &ArucoNodelet::camera_callback, this);
-                subimage.subscribe(nh, configs.getTopicName(CAMERA_SUB_TOPIC_A), 1);
-                subdepth.subscribe(nh, configs.getTopicName(CAMERA_SUB_TOPIC_B), 1);                
+                subimage.subscribe(nh, configs.getTopicName(COLOR_SUB_TOPIC), 1);
+                subdepth.subscribe(nh, configs.getTopicName(DEPTH_SUB_TOPIC), 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
                 sync_->registerCallback(boost::bind(&ArucoNodelet::camera_callback, this, _1, _2));
                 
-                uav_pose_sub = nh.subscribe(configs.getTopicName(POSE_SUB_TOPIC_A), 1, &ArucoNodelet::uav_pose_callback, this);
-                ugv_pose_sub = nh.subscribe(configs.getTopicName(POSE_SUB_TOPIC_B), 1, &ArucoNodelet::ugv_pose_callback, this);
+                uav_pose_sub = nh.subscribe(configs.getTopicName(UAV_POSE_SUB_TOPIC), 1, &ArucoNodelet::uav_pose_callback, this);
+                ugv_pose_sub = nh.subscribe(configs.getTopicName(UGV_POSE_SUB_TOPIC), 1, &ArucoNodelet::ugv_pose_callback, this);
 
                 
             }     

@@ -10,32 +10,28 @@ TOPICLIST:
     SUBORPUB: 0
   
   - TOPICTYPE: "POSE_SUB_TOPIC_A"
-    TOPICNAME: "/uav/mavros/vision_pose/pose/aurco" 
+    TOPICNAME: "/uav/mavros/vision_pose/pose" 
     SUBORPUB: 0
 
   - TOPICTYPE: "POSE_SUB_TOPIC_B"
-    TOPICNAME: "/vrpn_client_node/gh034_car/pose/aruco" 
+    TOPICNAME: "/vrpn_client_node/gh034_car/pose"
     SUBORPUB: 0
   
   #pub
   - TOPICTYPE: "POSE_PUB_TOPIC_A"
-    TOPICNAME: "/alan_state_estimation/aruco/pose/"
-    SUBORPUB: 1
-  
-  - TOPICTYPE: "ODOM_PUB_TOPIC_A"
-    TOPICNAME: "/alan_state_estimation/aruco/uav/odom"
+    TOPICNAME: "/alan_state_estimation/aruco/pose"
     SUBORPUB: 1
 
   - TOPICTYPE: "POSE_PUB_TOPIC_B"
-    TOPICNAME: "/alan_state_estimation/aruco/pose"
+    TOPICNAME: "/alan_state_estimation/UGV/pose"
     SUBORPUB: 1
   
   - TOPICTYPE: "POSE_PUB_TOPIC_C"
-    TOPICNAME: "/alan_state_estimation/UAV/pose/aruco"
+    TOPICNAME: "/alan_state_estimation/UAV/pose"
     SUBORPUB: 1
 
   - TOPICTYPE: "POSE_PUB_TOPIC_D"
-    TOPICNAME: "/alan_state_estimation/CAM/pose/aruco"
+    TOPICNAME: "/alan_state_estimation/CAM/pose"
     SUBORPUB:  1
 
 # Remark: 
