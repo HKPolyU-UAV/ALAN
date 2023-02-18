@@ -205,22 +205,19 @@ void alan::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
         
 
         //generate noise to validate BA
-        Sophus::SE3d pose;
-        if(add_noise)
-            pose = pose_add_noise(t,R);
-        else
-            pose = Sophus::SE3d(R,t);
+        Sophus::SE3d pose = Sophus::SE3d(R,t);
+
 
 
         //draw initial pose estimation
-        // for(auto what : body_frame_pts)
-        // {
-        //     Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
-        //     cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
-        // }
+        for(auto what : body_frame_pts)
+        {
+            Eigen::Vector2d reproject = reproject_3D_2D(what, pose);            
+            cv::circle(frame, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(255,0,0),-1);
+        }
 
-        // if(body_frame_pts.size() == pts_2d_detect.size())
-        //     optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
+        if(body_frame_pts.size() == pts_2d_detect.size())
+            optimize(pose, body_frame_pts, pts_2d_detect);//pose, body_frame_pts, pts_2d_detect
 
         // std::cout<<body_frame_pts.size()<<std::endl;
         for(auto what : body_frame_pts)
@@ -394,6 +391,7 @@ void alan::ArucoNodelet::get_initial_pose(std::vector<Eigen::Vector2d> pts_2d, s
     {
         R = R * reverse_mat;
         t = (-1) * t;
+
     }
 
 }
@@ -439,7 +437,7 @@ bool alan::ArucoNodelet::aruco_detect(cv::Mat& frame, std::vector<Eigen::Vector2
                 tvecs[0](1),
                 tvecs[0](2);
             
-            pose_aruco = Sophus::SE3d(R,t);
+            
         }
         
         for(auto& what : markercorners)
@@ -513,7 +511,7 @@ void alan::ArucoNodelet::optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3
 //converge problem need to be solved //-> fuck you, your Jacobian was wrong
 {
     //execute Gaussian-Newton Method
-    // std::cout<<"Bundle Adjustment Optimization"<<std::endl;
+    std::cout<<"Bundle Adjustment Optimization"<<std::endl;
 
     const int MAX_ITERATION = 400;
 
