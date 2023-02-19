@@ -71,7 +71,8 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
 
     set_image_to_publish(1 / (tock - tick), rgbmsg);
 
-    log(tock - tick);
+    if(LED_tracker_initiated_or_tracked)
+        log(tock - tick);
                     
     last_request = ros::Time::now().toSec();
 

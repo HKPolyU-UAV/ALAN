@@ -54,6 +54,7 @@
 #include <boost/thread.hpp>
 
 #include "tools/RosTopicConfigs.h"
+#include "alan_state_estimation/alan_log.h"
 
 // map definition for convinience
 #define COLOR_SUB_TOPIC CAMERA_SUB_TOPIC_A
@@ -78,6 +79,7 @@ namespace alan
             //publisher
             ros::Publisher nodelet_pub;
             ros::Publisher mypose_pub, arucopose_pub, campose_pub, ugvpose_pub, uavpose_pub;
+            ros::Publisher record_led_pub, record_uav_pub;
             image_transport::Publisher pubimage;
             
             //subscriber
@@ -97,6 +99,7 @@ namespace alan
             Eigen::Isometry3d aruco_pose;
             Eigen::Isometry3d ugv_pose;
             Eigen::Isometry3d cam_pose;
+            Eigen::Isometry3d uav_pose;
             Eigen::Translation3d ugvcam_t_;
             Eigen::Quaterniond ugvcam_q_;
             Eigen::VectorXd cameraEX;
@@ -126,6 +129,8 @@ namespace alan
 
             int error_no = 0;
             int total_no = 0;
+
+            bool aruco_tracker_initiated_or_tracked = false;
 
 
             //functions
@@ -165,6 +170,8 @@ namespace alan
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
 
+            //log
+            void log(double ms);
 //---------------------------------------------------------------------------------------
             virtual void onInit() 
             {
@@ -285,7 +292,11 @@ namespace alan
                 uav_pose_sub = nh.subscribe(configs.getTopicName(UAV_POSE_SUB_TOPIC), 1, &ArucoNodelet::uav_pose_callback, this);
                 ugv_pose_sub = nh.subscribe(configs.getTopicName(UGV_POSE_SUB_TOPIC), 1, &ArucoNodelet::ugv_pose_callback, this);
 
+                record_led_pub = nh.advertise<alan_state_estimation::alan_log>
+                                ("/alan_state_estimation/led/led_log", 1);
                 
+                record_uav_pub = nh.advertise<alan_state_estimation::alan_log>
+                                ("/alan_state_estimation/led/uav_log", 1);
             }     
 
             public:

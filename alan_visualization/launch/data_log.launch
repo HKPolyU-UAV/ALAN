@@ -1,7 +1,7 @@
 <launch>
     <node name="data" pkg="alan_visualization" type="data" output="screen">
         <param name="/log_path" type="string" value="/home/patty/alan_ws/src/alan/alan_visualization/log/"/>
-        <param name="/filename1" type="string" value="1130_4_led.csv"/>
-        <param name="/filename2" type="string" value="1130_4_uav.csv"/>
+        <param name="/filename1" type="string" value="0212_4_aru.csv"/>
+        <param name="/filename2" type="string" value="0212_4_uav.csv"/>
     </node>         
 </launch>

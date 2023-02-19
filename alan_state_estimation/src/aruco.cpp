@@ -63,6 +63,9 @@ void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConst
     pose_w_aruco_pnp(frame);//, image_dep);
 
     double t2 = ros::Time::now().toSec();
+
+    if(aruco_tracker_initiated_or_tracked)
+        log(t2- t1);
    
     char hz[40];
     char fps[5] = " fps";
@@ -139,6 +142,22 @@ void alan::ArucoNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::Con
 {
     // std::cout<<1<<std::endl;
     uav_pose_msg = *pose;
+
+    Eigen::Translation3d t_(
+        uav_pose_msg.pose.position.x,
+        uav_pose_msg.pose.position.y,
+        uav_pose_msg.pose.position.z
+    );
+
+    Eigen::Quaterniond q_(
+        uav_pose_msg.pose.orientation.w,
+        uav_pose_msg.pose.orientation.x,
+        uav_pose_msg.pose.orientation.y,
+        uav_pose_msg.pose.orientation.z  
+    );
+
+    uav_pose = t_ * q_;
+
     uav_pose_msg.header.frame_id = "world";
 
     uavpose_pub.publish(uav_pose_msg);
@@ -194,9 +213,10 @@ void alan::ArucoNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 //pnp + BA implementation
 void alan::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
 {
-     std::vector<Eigen::Vector2d> pts_2d_detect;
+    std::vector<Eigen::Vector2d> pts_2d_detect;
     if(aruco_detect(frame, pts_2d_detect))
     {
+        aruco_tracker_initiated_or_tracked = true;
         Eigen::Vector3d t;
         Eigen::Matrix3d R;
         // std::cout<<pts_2d_detect.size()<<std::endl;
@@ -229,6 +249,10 @@ void alan::ArucoNodelet::pose_w_aruco_pnp(cv::Mat& frame)
 
         map_SE3_to_pose(pose);
     }    
+    else
+    {
+        aruco_tracker_initiated_or_tracked = false;
+    }
 
 }
 
@@ -862,4 +886,71 @@ Eigen::Quaterniond alan::ArucoNodelet::rpy2q(Eigen::Vector3d rpy)
 Eigen::Vector3d alan::ArucoNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v)
 {
     return q * v;
+}
+
+void alan::ArucoNodelet::log(double ms)
+{
+    alan_state_estimation::alan_log logdata_entry_led;
+    
+    logdata_entry_led.px = aruco_pose.translation().x();
+    logdata_entry_led.py = aruco_pose.translation().y();
+    logdata_entry_led.pz = aruco_pose.translation().z();
+    
+    Eigen::Vector3d rpy = q2rpy(
+        Eigen::Quaterniond(aruco_pose.rotation())
+    );
+
+    logdata_entry_led.roll  = rpy(0);
+    logdata_entry_led.pitch = rpy(1);
+    logdata_entry_led.yaw   = rpy(2);
+
+    Eigen::AngleAxisd angle_axis_led = Eigen::AngleAxisd(aruco_pose.rotation());
+    logdata_entry_led.orientation = angle_axis_led.angle();
+
+    logdata_entry_led.ms = ms;
+    logdata_entry_led.depth = abs(
+        sqrt(
+            pow(
+                cam_pose.translation().x() - uav_pose.translation().x(),
+                2
+            ) +
+            pow(cam_pose.translation().y() - uav_pose.translation().y(),
+                2
+            ) +
+            pow(cam_pose.translation().z() - uav_pose.translation().z(),
+                2
+            )
+        )        
+    );
+
+    logdata_entry_led.header.stamp = aruco_pose_stamp;
+
+    record_led_pub.publish(logdata_entry_led);
+
+    ///////////////////////////////////////////////////////////
+
+    alan_state_estimation::alan_log logdata_entry_uav;
+    
+    logdata_entry_uav.px = uav_pose.translation().x();
+    logdata_entry_uav.py = uav_pose.translation().y();
+    logdata_entry_uav.pz = uav_pose.translation().z();
+    
+    rpy = q2rpy(
+        Eigen::Quaterniond(uav_pose.rotation())
+    );
+
+    logdata_entry_uav.roll  = rpy(0);
+    logdata_entry_uav.pitch = rpy(1);
+    logdata_entry_uav.yaw   = rpy(2);
+
+    Eigen::AngleAxisd angle_axis_uav = Eigen::AngleAxisd(uav_pose.rotation());
+    logdata_entry_uav.orientation = angle_axis_uav.angle();
+
+    logdata_entry_uav.header.stamp = aruco_pose_stamp;
+
+    record_uav_pub.publish(logdata_entry_uav);
+
+    // std::cout<<"orientation: "<<abs(logdata_entry_led.orientation - logdata_entry_uav.orientation)<<std::endl;
+    // std::ofstream save("/home/patty/alan_ws/src/alan/alan_state_estimation/src/temp/lala.txt", std::ios::app);
+    // save<<abs(logdata_entry_led.orientation - logdata_entry_uav.orientation)<<std::endl;
 }
