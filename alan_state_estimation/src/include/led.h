@@ -109,6 +109,7 @@ namespace alan
             Sophus::SE3d pose_global_sophus;
             Sophus::SE3d pose_epnp_sophus, pose_depth_sophus;
             geometry_msgs::PoseStamped ugv_pose_msg, uav_pose_msg;
+            geometry_msgs::PoseStamped uav_stpt_msg;
             Eigen::Isometry3d ugv_pose;
             Eigen::Isometry3d cam_pose;
             Eigen::Isometry3d ugv_cam_pose, led_cambody_pose;
@@ -140,10 +141,12 @@ namespace alan
             typedef message_filters::Synchronizer<MySyncPolicy> sync;//(MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<sync> sync_;                    
             ros::Subscriber ugv_pose_sub, uav_pose_sub;
+            ros::Subscriber uav_setpt_sub;
             //functions
             void camera_callback(const sensor_msgs::CompressedImage::ConstPtr & rgbimage, const sensor_msgs::Image::ConstPtr & depth);            
             void ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
             void uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
+            void uav_setpt_callback(const geometry_msgs::PoseStamped::ConstPtr& pose);
         
         //publisher 
             //objects
@@ -416,6 +419,8 @@ namespace alan
                 ugv_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
                     (configs.getTopicName(UGV_POSE_SUB_TOPIC), 1, &LedNodelet::ugv_pose_callback, this);
 
+                uav_setpt_sub = nh.subscribe<geometry_msgs::PoseStamped>
+                    ("/planner_server/traj/pose", 1, &LedNodelet::uav_setpt_callback, this);
             //publish
                 image_transport::ImageTransport image_transport_(nh);
 

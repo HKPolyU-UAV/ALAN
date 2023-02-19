@@ -45,6 +45,9 @@ void msg_callback(
     save << ledmsg->px << "," 
          << ledmsg->py << "," 
          << ledmsg->pz << ","
+         << ledmsg->set_px << ","
+         << ledmsg->set_py << ","
+         << ledmsg->set_pz << ","
          << ledmsg->roll  << ","
          << ledmsg->pitch << ","
          << ledmsg->yaw   << ","
@@ -104,7 +107,7 @@ int main(int argc, char** argv)
 
     std::ofstream save(log_file_1, std::ios::app);
     save<<filename<<std::endl;
-    save<<"x,y,z,r,p,y,ori,ms,dpth,t"<<std::endl;
+    save<<"x,y,z,st_x,st_y,st_z,r,p,y,ori,ms,dpth,t"<<std::endl;
     save.close();
 
 //// uav path

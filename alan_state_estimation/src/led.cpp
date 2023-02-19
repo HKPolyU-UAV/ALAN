@@ -151,6 +151,12 @@ void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::Const
     uavpose_pub.publish(uav_pose_msg);
 }
 
+void alan::LedNodelet::uav_setpt_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+{
+    uav_stpt_msg = *pose;
+
+}
+
 void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
 {   
     Eigen::Matrix3d cam_to_body;
@@ -1482,6 +1488,10 @@ void alan::LedNodelet::log(double ms)
     logdata_entry_led.px = led_pose.translation().x();
     logdata_entry_led.py = led_pose.translation().y();
     logdata_entry_led.pz = led_pose.translation().z();
+
+    logdata_entry_led.set_px = uav_stpt_msg.pose.position.x;
+    logdata_entry_led.set_py = uav_stpt_msg.pose.position.y;
+    logdata_entry_led.set_pz = uav_stpt_msg.pose.position.z;
     
     Eigen::Vector3d rpy = q2rpy(
         Eigen::Quaterniond(led_pose.rotation())
