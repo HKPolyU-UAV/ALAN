@@ -29,7 +29,6 @@ reference.
 # install Ubuntu 18.04 || 20.04
 # install ROS
 # install OpenCV (should come along with ROS)
-
 ```
 
 This repo utilize some third-party libraries,
@@ -92,7 +91,6 @@ The above packages salute the contribution of the following academic paper:
   year={2017},
   publisher={IEEE}
 }
-
 ```
 
 Now, below shows the architecture of the software platform:
