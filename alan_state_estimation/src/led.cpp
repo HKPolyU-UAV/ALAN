@@ -327,10 +327,17 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
 
 void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 {
+    double t0 = ros::Time::now().toSec();
     std::vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
     //what is this for?
     //to extract POI point of interest        
+     
 
+    double t1 = ros::Time::now().toSec();
+
+    std::cout<< (t1 - t0) * 1000<<std::endl;
+
+    double t2 = ros::Time::now().toSec();
     if(!pts_2d_detect.empty())
     {
         reject_outlier(pts_2d_detect, depth);
@@ -366,7 +373,12 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
         }        
     }      
     else
-        LED_tracker_initiated_or_tracked = false;                          
+        LED_tracker_initiated_or_tracked = false;       
+
+    double t3 = ros::Time::now().toSec();
+
+    // std::cout<<1 / (t3 - t2)<<std::endl;
+    
 }
 
 bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2d> pts_2d_detect)
@@ -655,6 +667,7 @@ void alan::LedNodelet::solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus:
 
 std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
 {    
+    
     cv::Mat depth_mask_src = depth.clone(), depth_mask_dst1, depth_mask_dst2;
 
     cv::threshold(depth_mask_src, depth_mask_dst1, LANDING_DISTANCE * 1000, 50000, cv::THRESH_BINARY_INV); //filter out far depths
@@ -666,20 +679,24 @@ std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, c
     depth_mask_src.convertTo(depth_mask_src, CV_8U);
 
     
-    cv::Mat d_img = depth;
-    int size = d_img.cols * d_img.rows;
+    // cv::Mat d_img = depth;
+    // int size = d_img.cols * d_img.rows;
 
-    for(int i=0; i < size; i++)
-    {
-        if(isnan(d_img.at<ushort>(i)))
-        {
-            d_img.at<ushort>(i) = 0;
-        }
-        if(d_img.at<ushort>(i) > 10000|| d_img.at<ushort>(i) < 100)
-        {
-            d_img.at<ushort>(i) = 0;
-        }
-    }
+    // double t0 = ros::Time::now().toSec();
+    // for(int i=0; i < size; i++)
+    // {
+    //     if(isnan(d_img.at<ushort>(i)))
+    //     {
+    //         d_img.at<ushort>(i) = 0;
+    //     }
+    //     if(d_img.at<ushort>(i) > 10000|| d_img.at<ushort>(i) < 100)
+    //     {
+    //         d_img.at<ushort>(i) = 0;
+    //     }
+    // }
+    // double t1 = ros::Time::now().toSec();
+
+    // std::cout<< (t1 - t0) * 1000<<std::endl;
    
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     cv::threshold(frame, frame, BINARY_THRES, 255, cv::THRESH_BINARY);
@@ -828,9 +845,10 @@ bool alan::LedNodelet::get_final_POI(std::vector<Eigen::Vector2d>& pts_2d_detect
 
 	cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
     
+
     detector->detect(final_ROI, keypoints_rgb_d);
 	cv::drawKeypoints( final_ROI, keypoints_rgb_d, im_with_keypoints,CV_RGB(0,255,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-    
+   
     // cv::imshow("final_ROI", final_ROI);
     // cv::waitKey(10);
         
