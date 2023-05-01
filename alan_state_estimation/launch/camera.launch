@@ -37,7 +37,7 @@
 
 
   <arg name="fisheye_fps"         default="30"/>
-  <arg name="depth_fps"           default="60"/>
+  <arg name="depth_fps"           default="90"/>
   <arg name="infra_fps"           default="60"/>
   <arg name="gyro_fps"            default="200"/>
   <arg name="accel_fps"           default="250"/>

@@ -27,6 +27,9 @@
 
 void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr & rgbmsg, const sensor_msgs::Image::ConstPtr & depthmsg)
 {
+    // std::cout<<"time difference: "<<
+    //     rgbmsg->header.stamp.toNSec() <<std::endl<<depthmsg->header.stamp.toNSec()
+    //     <<std::endl;
     total_no++;
     cv_bridge::CvImageConstPtr depth_ptr;
     led_pose_stamp = rgbmsg->header.stamp;
@@ -335,7 +338,7 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 
     double t1 = ros::Time::now().toSec();
 
-    std::cout<< (t1 - t0) * 1000<<std::endl;
+    // std::cout<< (t1 - t0) * 1000<<std::endl;
 
     double t2 = ros::Time::now().toSec();
     if(!pts_2d_detect.empty())

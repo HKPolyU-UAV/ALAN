@@ -1113,4 +1113,3 @@ void planner_server::set_alan_b_traj_online()
     traj_i = 4;
 
 }
-
