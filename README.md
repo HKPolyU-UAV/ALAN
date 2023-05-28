@@ -3,20 +3,7 @@
 
 ### Abstract
 <div align="justify">
-This paper addresses the problem of a quadrotor landing on a dynamic platform. Yet, different from
-most existing literatures, we approach the problem from a non-robocentric perspective, in which
-most sensing and computing tasks are transferred to ground, being performed in an offboard fashion.
-Such framework is believed to greatly alleviate the payload burden of a quadrotor UAV, while
-potentially increase the computation capability. In the proposed framework, modular modules are
-designed, in which relative pose estimation is first conducted through detection and tracking of LED
-markers of an aerial vehicles. The 6 DoF information is then returned through PnP algorithm family
-and minimization of reprojection error. Successively, by considering the kinematic and dynamic
-constraints, the motion planning module computes an optimized landing trajectory such that the
-aerial vehicle stays within safety corridor and perform the landing mission. Through a series of
-experiments, we demonstrate the applicability of this research work, in which a quadrotor could be
-controlled remotely and land on a moving ground vehicle constantly without equipped with sensors
-and computers. The hardware and software will be released to the research community for future
-reference.
+This research addresses the problem of a quadro- tor UAV landing on a ground vehicle. Yet, unlike most existing literature, we transfer most sensing and computing tasks to the ground vehicle, designing the landing system in a non- robocentric fashion. Such a framework greatly alleviates the payload burden, allowing more resource allocation for the quadrotor UAV. To validate the proposed framework, the implementation starts with relative pose estimation through detection and tracking of LED markers on an aerial vehicle. The 6 DoF orientation and position information is then returned through a PnP-based algorithm. Successively, by considering the visibility and dynamic constraints, the motion planning module computes an optimized landing trajectory, such that the aerial vehicle stays within a safety corridor and performs the landing mission. Through experiments, we demonstrate the applicability of this research work, in which a quadrotor could be guided remotely and landed on a moving ground vehicle smoothly without the support from any airborne exteroceptive sensors and computers.
 </div>
 
 ### Video
