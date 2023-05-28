@@ -79,8 +79,9 @@ The above packages salute the contribution of the following academic paper:
   publisher={IEEE}
 }
 ```
+Further details will be released once the manuscript is accepted.
 
-Now, below shows the architecture of the software platform:
+<!-- Now, below shows the architecture of the software platform: -->
 
 
-### Hardware Used in Literature
+<!-- ### Hardware Used in Literature -->
