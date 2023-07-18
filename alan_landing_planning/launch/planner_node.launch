@@ -9,7 +9,7 @@
     </node>  -->
 
 
-    <node name="alan_master_planner_node" pkg="alan_landing_planning" type="planner_node" output="screen">
+    <node name="alan_master_planner_node" pkg="alan_landing_planning" type="planner_node.cpp" output="screen">
             <rosparam command="load" file="$(find alan_landing_planning)/launch/configs/alan_land_trajectory.yaml" />
             <param name="/log_path" type="string" value="$(find alan_landing_planning)/src/log/"/>
     </node>    

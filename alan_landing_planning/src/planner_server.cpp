@@ -442,10 +442,22 @@ bool planner_server::taking_off()
 bool planner_server::go_to_rendezvous_pt_and_follow()
 {
     //follow dynamic
-    target_traj_pose = set_following_target_pose();
+    // ++++++++++
+    // target_traj_pose = set_following_target_pose();
+    // std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
+
+    // if(
+    //     uav_in_ugv_frame_posi.norm() - following_norm < 0.4 &&
+    //     prerequisite_set
+    // )
+    //     return true;
+    // else
+    //     return false;  
+    // ++++++++++
     
     //perform block traj during experiment
-    // target_traj_pose = set_uav_block_pose();
+    target_traj_pose = set_uav_block_pose();
+    return false;
 
     //decide whether to land based on following quality
     // if(
@@ -464,17 +476,7 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
     // if(set_alan_b_traj_prerequisite)
 
 
-
-    std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
-
-
-    if(
-        uav_in_ugv_frame_posi.norm() - following_norm < 0.4 &&
-        prerequisite_set
-    )
-        return true;
-    else
-        return false;        
+          
 
 }
 
