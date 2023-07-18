@@ -11,10 +11,10 @@
 
         
         <!-- circle_traj -->
-        <param name="/ang_vel" type="double" value="60"/>
-        <param name="/radius" type="double" value="1.4"/>
+        <param name="/ang_vel" type="double" value="42"/>
+        <param name="/radius" type="double" value="1.28"/>
         <param name="/center_x" type="double" value="0.0"/>
-        <param name="/center_y" type="double" value="0.38"/>
+        <param name="/center_y" type="double" value="0.36"/>
 
         <!-- straight_traj -->
         <param name="/starto_x" type="double" value="1.0"/>
