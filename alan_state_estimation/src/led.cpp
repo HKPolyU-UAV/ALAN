@@ -590,17 +590,17 @@ std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, c
     cv::Mat d_img = depth;
     int size = d_img.cols * d_img.rows;
 
-    for(int i=0; i < size; i++)
-    {
-        if(isnan(d_img.at<ushort>(i)))
-        {
-            d_img.at<ushort>(i) = 0;
-        }
-        if(d_img.at<ushort>(i) > 10000|| d_img.at<ushort>(i) < 100)
-        {
-            d_img.at<ushort>(i) = 0;
-        }
-    }
+    // for(int i=0; i < size; i++)
+    // {
+    //     if(isnan(d_img.at<ushort>(i)))
+    //     {
+    //         d_img.at<ushort>(i) = 0;
+    //     }
+    //     if(d_img.at<ushort>(i) > 10000|| d_img.at<ushort>(i) < 100)
+    //     {
+    //         d_img.at<ushort>(i) = 0;
+    //     }
+    // }
    
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     cv::threshold(frame, frame, BINARY_THRES, 255, cv::THRESH_BINARY);

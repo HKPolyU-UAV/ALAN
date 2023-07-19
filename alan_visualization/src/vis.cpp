@@ -126,10 +126,7 @@ void traj_msg_callback(const alan_landing_planning::Traj::ConstPtr& msg)
         posi_temp.z = what.position.z;
         traj_points.points.push_back(posi_temp);
     }      
-
-    
-
-    
+        
     rviz_traj_initiated = true;
 
 }
@@ -379,9 +376,10 @@ int main(int argc, char** argv)
         // cout<<sfc_pub_vis_object_polyh.polyhedrons.size()<<endl;
 
         if(
-            rviz_traj_initiated && 
-            rviz_traj_array_initiated &&
-            ctrlPts_initiated
+            rviz_traj_initiated
+            // rviz_traj_initiated && 
+            // rviz_traj_array_initiated &&
+            // ctrlPts_initiated
         )
         {
             traj_points.header.stamp = ros::Time::now();
@@ -404,8 +402,8 @@ int main(int argc, char** argv)
             transform.setRotation(q);
             br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "body"));
             traj_vis_pub.publish(traj_points);  
-            trajArray_vis_pub.publish(trajArray_points);
-            ctrl_pts_vis_pub.publish(ctrl_points);
+            // trajArray_vis_pub.publish(trajArray_points);
+            // ctrl_pts_vis_pub.publish(ctrl_points);
         }                                                 
             
         ros::spinOnce();

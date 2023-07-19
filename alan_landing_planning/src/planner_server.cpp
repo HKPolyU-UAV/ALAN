@@ -210,6 +210,7 @@ void planner_server::ugvPosePredictedMsgCallback(const geometry_msgs::PoseStampe
     ugv_traj_predict_pose.head<3>() = t_.translation();
     ugv_traj_predict_pose(3) = atan2(q_.toRotationMatrix()(1,0), q_.toRotationMatrix()(0,0));
 
+    std::cout<<"gan"<<std::endl;
 }
 
 void planner_server::sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& msg)
@@ -420,10 +421,10 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 {
     
     
-    //perform block traj during experiment
-    target_traj_pose = set_uav_block_pose();
+    // perform block traj during experiment
+    // target_traj_pose = set_uav_block_pose();
 
-    return false;
+    // return false;
 
     //decide whether to land based on following quality
     // if(
@@ -444,18 +445,19 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 
 
     //follow dynamic
-    // target_traj_pose = set_following_target_pose();
+    target_traj_pose = set_following_target_pose();
+    // std::cout<<target_traj_pose<<std::endl<<std::endl;
 
-    // std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
+    std::cout<<uav_in_ugv_frame_posi.norm() - following_norm<<std::endl;
 
 
-    // if(
-    //     uav_in_ugv_frame_posi.norm() - following_norm < 0.4 &&
-    //     prerequisite_set
-    // )
-    //     return true;
-    // else
-    //     return false;        
+    if(
+        uav_in_ugv_frame_posi.norm() - following_norm < 0.4 &&
+        prerequisite_set
+    )
+        return true;
+    else
+        return false;        
 
 }
 
@@ -465,7 +467,7 @@ bool planner_server::rendezvous()
 
     if(landornot)
     {
-        if(ros::Time::now().toSec() - last_request > ros::Duration(10.0).toSec())
+        if(ros::Time::now().toSec() - last_request > ros::Duration(2.0).toSec())
             return true;
         else 
             return false;
@@ -507,8 +509,10 @@ bool planner_server::land()
             target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.y;
             target_traj_pose(2) = optimal_traj_info_obj.optiTraj.trajectory[traj_i].position.z;
 
+            // target_traj_pose.head<3>() 
+            //     = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
             target_traj_pose.head<3>() 
-                = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
+                = ugvOdomPose.rotation() * target_traj_pose.head<3>() + ugvOdomPose.translation();
 
             target_traj_pose(3) = ugv_traj_pose(3);// set_yaw();
 
@@ -534,8 +538,11 @@ bool planner_server::land()
             target_traj_pose(1) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.y;
             target_traj_pose(2) = optimal_traj_info_obj.optiTraj.trajectory[traj_i - 1].position.z;
 
+            // target_traj_pose.head<3>() 
+            // = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
+
             target_traj_pose.head<3>() 
-            = ugvOdomPose_predicted.rotation() * target_traj_pose.head<3>() + ugvOdomPose_predicted.translation();
+            = ugvOdomPose.rotation() * target_traj_pose.head<3>() + ugvOdomPose.translation();
             
             target_traj_pose(3) = ugv_traj_pose(3);
 
@@ -723,12 +730,22 @@ Eigen::Vector4d planner_server::set_following_target_pose()
         take_off_height
     );
     
-    uav_following_pt =  ugvOdomPose_predicted.rotation() * uav_following_pt 
+    // uav_following_pt =  ugvOdomPose_predicted.rotation() * uav_following_pt 
+    //     + Eigen::Vector3d(
+    //         ugvOdomPose_predicted.translation().x(),
+    //         ugvOdomPose_predicted.translation().y(),
+    //         ugvOdomPose_predicted.translation().z()
+    //     );
+
+    uav_following_pt =  ugvOdomPose.rotation() * uav_following_pt 
         + Eigen::Vector3d(
-            ugvOdomPose_predicted.translation().x(),
-            ugvOdomPose_predicted.translation().y(),
-            ugvOdomPose_predicted.translation().z()
+            ugvOdomPose.translation().x(),
+            ugvOdomPose.translation().y(),
+            ugvOdomPose.translation().z()
         );
+
+    // std::cout<<std::endl<<"here: \n"
+    // <<uav_following_pt<<std::endl<<std::endl;
 
     // uav_following_pt.x() = ugv_traj_pose(0);
     // uav_following_pt.y() = ugv_traj_pose(1);
@@ -760,14 +777,14 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
 {    
     if(set_block_traj)
     { 
-        double vel = 0.2;
+        double vel = 0.12;
 
         std::cout<<"take_off_height: "<<take_off_height<<std::endl;
 
-        Eigen::Vector3d v1 = Eigen::Vector3d(-0.0,  0.2, take_off_height);
-        Eigen::Vector3d v2 = Eigen::Vector3d(-0.0, -0.2, take_off_height);
-        Eigen::Vector3d v3 = Eigen::Vector3d(-2.0, -0.2, take_off_height);
-        Eigen::Vector3d v4 = Eigen::Vector3d(-2.0,  0.2, take_off_height);
+        Eigen::Vector3d v1 = Eigen::Vector3d(-0.5,  0.04, take_off_height);
+        Eigen::Vector3d v2 = Eigen::Vector3d(-0.5, -0.04, take_off_height);
+        Eigen::Vector3d v3 = Eigen::Vector3d(-1.0, -0.04, take_off_height);
+        Eigen::Vector3d v4 = Eigen::Vector3d(-1.0,  0.04, take_off_height);
 
         std::vector<Eigen::Vector3d> traj_per_edge;
         
@@ -837,22 +854,23 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
         std::cout<<"v4-v1:........"<<block_traj_pts[3].size()<<std::endl;
 
 
-        //repeat 4 times        
+        //repeat 4 times  
 
-        for(int i = 0; i < 4; i++)
-        {
-            block_traj_pts.emplace_back(block_traj_pts[i]);
-        }
+        for(int lala = 0; lala < 40; lala++)      
+            for(int i = 0; i < 4; i++)
+            {
+                block_traj_pts.emplace_back(block_traj_pts[i]);
+            }
 
-        for(int i = 0; i < 4; i++)
-        {
-            block_traj_pts.emplace_back(block_traj_pts[i]);
-        }
+        // for(int i = 0; i < 4; i++)
+        // {
+        //     block_traj_pts.emplace_back(block_traj_pts[i]);
+        // }
 
-        for(int i = 0; i < 4; i++)
-        {
-            block_traj_pts.emplace_back(block_traj_pts[i]);
-        }
+        // for(int i = 0; i < 4; i++)
+        // {
+        //     block_traj_pts.emplace_back(block_traj_pts[i]);
+        // }
         
         std::cout<<"total edge:..."<<block_traj_pts.size()<<std::endl;
 
@@ -885,6 +903,8 @@ Eigen::Vector4d planner_server::set_uav_block_pose()
         following_target_pose(1) = landing_hover_pt.y;
         following_target_pose(2) = landing_hover_pt.z;
         following_target_pose(3) = landing_hover_pt.yaw;
+
+        ROS_INFO("END");
 
         return following_target_pose;
     }
