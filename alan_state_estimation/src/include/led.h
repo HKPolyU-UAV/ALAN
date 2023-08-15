@@ -53,6 +53,7 @@
 
 
 #include "tools/RosTopicConfigs.h"
+#include "tools/KalmanFilter.hpp"
 #include "alan_state_estimation/alan_log.h"
 
 // map definition for convinience
