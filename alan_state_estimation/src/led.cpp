@@ -291,6 +291,8 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
                 ROS_WARN("REPROJECTION_ERROR OVER @ INITIALIZATION %d", LED_no * 2);          
             }                    
             map_SE3_to_pose(pose_global_sophus);
+            
+            kf_ptr = std::make_unique<kf::aiekf>(pose_global_sophus.log());
         }
         else
         {

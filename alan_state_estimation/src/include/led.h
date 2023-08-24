@@ -55,6 +55,8 @@
 #include "tools/RosTopicConfigs.h"
 #include "alan_state_estimation/alan_log.h"
 
+#include "aiekf.hpp"
+
 // map definition for convinience
 #define COLOR_SUB_TOPIC CAMERA_SUB_TOPIC_A
 #define DEPTH_SUB_TOPIC CAMERA_SUB_TOPIC_B
@@ -228,6 +230,11 @@ namespace alan
             Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
+
+        //Kalman filtering
+            //
+            std::unique_ptr<kf::aiekf> kf_ptr;
+
             
 
         //below is the courtesy of UZH Faessler et al.
@@ -456,6 +463,8 @@ namespace alan
                 
                 record_uav_pub = nh.advertise<alan_state_estimation::alan_log>
                                 ("/alan_state_estimation/led/uav_log", 1);
+
+            
             }
 
 
