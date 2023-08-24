@@ -27,6 +27,9 @@
 
 void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr & rgbmsg, const sensor_msgs::Image::ConstPtr & depthmsg)
 {
+    Sophus::Vector6d temp;
+    // Sophus::SE3d lala = Sophus::;
+    Sophus::Vector6d lala_se3 = pose_global_sophus.log();
     // std::cout<<"time difference: "<<
     //     rgbmsg->header.stamp.toNSec() <<std::endl<<depthmsg->header.stamp.toNSec()
     //     <<std::endl;
@@ -157,7 +160,6 @@ void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::Const
 void alan::LedNodelet::uav_setpt_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
     uav_stpt_msg = *pose;
-
 }
 
 void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
@@ -220,7 +222,7 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     
     
 
-    set_twist_estimate(led_pose);
+    // set_twist_estimate(led_pose);
     
     //pose publish
     led_pose_estimated.header.stamp = led_pose_stamp;
@@ -286,7 +288,7 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
 
             if(BA_error > LED_no * 2)
             {
-                ROS_WARN("REPROJECTION_ERROR OVER %d", LED_no * 2);          
+                ROS_WARN("REPROJECTION_ERROR OVER @ INITIALIZATION %d", LED_no * 2);          
             }                    
             map_SE3_to_pose(pose_global_sophus);
         }
@@ -311,19 +313,6 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
         }
         else       
             map_SE3_to_pose(pose_global_sophus);
-
-        // cout<< q2rpy(Eigen::Quaterniond(pose_global_sophus.rotationMatrix())) / M_PI * 180<<endl; 
-        // cout<<"----------"<<endl;
-
-        // if(BA_error > LED_no * 2)
-        // {
-        //     if(!LED_tracker_initiated_or_tracked)
-        //     {
-        //         ROS_WARN("REPROJECTION_ERROR OVER %d", LED_no * 2);  
-        //         ROS_ERROR("");              
-        //         cv::imwrite("/home/patty/alan_ws/misc/i.png", display);                
-        //     }            
-        // }
         
     }
 }
@@ -341,6 +330,7 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
     // std::cout<< (t1 - t0) * 1000<<std::endl;
 
     double t2 = ros::Time::now().toSec();
+    
     if(!pts_2d_detect.empty())
     {
         reject_outlier(pts_2d_detect, depth);
@@ -412,22 +402,18 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
         solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order);        
         pose_global_sophus = pose_epnp_sophus;
 
-        // cout<<"search:"<<endl;
-        // cout<<pose_global_sophus.translation().z()<<endl<<endl;
 
-        optimize(pose_global_sophus, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);//pose, body_frame_pts, pts_2d_detect
 
-        double reproject_error = get_reprojection_error(
+        optimize(pose_global_sophus, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);
+        //pose, body_frame_pts, pts_2d_detect
+  
+
+        BA_error = get_reprojection_error(
             pts_on_body_frame_in_corres_order,
             pts_detected_in_corres_order,
             pose_global_sophus,
             true
         );
-
-        // cout<<"reproject_error..."<<endl;
-        // cout<<reproject_error<<endl;      
-
-        BA_error = reproject_error;
 
         if(BA_error > LED_no * 2)
             return false;
@@ -520,7 +506,6 @@ void alan::LedNodelet::solve_pnp_initial_pose(std::vector<Eigen::Vector2d> pts_2
     camMat.at<double>(1,1) = cameraMat(1,1);
     camMat.at<double>(1,2) = cameraMat(1,2);
 
-    // cout<<camMat<<endl;
 
     cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);
     //opt pnp algorithm
@@ -614,6 +599,7 @@ void alan::LedNodelet::optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3d>
     
         //solve Adx = b
         dx = A.ldlt().solve(b);
+        //
 
         for(int i = 0; i < 6; i++)
             if(isnan(dx(i,0)))
@@ -1411,58 +1397,6 @@ Eigen::Vector3d alan::LedNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::V
     return q * v;
 }
 
-void alan::LedNodelet::set_twist_estimate(Eigen::Isometry3d led_pose_current)
-{
-    double delta_time = led_pose_stamp.toSec() - led_pose_stamp_previous.toSec();
-
-    //settle angular
-    Eigen::Matrix3d R_delta = led_pose_previous.rotation().inverse()
-                                * led_pose_current.rotation();
-
-    Eigen::Matrix3d omegaX;
-    double phi = 0;
-
-    if (R_delta.isApprox(Eigen::Matrix3d::Identity(), 1e-10) == 1)
-    {
-        // phi has already been set to 0;
-        omegaX.setZero();
-    }
-    else
-    {
-        double temp = (R_delta.trace() - 1) / 2;
-        // Force phi to be either 1 or -1 if necessary. 
-        //Floating point errors can cause problems resulting in this not happening
-        if (temp > 1)
-        {
-            temp = 1;
-        }
-        else if (temp < -1)
-        {
-            temp = -1;
-        }
-
-        phi = acos(temp);
-        if (phi == 0)
-        {
-            omegaX.setZero();
-        }
-        else
-        {
-            omegaX = (R_delta - R_delta.transpose()) / (2 * sin(phi)) * phi;
-        }
-    }
-
-    led_twist_current.head<3>() = led_pose_current.translation() - led_pose_previous.translation();
-    
-    //settle linear
-    led_twist_current.tail<3>() << omegaX(2, 1), omegaX(0, 2), omegaX(1, 0);
-
-    led_twist_current = led_twist_current / delta_time;
-
-    led_pose_previous = led_pose_current;
-
-}
-
 void alan::LedNodelet::set_image_to_publish(double freq, const sensor_msgs::CompressedImageConstPtr & rgbmsg)
 {    
     char hz[40];
@@ -1611,151 +1545,4 @@ void alan::LedNodelet::terminal_msg_display(double hz)
         error_no ++;
     }
     std::cout<<"fail: "<< error_no<<" / "<<total_no<<std::endl;
-}
-
-//below is the courtesy of UZH Faessler et al.
-/*
-    @inproceedings{faessler2014monocular,
-    title={A monocular pose estimation system based on infrared leds},
-    author={Faessler, Matthias and Mueggler, Elias and Schwabe, Karl and Scaramuzza, Davide},
-    booktitle={2014 IEEE international conference on robotics and automation (ICRA)},
-    pages={907--913},
-    year={2014},
-    organization={IEEE}
-    }
-*/
-
-void alan::LedNodelet::set_pose_predict()
-{
-    double delta_time = (time_predicted - time_current) / (time_current - time_previous);
-
-    // Eigen::Matrix4d 
-    Eigen::VectorXd delta;
-    delta.resize(6);
-    delta = logarithmMap(pose_previous.inverse() * pose_current);
-    
-    Eigen::VectorXd delta_hat;
-    delta_hat.resize(6);
-    delta_hat = delta * delta_time;    
-
-    pose_predicted = pose_current * exponentialMap(delta_hat);
-}
-
-Eigen::VectorXd alan::LedNodelet::logarithmMap(Eigen::Matrix4d trans)
-{
-    Eigen::VectorXd xi;
-    xi.resize(6);
-
-    Eigen::Matrix3d R = trans.block<3, 3>(0, 0);
-    Eigen::Vector3d t = trans.block<3, 1>(0, 3);
-    Eigen::Vector3d w, upsilon;
-
-    
-    Eigen::Matrix3d A_inv;
-
-    Eigen::Matrix3d w_hat;
-    double phi = 0;
-    double w_norm;
-
-    // Calculate w_hat
-    if (R.isApprox(Eigen::Matrix3d::Identity(), 1e-10) == 1)
-    {
-        // phi has already been set to 0;
-        w_hat.setZero();
-    }
-    else
-    {
-        double temp = (R.trace() - 1) / 2;
-        // Force phi to be either 1 or -1 if necessary. Floating point errors can cause problems resulting in this not happening
-        if (temp > 1)
-        {
-            temp = 1;
-        }
-        else if (temp < -1)
-        {
-            temp = -1;
-        }
-
-        phi = acos(temp);
-        if (phi == 0)
-        {
-            w_hat.setZero();
-        }
-        else
-        {
-            w_hat = (R - R.transpose()) / (2 * sin(phi)) * phi;
-        }
-    }
-
-    // Extract w from skew symmetrix matrix of w
-    w << w_hat(2, 1), w_hat(0, 2), w_hat(1, 0);
-
-    w_norm = w.norm();
-
-    // Calculate upsilon
-    if (t.isApproxToConstant(0, 1e-10) == 1)
-    {
-        A_inv.setZero();
-    }
-    else if (w_norm == 0 || sin(w_norm) == 0)
-    {
-        A_inv.setIdentity();
-    }
-    else
-    {
-        //
-        A_inv = Eigen::Matrix3d::Identity() - w_hat / 2
-            + (2 * sin(w_norm) - w_norm * (1 + cos(w_norm))) / (2 * w_norm * w_norm * sin(w_norm)) * w_hat * w_hat;
-    }
-
-    upsilon = A_inv * t;
-
-    // Compose twist coordinates vector
-    xi.head<3>() = upsilon;
-    xi.tail<3>() = w;
-
-    return xi;
-}
-
-Eigen::Matrix4d alan::LedNodelet::exponentialMap(Eigen::VectorXd& twist)
-{
-    Eigen::Vector3d upsilon = twist.head<3>();
-    Eigen::Vector3d omega = twist.tail<3>();
-
-    double theta = omega.norm();
-    double theta_squared = theta * theta;
-
-    Eigen::Matrix3d Omega = skewSymmetricMatrix(omega);
-    Eigen::Matrix3d Omega_squared = Omega * Omega;
-    Eigen::Matrix3d rotation;
-    Eigen::Matrix3d V;
-
-    if (theta == 0)
-    {
-        rotation = Eigen::Matrix3d::Identity();
-        V.setIdentity();
-    }
-    else
-    {
-        rotation = Eigen::Matrix3d::Identity() + Omega / theta * sin(theta)
-            + Omega_squared / theta_squared * (1 - cos(theta));
-        V = (Eigen::Matrix3d::Identity() + (1 - cos(theta)) / (theta_squared) * Omega
-            + (theta - sin(theta)) / (theta_squared * theta) * Omega_squared);
-    }
-
-    Eigen::Matrix4d transform;
-
-    transform.setIdentity();
-    transform.block<3, 3>(0, 0) = rotation;
-    transform.block<3, 1>(0, 3) = V * upsilon;
-
-    return transform;
-}
-
-Eigen::Matrix3d alan::LedNodelet::skewSymmetricMatrix(Eigen::Vector3d w)
-{
-    Eigen::Matrix3d Omega;
-    Omega << 0, -w(2), w(1), w(2), 0, -w(0), -w(1), w(0), 0;
-
-    return Omega;
 }

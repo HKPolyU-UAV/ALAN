@@ -53,7 +53,6 @@
 
 
 #include "tools/RosTopicConfigs.h"
-#include "tools/KalmanFilter.hpp"
 #include "alan_state_estimation/alan_log.h"
 
 // map definition for convinience
@@ -117,6 +116,7 @@ namespace alan
             Eigen::Isometry3d uav_pose;
 
             Eigen::Isometry3d led_pose;
+            
             Eigen::Vector3d cam_origin_in_body_frame, cam_origin;
             Eigen::Quaterniond q_cam, q_led_cambody;
             Eigen::Vector3d t_cam, t_led_cambody;
@@ -160,7 +160,8 @@ namespace alan
         
         //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
-            Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);   
+            Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
+       
             double get_reprojection_error(std::vector<Eigen::Vector3d> pts_3d, std::vector<Eigen::Vector2d> pts_2d, Sophus::SE3d pose, bool draw_reproject);         
 
         //main process
@@ -244,25 +245,25 @@ namespace alan
 
             //twist for correspondence search
             //objects
-            Eigen::Matrix4d pose_previous;
-            Eigen::Matrix4d pose_current;
-            Eigen::Matrix4d pose_predicted;   
-                /*------------------------*/
-            Eigen::Isometry3d led_pose_previous;   
+            // Eigen::Matrix4d pose_previous;
+            // Eigen::Matrix4d pose_current;
+            // Eigen::Matrix4d pose_predicted;   
+            //     /*------------------------*/
+            // Eigen::Isometry3d led_pose_previous;   
             Eigen::VectorXd led_twist_current;    
-                /*------------------------*/
-            double time_previous = 0;
-            double time_current = 0;
-            double time_predicted = 0;
-            int global_counter = 0;
+            //     /*------------------------*/
+            // double time_previous = 0;
+            // double time_current = 0;
+            // double time_predicted = 0;
+            // int global_counter = 0;
 
-            //functions
-            void set_pose_predict();
-            void set_twist_estimate(Eigen::Isometry3d led_pose_current);
+            // //functions
+            // void set_pose_predict();
+            // void set_twist_estimate(Eigen::Isometry3d led_pose_current);
 
-            Eigen::VectorXd logarithmMap(Eigen::Matrix4d trans);
-            Eigen::Matrix4d exponentialMap(Eigen::VectorXd& twist);
-            Eigen::Matrix3d skewSymmetricMatrix(Eigen::Vector3d w);
+            // Eigen::VectorXd logarithmMap(Eigen::Matrix4d trans);
+            // Eigen::Matrix4d exponentialMap(Eigen::VectorXd& twist);
+            // Eigen::Matrix3d skewSymmetricMatrix(Eigen::Vector3d w);
 
 //---------------------------------------------------------------------------------------
             virtual void onInit()
