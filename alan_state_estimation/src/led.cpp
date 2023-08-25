@@ -32,7 +32,7 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
     //     <<std::endl;
     total_no++;
     cv_bridge::CvImageConstPtr depth_ptr;
-    led_pose_stamp = rgbmsg->header.stamp;
+    led_pose_header = rgbmsg->header;
 
     try
     {
@@ -82,159 +82,94 @@ void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::Const
     if(!nodelet_activated)
         nodelet_activated = true;
 
-    led_pose_stamp_previous = led_pose_stamp;
+    led_pose_header_previous = led_pose_header;
 
 } 
 
+Sophus::SE3d alan::LedNodelet::posemsg_to_SE3(const geometry_msgs::PoseStamped pose)
+{
+    return Sophus::SE3d(
+        Eigen::Quaterniond(
+            ugv_pose_msg.pose.orientation.w,
+            ugv_pose_msg.pose.orientation.x,
+            ugv_pose_msg.pose.orientation.y,
+            ugv_pose_msg.pose.orientation.z  
+        ).toRotationMatrix(),
+        Eigen::Translation3d(
+            ugv_pose_msg.pose.position.x,
+            ugv_pose_msg.pose.position.y,
+            ugv_pose_msg.pose.position.z
+        ).translation()
+    );
+}
+
+geometry_msgs::PoseStamped alan::LedNodelet::SE3_to_posemsg(
+    const Sophus::SE3d pose_on_SE3, 
+    const std_msgs::Header msgHeader
+)
+{
+    geometry_msgs::PoseStamped returnPoseMsg;
+    returnPoseMsg.header = msgHeader;
+
+    returnPoseMsg.pose.position.x = pose_on_SE3.translation().x();
+    returnPoseMsg.pose.position.y = pose_on_SE3.translation().y();
+    returnPoseMsg.pose.position.z = pose_on_SE3.translation().z();
+
+    returnPoseMsg.pose.orientation.w = pose_on_SE3.unit_quaternion().w();
+    returnPoseMsg.pose.orientation.x = pose_on_SE3.unit_quaternion().x();
+    returnPoseMsg.pose.orientation.y = pose_on_SE3.unit_quaternion().y();
+    returnPoseMsg.pose.orientation.z = pose_on_SE3.unit_quaternion().z();
+
+    return returnPoseMsg;
+}
 
 void alan::LedNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
+    pose_cam_inWorld_SE3 = pose_ugv_inWorld_SE3 * pose_cam_inUgvBody_SE3;
+
+    geometry_msgs::PoseStamped cam_pose_msg = SE3_to_posemsg(
+        pose_cam_inWorld_SE3, 
+        pose->header
+    );
+
+    campose_pub.publish(cam_pose_msg);
+
+    pose_ugv_inWorld_SE3 = posemsg_to_SE3(*pose); 
+    
     ugv_pose_msg = *pose;
     ugv_pose_msg.header.frame_id = "world";
-    
-    Eigen::Translation3d t_(
-        ugv_pose_msg.pose.position.x,
-        ugv_pose_msg.pose.position.y,
-        ugv_pose_msg.pose.position.z
-    );
-
-    Eigen::Quaterniond q_(
-        ugv_pose_msg.pose.orientation.w,
-        ugv_pose_msg.pose.orientation.x,
-        ugv_pose_msg.pose.orientation.y,
-        ugv_pose_msg.pose.orientation.z  
-    );
-
-    ugv_pose = t_ * q_;//body_to_world
-
-    Eigen::Vector3d cam_origin;
-    cam_origin.setZero();
-
-    q_cam =  q_ * q_c2b;
-    t_cam = q_.toRotationMatrix() * t_c2b.translation() + t_.translation();
-
-    cam_pose = Eigen::Translation3d(t_cam) * q_cam; 
-
-    geometry_msgs::PoseStamped pose_cam;
-    pose_cam.header.frame_id = "world";
-    pose_cam.pose.position.x = t_cam.x();
-    pose_cam.pose.position.y = t_cam.y();
-    pose_cam.pose.position.z = t_cam.z();
-
-    pose_cam.pose.orientation.w = q_cam.w();
-    pose_cam.pose.orientation.x = q_cam.x();
-    pose_cam.pose.orientation.y = q_cam.y();
-    pose_cam.pose.orientation.z = q_cam.z();
-
-    campose_pub.publish(pose_cam);    
     ugvpose_pub.publish(ugv_pose_msg);
 }
 
 void alan::LedNodelet::uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
+    pose_uav_inWorld_SE3 = posemsg_to_SE3(*pose);
+    
     uav_pose_msg = *pose;
-
-    Eigen::Translation3d t_(
-        uav_pose_msg.pose.position.x,
-        uav_pose_msg.pose.position.y,
-        uav_pose_msg.pose.position.z
-    );
-
-    Eigen::Quaterniond q_(
-        uav_pose_msg.pose.orientation.w,
-        uav_pose_msg.pose.orientation.x,
-        uav_pose_msg.pose.orientation.y,
-        uav_pose_msg.pose.orientation.z  
-    );
-
-    uav_pose = t_ * q_;
-
     uav_pose_msg.header.frame_id = "world";
-
     uavpose_pub.publish(uav_pose_msg);
 }
 
 void alan::LedNodelet::uav_setpt_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
     uav_stpt_msg = *pose;
-
 }
 
-void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
+void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose_led_inCamera_SE3)
 {   
-    Eigen::Matrix3d cam_to_body;
-    cam_to_body << 
-        0,0,1,
-        -1,0,0,
-        0,-1,0;
+    pose_cam_inGeneralBodySE3 * pose_led_inCamera_SE3; //now we in body frame
 
-
-    Eigen::Quaterniond q_led = Eigen::Quaterniond(pose.rotationMatrix() );
-    Eigen::Translation3d t_led = Eigen::Translation3d(pose.translation() );
-
-    led_pose = t_led * q_led;//in {c} frame
-
-    // transfer to {w} frame
-    Eigen::Quaterniond q_final = Eigen::Quaterniond(cam_pose.rotation() * cam_to_body * led_pose.rotation());
-    Eigen::Vector3d led_in_world = cam_pose.rotation() * cam_to_body * led_pose.translation() + cam_pose.translation();// Eigen::Translation3d(led_pose.translation());
-
-
-    Eigen::Vector3d uav_led_pose = q_final.toRotationMatrix() 
-            * Eigen::Vector3d(LEDEX(0), LEDEX(1), LEDEX(2)) 
-            + led_in_world; //in {w} frame but with offset
-
-    Eigen::Translation3d t_final = Eigen::Translation3d(uav_led_pose);
-
-    led_pose = t_final * q_final;
-
-    //////////////////////////////
-
-    Eigen::Vector3d temp(
-        (uav_pose.translation() - led_pose.translation()).x(),
-        (uav_pose.translation() - led_pose.translation()).y(),
-        (uav_pose.translation() - led_pose.translation()).z()
-    );
-
-    Eigen::Vector3d temp2(
-        uav_pose.translation().x() - uav_led_pose.x(),
-        uav_pose.translation().y() - uav_led_pose.y(),
-        uav_pose.translation().z() - uav_led_pose.z()
-    );
-
-    // std::
-
-    // std::cout<<"relative distance...\n";
-    // temp = led_pose.rotation().inverse() * (-temp);
-
+    pose_led_inWorld_SE3 = 
+        pose_cam_inWorld_SE3 
+        * pose_led_inUavBodyOffset_SE3 
+        * pose_cam_inGeneralBodySE3 
+        * pose_led_inCamera_SE3;
     
-    
-    // std::cout<< temp <<std::endl<<std::endl;;
-    // std::cout<<"relative distance...2\n";
-    // std::cout<< temp2.norm() <<std::endl<<std::endl;;
-
-    // if(depth_avg_of_all < 1.0)
-    // {
-    //     std::ofstream save("/home/patty/alan_ws/src/alan/alan_state_estimation/src/temp/lala.txt", std::ios::app);
-    //     save<<temp.x() <<","<<temp.y()<<","<<temp.z()<<std::endl;
-    // }
-    
-    
+    led_pose_estimated_msg = SE3_to_posemsg(pose_led_inWorld_SE3, led_pose_header);
 
     set_twist_estimate(led_pose);
     
     //pose publish
-    led_pose_estimated.header.stamp = led_pose_stamp;
-    led_pose_estimated.header.frame_id = "world";
-
-    led_pose_estimated.pose.position.x = t_final.translation().x();
-    led_pose_estimated.pose.position.y = t_final.translation().y();
-    led_pose_estimated.pose.position.z = t_final.translation().z();
-
-    led_pose_estimated.pose.orientation.w = q_final.w();    
-    led_pose_estimated.pose.orientation.x = q_final.x();
-    led_pose_estimated.pose.orientation.y = q_final.y();
-    led_pose_estimated.pose.orientation.z = q_final.z();
-
     // Eigen::AngleAxisd attitude_angle_axis_led(q_final.toRotationMatrix());
 
     // Eigen::AngleAxisd attitude_angle_axis_uav(uav_pose.rotation());
@@ -242,30 +177,31 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose)
     // std::cout<<attitude_angle_axis_led.angle()<<std::endl;
     // std::cout<<attitude_angle_axis_uav.angle()<<std::endl;
 
-    ledpose_pub.publish(led_pose_estimated);
+    led_pose_estimated_msg.header.frame_id = "world";
+    ledpose_pub.publish(led_pose_estimated_msg);
 
     //odom publish
-    led_odom_estimated.header.stamp = led_pose_stamp;
-    led_odom_estimated.header.frame_id = "world";
+    // led_odom_estimated.header.stamp = led_pose_header;
+    // led_odom_estimated.header.frame_id = "world";
 
-    led_odom_estimated.pose.pose.position.x = t_final.translation().x();
-    led_odom_estimated.pose.pose.position.y = t_final.translation().y();
-    led_odom_estimated.pose.pose.position.z = t_final.translation().z();
+    // led_odom_estimated.pose.pose.position.x = t_final.translation().x();
+    // led_odom_estimated.pose.pose.position.y = t_final.translation().y();
+    // led_odom_estimated.pose.pose.position.z = t_final.translation().z();
 
-    led_odom_estimated.pose.pose.orientation.w = q_final.w();
-    led_odom_estimated.pose.pose.orientation.x = q_final.x();
-    led_odom_estimated.pose.pose.orientation.y = q_final.y();
-    led_odom_estimated.pose.pose.orientation.z = q_final.z();
+    // led_odom_estimated.pose.pose.orientation.w = q_final.w();
+    // led_odom_estimated.pose.pose.orientation.x = q_final.x();
+    // led_odom_estimated.pose.pose.orientation.y = q_final.y();
+    // led_odom_estimated.pose.pose.orientation.z = q_final.z();
 
-    led_odom_estimated.twist.twist.linear.x = led_twist_current(0);
-    led_odom_estimated.twist.twist.linear.y = led_twist_current(1);
-    led_odom_estimated.twist.twist.linear.z = led_twist_current(2);
+    // led_odom_estimated.twist.twist.linear.x = led_twist_current(0);
+    // led_odom_estimated.twist.twist.linear.y = led_twist_current(1);
+    // led_odom_estimated.twist.twist.linear.z = led_twist_current(2);
 
-    led_odom_estimated.twist.twist.angular.x = led_twist_current(3);
-    led_odom_estimated.twist.twist.angular.y = led_twist_current(4);
-    led_odom_estimated.twist.twist.angular.z = led_twist_current(5);
+    // led_odom_estimated.twist.twist.angular.x = led_twist_current(3);
+    // led_odom_estimated.twist.twist.angular.y = led_twist_current(4);
+    // led_odom_estimated.twist.twist.angular.z = led_twist_current(5);
     
-    ledodom_pub.publish(led_odom_estimated);
+    // ledodom_pub.publish(led_odom_estimated);
 
     // Sophus::SE3d led_twist_sophus = Sophus::SE3d(led_twist_current);
     // led_twist_estimated.twist.linear.x = led_twist_sophus.ro       
@@ -1413,7 +1349,7 @@ Eigen::Vector3d alan::LedNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::V
 
 void alan::LedNodelet::set_twist_estimate(Eigen::Isometry3d led_pose_current)
 {
-    double delta_time = led_pose_stamp.toSec() - led_pose_stamp_previous.toSec();
+    double delta_time = led_pose_header.stamp.toSec() - led_pose_header_previous.stamp.toSec();
 
     //settle angular
     Eigen::Matrix3d R_delta = led_pose_previous.rotation().inverse()
@@ -1541,7 +1477,7 @@ void alan::LedNodelet::log(double ms)
         )        
     );
 
-    logdata_entry_led.header.stamp = led_pose_stamp;
+    logdata_entry_led.header.stamp = led_pose_header.stamp;
 
     record_led_pub.publish(logdata_entry_led);
 
@@ -1564,7 +1500,7 @@ void alan::LedNodelet::log(double ms)
     Eigen::AngleAxisd angle_axis_uav = Eigen::AngleAxisd(uav_pose.rotation());
     logdata_entry_uav.orientation = angle_axis_uav.angle();
 
-    logdata_entry_uav.header.stamp = led_pose_stamp;
+    logdata_entry_uav.header.stamp = led_pose_header.stamp;
 
     record_uav_pub.publish(logdata_entry_uav);
 
