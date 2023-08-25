@@ -94,7 +94,7 @@ Sophus::SE3d alan::LedNodelet::posemsg_to_SE3(const geometry_msgs::PoseStamped p
             ugv_pose_msg.pose.orientation.x,
             ugv_pose_msg.pose.orientation.y,
             ugv_pose_msg.pose.orientation.z  
-        ).toRotationMatrix(),
+        ).normalized().toRotationMatrix(),
         Eigen::Translation3d(
             ugv_pose_msg.pose.position.x,
             ugv_pose_msg.pose.position.y,

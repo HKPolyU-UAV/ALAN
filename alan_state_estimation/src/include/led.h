@@ -356,6 +356,8 @@ namespace alan
                     LEDEX(i) = extrinsics_list_led[i];
                 }
 
+                std::cout<<Eigen::Matrix3d::Identity()<<std::endl;
+
                 pose_led_inUavBodyOffset_SE3 = Sophus::SE3d(
                     Eigen::Matrix3d::Identity(),
                     Eigen::Vector3d(
