@@ -27,6 +27,7 @@
 #define AIEKF_HPP
 
 #include "tools/essential.h"
+#include "cameraModel.hpp"
 #include <sophus/se3.hpp>
 
 namespace kf
@@ -55,15 +56,8 @@ namespace kf
     }FINAL_RETURN;
 
 
-    class aiekf
+    class aiekf : public vision::cameraModel
     {
-        /*
-            In this class, sensor fusion will be conducted,
-            in which, an adaptive, iterative
-            extended Kalman filter is exploited.
-            In particular,
-            the definied functions will not touch opencv
-        */
     private:
         /* ================ main flow ================ */
         
@@ -72,7 +66,7 @@ namespace kf
         STATE X_current_dynamic_priori;  // X @ k, priori
         STATE X_current_camera_priori;   // X @ k, priori 
 
-        MEASUREMENT Z_current_meas;      // Z @ k
+        MEASUREMENT Z_current_meas;      // Z @ k        
 
         void setPredict(); //set_X_current_dynamic_priori
         void setMeasurement();
@@ -81,37 +75,42 @@ namespace kf
         void setAdaptiveR();
         void setPostOptimize();
 
-
-        /* ================ utilities function below ================ */
-
-        Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
-
-        void solveJacobianCamera(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
-        Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
-
     public:
-        aiekf(Sophus::Vector6d initial_pose, Eigen::Matrix3d cameraMat);
+        aiekf();
         ~aiekf();
 
         void run_AIEKF(MEASUREMENT meas_at_k);
-
+        void initKF(Sophus::Vector6d initial_pose);
+        void reinitKF();
 
     };
 
 }
 
-kf::aiekf::aiekf(Sophus::Vector6d initial_pose, Eigen::Matrix3d cameraMat_)
- : cameraMat(cameraMat_)
+kf::aiekf::aiekf()
 {
-    X_previous_posterori.X_se3 = initial_pose;
-    X_previous_posterori.vel.setZero();
-    X_previous_posterori.size = X_previous_posterori.X_se3.size() + X_previous_posterori.vel.size();
+    
 }
 
 kf::aiekf::~aiekf()
 {
     // EXIT AIEKF
     std::cout<<"EXIT AIEKF"<<std::endl;
+}
+
+void kf::aiekf::initKF(Sophus::Vector6d initial_pose)
+{
+    X_previous_posterori.X_se3 = initial_pose;
+    X_previous_posterori.vel.setZero();
+    X_previous_posterori.size = 
+          X_previous_posterori.X_se3.size() 
+        + X_previous_posterori.vel.size();
+
+}
+
+void kf::aiekf::reinitKF()
+{
+
 }
 
 void kf::aiekf::run_AIEKF(MEASUREMENT meas_at_k)
@@ -154,7 +153,7 @@ void kf::aiekf::setPostOptimize()
 
 
 
-// ================ utilities function below ================
+/* ================ utilities function below ================ */
 
 void kf::aiekf::doOptimize(MEASUREMENT meas_at_k)
 {
@@ -170,7 +169,7 @@ void kf::aiekf::doOptimize(MEASUREMENT meas_at_k)
     Eigen::Vector2d e; // R2
     Eigen::Matrix<double, 6, 1> dx;
 
-    Sophus::SE3d pose = meas_at_k.pose_initial_se3.exp();
+    Sophus::SE3d pose;//= Sophus::SE3d::exp(meas_at_k.pose_initial_se3);
 
     int i;
     double cost = 0, lastcost = INFINITY;
@@ -219,61 +218,5 @@ void kf::aiekf::doOptimize(MEASUREMENT meas_at_k)
     // cout<<"gone thru: "<<i<<" th, end optimize"<<endl<<endl;;;
 
 }
-
-Eigen::Vector2d kf::aiekf::reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose)
-{
-    Eigen::Vector3d result;
-
-    Eigen::Matrix3d R = pose.rotationMatrix();
-    Eigen::Vector3d t = pose.translation();
-
-    result = cameraMat * (R * P + t); 
-
-    Eigen::Vector2d result2d;
-
-    result2d <<
-        result(0)/result(2), 
-        result(1)/result(2);
-    
-    return result2d;
-}
-
-void kf::aiekf::solveJacobianCamera(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d)
-{
-    Eigen::Matrix3d R = pose.rotationMatrix();
-    Eigen::Vector3d t = pose.translation();
-                // cameraMat
-    double fx = cameraMat(0,0);
-    double fy = cameraMat(1,1);
-
-    Eigen::Vector3d point_in_camera = R * point_3d + t;
-    
-    double x_c = point_in_camera(0),
-        y_c = point_in_camera(1),
-        z_c = point_in_camera(2);
-
-    //save entries to Jacob and return
-    Jacob << 
-        //first row
-        -fx / z_c, 
-        0, 
-        fx * x_c / z_c / z_c, 
-        fx * x_c * y_c / z_c / z_c,
-        -fx - fx * x_c * x_c / z_c / z_c,
-        fx * y_c / z_c,
-
-        //second row
-        0,
-        -fy / z_c,
-        fy * y_c / z_c / z_c,
-        fy + fy * y_c * y_c / z_c / z_c,
-        -fy * x_c * y_c / z_c / z_c,
-        -fy * x_c / z_c;
-
-}
-
-
-
-
 
 #endif

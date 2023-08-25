@@ -56,6 +56,7 @@
 #include "alan_state_estimation/alan_log.h"
 
 #include "aiekf.hpp"
+#include "cameraModel.hpp"
 
 // map definition for convinience
 #define COLOR_SUB_TOPIC CAMERA_SUB_TOPIC_A
@@ -83,7 +84,7 @@ namespace correspondence
 
 namespace alan
 {
-    class LedNodelet : public nodelet::Nodelet
+    class LedNodelet : public nodelet::Nodelet, private kf::aiekf
     {
         //primary objects
             //frames
@@ -97,7 +98,7 @@ namespace alan
             double last_request = 0;
 
             //camera related
-            Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
+            // Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             Eigen::VectorXd cameraEX;
             Eigen::Quaterniond q_c2b;
             Eigen::Translation3d t_c2b;
@@ -162,9 +163,30 @@ namespace alan
         
         //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
-            Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
        
-            double get_reprojection_error(std::vector<Eigen::Vector3d> pts_3d, std::vector<Eigen::Vector2d> pts_2d, Sophus::SE3d pose, bool draw_reproject);         
+            // double get_reprojection_error(std::vector<Eigen::Vector3d> pts_3d, 
+            //     std::vector<Eigen::Vector2d> pts_2d, 
+            //     Sophus::SE3d pose, 
+            //     bool draw_reproject) 
+            //         override
+            //     {
+            //         double e = 0;
+
+            //         Eigen::Vector2d reproject, error;
+
+            //         for(int i = 0; i < pts_3d.size(); i++)
+            //         {
+            //             reproject = reproject_3D_2D(pts_3d[i], pose);
+            //             error = pts_2d[i] - reproject;
+            //             e = e + error.norm();
+
+            //             if(draw_reproject)
+            //                 cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+                        
+            //         }
+
+            //         return e;
+            //     };         
 
         //main process
             void recursive_filtering(cv::Mat& frame, cv::Mat depth);
@@ -172,10 +194,9 @@ namespace alan
 
         //pnp + BA
             void solve_pnp_initial_pose(std::vector<Eigen::Vector2d> pts_2d, std::vector<Eigen::Vector3d> body_frame_pts);
-            void optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3d> pts_3d_exists, std::vector<Eigen::Vector2d> pts_2d_detected);
-                //converge problem need to be solved //-> fuck you, your Jacobian was wrong
-            void solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
-
+            // void optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3d> pts_3d_exists, std::vector<Eigen::Vector2d> pts_2d_detected);
+            //     //converge problem need to be solved //-> fuck you, your Jacobian was wrong
+            // void solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
         //LED extraction tool
             //objects
             double LANDING_DISTANCE = 0;
@@ -233,7 +254,7 @@ namespace alan
 
         //Kalman filtering
             //
-            std::unique_ptr<kf::aiekf> kf_ptr;
+            // std::unique_ptr<kf::aiekf> kf_ptr;
 
             
 
@@ -302,12 +323,14 @@ namespace alan
                     intrinsics_value[i] = intrinsics_list[i];
                 }
 
+                
                 cameraMat <<    
+                    // inherintance here -> modifying value for all super/sub classes
                     intrinsics_value[0], 0, intrinsics_value[2], 
                     0, intrinsics_value[1], intrinsics_value[3],
                     0, 0,  1; 
 
-                // std::cout<<cameraMat<<std::endl;
+                
 
                 cameraEX.resize(6);
                 XmlRpc::XmlRpcValue extrinsics_list;
