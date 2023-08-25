@@ -94,14 +94,12 @@ namespace alan
             cv::Mat frame_initial_thresholded;
             
             //time related
-            ros::Time led_pose_stamp, led_pose_stamp_previous;
+            std_msgs::Header led_pose_header, led_pose_header_previous;
             double last_request = 0;
 
             //camera related
             // Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             Eigen::VectorXd cameraEX;
-            Eigen::Quaterniond q_c2b;
-            Eigen::Translation3d t_c2b;
 
             //LED config and correspondences
             std::vector<Eigen::Vector3d> pts_on_body_frame;
@@ -111,18 +109,19 @@ namespace alan
             //poses
             Sophus::SE3d pose_global_sophus;
             Sophus::SE3d pose_epnp_sophus, pose_depth_sophus;
-            geometry_msgs::PoseStamped ugv_pose_msg, uav_pose_msg;
-            geometry_msgs::PoseStamped uav_stpt_msg;
-            Eigen::Isometry3d ugv_pose;
-            Eigen::Isometry3d cam_pose;
-            Eigen::Isometry3d ugv_cam_pose, led_cambody_pose;
-            Eigen::Isometry3d uav_pose;
-
-            Eigen::Isometry3d led_pose;
             
-            Eigen::Vector3d cam_origin_in_body_frame, cam_origin;
-            Eigen::Quaterniond q_cam, q_led_cambody;
-            Eigen::Vector3d t_cam, t_led_cambody;
+            Sophus::SE3d pose_cam_inWorld_SE3;
+            Sophus::SE3d pose_ugv_inWorld_SE3;
+            Sophus::SE3d pose_uav_inWorld_SE3;
+            Sophus::SE3d pose_led_inWorld_SE3;
+
+            Sophus::SE3d pose_cam_inGeneralBodySE3;
+            Sophus::SE3d pose_cam_inUgvBody_SE3;
+            Sophus::SE3d pose_led_inUavBodyOffset_SE3;
+
+            geometry_msgs::PoseStamped ugv_pose_msg, 
+                                       uav_pose_msg,
+                                       uav_stpt_msg;
             
             
         //secondary objects
@@ -236,7 +235,7 @@ namespace alan
             //objects
             int error_no = 0;
             int total_no = 0;
-            geometry_msgs::PoseStamped led_pose_estimated;
+            geometry_msgs::PoseStamped led_pose_estimated_msg;
             geometry_msgs::TwistStamped led_twist_estimated;
             nav_msgs::Odometry led_odom_estimated;            
             //functions
@@ -248,9 +247,12 @@ namespace alan
             void terminal_msg_display(double hz);
             void log(double ms);
             //functions
-            Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
-            Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
-            Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
+            inline Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
+            inline Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
+            inline Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
+
+            inline Sophus::SE3d posemsg_to_SE3(const geometry_msgs::PoseStamped pose);
+            inline geometry_msgs::PoseStamped SE3_to_posemsg(const Sophus::SE3d pose_on_SE3, const std_msgs::Header msgHeader);
 
         //Kalman filtering
             //
@@ -301,7 +303,7 @@ namespace alan
 
                 RosTopicConfigs configs(nh, "/led");
                                 
-            //load POI_extract config
+            // load POI_extract config
                 nh.getParam("/alan_master/LANDING_DISTANCE", LANDING_DISTANCE);     
                 nh.getParam("/alan_master/BINARY_threshold", BINARY_THRES);     
                 nh.getParam("/alan_master/frame_width", _width);
@@ -313,7 +315,7 @@ namespace alan
                 // nh.getParam("/alan_master/UAV_POSE_TOPIC", UAV_POSE_TOPIC);
 
                 
-            //load camera intrinsics
+            // load camera intrinsics
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
                 nh.getParam("/alan_master/cam_intrinsics_455", intrinsics_list);
@@ -322,7 +324,6 @@ namespace alan
                 {
                     intrinsics_value[i] = intrinsics_list[i];
                 }
-
                 
                 cameraMat <<    
                     // inherintance here -> modifying value for all super/sub classes
@@ -342,6 +343,22 @@ namespace alan
                     cameraEX(i) = extrinsics_list[i];                    
                 }
 
+                pose_cam_inUgvBody_SE3 = Sophus::SE3d(
+                    rpy2q(
+                        Eigen::Vector3d(
+                            cameraEX(3) / 180 * M_PI,
+                            cameraEX(4) / 180 * M_PI,
+                            cameraEX(5) / 180 * M_PI              
+                        )
+                    ),
+                    Eigen::Vector3d(
+                        cameraEX(0),
+                        cameraEX(1),
+                        cameraEX(2)
+                    )            
+                );
+
+            // load LED extrinsics
                 LEDEX.resize(6);
                 XmlRpc::XmlRpcValue extrinsics_list_led;
 
@@ -352,49 +369,30 @@ namespace alan
                     LEDEX(i) = extrinsics_list_led[i];
                 }
 
-
-                q_c2b = rpy2q(
+                pose_led_inUavBodyOffset_SE3 = Sophus::SE3d(
+                    Eigen::Matrix3d::Identity(),
                     Eigen::Vector3d(
-                        cameraEX(3) / 180 * M_PI,
-                        cameraEX(4) / 180 * M_PI,
-                        cameraEX(5) / 180 * M_PI              
+                        LEDEX(0),
+                        LEDEX(1),
+                        LEDEX(2)
                     )
                 );
 
-                t_c2b.translation() = Eigen::Vector3d(
-                    cameraEX(0),
-                    cameraEX(1),
-                    cameraEX(2)
+            // load cam in general body frame                
+                Eigen::Matrix3d cam_to_body_rot;
+                cam_to_body_rot << 
+                    0,0,1,
+                    -1,0,0,
+                    0,-1,0;
+
+                pose_cam_inGeneralBodySE3 = Sophus::SE3d(
+                    cam_to_body_rot, 
+                    Eigen::Vector3d::Zero()
                 );
 
-                q_c2b = q_c2b;
-                t_c2b.translation() = Eigen::Vector3d(0,0,0) + t_c2b.translation();
-
-                ugv_cam_pose = t_c2b * q_c2b;//cam_to_body
-
-                Eigen::Matrix<double, 4, 4> cam_to_body;
-                cam_to_body << 
-                    0,0,1,0,
-                    -1,0,0,0,
-                    0,-1,0,0,
-                    0,0,0,1;
-                led_cambody_pose = Eigen::Isometry3d(cam_to_body);
-                q_led_cambody = Eigen::Quaterniond(led_cambody_pose.rotation());
-
-
+            // initialize led_velocity
                 led_twist_current.resize(6);
-                // t_led_cambody = Eigen::
-                // cam_origin_in_body_frame = ugv_cam_pose.rotation() * Eigen::Vector3d(0.0,0.0,0.0) + ugv_cam_pose.translation();
-                // cam_origin = cam_origin_in_body_frame;
-                // ugv_cam_pose = ugv_cam_pose.inverse();
 
-
-
-            // Eigen::Matrix3d body_to_cam;//rpy = 0 -90 90
-            // body_to_cam << 
-            //     0.0000000,  -1.0000000,  0.0000000,
-            //     0.0000000,  0.0000000,  -1.0000000,
-            //     1.0000000, 0.0000000,  0.0000000;
 
             //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
@@ -485,9 +483,7 @@ namespace alan
                                 ("/alan_state_estimation/led/led_log", 1);
                 
                 record_uav_pub = nh.advertise<alan_state_estimation::alan_log>
-                                ("/alan_state_estimation/led/uav_log", 1);
-
-            
+                                ("/alan_state_estimation/led/uav_log", 1);            
             }
 
 
