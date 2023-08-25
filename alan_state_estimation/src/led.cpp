@@ -113,7 +113,7 @@ void alan::LedNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::Const
     q_cam =  q_ * q_c2b;
     t_cam = q_.toRotationMatrix() * t_c2b.translation() + t_.translation();
 
-    cam_pose = Eigen::Translation3d(t_cam) * q_cam;
+    cam_pose = Eigen::Translation3d(t_cam) * q_cam; 
 
     geometry_msgs::PoseStamped pose_cam;
     pose_cam.header.frame_id = "world";
