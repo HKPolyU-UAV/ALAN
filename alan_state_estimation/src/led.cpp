@@ -167,7 +167,7 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose_led_inCamera_SE3)
     
     led_pose_estimated_msg = SE3_to_posemsg(pose_led_inWorld_SE3, led_pose_header);
 
-    set_twist_estimate(led_pose);
+    // set_twist_estimate(led_pose);
     
     //pose publish
     // Eigen::AngleAxisd attitude_angle_axis_led(q_final.toRotationMatrix());
@@ -1442,36 +1442,36 @@ void alan::LedNodelet::log(double ms)
 {
     alan_state_estimation::alan_log logdata_entry_led;
     
-    logdata_entry_led.px = led_pose.translation().x();
-    logdata_entry_led.py = led_pose.translation().y();
-    logdata_entry_led.pz = led_pose.translation().z();
+    logdata_entry_led.px = pose_led_inWorld_SE3.translation().x();
+    logdata_entry_led.py = pose_led_inWorld_SE3.translation().y();
+    logdata_entry_led.pz = pose_led_inWorld_SE3.translation().z();
 
     logdata_entry_led.set_px = uav_stpt_msg.pose.position.x;
     logdata_entry_led.set_py = uav_stpt_msg.pose.position.y;
     logdata_entry_led.set_pz = uav_stpt_msg.pose.position.z;
     
     Eigen::Vector3d rpy = q2rpy(
-        Eigen::Quaterniond(led_pose.rotation())
+        Eigen::Quaterniond(pose_led_inWorld_SE3.rotationMatrix())
     );
 
     logdata_entry_led.roll  = rpy(0);
     logdata_entry_led.pitch = rpy(1);
     logdata_entry_led.yaw   = rpy(2);
 
-    Eigen::AngleAxisd angle_axis_led = Eigen::AngleAxisd(led_pose.rotation());
+    Eigen::AngleAxisd angle_axis_led = Eigen::AngleAxisd(pose_led_inWorld_SE3.rotationMatrix());
     logdata_entry_led.orientation = angle_axis_led.angle();
 
     logdata_entry_led.ms = ms;
     logdata_entry_led.depth = abs(
         sqrt(
             pow(
-                cam_pose.translation().x() - uav_pose.translation().x(),
+                pose_cam_inWorld_SE3.translation().x() - pose_uav_inWorld_SE3.translation().x(),
                 2
             ) +
-            pow(cam_pose.translation().y() - uav_pose.translation().y(),
+            pow(pose_cam_inWorld_SE3.translation().y() - pose_uav_inWorld_SE3.translation().y(),
                 2
             ) +
-            pow(cam_pose.translation().z() - uav_pose.translation().z(),
+            pow(pose_cam_inWorld_SE3.translation().z() - pose_uav_inWorld_SE3.translation().z(),
                 2
             )
         )        
@@ -1485,19 +1485,19 @@ void alan::LedNodelet::log(double ms)
 
     alan_state_estimation::alan_log logdata_entry_uav;
     
-    logdata_entry_uav.px = uav_pose.translation().x();
-    logdata_entry_uav.py = uav_pose.translation().y();
-    logdata_entry_uav.pz = uav_pose.translation().z();
+    logdata_entry_uav.px = pose_uav_inWorld_SE3.translation().x();
+    logdata_entry_uav.py = pose_uav_inWorld_SE3.translation().y();
+    logdata_entry_uav.pz = pose_uav_inWorld_SE3.translation().z();
     
     rpy = q2rpy(
-        Eigen::Quaterniond(uav_pose.rotation())
+        Eigen::Quaterniond(pose_uav_inWorld_SE3.rotationMatrix())
     );
 
     logdata_entry_uav.roll  = rpy(0);
     logdata_entry_uav.pitch = rpy(1);
     logdata_entry_uav.yaw   = rpy(2);
 
-    Eigen::AngleAxisd angle_axis_uav = Eigen::AngleAxisd(uav_pose.rotation());
+    Eigen::AngleAxisd angle_axis_uav = Eigen::AngleAxisd(pose_uav_inWorld_SE3.rotationMatrix());
     logdata_entry_uav.orientation = angle_axis_uav.angle();
 
     logdata_entry_uav.header.stamp = led_pose_header.stamp;

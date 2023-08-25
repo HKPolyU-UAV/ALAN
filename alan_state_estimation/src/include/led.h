@@ -97,8 +97,6 @@ namespace alan
             //camera related
             Eigen::MatrixXd cameraMat = Eigen::MatrixXd::Zero(3,3);
             Eigen::VectorXd cameraEX;
-            Eigen::Quaterniond q_c2b;
-            Eigen::Translation3d t_c2b;
 
             //LED config and correspondences
             std::vector<Eigen::Vector3d> pts_on_body_frame;
@@ -109,7 +107,6 @@ namespace alan
             Sophus::SE3d pose_global_sophus;
             Sophus::SE3d pose_epnp_sophus, pose_depth_sophus;
             
-            
             Sophus::SE3d pose_cam_inWorld_SE3;
             Sophus::SE3d pose_ugv_inWorld_SE3;
             Sophus::SE3d pose_uav_inWorld_SE3;
@@ -119,17 +116,9 @@ namespace alan
             Sophus::SE3d pose_cam_inUgvBody_SE3;
             Sophus::SE3d pose_led_inUavBodyOffset_SE3;
 
-            geometry_msgs::PoseStamped ugv_pose_msg, uav_pose_msg;
-            geometry_msgs::PoseStamped uav_stpt_msg;
-            Eigen::Isometry3d ugv_pose;
-            Eigen::Isometry3d cam_pose;
-            Eigen::Isometry3d ugv_cam_pose, led_cambody_pose;
-            Eigen::Isometry3d uav_pose;
-
-            Eigen::Isometry3d led_pose;
-            Eigen::Vector3d cam_origin_in_body_frame, cam_origin;
-            Eigen::Quaterniond q_cam, q_led_cambody;
-            Eigen::Vector3d t_cam, t_led_cambody;
+            geometry_msgs::PoseStamped ugv_pose_msg, 
+                                       uav_pose_msg,
+                                       uav_stpt_msg;            
             
             
         //secondary objects
@@ -326,23 +315,19 @@ namespace alan
                     cameraEX(i) = extrinsics_list[i];                    
                 }
 
-                q_c2b = rpy2q(
-                    Eigen::Vector3d(
-                        cameraEX(3) / 180 * M_PI,
-                        cameraEX(4) / 180 * M_PI,
-                        cameraEX(5) / 180 * M_PI              
-                    )
-                );
-
-                t_c2b.translation() = Eigen::Vector3d(
-                    cameraEX(0),
-                    cameraEX(1),
-                    cameraEX(2)
-                );
-
                 pose_cam_inUgvBody_SE3 = Sophus::SE3d(
-                    q_c2b.toRotationMatrix(),
-                    t_c2b.translation()
+                    rpy2q(
+                        Eigen::Vector3d(
+                            cameraEX(3) / 180 * M_PI,
+                            cameraEX(4) / 180 * M_PI,
+                            cameraEX(5) / 180 * M_PI              
+                        )
+                    ),
+                    Eigen::Vector3d(
+                        cameraEX(0),
+                        cameraEX(1),
+                        cameraEX(2)
+                    )            
                 );
             
             // load LED extrinsics
@@ -379,29 +364,9 @@ namespace alan
                     Eigen::Vector3d::Zero()
                 );
 
-                // Eigen::Matrix<double, 4, 4> cam_to_body;
-                // cam_to_body << 
-                //     0,0,1,0,
-                //     -1,0,0,0,
-                //     0,-1,0,0,
-                //     0,0,0,1;
-                // led_cambody_pose = Eigen::Isometry3d(cam_to_body);
-                // q_led_cambody = Eigen::Quaterniond(led_cambody_pose.rotation());
-
             // initialize led_velocity
                 led_twist_current.resize(6);
-                // t_led_cambody = Eigen::
-                // cam_origin_in_body_frame = ugv_cam_pose.rotation() * Eigen::Vector3d(0.0,0.0,0.0) + ugv_cam_pose.translation();
-                // cam_origin = cam_origin_in_body_frame;
-                // ugv_cam_pose = ugv_cam_pose.inverse();
 
-
-
-            // Eigen::Matrix3d body_to_cam;//rpy = 0 -90 90
-            // body_to_cam << 
-            //     0.0000000,  -1.0000000,  0.0000000,
-            //     0.0000000,  0.0000000,  -1.0000000,
-            //     1.0000000, 0.0000000,  0.0000000;
 
             //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
