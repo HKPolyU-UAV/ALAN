@@ -332,6 +332,15 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
         solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order);        
         pose_global_sophus = pose_epnp_sophus;
 
+        kf::MEASUREMENT meas_at_k = {
+            pose_epnp_sophus,
+            pts_detected_in_corres_order,
+            pts_on_body_frame_in_corres_order
+        };
+
+        double deltaT = led_pose_header.stamp.toSec() - led_pose_header_previous.stamp.toSec();
+        run_AIEKF(meas_at_k, deltaT);
+
 
 
         // optimize(pose_global_sophus, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);

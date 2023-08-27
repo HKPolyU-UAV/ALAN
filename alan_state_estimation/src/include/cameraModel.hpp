@@ -171,6 +171,11 @@ void vision::cameraModel::camOptimize(
 
 
         pose = Sophus::SE3d::exp(dx) * pose;
+            /*
+                pertubation defined in world frame,
+                left jacobians, 
+                hence, add from the left
+            */
 
         lastcost = cost;
 

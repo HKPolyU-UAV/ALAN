@@ -34,15 +34,16 @@ namespace kf
 {
     typedef struct STATE
     {
-        Sophus::SE3d X_se3;
-        Sophus::SE3d V_se3;
+        Sophus::SE3d X_SE3;
+        Sophus::SE3d V_SE3;
+        Eigen::MatrixXd PMatrix;
     } STATE;
 
     typedef struct MEASUREMENT
     {
-        Sophus::Vector6d pose_initial_se3;
-        std::vector<Eigen::Vector3d> pts_3d_exists;
+        Sophus::SE3d pose_initial_SE3;
         std::vector<Eigen::Vector2d> pts_2d_detected;
+        std::vector<Eigen::Vector3d> pts_3d_exists;
     } MEASUREMENT;
 
     typedef struct FINAL_RETURN
@@ -65,6 +66,11 @@ namespace kf
         STATE X_current_dynamic_priori;  // X @ k, priori
         STATE X_current_camera_priori;   // X @ k, priori 
         int trackedSize = 0;
+
+        Eigen::MatrixXd F_k;
+        Eigen::MatrixXd H_k;
+
+        Eigen::MatrixXd K_k;
         
         Eigen::MatrixXd Q_init;
         Eigen::MatrixXd R_init;
@@ -74,16 +80,22 @@ namespace kf
         MEASUREMENT Z_current_meas;      // Z @ k        
 
         void setPredict(); //set_X_current_dynamic_priori
-        void setMeasurement();
         void doOptimize(MEASUREMENT meas_at_k);
-        void setAdaptiveQ();
-        void setAdaptiveR();
-        void setPostOptimize();
-
-        Eigen::VectorXd dfx();
+        void setPostOptimize(MEASUREMENT meas_at_k);
 
         /* ================ utilities ================ */
         double deltaT = 0;
+        Eigen::Vector3d g = {0,0,-9.81};
+        double QAdaptiveAlpha = 0;
+        double RAdaptiveBeta = 0;
+
+        Eigen::VectorXd dfx();
+        void setKalmanGain();
+        void setAdaptiveQ(MEASUREMENT meas_at_k);
+        void setAdaptiveR(MEASUREMENT meas_at_k);
+        void setJacobianDynamic(Eigen::MatrixXd& Jacob);
+        void setJacobianCamera(Eigen::MatrixXd& Jacob, MEASUREMENT meas_at_k);
+        Eigen::Matrix3d skewSymmetricMatrix(const Eigen::Vector3d w);
 
     public:
         aiekf(){};
@@ -93,110 +105,107 @@ namespace kf
 
         void run_AIEKF(MEASUREMENT meas_at_k, double deltaT_);
         void initKF(
-            Sophus::SE3d initial_pose,
+            MEASUREMENT meas_at_k,
             Eigen::MatrixXd Q_init_,
-            Eigen::MatrixXd R_init_
+            Eigen::MatrixXd R_init_,
+            double QAdaptiveAlpha_,
+            double RAdaptiveBeta_
         );
-        void reinitKF(Sophus::SE3d reinitial_pose);
+        void reinitKF(MEASUREMENT meas_at_k);
 
     };
 
 }
 
 void kf::aiekf::initKF(
-    Sophus::SE3d initial_pose, 
-    Eigen::MatrixXd Q_init_, 
-    Eigen::MatrixXd R_init_
+    MEASUREMENT meas_at_k,
+    Eigen::MatrixXd Q_init_,
+    Eigen::MatrixXd R_init_,
+    double QAdaptiveAlpha_,
+    double RAdaptiveBeta_
 )
 {
-    X_previous_posterori.X_se3 = initial_pose;
-    X_previous_posterori.V_se3 = Sophus::SE3d(
+    X_previous_posterori.X_SE3 = meas_at_k.pose_initial_SE3;
+    X_previous_posterori.V_SE3 = Sophus::SE3d(
         Eigen::Matrix3d::Identity(),
         Eigen::Vector3d::Zero()
     );
     trackedSize = 
-          X_previous_posterori.X_se3.log().size()
-        + X_previous_posterori.V_se3.log().head<3>().size();
+          X_previous_posterori.X_SE3.log().size()
+        + X_previous_posterori.V_SE3.log().head<3>().size();
+
+    X_previous_posterori.PMatrix.resize(trackedSize, trackedSize);
+    X_previous_posterori.PMatrix.setZero();
+    X_previous_posterori.PMatrix.block<6,6>(0,0).setConstant(0.1);
+    X_previous_posterori.PMatrix.block<6,6>(0,0).setConstant(1.0);
+
 
     if(trackedSize != Q_init_.rows())
     {
         ROS_RED_STREAM("KF DIMENSION DOES NOT MATCH!!!");
         return;
     }
-        
+            
     Q_k = this->Q_init = Q_init_;
     R_k = this->R_init = R_init_;
 
+    QAdaptiveAlpha = QAdaptiveAlpha_;
+    RAdaptiveBeta  = RAdaptiveBeta_;
+
+    setAdaptiveQ(meas_at_k);
+    setAdaptiveR(meas_at_k);
 }
 
-void kf::aiekf::reinitKF(Sophus::SE3d reinitial_pose)
+void kf::aiekf::reinitKF(MEASUREMENT meas_at_k)
 {
-    X_previous_posterori.X_se3 = reinitial_pose;
-    X_previous_posterori.V_se3 = Sophus::SE3d(
+    X_previous_posterori.X_SE3 = meas_at_k.pose_initial_SE3;
+    X_previous_posterori.V_SE3 = Sophus::SE3d(
         Eigen::Matrix3d::Identity(),
         Eigen::Vector3d::Zero()
     );
 
     Q_k = Q_init;
     R_k = R_init;
+
+    setAdaptiveQ(meas_at_k);
+    setAdaptiveR(meas_at_k);
     // X_previous_posterori.size = X_previous_posterori.size;
 }
 
 void kf::aiekf::run_AIEKF(MEASUREMENT meas_at_k, double deltaT)
 {
-    setPredict();
-    setMeasurement();
-    setAdaptiveQ();
+    setPredict();    
     doOptimize(meas_at_k);
-    setAdaptiveR();
-    setPostOptimize();
+    setPostOptimize(meas_at_k);
 }
 
 void kf::aiekf::setPredict()
 {
+    Eigen::VectorXd dx = dfx() * deltaT; // first 6 element: se(3) of pose
+                                   // last 3 element: velocity
+
+    X_current_dynamic_priori.X_SE3 = 
+        X_previous_posterori.X_SE3 * Sophus::SE3d::exp(dx.head<6>());
     
+    X_current_dynamic_priori.V_SE3.translation() = 
+        X_previous_posterori.V_SE3.translation() + dx.tail<3>();
 
+    setJacobianDynamic(F_k);
 
+    X_current_dynamic_priori.PMatrix = F_k * X_previous_posterori.PMatrix * F_k.transpose();
 }
 
-void kf::aiekf::setMeasurement()
-{
 
-}
 
-void kf::aiekf::setAdaptiveQ()
-{
-
-}
-
-void kf::aiekf::setAdaptiveR()
-{
-
-}
-
-void kf::aiekf::setPostOptimize()
+void kf::aiekf::setPostOptimize(MEASUREMENT meas_at_k)
 {
     // update velocity
+    setJacobianCamera(H_k, meas_at_k);
 
+    setKalmanGain();
+    setAdaptiveQ(meas_at_k);
+    setAdaptiveR(meas_at_k);
 }
-
-Eigen::VectorXd kf::aiekf::dfx()
-{
-    // x_dot = Ax here  
-    // i.e., give delta x here, basically (in se(3))
-    Eigen::VectorXd returnDfx; // first 6 element: se(3) of pose
-                               // last 3 element: velocity 
-    returnDfx.resize(trackedSize);
-
-    
-
-    return returnDfx;
-    
-}
-
-
-
-/* ================ utilities function below ================ */
 
 void kf::aiekf::doOptimize(MEASUREMENT meas_at_k)
 {
@@ -260,6 +269,97 @@ void kf::aiekf::doOptimize(MEASUREMENT meas_at_k)
 
     // cout<<"gone thru: "<<i<<" th, end optimize"<<endl<<endl;;;
 
+}
+
+
+/* ================ utilities ================ */
+
+Eigen::VectorXd kf::aiekf::dfx()
+{
+    // x_dot = Ax here  
+    // i.e., give x_dot here, basically (in se(3))
+    Eigen::VectorXd returnDfx; // first 6 element: se(3) of pose
+                               // last 3 element: velocity 
+    returnDfx.resize(trackedSize);
+    
+    X_previous_posterori.V_SE3.log();
+    
+    returnDfx.head<Sophus::SE3d::DoF>() = 
+        Sophus::SE3d(
+            Eigen::Matrix3d::Identity(),
+            X_previous_posterori.V_SE3.translation()
+        ).log();
+    returnDfx.tail<Sophus::SE3d::DoF/2>() = X_previous_posterori.X_SE3.rotationMatrix() * g; 
+
+    return returnDfx;
+    
+}
+
+void kf::aiekf::setKalmanGain()
+{
+    K_k = X_current_dynamic_priori.PMatrix // R 9*9
+        * H_k.transpose()                  // R 9*2
+        * (H_k * X_current_camera_priori.PMatrix * H_k.transpose() + R_k).inverse(); // R 2*2
+}
+
+void kf::aiekf::setAdaptiveQ(MEASUREMENT meas_at_k)
+{
+    // Eigen::Vector
+    // Q_k = QAdaptiveAlpha * Q_k + (1 - QAdaptiveAlpha) *
+
+
+
+}
+
+void kf::aiekf::setAdaptiveR(MEASUREMENT meas_at_k)
+{
+
+}
+
+void kf::aiekf::setJacobianDynamic(Eigen::MatrixXd& Jacob)
+{
+    Jacob.resize(trackedSize, trackedSize);
+    Jacob.setZero();
+
+    Jacob.block<3,3>(0,0).setIdentity();
+    Jacob.block<3,3>(3,3).setIdentity();
+    Jacob.block<3,3>(6,6).setIdentity();
+
+    Jacob.block<3,3>(0,6).setConstant(deltaT);
+    Jacob.block<3,3>(6,3) = 
+        -1.0 * 
+        skewSymmetricMatrix(X_previous_posterori.X_SE3.rotationMatrix() * g);
+}
+
+void kf::aiekf::setJacobianCamera(Eigen::MatrixXd& Jacob, MEASUREMENT meas_at_k)
+{
+    Eigen::Matrix<double, 2, 6> JCamWRTPose;
+    Eigen::Matrix<double, 2, 3> JCamWRTVelo;
+
+    JCamWRTPose.setZero();
+    JCamWRTVelo.setZero();
+
+    for(int i = 0; meas_at_k.pts_3d_exists.size(); i++)
+    {
+        solveJacobianCamera(
+            JCamWRTPose, 
+            meas_at_k.pose_initial_SE3, 
+            meas_at_k.pts_3d_exists[i]
+        );
+
+        JCamWRTPose = JCamWRTPose + JCamWRTPose;
+    }
+
+    Jacob.resize(JCamWRTPose.rows(), JCamWRTPose.cols() + JCamWRTVelo.cols());
+    Jacob.block<2,6>(0,0) = JCamWRTPose;
+    Jacob.block<2,3>(6,0) = JCamWRTVelo;    
+}
+
+Eigen::Matrix3d kf::aiekf::skewSymmetricMatrix(const Eigen::Vector3d w)
+{
+  Eigen::Matrix3d Omega;
+  Omega << 0, -w(2), w(1), w(2), 0, -w(0), -w(1), w(0), 0;
+  return Omega;
 }
 
 #endif
