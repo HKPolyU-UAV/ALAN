@@ -34,9 +34,8 @@ namespace kf
 {
     typedef struct STATE
     {
-        Sophus::Vector6d X_se3;
-        Eigen::Vector3d vel;
-        int size;
+        Sophus::SE3d X_se3;
+        Sophus::SE3d V_se3;
     } STATE;
 
     typedef struct MEASUREMENT
@@ -65,6 +64,12 @@ namespace kf
         STATE X_previous_posterori;      // X @ k - 1
         STATE X_current_dynamic_priori;  // X @ k, priori
         STATE X_current_camera_priori;   // X @ k, priori 
+        int trackedSize = 0;
+        
+        Eigen::MatrixXd Q_init;
+        Eigen::MatrixXd R_init;
+        Eigen::MatrixXd Q_k;
+        Eigen::MatrixXd R_k;
 
         MEASUREMENT Z_current_meas;      // Z @ k        
 
@@ -75,45 +80,69 @@ namespace kf
         void setAdaptiveR();
         void setPostOptimize();
 
-    public:
-        aiekf();
-        ~aiekf();
+        Eigen::VectorXd dfx();
 
-        void run_AIEKF(MEASUREMENT meas_at_k);
-        void initKF(Sophus::Vector6d initial_pose);
-        void reinitKF();
+        /* ================ utilities ================ */
+        double deltaT = 0;
+
+    public:
+        aiekf(){};
+        ~aiekf(){
+            std::cout<<"EXIT AIEKF"<<std::endl;
+        };
+
+        void run_AIEKF(MEASUREMENT meas_at_k, double deltaT_);
+        void initKF(
+            Sophus::SE3d initial_pose,
+            Eigen::MatrixXd Q_init_,
+            Eigen::MatrixXd R_init_
+        );
+        void reinitKF(Sophus::SE3d reinitial_pose);
 
     };
 
 }
 
-kf::aiekf::aiekf()
-{
-    
-}
-
-kf::aiekf::~aiekf()
-{
-    // EXIT AIEKF
-    std::cout<<"EXIT AIEKF"<<std::endl;
-}
-
-void kf::aiekf::initKF(Sophus::Vector6d initial_pose)
+void kf::aiekf::initKF(
+    Sophus::SE3d initial_pose, 
+    Eigen::MatrixXd Q_init_, 
+    Eigen::MatrixXd R_init_
+)
 {
     X_previous_posterori.X_se3 = initial_pose;
-    X_previous_posterori.vel.setZero();
-    X_previous_posterori.size = 
-          X_previous_posterori.X_se3.size() 
-        + X_previous_posterori.vel.size();
+    X_previous_posterori.V_se3 = Sophus::SE3d(
+        Eigen::Matrix3d::Identity(),
+        Eigen::Vector3d::Zero()
+    );
+    trackedSize = 
+          X_previous_posterori.X_se3.log().size()
+        + X_previous_posterori.V_se3.log().head<3>().size();
+
+    if(trackedSize != Q_init_.rows())
+    {
+        ROS_RED_STREAM("KF DIMENSION DOES NOT MATCH!!!");
+        return;
+    }
+        
+    Q_k = this->Q_init = Q_init_;
+    R_k = this->R_init = R_init_;
 
 }
 
-void kf::aiekf::reinitKF()
+void kf::aiekf::reinitKF(Sophus::SE3d reinitial_pose)
 {
+    X_previous_posterori.X_se3 = reinitial_pose;
+    X_previous_posterori.V_se3 = Sophus::SE3d(
+        Eigen::Matrix3d::Identity(),
+        Eigen::Vector3d::Zero()
+    );
 
+    Q_k = Q_init;
+    R_k = R_init;
+    // X_previous_posterori.size = X_previous_posterori.size;
 }
 
-void kf::aiekf::run_AIEKF(MEASUREMENT meas_at_k)
+void kf::aiekf::run_AIEKF(MEASUREMENT meas_at_k, double deltaT)
 {
     setPredict();
     setMeasurement();
@@ -125,6 +154,8 @@ void kf::aiekf::run_AIEKF(MEASUREMENT meas_at_k)
 
 void kf::aiekf::setPredict()
 {
+    
+
 
 }
 
@@ -132,8 +163,6 @@ void kf::aiekf::setMeasurement()
 {
 
 }
-
-
 
 void kf::aiekf::setAdaptiveQ()
 {
@@ -149,6 +178,20 @@ void kf::aiekf::setPostOptimize()
 {
     // update velocity
 
+}
+
+Eigen::VectorXd kf::aiekf::dfx()
+{
+    // x_dot = Ax here  
+    // i.e., give delta x here, basically (in se(3))
+    Eigen::VectorXd returnDfx; // first 6 element: se(3) of pose
+                               // last 3 element: velocity 
+    returnDfx.resize(trackedSize);
+
+    
+
+    return returnDfx;
+    
 }
 
 

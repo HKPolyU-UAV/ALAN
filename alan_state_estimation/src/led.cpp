@@ -168,19 +168,9 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose_led_inCamera_SE3)
         * pose_cam_inGeneralBodySE3 
         * pose_led_inCamera_SE3;
     
+    led_pose_header.frame_id = "world";
     led_pose_estimated_msg = SE3_to_posemsg(pose_led_inWorld_SE3, led_pose_header);
 
-    // set_twist_estimate(led_pose);
-    
-    //pose publish
-    // Eigen::AngleAxisd attitude_angle_axis_led(q_final.toRotationMatrix());
-
-    // Eigen::AngleAxisd attitude_angle_axis_uav(uav_pose.rotation());
-
-    // std::cout<<attitude_angle_axis_led.angle()<<std::endl;
-    // std::cout<<attitude_angle_axis_uav.angle()<<std::endl;
-
-    led_pose_estimated_msg.header.frame_id = "world";
     ledpose_pub.publish(led_pose_estimated_msg);
 
     //odom publish
@@ -229,7 +219,7 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
             }                    
             map_SE3_to_pose(pose_global_sophus);
             
-            initKF(pose_global_sophus.log());
+            // initKF(pose_global_sophus.log());
         }
         else
         {
