@@ -556,7 +556,14 @@ void alan::LedNodelet::optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3d>
                 break;
 
 
-        pose = Sophus::SE3d::exp(dx) * pose;
+        // pose = Sophus::SE3d::exp(dx) * pose;
+        pose = Sophus::SE3d::exp(dx) * pose; 
+            /*
+                pertubation defined in world frame,
+                left jacobians, 
+                hence, add from the left
+            */
+            
 
         lastcost = cost;
 
