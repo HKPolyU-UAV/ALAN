@@ -27,12 +27,6 @@
 
 void alan::LedNodelet::camera_callback(const sensor_msgs::CompressedImage::ConstPtr & rgbmsg, const sensor_msgs::Image::ConstPtr & depthmsg)
 {
-    Sophus::Vector6d temp;
-    // Sophus::SE3d lala = Sophus::;
-    Sophus::Vector6d lala_se3 = pose_global_sophus.log();
-    // std::cout<<"time difference: "<<
-    //     rgbmsg->header.stamp.toNSec() <<std::endl<<depthmsg->header.stamp.toNSec()
-    //     <<std::endl;
     total_no++;
     cv_bridge::CvImageConstPtr depth_ptr;
     led_pose_header = rgbmsg->header;
@@ -206,6 +200,7 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
     if(!LED_tracker_initiated_or_tracked)        
     {
         LED_tracker_initiated_or_tracked = LED_tracking_initialize(frame, depth);
+        // try to initialize here...
 
         if(LED_tracker_initiated_or_tracked)
         {
@@ -217,9 +212,16 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
             {
                 ROS_WARN("REPROJECTION_ERROR OVER @ INITIALIZATION %d", LED_no * 2);          
             }                    
-            map_SE3_to_pose(pose_global_sophus);
+
+            if(!kf_initiated)
+            {
+                kf_initiated = true;
+                apiKF(kfINITIATE);                
+            }
+            else
+                apiKF(kfREINITIATE);            
             
-            // initKF(pose_global_sophus.log());
+            map_SE3_to_pose(pose_global_sophus);
         }
         else
         {
@@ -245,63 +247,76 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
             map_SE3_to_pose(pose_global_sophus);
         
     }
+
+}
+
+void alan::LedNodelet::apiKF(int DOKF)
+{
+    switch (DOKF)
+    {
+    case kfINITIATE:
+        /* code */
+        global_meas_at_k.pose_initial_SE3 = pose_global_sophus;
+        initKF(
+            global_meas_at_k,
+            Q_init_,
+            R_init_,
+            Q_alpha_,
+            R_beta_
+        );
+        break;
+    
+    case kfREINITIATE:
+        /* code */
+        reinitKF(
+            global_meas_at_k
+        );
+        break;
+
+    case kfNORMALKF:
+        /* code */
+        global_meas_at_k
+        run_AIEKF(
+            global_meas_at_k,
+            led_pose_header.stamp.toSec() - led_pose_header_previous.stamp.toSec()
+        );
+        break;
+    
+    default:
+        ROS_RED_STREAM("APIKF GOT ERROR; PLS DEBUG...");
+        break;
+    }
 }
 
 void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 {
     double t0 = ros::Time::now().toSec();
-    std::vector<Eigen::Vector2d> pts_2d_detect = LED_extract_POI(frame, depth);
-    //what is this for?
-    //to extract POI point of interest        
-     
+    std::vector<Eigen::Vector2d> pts_2d_detect;
+    bool sufficient_pts = LED_pts_measurement(
+        frame,
+        depth,
+        pts_2d_detect
+    );
 
-    double t1 = ros::Time::now().toSec();
-
-    // std::cout<< (t1 - t0) * 1000<<std::endl;
-
-    double t2 = ros::Time::now().toSec();
-    
-    if(!pts_2d_detect.empty())
+    if(!sufficient_pts)
     {
-        reject_outlier(pts_2d_detect, depth);
-        //reject some outliers
-
-        bool sufficient_pts = get_final_POI(pts_2d_detect);
-        //the former retrieved POI could be noisy,
-        //so get final POI
-
-        if(sufficient_pts)
-        {                        
-            if(!search_corres_and_pose_predict(pts_2d_detect))
-            {
-                if(reinitialization(pts_2d_detect, depth))
-                {
-                    ROS_GREEN_STREAM("REINITIALIZATION SUCCESSFUL");
-                }
-                else
-                {
-                    ROS_RED_STREAM("REINITIALIZATION FAILED");
-                    LED_tracker_initiated_or_tracked = false;
-                }                                
-            }
-            else
-            {
-                //perhaps Kalman filtering w/ depth                
-            }            
-        }    
+        ROS_RED_STREAM("INSUFFICIENT LED DETECTED");
+        LED_tracker_initiated_or_tracked = false;
+        return;
+    }
+                       
+    if(!search_corres_and_pose_predict(pts_2d_detect))
+    {
+        if(reinitialization(pts_2d_detect, depth))
+        {
+            ROS_GREEN_STREAM("REINITIALIZATION SUCCESSFUL");
+        }
         else
         {
-            ROS_RED_STREAM("INSUFFICIENT LED DETECTED");
+            ROS_RED_STREAM("REINITIALIZATION FAILED");
             LED_tracker_initiated_or_tracked = false;
-        }        
-    }      
-    else
-        LED_tracker_initiated_or_tracked = false;       
-
-    double t3 = ros::Time::now().toSec();
-
-    // std::cout<<1 / (t3 - t2)<<std::endl;
-    
+        }                                
+    }
 }
 
 bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2d> pts_2d_detect)
@@ -317,7 +332,7 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
         {   
             pts_detected_in_corres_order.push_back(corres_global[i].pts_2d_correspond);             
             pts_on_body_frame_in_corres_order.push_back(pts_on_body_frame[i]);
-            corres_global[i].detected_ornot = false;//reset for next time step
+            corres_global[i].detected_ornot = false; //reset for next time step
         }        
     }
 
@@ -330,34 +345,14 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
     else
     {          
         solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order);        
-        pose_global_sophus = pose_epnp_sophus;
+        // pose_global_sophus = pose_epnp_sophus;
+        apiKF(kfNORMALKF);
 
-        kf::MEASUREMENT meas_at_k = {
-            pose_epnp_sophus,
-            pts_detected_in_corres_order,
-            pts_on_body_frame_in_corres_order
-        };
-
-        double deltaT = led_pose_header.stamp.toSec() - led_pose_header_previous.stamp.toSec();
-        run_AIEKF(meas_at_k, deltaT);
-
-
-
-        // optimize(pose_global_sophus, pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);
-        //pose, body_frame_pts, pts_2d_detect
-  
-
-        // BA_error = get_reprojection_error(
-        //     pts_on_body_frame_in_corres_order,
-        //     pts_detected_in_corres_order,
-        //     pose_global_sophus,
-        //     true
-        // );
-
-        if(BA_error > LED_no * 2)
-            return false;
-        else
-            return true;
+        return true;
+        // if(BA_error > LED_no * 2)
+        //     return false;
+        // else
+        //     return true;
     }    
 }
 
@@ -458,6 +453,31 @@ void alan::LedNodelet::solve_pnp_initial_pose(std::vector<Eigen::Vector2d> pts_2
 
 
 /* ================ POI Extraction utilities function below ================ */
+
+bool alan::LedNodelet::LED_pts_measurement(
+    cv::Mat& frame, 
+    cv::Mat& depth, 
+    std::vector<Eigen::Vector2d>& pts_2d_detect
+)
+{
+    pts_2d_detect = LED_extract_POI(frame, depth);
+    //to extract POI point of interest  
+
+    if(pts_2d_detect.empty())
+    {
+        LED_tracker_initiated_or_tracked = false;
+        return false;
+    }
+
+    reject_outlier(pts_2d_detect, depth);
+    // to reject some outliers
+
+    bool sufficient_pts = get_final_POI(pts_2d_detect);
+    // the former retrieved POI could be noisy,
+    // so get final POI
+
+    return sufficient_pts;
+}
 
 std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
 {    
@@ -810,7 +830,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
                     pts_2d_detect_temp,
                     pose_global_sophus,
                     false
-                );
+                ).norm();
 
                 if(e < error_total)
                 {                    
@@ -960,7 +980,7 @@ bool alan::LedNodelet::reinitialization(std::vector<Eigen::Vector2d> pts_2d_dete
                     pts_2d_detect_temp,
                     pose_global_sophus,
                     false
-                );
+                ).norm();
 
                 if(e < error_total)
                 {                    

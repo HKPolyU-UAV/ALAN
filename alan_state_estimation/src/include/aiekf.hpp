@@ -32,6 +32,10 @@
 
 namespace kf
 {
+    #define kfINITIATE 100
+    #define kfREINITIATE 101
+    #define kfNORMALKF 102
+
     typedef struct STATE
     {
         Sophus::SE3d X_SE3;
@@ -77,11 +81,12 @@ namespace kf
         Eigen::MatrixXd Q_k;
         Eigen::MatrixXd R_k;
 
-        MEASUREMENT Z_current_meas;      // Z @ k        
+        MEASUREMENT Z_current_meas;      // Z @ k       
+        
 
         void setPredict(); //set_X_current_dynamic_priori
-        void doOptimize(MEASUREMENT meas_at_k);
-        void setPostOptimize(MEASUREMENT meas_at_k);
+        void doOptimize();
+        void setPostOptimize();
 
         /* ================ utilities ================ */
         double deltaT = 0;
@@ -91,10 +96,14 @@ namespace kf
 
         Eigen::VectorXd dfx();
         void setKalmanGain();
-        void setAdaptiveQ(MEASUREMENT meas_at_k);
-        void setAdaptiveR(MEASUREMENT meas_at_k);
+        void setAdaptiveQ();
+        void setAdaptiveR();
         void setJacobianDynamic(Eigen::MatrixXd& Jacob);
-        void setJacobianCamera(Eigen::MatrixXd& Jacob, MEASUREMENT meas_at_k);
+        void setJacobianCamera(
+            Eigen::MatrixXd& Jacob, 
+            Sophus::SE3d pose, 
+            std::vector<Eigen::Vector3d> pts_3d_exists
+        );
         Eigen::Matrix3d skewSymmetricMatrix(const Eigen::Vector3d w);
 
     public:
@@ -112,6 +121,8 @@ namespace kf
             double RAdaptiveBeta_
         );
         void reinitKF(MEASUREMENT meas_at_k);
+
+        bool kf_initiated = false; 
 
     };
 
@@ -151,9 +162,6 @@ void kf::aiekf::initKF(
 
     QAdaptiveAlpha = QAdaptiveAlpha_;
     RAdaptiveBeta  = RAdaptiveBeta_;
-
-    setAdaptiveQ(meas_at_k);
-    setAdaptiveR(meas_at_k);
 }
 
 void kf::aiekf::reinitKF(MEASUREMENT meas_at_k)
@@ -167,16 +175,17 @@ void kf::aiekf::reinitKF(MEASUREMENT meas_at_k)
     Q_k = Q_init;
     R_k = R_init;
 
-    setAdaptiveQ(meas_at_k);
-    setAdaptiveR(meas_at_k);
     // X_previous_posterori.size = X_previous_posterori.size;
 }
 
-void kf::aiekf::run_AIEKF(MEASUREMENT meas_at_k, double deltaT)
+void kf::aiekf::run_AIEKF(MEASUREMENT meas_at_k, double deltaT_)
 {
+    Z_current_meas = meas_at_k;
+    this->deltaT = deltaT_;
+
     setPredict();    
-    doOptimize(meas_at_k);
-    setPostOptimize(meas_at_k);
+    doOptimize();
+    setPostOptimize();
 }
 
 void kf::aiekf::setPredict()
@@ -195,25 +204,13 @@ void kf::aiekf::setPredict()
     X_current_dynamic_priori.PMatrix = F_k * X_previous_posterori.PMatrix * F_k.transpose();
 }
 
-
-
-void kf::aiekf::setPostOptimize(MEASUREMENT meas_at_k)
-{
-    // update velocity
-    setJacobianCamera(H_k, meas_at_k);
-
-    setKalmanGain();
-    setAdaptiveQ(meas_at_k);
-    setAdaptiveR(meas_at_k);
-}
-
-void kf::aiekf::doOptimize(MEASUREMENT meas_at_k)
+void kf::aiekf::doOptimize()
 {
     const int MAX_ITERATION = 40;
 
     const double converge_threshold = 1e-6;
 
-    const int points_no = meas_at_k.pts_2d_detected.size();
+    const int points_no = Z_current_meas.pts_2d_detected.size();
 
     Eigen::Matrix<double, 2, 6> J;
     Eigen::Matrix<double, 6, 6> A; // R6*6
@@ -237,9 +234,10 @@ void kf::aiekf::doOptimize(MEASUREMENT meas_at_k)
         for(int i=0; i < points_no; i++)
         {
             //get the Jacobian for this point
-            solveJacobianCamera(J, pose, meas_at_k.pts_3d_exists[i]);
+            solveJacobianCamera(J, pose, Z_current_meas.pts_3d_exists[i]);
 
-            e = meas_at_k.pts_2d_detected[i] - reproject_3D_2D(meas_at_k.pts_3d_exists[i], pose) ; 
+            e = Z_current_meas.pts_2d_detected[i] - 
+                reproject_3D_2D(Z_current_meas.pts_3d_exists[i], pose) ; 
             
             cost += e.norm();
 
@@ -270,6 +268,17 @@ void kf::aiekf::doOptimize(MEASUREMENT meas_at_k)
     // cout<<"gone thru: "<<i<<" th, end optimize"<<endl<<endl;;;
 
 }
+
+void kf::aiekf::setPostOptimize()
+{
+    // update velocity
+    setJacobianCamera(H_k, X_current_posterori.X_SE3, Z_current_meas.pts_3d_exists);
+
+    setKalmanGain();
+    setAdaptiveQ();
+    setAdaptiveR();
+}
+
 
 
 /* ================ utilities ================ */
@@ -302,17 +311,32 @@ void kf::aiekf::setKalmanGain()
         * (H_k * X_current_camera_priori.PMatrix * H_k.transpose() + R_k).inverse(); // R 2*2
 }
 
-void kf::aiekf::setAdaptiveQ(MEASUREMENT meas_at_k)
+void kf::aiekf::setAdaptiveQ()
 {
-    // Eigen::Vector
-    // Q_k = QAdaptiveAlpha * Q_k + (1 - QAdaptiveAlpha) *
-
-
+    Eigen::Vector2d innovation;
+    innovation = get_reprojection_error(
+        Z_current_meas.pts_3d_exists,
+        Z_current_meas.pts_2d_detected,
+        Z_current_meas.pose_initial_SE3,
+        false
+    );
+    
+    Q_k = QAdaptiveAlpha 
+            * Q_k 
+            + (1 - QAdaptiveAlpha) 
+            * (K_k * innovation * innovation.transpose() * K_k.transpose());
 
 }
 
-void kf::aiekf::setAdaptiveR(MEASUREMENT meas_at_k)
+void kf::aiekf::setAdaptiveR()
 {
+    Eigen::Vector2d residual;
+    residual = get_reprojection_error(
+        Z_current_meas.pts_3d_exists,
+        Z_current_meas.pts_2d_detected,
+        X_current_posterori.X_SE3,
+        false
+    );
 
 }
 
@@ -331,7 +355,10 @@ void kf::aiekf::setJacobianDynamic(Eigen::MatrixXd& Jacob)
         skewSymmetricMatrix(X_previous_posterori.X_SE3.rotationMatrix() * g);
 }
 
-void kf::aiekf::setJacobianCamera(Eigen::MatrixXd& Jacob, MEASUREMENT meas_at_k)
+void kf::aiekf::setJacobianCamera(
+    Eigen::MatrixXd& Jacob,
+    Sophus::SE3d pose,
+    std::vector<Eigen::Vector3d> pts_3d_exists)
 {
     Eigen::Matrix<double, 2, 6> JCamWRTPose;
     Eigen::Matrix<double, 2, 3> JCamWRTVelo;
@@ -339,12 +366,12 @@ void kf::aiekf::setJacobianCamera(Eigen::MatrixXd& Jacob, MEASUREMENT meas_at_k)
     JCamWRTPose.setZero();
     JCamWRTVelo.setZero();
 
-    for(int i = 0; meas_at_k.pts_3d_exists.size(); i++)
+    for(int i = 0; pts_3d_exists.size(); i++)
     {
         solveJacobianCamera(
             JCamWRTPose, 
-            meas_at_k.pose_initial_SE3, 
-            meas_at_k.pts_3d_exists[i]
+            pose, 
+            pts_3d_exists[i]
         );
 
         JCamWRTPose = JCamWRTPose + JCamWRTPose;

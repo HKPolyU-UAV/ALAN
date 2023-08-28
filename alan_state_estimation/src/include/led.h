@@ -187,8 +187,14 @@ namespace alan
             //         return e;
             //     };         
 
-        //main process
-            void recursive_filtering(cv::Mat& frame, cv::Mat depth);
+        //main process & kf
+            kf::MEASUREMENT global_meas_at_k; 
+            Eigen::MatrixXd Q_init_;
+            Eigen::MatrixXd R_init_;
+            double Q_alpha_, R_beta_;
+
+            void apiKF(int DOKF);
+            void recursive_filtering(cv::Mat& frame, cv::Mat depth);        
             bool search_corres_and_pose_predict(std::vector<Eigen::Vector2d> pts_2d_detect);
 
         //pnp + BA
@@ -200,6 +206,12 @@ namespace alan
             //objects
             double LANDING_DISTANCE = 0;
             int BINARY_THRES = 0;
+            
+            bool LED_pts_measurement(
+                cv::Mat& frame, 
+                cv::Mat& depth, 
+                std::vector<Eigen::Vector2d>& pts_2d_detected
+            );
             std::vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
             std::vector<Eigen::Vector3d> pointcloud_generate(std::vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
             bool get_final_POI(std::vector<Eigen::Vector2d>& pts_2d_detected);
