@@ -137,6 +137,21 @@ failsafe_on:
  #1 on, 
  #0 off
 
+# KF-related
+Q_val:
+ 1000000.0
+R_val:
+ 1.0
+Q_alpha:
+ 0.3
+R_beta:
+ 0.4
+kf_size:
+ 9
+kfZ_size:
+ 2
+
+
 
 
 

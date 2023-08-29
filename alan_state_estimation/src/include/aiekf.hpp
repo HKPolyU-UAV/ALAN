@@ -30,6 +30,8 @@
 #include "cameraModel.hpp"
 #include <sophus/se3.hpp>
 
+using namespace std;
+
 namespace kf
 {
     #define kfINITIATE 100
@@ -40,7 +42,7 @@ namespace kf
     {
         Sophus::SE3d X_SE3;
         Sophus::SE3d V_SE3;
-        Eigen::MatrixXd PMatrix;
+        Eigen::MatrixXd PCov;
     } STATE;
 
     typedef struct MEASUREMENT
@@ -98,12 +100,30 @@ namespace kf
         void setKalmanGain();
         void setAdaptiveQ();
         void setAdaptiveR();
-        void setJacobianDynamic(Eigen::MatrixXd& Jacob);
-        void setJacobianCamera(
+        
+        
+        void setDFJacobianDynamic(
             Eigen::MatrixXd& Jacob, 
-            Sophus::SE3d pose, 
-            std::vector<Eigen::Vector3d> pts_3d_exists
+            STATE X_var
         );
+        void setDHJacobianCamera(
+            Eigen::MatrixXd& Jacob, 
+            STATE X_var, 
+            Eigen::Vector3d pts_3d
+        );
+
+        virtual void setGNBlocks(
+            STATE X_var,
+            Eigen::MatrixXd& JPJt, 
+            Eigen::VectorXd& nJtPf,
+            std::vector<Eigen::MatrixXd> Ps,
+            std::vector<Eigen::MatrixXd> JacobTemplates
+        );
+
+        void addCamGNBlocks(Eigen::MatrixXd& JPJt, Eigen::VectorXd& nJtPf);
+        void addDynGNBlocks(Eigen::MatrixXd& JPJt, Eigen::VectorXd& nJtPf);
+        
+        Eigen::VectorXd dynamicResidual(STATE pose_priori, STATE pose);
         Eigen::Matrix3d skewSymmetricMatrix(const Eigen::Vector3d w);
 
     public:
@@ -143,13 +163,12 @@ void kf::aiekf::initKF(
     );
     trackedSize = 
           X_previous_posterori.X_SE3.log().size()
-        + X_previous_posterori.V_SE3.log().head<3>().size();
+        + X_previous_posterori.V_SE3.log().head(3).size();
 
-    X_previous_posterori.PMatrix.resize(trackedSize, trackedSize);
-    X_previous_posterori.PMatrix.setZero();
-    X_previous_posterori.PMatrix.block<6,6>(0,0).setConstant(0.1);
-    X_previous_posterori.PMatrix.block<6,6>(0,0).setConstant(1.0);
-
+    X_previous_posterori.PCov.resize(trackedSize, trackedSize);
+    X_previous_posterori.PCov.setZero();
+    X_previous_posterori.PCov.setIdentity();
+    X_previous_posterori.PCov = X_previous_posterori.PCov * 2.1;
 
     if(trackedSize != Q_init_.rows())
     {
@@ -162,6 +181,8 @@ void kf::aiekf::initKF(
 
     QAdaptiveAlpha = QAdaptiveAlpha_;
     RAdaptiveBeta  = RAdaptiveBeta_;
+
+    // ros::shutdown();
 }
 
 void kf::aiekf::reinitKF(MEASUREMENT meas_at_k)
@@ -185,7 +206,8 @@ void kf::aiekf::run_AIEKF(MEASUREMENT meas_at_k, double deltaT_)
 
     setPredict();    
     doOptimize();
-    setPostOptimize();
+    // setPostOptimize();
+    ros::shutdown();
 }
 
 void kf::aiekf::setPredict()
@@ -194,92 +216,141 @@ void kf::aiekf::setPredict()
                                    // last 3 element: velocity
 
     X_current_dynamic_priori.X_SE3 = 
-        X_previous_posterori.X_SE3 * Sophus::SE3d::exp(dx.head<6>());
+        X_previous_posterori.X_SE3 * Sophus::SE3d::exp(dx.head(6));
+
+    X_current_dynamic_priori.V_SE3 = 
+        X_previous_posterori.V_SE3 * Sophus::SE3d(Eigen::Matrix3d::Identity(), dx.tail(3));
+
+    std::cout<<"just to check frame: "<<std::endl;
+    std::cout<<X_current_dynamic_priori.X_SE3.translation()<<std::endl<<std::endl;
+    // std::cout<<X_current_dynamic_priori.V_SE3.translation()<<std::endl;
+
+    setDFJacobianDynamic(
+        F_k,
+        X_previous_posterori
+    );
+
     
-    X_current_dynamic_priori.V_SE3.translation() = 
-        X_previous_posterori.V_SE3.translation() + dx.tail<3>();
+    // std::cout<<X_previous_posterori.PCov<<std::endl;
 
-    setJacobianDynamic(F_k);
+    X_current_dynamic_priori.PCov = 
+        F_k * X_previous_posterori.PCov * F_k.transpose() + Q_k;
 
-    X_current_dynamic_priori.PMatrix = F_k * X_previous_posterori.PMatrix * F_k.transpose();
+    // std::cout<<F_k<<std::endl;
+    // ros::shutdown();
 }
 
 void kf::aiekf::doOptimize()
 {
-    const int MAX_ITERATION = 40;
+    std::cout<<R_k.inverse().trace()<<std::endl;
+    std::cout<<X_current_dynamic_priori.PCov.inverse().trace()<<std::endl;
 
+    ROS_BLUE_STREAM("IN KF OPTIMIZATION!!!");
+    
+    const int MAX_ITERATION = 10;
     const double converge_threshold = 1e-6;
 
     const int points_no = Z_current_meas.pts_2d_detected.size();
 
-    Eigen::Matrix<double, 2, 6> J;
-    Eigen::Matrix<double, 6, 6> A; // R6*6
-    Eigen::Matrix<double, 6, 1> b; // R6
-    Eigen::Vector2d e; // R2
-    Eigen::Matrix<double, 6, 1> dx;
+    Eigen::MatrixXd JCam;
+    JCam.resize(2,9);
+    Eigen::MatrixXd JDyn;
+    JDyn.resize(9,9);
 
-    Sophus::SE3d pose;//= Sophus::SE3d::exp(meas_at_k.pose_initial_se3);
+    Eigen::MatrixXd JPJt; // R9*9
+    JPJt.resize(9,9);
+    Eigen::VectorXd nJtPf; // R9
+    nJtPf.resize(9);
+
+    Eigen::Matrix<double, 9, 1> dx;
+    Sophus::Vector6d dx_pose_se3;
+    Sophus::Vector6d dx_velo_se3;
+    // Eigen::Matrix<double, 6, 1> dx_cam;
+    // Eigen::Matrix<double, 6, 1> dx_dyn;
+
+    STATE X_var = {
+        Z_current_meas.pose_initial_SE3, 
+        X_current_dynamic_priori.V_SE3,
+        X_current_camera_priori.PCov
+    };
 
     int i;
     double cost = 0, lastcost = INFINITY;
+
+    std::cout<<"before cam residual: "<<get_reprojection_error(
+        Z_current_meas.pts_3d_exists,
+        Z_current_meas.pts_2d_detected,
+        X_var.X_SE3,
+        false
+    ).norm()<<std::endl;;
+    std::cout<<"before dyn residual: "<<dynamicResidual(X_current_dynamic_priori, X_var).norm()<<std::endl;
+    
+    vector<Eigen::MatrixXd> Ps;
+    Ps.emplace_back(R_k);
+    Ps.emplace_back(X_current_dynamic_priori.PCov);
+
+    vector<Eigen::MatrixXd> JacobTemplates;
+    JacobTemplates.emplace_back(JCam);
+    JacobTemplates.emplace_back(JDyn);
     
     for(i = 0; i < MAX_ITERATION; i++)
     {
-        A.setZero();
-        b.setZero();
+        setGNBlocks(
+            X_var,
+            JPJt, 
+            nJtPf,
+            Ps,
+            JacobTemplates
+        );
 
-        cost = 0;
-        
-
-        for(int i=0; i < points_no; i++)
-        {
-            //get the Jacobian for this point
-            solveJacobianCamera(J, pose, Z_current_meas.pts_3d_exists[i]);
-
-            e = Z_current_meas.pts_2d_detected[i] - 
-                reproject_3D_2D(Z_current_meas.pts_3d_exists[i], pose) ; 
-            
-            cost += e.norm();
-
-            //form Ax = b
-            A += J.transpose() * J;
-            b += -J.transpose() * e;
-        }
-    
         //solve Adx = b
-        dx = A.ldlt().solve(b);
-        //
+        dx = JPJt.ldlt().solve(nJtPf);
+
+        // std::cout<<dx<<std::endl<<std::endl;
 
         for(int i = 0; i < 6; i++)
             if(isnan(dx(i,0)))
                 break;
 
+        dx_pose_se3 = dx.head(6);
+        dx_velo_se3 << dx.tail(3), Eigen::Vector3d::Zero();
 
-        pose = Sophus::SE3d::exp(dx) * pose;
-
-        lastcost = cost;
+        X_var.X_SE3 =  Sophus::SE3d::exp(dx_pose_se3) * X_var.X_SE3 ;
+        X_var.V_SE3 = Sophus::SE3d::exp(dx_velo_se3) * X_var.V_SE3;
+        // lastcost = cost;
 
         if(dx.norm() < converge_threshold)        
             break;
     }
 
-    // BA_error = lastcost;
+    std::cout<<"after cam residual: "<<get_reprojection_error(
+        Z_current_meas.pts_3d_exists,
+        Z_current_meas.pts_2d_detected,
+        X_var.X_SE3,
+        false
+    ).norm()<<std::endl;
 
-    // cout<<"gone thru: "<<i<<" th, end optimize"<<endl<<endl;;;
+    std::cout<<Sophus::SE3d(Eigen::Matrix3d::Identity(), Eigen::Vector3d()).matrix()<<std::endl<<std::endl;;
+    std::cout<<Sophus::SE3d(X_var.X_SE3.rotationMatrix(), Eigen::Vector3d(0.2,0.2,0.2)).log()<<std::endl<<std::endl;;
 
+    std::cout<<"after dyn residual: "<<dynamicResidual(X_current_dynamic_priori, X_var).norm()<<std::endl;
+    std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
+    ros::shutdown();
 }
 
 void kf::aiekf::setPostOptimize()
 {
     // update velocity
-    setJacobianCamera(H_k, X_current_posterori.X_SE3, Z_current_meas.pts_3d_exists);
+    for(int i = 0; i < Z_current_meas.pts_3d_exists.size(); i++)
+    {
+
+    }
+    // setDHJacobianCamera(H_k, X_current_posterori, Z_current_meas.pts_3d_exists);
 
     setKalmanGain();
     setAdaptiveQ();
     setAdaptiveR();
 }
-
-
 
 /* ================ utilities ================ */
 
@@ -293,12 +364,17 @@ Eigen::VectorXd kf::aiekf::dfx()
     
     X_previous_posterori.V_SE3.log();
     
-    returnDfx.head<Sophus::SE3d::DoF>() = 
+    returnDfx.head(Sophus::SE3d::DoF) = 
         Sophus::SE3d(
             Eigen::Matrix3d::Identity(),
             X_previous_posterori.V_SE3.translation()
         ).log();
-    returnDfx.tail<Sophus::SE3d::DoF/2>() = X_previous_posterori.X_SE3.rotationMatrix() * g; 
+    
+    
+    returnDfx.tail<Sophus::SE3d::DoF/2>() = X_previous_posterori.X_SE3.rotationMatrix() * g;
+
+    std::cout<<"gravity: "<<std::endl;
+    std::cout<<X_previous_posterori.X_SE3.rotationMatrix() * g <<std::endl<<std::endl;;
 
     return returnDfx;
     
@@ -306,9 +382,9 @@ Eigen::VectorXd kf::aiekf::dfx()
 
 void kf::aiekf::setKalmanGain()
 {
-    K_k = X_current_dynamic_priori.PMatrix // R 9*9
+    K_k = X_current_dynamic_priori.PCov // R 9*9
         * H_k.transpose()                  // R 9*2
-        * (H_k * X_current_camera_priori.PMatrix * H_k.transpose() + R_k).inverse(); // R 2*2
+        * (H_k * X_current_camera_priori.PCov * H_k.transpose() + R_k).inverse(); // R 2*2
 }
 
 void kf::aiekf::setAdaptiveQ()
@@ -340,7 +416,10 @@ void kf::aiekf::setAdaptiveR()
 
 }
 
-void kf::aiekf::setJacobianDynamic(Eigen::MatrixXd& Jacob)
+void kf::aiekf::setDFJacobianDynamic(
+    Eigen::MatrixXd& Jacob,
+    STATE X_var
+)
 {
     Jacob.resize(trackedSize, trackedSize);
     Jacob.setZero();
@@ -352,34 +431,113 @@ void kf::aiekf::setJacobianDynamic(Eigen::MatrixXd& Jacob)
     Jacob.block<3,3>(0,6).setConstant(deltaT);
     Jacob.block<3,3>(6,3) = 
         -1.0 * 
-        skewSymmetricMatrix(X_previous_posterori.X_SE3.rotationMatrix() * g);
+        skewSymmetricMatrix(X_var.X_SE3.rotationMatrix() * g);
 }
 
-void kf::aiekf::setJacobianCamera(
+void kf::aiekf::setDHJacobianCamera(
     Eigen::MatrixXd& Jacob,
-    Sophus::SE3d pose,
-    std::vector<Eigen::Vector3d> pts_3d_exists)
+    STATE X_var,
+    Eigen::Vector3d pts_3d_exists
+)
 {
-    Eigen::Matrix<double, 2, 6> JCamWRTPose;
-    Eigen::Matrix<double, 2, 3> JCamWRTVelo;
-
+    Eigen::MatrixXd JCamWRTPose;
+    JCamWRTPose.resize(2,6);
+    Eigen::MatrixXd JCamWRTVelo;
+    JCamWRTVelo.resize(2,3);
+    
     JCamWRTPose.setZero();
     JCamWRTVelo.setZero();
 
-    for(int i = 0; pts_3d_exists.size(); i++)
+    solveJacobianCamera(
+        JCamWRTPose, 
+        X_var.X_SE3, 
+        pts_3d_exists
+    );
+    
+    Jacob.resize(JCamWRTPose.rows(), JCamWRTPose.cols() + JCamWRTVelo.cols());
+    
+    Jacob.block<2,6>(0,0) = JCamWRTPose;
+    Jacob.block<2,3>(0,6) = JCamWRTVelo;
+}
+
+void kf::aiekf::setGNBlocks(
+    STATE X_var,
+    Eigen::MatrixXd& JPJt,
+    Eigen::VectorXd& nJtPf,
+    vector<Eigen::MatrixXd> Ps,
+    std::vector<Eigen::MatrixXd> JacobTemplates
+)
+{
+    Eigen::MatrixXd JCamWRTPose;
+    JCamWRTPose.resize(2,6);
+    Eigen::MatrixXd JDynWRTXNow;
+    JDynWRTXNow.resize(9,9);
+
+    Eigen::Matrix<double, 2, 1> eCam; // R2
+    Eigen::Matrix<double, 9, 1> eDyn; // R9
+    eCam.setZero();
+    eDyn.setZero();
+
+    JPJt.setZero();
+    nJtPf.setZero();
+
+    for(int i = 0; i < Z_current_meas.pts_3d_exists.size(); i++)
     {
-        solveJacobianCamera(
-            JCamWRTPose, 
-            pose, 
-            pts_3d_exists[i]
+        setDHJacobianCamera(
+            JCamWRTPose,
+            X_var,
+            Z_current_meas.pts_3d_exists[i]
         );
 
-        JCamWRTPose = JCamWRTPose + JCamWRTPose;
+        JCamWRTPose *= (-1);
+
+        eCam = Z_current_meas.pts_2d_detected[i] - reproject_3D_2D(
+            Z_current_meas.pts_3d_exists[i],
+            X_var.X_SE3
+        );
+
+        JPJt += JCamWRTPose.transpose() * JCamWRTPose;
+        nJtPf += -JCamWRTPose.transpose() * eCam;
     }
 
-    Jacob.resize(JCamWRTPose.rows(), JCamWRTPose.cols() + JCamWRTVelo.cols());
-    Jacob.block<2,6>(0,0) = JCamWRTPose;
-    Jacob.block<2,3>(6,0) = JCamWRTVelo;    
+    for(int i = 0; i < 1; i++)
+    {
+        setDFJacobianDynamic(
+            JDynWRTXNow,
+            X_var
+        );
+
+        JDynWRTXNow *= (-1);
+
+        eDyn = dynamicResidual(
+            X_current_dynamic_priori,
+            X_var
+        );
+
+        JPJt += JDynWRTXNow.transpose() * JDynWRTXNow;
+        nJtPf += -JDynWRTXNow.transpose() * eDyn;
+    }
+}
+
+Eigen::VectorXd kf::aiekf::dynamicResidual(
+    STATE priori_X,
+    STATE X
+)
+{
+    Eigen::VectorXd returnResidual;
+
+    const int poseSize = X.X_SE3.log().size();
+    const int velSize  = X.V_SE3.log().head(3).size();
+    
+    returnResidual.resize(
+        X.X_SE3.log().size() + 
+        X.V_SE3.log().head<3>().size()
+    );
+
+    returnResidual.head(poseSize) = (priori_X.X_SE3 * X.X_SE3.inverse()).log();
+    returnResidual.tail(velSize) = (priori_X.V_SE3 * X.V_SE3.inverse()).log().tail(velSize);
+
+    return returnResidual;
 }
 
 Eigen::Matrix3d kf::aiekf::skewSymmetricMatrix(const Eigen::Vector3d w)

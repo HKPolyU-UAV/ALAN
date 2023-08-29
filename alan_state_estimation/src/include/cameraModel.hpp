@@ -52,10 +52,19 @@ namespace vision{
             double BA_error
         );
         virtual void solveJacobianCamera(
-            Eigen::Matrix<double, 2, 6>& Jacob, 
+            Eigen::MatrixXd& Jacob, 
             Sophus::SE3d pose, 
             Eigen::Vector3d point_3d
         );
+
+        inline virtual Eigen::Vector3d q2rpy(Eigen::Quaterniond q) final;
+        inline virtual Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy) final;
+        inline virtual Eigen::Vector3d q_rotate_vector(
+            Eigen::Quaterniond q, 
+            Eigen::Vector3d v
+        ) final;
+
+
 
 
         static Eigen::MatrixXd cameraMat;
@@ -110,7 +119,7 @@ Eigen::Vector2d vision::cameraModel::get_reprojection_error(
         reproject = reproject_3D_2D(pts_3d[i], pose);
         error = pts_2d[i] - reproject;
         // e = e + error.norm();
-        returnError += returnError;
+        returnError += error;
     }
 
     return returnError;
@@ -133,7 +142,9 @@ void vision::cameraModel::camOptimize(
 
     const int points_no = pts_2d_detected.size();
 
-    Eigen::Matrix<double, 2, 6> J;
+    Eigen::MatrixXd J;
+    J.resize(2,6);
+    
     Eigen::Matrix<double, 6, 6> A; // R6*6
     Eigen::Matrix<double, 6, 1> b; // R6
     Eigen::Vector2d e; // R2
@@ -154,6 +165,7 @@ void vision::cameraModel::camOptimize(
         {
             //get the Jacobian for this point
             solveJacobianCamera(J, pose, pts_3d_exists[i]);
+            J *= (-1);
 
             e = pts_2d_detected[i] - reproject_3D_2D(pts_3d_exists[i], pose) ; 
             
@@ -175,7 +187,7 @@ void vision::cameraModel::camOptimize(
 
         pose = Sophus::SE3d::exp(dx) * pose;
             /*
-                pertubation defined in world frame,
+                pertubation defined in world frame (left Jacobian),
                 left jacobians, 
                 hence, add from the left
             */
@@ -192,8 +204,9 @@ void vision::cameraModel::camOptimize(
 
 }
 
-void vision::cameraModel::solveJacobianCamera(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d)
+void vision::cameraModel::solveJacobianCamera(Eigen::MatrixXd& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d)
 {
+    
     Eigen::Matrix3d R = pose.rotationMatrix();
     Eigen::Vector3d t = pose.translation();
                 // cameraMat
@@ -209,21 +222,52 @@ void vision::cameraModel::solveJacobianCamera(Eigen::Matrix<double, 2, 6>& Jacob
     //save entries to Jacob and return
     Jacob << 
         //first row
-        -fx / z_c, 
+        fx / z_c, 
         0, 
-        fx * x_c / z_c / z_c, 
-        fx * x_c * y_c / z_c / z_c,
-        -fx - fx * x_c * x_c / z_c / z_c,
-        fx * y_c / z_c,
+        -fx * x_c / z_c / z_c, 
+        -fx * x_c * y_c / z_c / z_c,
+        fx - fx * x_c * x_c / z_c / z_c,
+        -fx * y_c / z_c,
 
         //second row
         0,
-        -fy / z_c,
-        fy * y_c / z_c / z_c,
-        fy + fy * y_c * y_c / z_c / z_c,
-        -fy * x_c * y_c / z_c / z_c,
-        -fy * x_c / z_c;
+        fy / z_c,
+        -fy * y_c / z_c / z_c,
+        -fy - fy * y_c * y_c / z_c / z_c,
+        fy * x_c * y_c / z_c / z_c,
+        fy * x_c / z_c;
 
+}
+
+Eigen::Vector3d vision::cameraModel::q2rpy(Eigen::Quaterniond q) 
+{
+    tfScalar yaw, pitch, roll;
+    tf::Quaternion q_tf;
+    q_tf.setW(q.w());
+    q_tf.setX(q.x());
+    q_tf.setY(q.y());
+    q_tf.setZ(q.z());
+
+    tf::Matrix3x3 mat(q_tf);
+    mat.getEulerYPR(yaw, pitch, roll);
+
+    return Eigen::Vector3d(roll, pitch, yaw);
+}
+
+Eigen::Quaterniond vision::cameraModel::rpy2q(Eigen::Vector3d rpy)
+{
+    Eigen::AngleAxisd rollAngle(rpy(0), Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd pitchAngle(rpy(1), Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd yawAngle(rpy(2), Eigen::Vector3d::UnitZ());
+
+    Eigen::Quaterniond q = yawAngle * pitchAngle * rollAngle;
+
+    return q;
+}
+
+Eigen::Vector3d vision::cameraModel::q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v)
+{
+    return q * v;
 }
 
 

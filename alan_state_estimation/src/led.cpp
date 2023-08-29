@@ -275,7 +275,10 @@ void alan::LedNodelet::apiKF(int DOKF)
 
     case kfNORMALKF:
         /* code */
-        global_meas_at_k
+        global_meas_at_k.pose_initial_SE3 = pose_epnp_sophus;
+        global_meas_at_k.pts_3d_exists = pts_on_body_frame_in_corres_order;
+        global_meas_at_k.pts_2d_detected = pts_detected_in_corres_order;
+
         run_AIEKF(
             global_meas_at_k,
             led_pose_header.stamp.toSec() - led_pose_header_previous.stamp.toSec()
@@ -307,15 +310,7 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
                        
     if(!search_corres_and_pose_predict(pts_2d_detect))
     {
-        if(reinitialization(pts_2d_detect, depth))
-        {
-            ROS_GREEN_STREAM("REINITIALIZATION SUCCESSFUL");
-        }
-        else
-        {
-            ROS_RED_STREAM("REINITIALIZATION FAILED");
-            LED_tracker_initiated_or_tracked = false;
-        }                                
+        LED_tracker_initiated_or_tracked = false;                                    
     }
 }
 
@@ -323,8 +318,8 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
 {
     correspondence_search_kmeans(pts_2d_detect);
 
-    std::vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
-    std::vector<Eigen::Vector2d> pts_detected_in_corres_order;            
+    pts_on_body_frame_in_corres_order.clear();
+    pts_detected_in_corres_order.clear(); 
 
     for(int i = 0; i < corres_global.size(); i++)
     {            
@@ -345,14 +340,10 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
     else
     {          
         solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order);        
-        // pose_global_sophus = pose_epnp_sophus;
         apiKF(kfNORMALKF);
 
+        
         return true;
-        // if(BA_error > LED_no * 2)
-        //     return false;
-        // else
-        //     return true;
     }    
 }
 
@@ -1208,41 +1199,6 @@ inline double alan::LedNodelet::calculate_MAD(std::vector<double> norm_of_points
 
     return MAD;
 }
-
-
-/* ================ rotation utilities function below ================ */
-
-Eigen::Vector3d alan::LedNodelet::q2rpy(Eigen::Quaterniond q) 
-{
-    tfScalar yaw, pitch, roll;
-    tf::Quaternion q_tf;
-    q_tf.setW(q.w());
-    q_tf.setX(q.x());
-    q_tf.setY(q.y());
-    q_tf.setZ(q.z());
-
-    tf::Matrix3x3 mat(q_tf);
-    mat.getEulerYPR(yaw, pitch, roll);
-
-    return Eigen::Vector3d(roll, pitch, yaw);
-}
-
-Eigen::Quaterniond alan::LedNodelet::rpy2q(Eigen::Vector3d rpy)
-{
-    Eigen::AngleAxisd rollAngle(rpy(0), Eigen::Vector3d::UnitX());
-    Eigen::AngleAxisd pitchAngle(rpy(1), Eigen::Vector3d::UnitY());
-    Eigen::AngleAxisd yawAngle(rpy(2), Eigen::Vector3d::UnitZ());
-
-    Eigen::Quaterniond q = yawAngle * pitchAngle * rollAngle;
-
-    return q;
-}
-
-Eigen::Vector3d alan::LedNodelet::q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v)
-{
-    return q * v;
-}
-
 
 /* ================ UI utilities function below ================ */
 

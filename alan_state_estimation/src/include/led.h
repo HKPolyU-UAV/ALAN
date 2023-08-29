@@ -206,6 +206,10 @@ namespace alan
             //objects
             double LANDING_DISTANCE = 0;
             int BINARY_THRES = 0;
+
+            std::vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
+            std::vector<Eigen::Vector2d> pts_detected_in_corres_order;
+
             
             bool LED_pts_measurement(
                 cv::Mat& frame, 
@@ -259,53 +263,14 @@ namespace alan
             void terminal_msg_display(double hz);
             void log(double ms);
             //functions
-            inline Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
-            inline Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
-            inline Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
+            // inline Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
+            // inline Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
+            // inline Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
 
             inline Sophus::SE3d posemsg_to_SE3(const geometry_msgs::PoseStamped pose);
             inline geometry_msgs::PoseStamped SE3_to_posemsg(const Sophus::SE3d pose_on_SE3, const std_msgs::Header msgHeader);
-
-        //Kalman filtering
-            //
-            // std::unique_ptr<kf::aiekf> kf_ptr;
-
-            
-
-        //below is the courtesy of UZH Faessler et al.
-        //which was used for calculation of the twists in this project
-            /*
-                @inproceedings{faessler2014monocular,
-                title={A monocular pose estimation system based on infrared leds},
-                author={Faessler, Matthias and Mueggler, Elias and Schwabe, Karl and Scaramuzza, Davide},
-                booktitle={2014 IEEE international conference on robotics and automation (ICRA)},
-                pages={907--913},
-                year={2014},
-                organization={IEEE}
-                }
-            */
-
-            //twist for correspondence search
-            //objects
-            // Eigen::Matrix4d pose_previous;
-            // Eigen::Matrix4d pose_current;
-            // Eigen::Matrix4d pose_predicted;   
-            //     /*------------------------*/
-            // Eigen::Isometry3d led_pose_previous;   
+   
             Eigen::VectorXd led_twist_current;    
-            //     /*------------------------*/
-            // double time_previous = 0;
-            // double time_current = 0;
-            // double time_predicted = 0;
-            // int global_counter = 0;
-
-            // //functions
-            // void set_pose_predict();
-            // void set_twist_estimate(Eigen::Isometry3d led_pose_current);
-
-            // Eigen::VectorXd logarithmMap(Eigen::Matrix4d trans);
-            // Eigen::Matrix4d exponentialMap(Eigen::VectorXd& twist);
-            // Eigen::Matrix3d skewSymmetricMatrix(Eigen::Vector3d w);
 
 //---------------------------------------------------------------------------------------
             virtual void onInit()
@@ -314,140 +279,11 @@ namespace alan
                 ROS_INFO("LED Nodelet Initiated...");
 
                 RosTopicConfigs configs(nh, "/led");
-                                
-            // load POI_extract config
-                nh.getParam("/alan_master/LANDING_DISTANCE", LANDING_DISTANCE);     
-                nh.getParam("/alan_master/BINARY_threshold", BINARY_THRES);     
-                nh.getParam("/alan_master/frame_width", _width);
-                nh.getParam("/alan_master/frame_height", _height);
 
-                // #define CAR_POSE_TOPIC POSE_SUB_TOPIC_A
-                // std::cout<<CAR_POSE_TOPIC<<std::endl;
-                // nh.getParam("/alan_master/CAR_POSE_TOPIC", CAR_POSE_TOPIC);
-                // nh.getParam("/alan_master/UAV_POSE_TOPIC", UAV_POSE_TOPIC);
-
+                doALOTofConfigs(nh);
                 
-            // load camera intrinsics
-                Eigen::Vector4d intrinsics_value;
-                XmlRpc::XmlRpcValue intrinsics_list;
-                nh.getParam("/alan_master/cam_intrinsics_455", intrinsics_list);
-                                                
-                for(int i = 0; i < 4; i++)
-                {
-                    intrinsics_value[i] = intrinsics_list[i];
-                }
-                
-                cameraMat <<    
-                    // inherintance here -> modifying value for all super/sub classes
-                    intrinsics_value[0], 0, intrinsics_value[2], 
-                    0, intrinsics_value[1], intrinsics_value[3],
-                    0, 0,  1; 
-
-                
-
-                cameraEX.resize(6);
-                XmlRpc::XmlRpcValue extrinsics_list;
-                
-                nh.getParam("/alan_master/cam_ugv_extrinsics", extrinsics_list);                
-                
-                for(int i = 0; i < 6; i++)
-                {                    
-                    cameraEX(i) = extrinsics_list[i];                    
-                }
-
-                pose_cam_inUgvBody_SE3 = Sophus::SE3d(
-                    rpy2q(
-                        Eigen::Vector3d(
-                            cameraEX(3) / 180 * M_PI,
-                            cameraEX(4) / 180 * M_PI,
-                            cameraEX(5) / 180 * M_PI              
-                        )
-                    ),
-                    Eigen::Vector3d(
-                        cameraEX(0),
-                        cameraEX(1),
-                        cameraEX(2)
-                    )            
-                );
-
-            // load LED extrinsics
-                LEDEX.resize(6);
-                XmlRpc::XmlRpcValue extrinsics_list_led;
-
-                nh.getParam("/alan_master/led_uav_extrinsics", extrinsics_list_led);
-
-                for(int i = 0; i < 6; i++)
-                {
-                    LEDEX(i) = extrinsics_list_led[i];
-                }
-
-                pose_led_inUavBodyOffset_SE3 = Sophus::SE3d(
-                    Eigen::Matrix3d::Identity(),
-                    Eigen::Vector3d(
-                        LEDEX(0),
-                        LEDEX(1),
-                        LEDEX(2)
-                    )
-                );
-
-            // load cam in general body frame                
-                Eigen::Matrix3d cam_to_body_rot;
-                cam_to_body_rot << 
-                    0,0,1,
-                    -1,0,0,
-                    0,-1,0;
-
-                pose_cam_inGeneralBodySE3 = Sophus::SE3d(
-                    cam_to_body_rot, 
-                    Eigen::Vector3d::Zero()
-                );
-
-            // initialize led_velocity
-                led_twist_current.resize(6);
-
-
-            //load LED potisions in body frame
-                XmlRpc::XmlRpcValue LED_list;
-                nh.getParam("/alan_master/LED_positions", LED_list); 
-
-                std::vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
-
-                std::cout<<"\nPts on body frame (X Y Z):\n";
-                for(int i = 0; i < LED_list.size(); i++)
-                {
-                    Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
-                    
-                    norm_of_x_points.push_back(temp.x());
-                    norm_of_y_points.push_back(temp.y());
-                    norm_of_z_points.push_back(temp.z());                    
-                    std::cout<<"-----"<<std::endl;
-                    std::cout<<temp.x()<<" "<<temp.y()<<" "<<temp.z()<<" "<<std::endl;                    
-                    pts_on_body_frame.push_back(temp);
-                }   
-                std::cout<<std::endl;
-
-                LED_no = pts_on_body_frame.size();
-
-                nh.getParam("/alan_master/LED_r_number", LED_r_no);
-                nh.getParam("/alan_master/LED_g_number", LED_g_no);
-
-
-            //load outlier rejection info
-                nh.getParam("/alan_master/MAD_dilate", MAD_dilate);
-                nh.getParam("/alan_master/MAD_max", MAD_max);
-
-                MAD_x_threshold = (calculate_MAD(norm_of_x_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_x_points) * MAD_dilate);
-                MAD_y_threshold = (calculate_MAD(norm_of_y_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_y_points) * MAD_dilate);
-                MAD_z_threshold = (calculate_MAD(norm_of_z_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_z_points) * MAD_dilate);
-
-                // std::cout<<MAD_x_threshold<<std::endl;
-                // std::cout<<MAD_y_threshold<<std::endl;
-                // std::cout<<MAD_z_threshold<<std::endl;
-
-                LED_no = pts_on_body_frame.size();
-                                                                
-            //subscribe
-                
+                                         
+            //subscribe                
                 subimage.subscribe(nh, configs.getTopicName(COLOR_SUB_TOPIC), 1);                
                 subdepth.subscribe(nh, configs.getTopicName(DEPTH_SUB_TOPIC), 1);                
                 sync_.reset(new sync( MySyncPolicy(10), subimage, subdepth));            
@@ -485,7 +321,6 @@ namespace alan
                 uavpose_pub = nh.advertise<geometry_msgs::PoseStamped>
                 //only used for validation stage
                                 (configs.getTopicName(UAV_POSE_PUB_TOPIC), 1, true);
-
                 
                 campose_pub = nh.advertise<geometry_msgs::PoseStamped>
                 //only used for validation stage
@@ -498,8 +333,184 @@ namespace alan
                                 ("/alan_state_estimation/led/uav_log", 1);            
             }
 
+            inline void doALOTofConfigs(ros::NodeHandle& nh)
+            {
+                POI_config(nh);
+                camIntrinsic_config(nh);
+                camExtrinsic_config(nh);
+                LEDExtrinsicUAV_config(nh);
+                CamInGeneralBody_config(nh);
+                LEDInBody_OutlierSetting_config(nh);
+                KF_config(nh);
 
+                led_twist_current.resize(6);
+            }
+
+            inline void POI_config(ros::NodeHandle& nh)
+            {
+                // load POI_extract config
+                nh.getParam("/alan_master/LANDING_DISTANCE", LANDING_DISTANCE);     
+                nh.getParam("/alan_master/BINARY_threshold", BINARY_THRES);     
+                nh.getParam("/alan_master/frame_width", _width);
+                nh.getParam("/alan_master/frame_height", _height);
+
+                // #define CAR_POSE_TOPIC POSE_SUB_TOPIC_A
+                // std::cout<<CAR_POSE_TOPIC<<std::endl;
+                // nh.getParam("/alan_master/CAR_POSE_TOPIC", CAR_POSE_TOPIC);
+                // nh.getParam("/alan_master/UAV_POSE_TOPIC", UAV_POSE_TOPIC);
+            }
+
+            inline void camIntrinsic_config(ros::NodeHandle& nh)
+            {
+                // load camera intrinsics
+                Eigen::Vector4d intrinsics_value;
+                XmlRpc::XmlRpcValue intrinsics_list;
+                nh.getParam("/alan_master/cam_intrinsics_455", intrinsics_list);
+                                                
+                for(int i = 0; i < 4; i++)
+                {
+                    intrinsics_value[i] = intrinsics_list[i];
+                }
+                
+                cameraMat <<    
+                    // inherintance here -> modifying value for all super/sub classes
+                    intrinsics_value[0], 0, intrinsics_value[2], 
+                    0, intrinsics_value[1], intrinsics_value[3],
+                    0, 0,  1; 
+
+            }
+
+            inline void camExtrinsic_config(ros::NodeHandle& nh)
+            {
+                cameraEX.resize(6);
+                XmlRpc::XmlRpcValue extrinsics_list;
+                
+                nh.getParam("/alan_master/cam_ugv_extrinsics", extrinsics_list);                
+                
+                for(int i = 0; i < 6; i++)
+                {                    
+                    cameraEX(i) = extrinsics_list[i];                    
+                }
+
+                pose_cam_inUgvBody_SE3 = Sophus::SE3d(
+                    rpy2q(
+                        Eigen::Vector3d(
+                            cameraEX(3) / 180 * M_PI,
+                            cameraEX(4) / 180 * M_PI,
+                            cameraEX(5) / 180 * M_PI              
+                        )
+                    ),
+                    Eigen::Vector3d(
+                        cameraEX(0),
+                        cameraEX(1),
+                        cameraEX(2)
+                    )            
+                );
+            }
+
+            inline void LEDExtrinsicUAV_config(ros::NodeHandle& nh)
+            {
+                // load LED extrinsics
+                LEDEX.resize(6);
+                XmlRpc::XmlRpcValue extrinsics_list_led;
+
+                nh.getParam("/alan_master/led_uav_extrinsics", extrinsics_list_led);
+
+                for(int i = 0; i < 6; i++)
+                {
+                    LEDEX(i) = extrinsics_list_led[i];
+                }
+
+                pose_led_inUavBodyOffset_SE3 = Sophus::SE3d(
+                    Eigen::Matrix3d::Identity(),
+                    Eigen::Vector3d(
+                        LEDEX(0),
+                        LEDEX(1),
+                        LEDEX(2)
+                    )
+                );
+            }
+
+            inline void CamInGeneralBody_config(ros::NodeHandle& nh)
+            {
+                // load cam in general body frame                
+                Eigen::Matrix3d cam_to_body_rot;
+                cam_to_body_rot << 
+                    0,0,1,
+                    -1,0,0,
+                    0,-1,0;
+
+                pose_cam_inGeneralBodySE3 = Sophus::SE3d(
+                    cam_to_body_rot, 
+                    Eigen::Vector3d::Zero()
+                );
+            }
+
+            inline void LEDInBody_OutlierSetting_config(ros::NodeHandle& nh)
+            {
+                //load LED potisions in body frame
+                XmlRpc::XmlRpcValue LED_list;
+                nh.getParam("/alan_master/LED_positions", LED_list); 
+
+                std::vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
+
+                std::cout<<"\nPts on body frame (X Y Z):\n";
+                for(int i = 0; i < LED_list.size(); i++)
+                {
+                    Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
+                    
+                    norm_of_x_points.push_back(temp.x());
+                    norm_of_y_points.push_back(temp.y());
+                    norm_of_z_points.push_back(temp.z());                    
+                    std::cout<<"-----"<<std::endl;
+                    std::cout<<temp.x()<<" "<<temp.y()<<" "<<temp.z()<<" "<<std::endl;                    
+                    pts_on_body_frame.push_back(temp);
+                }   
+                std::cout<<std::endl;
+
+                LED_no = pts_on_body_frame.size();
+
+                nh.getParam("/alan_master/LED_r_number", LED_r_no);
+                nh.getParam("/alan_master/LED_g_number", LED_g_no);
+
+                //load outlier rejection info
+                nh.getParam("/alan_master/MAD_dilate", MAD_dilate);
+                nh.getParam("/alan_master/MAD_max", MAD_max);
+
+                MAD_x_threshold = (calculate_MAD(norm_of_x_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_x_points) * MAD_dilate);
+                MAD_y_threshold = (calculate_MAD(norm_of_y_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_y_points) * MAD_dilate);
+                MAD_z_threshold = (calculate_MAD(norm_of_z_points) * MAD_dilate > MAD_max ? MAD_max : calculate_MAD(norm_of_z_points) * MAD_dilate);
+
+                // std::cout<<MAD_x_threshold<<std::endl;
+                // std::cout<<MAD_y_threshold<<std::endl;
+                // std::cout<<MAD_z_threshold<<std::endl;
+
+                LED_no = pts_on_body_frame.size();
+            }
               
+            inline void KF_config(ros::NodeHandle& nh)
+            {
+                double Q_val;
+                double R_val;
+                
+                int kf_size;
+                int kfZ_size;
+
+                nh.getParam("/alan_master/Q_val", Q_val);
+                nh.getParam("/alan_master/R_val", R_val);
+                nh.getParam("/alan_master/Q_alpha", Q_alpha_);
+                nh.getParam("/alan_master/R_beta", R_beta_);
+                nh.getParam("/alan_master/kf_size", kf_size);
+                nh.getParam("/alan_master/kfZ_size", kfZ_size);
+
+                Q_init_.resize(kf_size, kf_size);
+                Q_init_.setIdentity();
+                Q_init_ = Q_init_ * Q_val;
+
+                R_init_.resize(kfZ_size, kfZ_size);
+                R_init_.setIdentity();
+                R_init_ = R_init_ * R_val;
+            }
     };
 
     PLUGINLIB_EXPORT_CLASS(alan::LedNodelet, nodelet::Nodelet)
