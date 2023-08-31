@@ -139,7 +139,7 @@ failsafe_on:
 
 # KF-related
 Q_val:
- 1000000.0
+ 10.0
 R_val:
  1.0
 Q_alpha:
