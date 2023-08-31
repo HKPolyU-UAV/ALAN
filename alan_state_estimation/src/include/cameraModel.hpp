@@ -219,6 +219,8 @@ void vision::cameraModel::solveJacobianCamera(Eigen::MatrixXd& Jacob, Sophus::SE
         y_c = point_in_camera(1),
         z_c = point_in_camera(2);
 
+    Jacob.resize(2,6);
+
     //save entries to Jacob and return
     Jacob << 
         //first row
@@ -226,7 +228,7 @@ void vision::cameraModel::solveJacobianCamera(Eigen::MatrixXd& Jacob, Sophus::SE
         0, 
         -fx * x_c / z_c / z_c, 
         -fx * x_c * y_c / z_c / z_c,
-        fx - fx * x_c * x_c / z_c / z_c,
+        fx + fx * x_c * x_c / z_c / z_c,
         -fx * y_c / z_c,
 
         //second row
