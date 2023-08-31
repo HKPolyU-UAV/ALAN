@@ -218,9 +218,9 @@ void kf::aiekf::setPredict()
     X_current_dynamic_priori.V_SE3 = 
         X_previous_posterori.V_SE3 * Sophus::SE3d(Eigen::Matrix3d::Identity(), dx.tail(3));
 
-    std::cout<<"just to check frame: "<<std::endl;
+    // std::cout<<"just to check frame: "<<std::endl;
     // std::cout<<X_current_dynamic_priori.X_SE3.translation()<<std::endl<<std::endl;
-    std::cout<<X_current_dynamic_priori.V_SE3.translation()<<std::endl;
+    // std::cout<<X_current_dynamic_priori.V_SE3.translation()<<std::endl;
 
     setDFJacobianDynamic(
         F_k,
@@ -240,10 +240,9 @@ void kf::aiekf::setPredict()
 void kf::aiekf::setMeasurement()
 {
     X_current_camera_priori.X_SE3 = Z_current_meas.pose_initial_SE3;
-    X_current_camera_priori.V_SE3 = Sophus::SE3d::exp(
-        Sophus::Vector6d(
-            (Z_current_meas.pose_initial_SE3 * X_previous_posterori.X_SE3.inverse() ).log()
-        ) 
+    X_current_camera_priori.V_SE3 = Sophus::SE3d(
+        Eigen::Matrix3d::Identity(),
+        (Z_current_meas.pose_initial_SE3 * X_previous_posterori.X_SE3.inverse()).translation() 
         / deltaT
     );
 
@@ -255,8 +254,8 @@ void kf::aiekf::doOptimize()
     std::cout<<R_k.inverse().trace()<<std::endl;
     std::cout<<X_current_dynamic_priori.PCov.inverse().trace()<<std::endl;
 
-    const int MAX_ITERATION = 40;
-    const double converge_threshold = 1e-6;
+    const int MAX_ITERATION = 25;
+    const double converge_threshold = 1e-2;
 
 
     Eigen::MatrixXd JPJt; // R9*9
@@ -316,24 +315,23 @@ void kf::aiekf::doOptimize()
         for(int i = 0; i < 6; i++)
             if(isnan(dx(i,0)))
                 break;
+        // std::cout<<std::endl<<"===========!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+        // std::cout<<std::endl<<"==========="<<std::endl;
+        // std::cout<<"hi"<<std::endl<<std::endl;
+        // std::cout<<dx<<std::endl<<std::endl;
+
+        // std::cout<<std::endl<<"==========="<<std::endl;
 
         dx_pose_se3 = dx.head(6);
         dx_velo_se3 << dx.tail(3), Eigen::Vector3d::Zero();
 
-        std::cout<<"==========+++++++++++++++"<<std::endl;
-        std::cout<<dx_velo_se3<<std::endl;
+        // std::cout<<dx_velo_se3<<std::endl;
+
 
         X_var.X_SE3 =  Sophus::SE3d::exp(dx_pose_se3) * X_var.X_SE3 ;
-
-        std::cout<<"X_var: \n";
-        std::cout<<"=========="<<std::endl;
-        std::cout<<X_var.V_SE3.log().head(3)<<std::endl;
-        std::cout<<"=========="<<std::endl;
-
         X_var.V_SE3 = Sophus::SE3d::exp(dx_velo_se3) * X_var.V_SE3;
 
-        std::cout<<X_var.V_SE3.log().head(3)<<std::endl;
-        std::cout<<"=========="<<std::endl;
+        // cost = 
 
         if(dx.norm() < converge_threshold)        
             break;
@@ -465,6 +463,8 @@ void kf::aiekf::setDFJacobianDynamic(
     Jacob.block<3,3>(6,3) = 
         -1.0 * 
         skewSymmetricMatrix(X_var.X_SE3.rotationMatrix() * g);
+
+    Jacob.setIdentity();
 }
 
 void kf::aiekf::setDHJacobianCamera(
@@ -536,8 +536,6 @@ void kf::aiekf::setGNBlocks(
 
         JCamWRTPose *= (-1);
 
-        
-
         eCam.head(2) = Z_current_meas.pts_2d_detected[i] - reproject_3D_2D(
             Z_current_meas.pts_3d_exists[i],
             X_var.X_SE3
@@ -561,29 +559,35 @@ void kf::aiekf::setGNBlocks(
 
 
 
-        // JPJt += JCamWRTPose.transpose() * Ps[0].inverse() * JCamWRTPose;
-        // nJtPf += -JCamWRTPose.transpose() * Ps[0].inverse() * eCam;
+        JPJt += JCamWRTPose.transpose() * Ps[0].inverse() * JCamWRTPose;
+        nJtPf += -JCamWRTPose.transpose() * Ps[0].inverse() * eCam;
     }
 
-    for(int i = 0; i < 1; i++)
-    {
-        setDFJacobianDynamic(
-            JDynWRTXNow,
-            X_var
-        );
+   
+    setDFJacobianDynamic(
+        JDynWRTXNow,
+        X_var
+    );
 
-        JDynWRTXNow *= (-1);
+    JDynWRTXNow *= (-1);
 
-        // std::cout<<JDynWRTXNow<<std::endl;
+    // std::cout<<JDynWRTXNow<<std::endl;
 
-        eDyn = dynamicResidual(
-            X_current_dynamic_priori,
-            X_var
-        );
+    eDyn = dynamicResidual(
+        X_current_dynamic_priori,
+        X_var
+    );
 
-        JPJt += JDynWRTXNow.transpose() * Ps[1].inverse() * JDynWRTXNow;
-        nJtPf += -JDynWRTXNow.transpose() * Ps[1].inverse() * eDyn;
-    }
+    // std::cout<<"GNBlocks:\n"<<std::endl;
+
+    // std::cout<<eDyn<<std::endl<<std::endl;;
+
+    // std::cout<<Ps[1]<<std::endl;
+    JPJt += JDynWRTXNow.transpose() * Ps[1].inverse() * JDynWRTXNow;
+    // std::cout<<JPJt<<std::endl;
+    nJtPf += -JDynWRTXNow.transpose() * Ps[1].inverse() * eDyn;
+    // std::cout<<nJtPf<<std::endl;
+    
 }
 
 
@@ -603,10 +607,15 @@ Eigen::VectorXd kf::aiekf::dynamicResidual(
         X.V_SE3.log().head<3>().size()
     );
 
-    returnResidual.head(posSize) = (priori_X.X_SE3 * X.X_SE3.inverse()).log();
-    returnResidual.block<3,1>(3,0) = (priori_X.X_SE3 * X.X_SE3.inverse()).log(); 
-    returnResidual.tail(velSize) = (priori_X.V_SE3 * X.V_SE3.inverse()).log().tail(velSize);
-
+    // returnResidual.head(posSize) = (priori_X.X_SE3 * X.X_SE3.inverse()).translation();
+    returnResidual.head(posSize) = (priori_X.X_SE3 * X.X_SE3.inverse()).log().tail(3);
+    // std::cout<<"down here in dynamicResidual...\n";
+    // std::cout<<(priori_X.X_SE3 * X.X_SE3.inverse()).translation()<<std::endl;
+    // std::cout<<priori_X.X_SE3.translation() - X.X_SE3.translation()<<std::endl;
+    returnResidual.block<3,1>(3,0) = (priori_X.X_SE3 * X.X_SE3.inverse()).log().tail(3); 
+    // returnResidual.block<3,1>(3,0) = Eigen::Vector3d().Zero(); 
+    returnResidual.tail(velSize) = (priori_X.V_SE3 * X.V_SE3.inverse()).log().head(velSize);
+    // std::cout<<(priori_X.V_SE3 * X.V_SE3.inverse()).rotationMatrix()<<std::endl;
     return returnResidual;
 }
 
