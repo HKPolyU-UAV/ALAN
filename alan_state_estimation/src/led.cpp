@@ -256,31 +256,24 @@ void alan::LedNodelet::apiKF(int DOKF)
     {
     case kfINITIATE:
         /* code */
-        global_meas_at_k.pose_initial_SE3 = pose_global_sophus;
-        initKF(
-            global_meas_at_k,
-            Q_init_,
-            R_init_,
-            Q_alpha_,
-            R_beta_
-        );
+        Z_current_meas.pose_initial_SE3 = pose_global_sophus;
+        // Z_
+        initKF();
         break;
     
     case kfREINITIATE:
         /* code */
-        reinitKF(
-            global_meas_at_k
-        );
+        Z_current_meas.pose_initial_SE3 = pose_global_sophus;
+        reinitKF();
         break;
 
     case kfNORMALKF:
         /* code */
-        global_meas_at_k.pose_initial_SE3 = pose_epnp_sophus;
-        global_meas_at_k.pts_3d_exists = pts_on_body_frame_in_corres_order;
-        global_meas_at_k.pts_2d_detected = pts_detected_in_corres_order;
+        Z_current_meas.pose_initial_SE3 = pose_epnp_sophus;
+        Z_current_meas.pts_3d_exists = pts_on_body_frame_in_corres_order;
+        Z_current_meas.pts_2d_detected = pts_detected_in_corres_order;
 
         run_AIEKF(
-            global_meas_at_k,
             led_pose_header.stamp.toSec() - led_pose_header_previous.stamp.toSec()
         );
         break;
@@ -821,7 +814,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
                     pts_2d_detect_temp,
                     pose_global_sophus,
                     false
-                ).norm();
+                );
 
                 if(e < error_total)
                 {                    
@@ -971,7 +964,7 @@ bool alan::LedNodelet::reinitialization(std::vector<Eigen::Vector2d> pts_2d_dete
                     pts_2d_detect_temp,
                     pose_global_sophus,
                     false
-                ).norm();
+                );
 
                 if(e < error_total)
                 {                    

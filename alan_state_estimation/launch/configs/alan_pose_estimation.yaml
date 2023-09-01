@@ -150,6 +150,10 @@ kf_size:
  9
 kfZ_size:
  5
+OPT_MAX_ITERATION:
+ 25
+CONVERGE_THRESHOLD:
+ 0.001
 
 
 

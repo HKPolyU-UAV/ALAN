@@ -188,10 +188,10 @@ namespace alan
             //     };         
 
         //main process & kf
-            kf::MEASUREMENT global_meas_at_k; 
-            Eigen::MatrixXd Q_init_;
-            Eigen::MatrixXd R_init_;
-            double Q_alpha_, R_beta_;
+            // kf::MEASUREMENT global_meas_at_k; 
+            // Eigen::MatrixXd Q_init_;
+            // Eigen::MatrixXd R_init_;
+            // double Q_alpha_, R_beta_;
 
             void apiKF(int DOKF);
             void recursive_filtering(cv::Mat& frame, cv::Mat depth);        
@@ -498,18 +498,20 @@ namespace alan
 
                 nh.getParam("/alan_master/Q_val", Q_val);
                 nh.getParam("/alan_master/R_val", R_val);
-                nh.getParam("/alan_master/Q_alpha", Q_alpha_);
-                nh.getParam("/alan_master/R_beta", R_beta_);
+                nh.getParam("/alan_master/Q_alpha", QAdaptiveAlpha);
+                nh.getParam("/alan_master/R_beta", RAdaptiveBeta);
                 nh.getParam("/alan_master/kf_size", kf_size);
                 nh.getParam("/alan_master/kfZ_size", kfZ_size);
+                nh.getParam("/alan_master/OPT_MAX_ITERATION", MAX_ITERATION);
+                nh.getParam("/alan_master/CONVERGE_THRESHOLD", CONVERGE_THRESHOLD);
 
-                Q_init_.resize(kf_size, kf_size);
-                Q_init_.setIdentity();
-                Q_init_ = Q_init_ * Q_val;
+                Q_init.resize(kf_size, kf_size);
+                Q_init.setIdentity();
+                Q_init = Q_init * Q_val;
 
-                R_init_.resize(kfZ_size, kfZ_size);
-                R_init_.setIdentity();
-                R_init_ = R_init_ * R_val;
+                R_init.resize(kfZ_size, kfZ_size);
+                R_init.setIdentity();
+                R_init = R_init * R_val;
             }
     };
 

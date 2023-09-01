@@ -39,7 +39,7 @@ namespace vision{
         ~cameraModel();
 
         virtual Eigen::Vector2d reproject_3D_2D(Eigen::Vector3d P, Sophus::SE3d pose);
-        virtual Eigen::Vector2d get_reprojection_error(
+        virtual double get_reprojection_error(
             std::vector<Eigen::Vector3d> pts_3d, 
             std::vector<Eigen::Vector2d> pts_2d, 
             Sophus::SE3d pose,
@@ -63,9 +63,6 @@ namespace vision{
             Eigen::Quaterniond q, 
             Eigen::Vector3d v
         ) final;
-
-
-
 
         static Eigen::MatrixXd cameraMat;
         
@@ -101,28 +98,25 @@ Eigen::Vector2d vision::cameraModel::reproject_3D_2D(Eigen::Vector3d P, Sophus::
     return result2d;
 }
 
-Eigen::Vector2d vision::cameraModel::get_reprojection_error(
+double vision::cameraModel::get_reprojection_error(
             std::vector<Eigen::Vector3d> pts_3d, 
             std::vector<Eigen::Vector2d> pts_2d, 
             Sophus::SE3d pose,
             bool draw_reproject
-        )
+)
 {
     double e = 0;
 
     Eigen::Vector2d reproject, error;
-    Eigen::Vector2d returnError;
-    returnError.setZero();
 
     for(int i = 0; i < pts_3d.size(); i++)
     {
         reproject = reproject_3D_2D(pts_3d[i], pose);
         error = pts_2d[i] - reproject;
-        // e = e + error.norm();
-        returnError += error;
+        e = e + error.norm();
     }
 
-    return returnError;
+    return e;
 
 }
 
