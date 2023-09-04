@@ -332,10 +332,9 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
     }
     else
     {          
-        solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order);        
+        // solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order);        
         apiKF(kfNORMALKF);
 
-        
         return true;
     }    
 }

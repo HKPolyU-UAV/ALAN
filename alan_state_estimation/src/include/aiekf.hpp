@@ -165,7 +165,7 @@ void kf::aiekf::initKF()
 
     X_previous_posterori.PCov.resize(trackedSize, trackedSize);
     X_previous_posterori.PCov.setIdentity();
-    X_previous_posterori.PCov = X_previous_posterori.PCov * 10.0;
+    X_previous_posterori.PCov = X_previous_posterori.PCov * R_init(0,0);
 
     if(trackedSize != Q_init.rows())
     {
@@ -174,6 +174,7 @@ void kf::aiekf::initKF()
     }
             
     Q_k = this->Q_init;
+    std::cout<<Q_k<<std::endl<<std::endl;;
     R_k = this->R_init;
 }
 
@@ -199,6 +200,7 @@ void kf::aiekf::run_AIEKF(double deltaT_)
     // setPostOptimize();
 }
 
+/*=======set Predict=======*/
 void kf::aiekf::setPredict()
 {
     Eigen::VectorXd dx = dfx() * deltaT; // first 6 element: se(3) of pose
@@ -210,15 +212,15 @@ void kf::aiekf::setPredict()
     X_current_dynamic_priori.V_SE3 = 
         X_previous_posterori.V_SE3 * Sophus::SE3d(Eigen::Matrix3d::Identity(), dx.tail(3));
 
-    // std::cout<<"just to check frame: "<<std::endl;
-    // std::cout<<X_current_dynamic_priori.X_SE3.translation()<<std::endl<<std::endl;
-    // std::cout<<X_current_dynamic_priori.V_SE3.translation()<<std::endl;
-
     setDFJacobianDynamic(
         F_k,
         X_previous_posterori,
         false
     );
+
+    // here
+
+    F_k.setZero();
 
     
     // std::cout<<X_previous_posterori.PCov<<std::endl;
@@ -229,153 +231,6 @@ void kf::aiekf::setPredict()
     // std::cout<<F_k<<std::endl;
     // ros::shutdown();
 }
-
-void kf::aiekf::setMeasurement()
-{
-    X_current_camera_priori.X_SE3 = Z_current_meas.pose_initial_SE3;
-    X_current_camera_priori.V_SE3 = Sophus::SE3d(
-        Eigen::Matrix3d::Identity(),
-        (Z_current_meas.pose_initial_SE3 * X_previous_posterori.X_SE3.inverse()).translation() 
-        / deltaT
-    );
-
-    X_current_camera_priori.PCov = R_k;
-}
-
-void kf::aiekf::doOptimize()
-{
-    std::cout<<R_k.inverse().trace()<<std::endl;
-    std::cout<<X_current_dynamic_priori.PCov.inverse().trace()<<std::endl;
-
-    Eigen::MatrixXd JPJt; // R9*9
-    JPJt.resize(9,9);
-    Eigen::VectorXd nJtPf; // R9
-    nJtPf.resize(9);
-
-    Eigen::Matrix<double, 9, 1> dx;
-    Sophus::Vector6d dx_pose_se3;
-    Sophus::Vector6d dx_velo_se3;
-
-    /* ================================================================= */
-
-    STATE X_var = X_current_camera_priori;
-    // X_var.V_SE3 = X_current_dynamic_priori.V_SE3;
-    X_var.V_SE3.translation().setConstant(5)
-;
-    std::cout<<"\n\nvelo here:\n"<<X_var.V_SE3.log().head(3)<<std::endl;
-    std::cout<<"velo prio:\n"<<X_current_dynamic_priori.V_SE3.log().head(3)<<std::endl;
-    std::cout<<"velo prio:\n\n"<<X_current_dynamic_priori.V_SE3.log().tail(3)<<std::endl;
-
-    /* ================================================================= */
-
-    int i;
-    double cost = 0, lastcost = INFINITY;
-
-    ROS_BLUE_STREAM("OPTIMIZATION METRIC:...");
-
-    std::cout<<"before cam residual:  "<<get_reprojection_error(
-        Z_current_meas.pts_3d_exists,
-        Z_current_meas.pts_2d_detected,
-        X_var.X_SE3,
-        false
-    )<<std::endl;;
-    std::cout<<"before dyn residual: "
-        <<(X_current_dynamic_priori.V_SE3.translation() - X_var.V_SE3.translation()).norm()
-        <<std::endl<<std::endl;
-
-    vector<Eigen::MatrixXd> Ps;
-    Ps.emplace_back(R_k);
-    Ps.emplace_back(X_current_dynamic_priori.PCov);
-
-    /* ================================================================= */
-    
-    for(i = 0; i < MAX_ITERATION; i++)
-    {
-        std::cout<<"optimize here"<<std::endl;
-        setGNBlocks(
-            X_var,
-            JPJt, 
-            nJtPf,
-            Ps
-        );
-
-        //solve Adx = b
-        dx = JPJt.ldlt().solve(nJtPf);
-
-        for(int i = 0; i < 6; i++)
-            if(isnan(dx(i,0)))
-                break;
-        // std::cout<<std::endl<<"===========!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-        // std::cout<<std::endl<<"==========="<<std::endl;
-        // std::cout<<"hi"<<std::endl<<std::endl;
-        // std::cout<<dx<<std::endl<<std::endl;
-
-        // std::cout<<std::endl<<"==========="<<std::endl;
-
-        dx_pose_se3 = dx.head(6);
-        dx_velo_se3 << dx.tail(3), Eigen::Vector3d::Zero();
-
-        // std::cout<<dx_velo_se3<<std::endl;
-
-
-        X_var.X_SE3 =  Sophus::SE3d::exp(dx_pose_se3) * X_var.X_SE3 ;
-        X_var.V_SE3 = Sophus::SE3d::exp(dx_velo_se3) * X_var.V_SE3;
-
-        cost = getCost(X_var);
-        lastcost = cost;
-
-        if(lastcost > cost)
-            ROS_RED_STREAM("OPTIMIZATION DIVERGE!!!");
-        
-        std::cout<<"lla"<<std::endl;
-        std::cout<<CONVERGE_THRESHOLD<<std::endl;
-
-        if(dx.norm() < CONVERGE_THRESHOLD)        
-            break;
-    }
-
-    /* ================================================================= */
-
-    std::cout<<"\nafter cam residual: "<<get_reprojection_error(
-        Z_current_meas.pts_3d_exists,
-        Z_current_meas.pts_2d_detected,
-        X_var.X_SE3,
-        false
-    )<<std::endl;
-
-    std::cout<<"after dyn residual: "
-        <<(X_current_dynamic_priori.V_SE3.translation() - X_var.V_SE3.translation()).norm()
-        <<std::endl<<std::endl;
-    std::cout<<"=================================="<<std::endl<<std::endl;
-
-    std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
-    std::cout<<"dx.norm(): "<<dx.norm()<<std::endl<<dx<<std::endl;
-    ros::shutdown();
-}
-
-
-
-
-
-
-
-void kf::aiekf::setPostOptimize()
-{
-    // update velocity
-    setKalmanGain();
-    // X_previous_posterori
-    for(int i = 0; i < Z_current_meas.pts_3d_exists.size(); i++)
-    {
-
-    }
-    // setDHJacobianCamera(H_k, X_current_posterori, Z_current_meas.pts_3d_exists);
-
-    
-    // setAdaptiveQ();
-    // setAdaptiveR();
-}
-
-/* ================ utilities ================ */
 
 Eigen::VectorXd kf::aiekf::dfx()
 {
@@ -406,39 +261,181 @@ Eigen::VectorXd kf::aiekf::dfx()
     
 }
 
-void kf::aiekf::setKalmanGain()
+/*=======set Measurement=======*/
+void kf::aiekf::setMeasurement()
 {
-    K_k = X_current_dynamic_priori.PCov // R 9*9
-        * H_k.transpose()                  // R 9*2
-        * (H_k * X_current_camera_priori.PCov * H_k.transpose() + R_k).inverse(); // R 2*2
+    X_current_camera_priori.X_SE3 = Z_current_meas.pose_initial_SE3;
+    X_current_camera_priori.V_SE3 = Sophus::SE3d(
+        Eigen::Matrix3d::Identity(),
+        (Z_current_meas.pose_initial_SE3 * X_previous_posterori.X_SE3.inverse()).translation() 
+        / deltaT
+    );
+
+    X_current_camera_priori.PCov = R_k;
 }
 
-void kf::aiekf::setAdaptiveQ()
+/*=======NLS Optimization=======*/
+void kf::aiekf::doOptimize()
 {
-    Eigen::Vector2d innovation;
-    // innovation = get_reprojection_error(
-    //     Z_current_meas.pts_3d_exists,
-    //     Z_current_meas.pts_2d_detected,
-    //     Z_current_meas.pose_initial_SE3,
-    //     false
-    // );
+    std::cout<<R_k.inverse().trace()<<std::endl;
+    std::cout<<X_current_dynamic_priori.PCov.inverse().trace()<<std::endl;
+
+    Eigen::MatrixXd JPJt; //R9*9
+    JPJt.resize(9,9);
+    Eigen::VectorXd nJtPf; // R9
+    nJtPf.resize(9);
+
+    Eigen::Matrix<double, 9, 1> dx;
+    Sophus::Vector6d dx_pose_se3;
+    Sophus::Vector6d dx_velo_se3;
+
+    /* ================================================================= */
+
+    STATE X_var = X_current_camera_priori;
+    // X_var.V_SE3 = X_current_dynamic_priori.V_SE3;
+    X_var.V_SE3.translation().setConstant(5);
+
+    std::cout<<"\n\nvelo here:\n"<<X_var.V_SE3.log().head(3)<<std::endl;
+    std::cout<<"velo prio:\n"<<X_current_dynamic_priori.V_SE3.log().head(3)<<std::endl;
+    std::cout<<"velo prio:\n\n"<<X_current_dynamic_priori.V_SE3.log().tail(3)<<std::endl;
+
+    /* ================================================================= */
+
+    int i = 0;
+    double cost = 0, lastcost = INFINITY;
+
+    ROS_BLUE_STREAM("OPTIMIZATION METRIC:...");
+
+    std::cout<<"before cam residual:  "<<get_reprojection_error(
+        Z_current_meas.pts_3d_exists,
+        Z_current_meas.pts_2d_detected,
+        X_var.X_SE3,
+        false
+    )<<std::endl;;
+    std::cout<<"before dyn residual: "
+        <<getDynamicResidual(
+            X_current_dynamic_priori,
+            X_var
+        ).norm()
+        <<std::endl<<std::endl;
+
+    vector<Eigen::MatrixXd> Ps;
+    Ps.emplace_back(R_k);
+    Ps.emplace_back(X_current_dynamic_priori.PCov);
+
+    /* ================================================================= */
     
-    Q_k = QAdaptiveAlpha 
-            * Q_k 
-            + (1 - QAdaptiveAlpha) 
-            * (K_k * innovation * innovation.transpose() * K_k.transpose());
+    for(i = 0; i < MAX_ITERATION; i++)
+    {
+        setGNBlocks(
+            X_var,
+            JPJt, 
+            nJtPf,
+            Ps
+        );
 
+        //solve Adx = b
+        dx = JPJt.ldlt().solve(nJtPf);
+
+        for(int i = 0; i < 6; i++)
+            if(isnan(dx(i,0)))
+                break;
+
+        dx_pose_se3 = dx.head(6);
+        dx_velo_se3 << dx.tail(3), Eigen::Vector3d::Zero();
+
+        X_var.X_SE3 =  Sophus::SE3d::exp(dx_pose_se3) * X_var.X_SE3 ;
+        X_var.V_SE3 = Sophus::SE3d::exp(dx_velo_se3) * X_var.V_SE3;
+
+        cost = getCost(X_var);
+        lastcost = cost;
+
+        if(lastcost > cost)
+        {
+            ROS_RED_STREAM("OPTIMIZATION DIVERGE!!!");
+            break;
+        }
+
+        if(dx.norm() < CONVERGE_THRESHOLD)        
+            break;
+    }
+
+    /* ================================================================= */
+
+    std::cout<<"\nafter cam residual: "<<get_reprojection_error(
+        Z_current_meas.pts_3d_exists,
+        Z_current_meas.pts_2d_detected,
+        X_var.X_SE3,
+        false
+    )<<std::endl;
+
+    std::cout<<"after dyn residual: "
+        <<getDynamicResidual(
+            X_current_dynamic_priori,
+            X_var
+        ).norm()
+        <<std::endl<<std::endl;
+    std::cout<<"=================================="<<std::endl<<std::endl;
+
+    std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
+    std::cout<<"dx.norm(): "<<dx.norm()<<std::endl<<dx<<std::endl;
+    ros::shutdown();
 }
 
-void kf::aiekf::setAdaptiveR()
+void kf::aiekf::setGNBlocks(
+    STATE X_var,
+    Eigen::MatrixXd& JPJt,
+    Eigen::VectorXd& nJtPf,
+    vector<Eigen::MatrixXd> Ps
+)
 {
-    Eigen::Vector2d residual;
-    // residual = get_reprojection_error(
-    //     Z_current_meas.pts_3d_exists,
-    //     Z_current_meas.pts_2d_detected,
-    //     X_current_posterori.X_SE3,
-    //     false
-    // );
+    Eigen::MatrixXd JCamWRTPose;
+    Eigen::MatrixXd JDynWRTXNow;
+
+    Eigen::VectorXd eCam; // R5
+    Eigen::VectorXd eDyn; // R9
+
+    JPJt.setZero();
+    nJtPf.setZero();
+
+    for(int i = 0; i < Z_current_meas.pts_3d_exists.size(); i++)
+    {
+        setDHJacobianCamera(
+            JCamWRTPose,
+            X_var,
+            Z_current_meas.pts_3d_exists[i]
+        );
+
+        JCamWRTPose *= (-1);
+
+        eCam = getCameraResidual(
+            X_var,
+            Z_current_meas.pts_2d_detected[i],
+            Z_current_meas.pts_3d_exists[i]
+        );
+
+        JPJt += JCamWRTPose.transpose() * Ps[0].inverse() * JCamWRTPose;
+        nJtPf += -JCamWRTPose.transpose() * Ps[0].inverse() * eCam;
+    }
+
+    for(int i = 0; i < 1; i ++)
+    {
+        setDFJacobianDynamic(
+            JDynWRTXNow,
+            X_var,
+            true
+        );
+
+        JDynWRTXNow *= (-1);
+
+        eDyn = getDynamicResidual(
+            X_current_dynamic_priori,
+            X_var
+        );
+        
+        JPJt += JDynWRTXNow.transpose() * Ps[1].inverse() * JDynWRTXNow;
+        nJtPf += -JDynWRTXNow.transpose() * Ps[1].inverse() * eDyn;       
+    }
 
 }
 
@@ -507,65 +504,60 @@ void kf::aiekf::setDHJacobianCamera(
 
 }
 
-void kf::aiekf::setGNBlocks(
-    STATE X_var,
-    Eigen::MatrixXd& JPJt,
-    Eigen::VectorXd& nJtPf,
-    vector<Eigen::MatrixXd> Ps
-)
+/*=======set PostOptimize=======*/
+void kf::aiekf::setPostOptimize()
 {
-    Eigen::MatrixXd JCamWRTPose;
-    Eigen::MatrixXd JDynWRTXNow;
-
-    Eigen::VectorXd eCam; // R5
-    Eigen::VectorXd eDyn; // R9
-
-    JPJt.setZero();
-    nJtPf.setZero();
-
+    // update velocity
+    setKalmanGain();
+    // X_previous_posterori
     for(int i = 0; i < Z_current_meas.pts_3d_exists.size(); i++)
     {
-        setDHJacobianCamera(
-            JCamWRTPose,
-            X_var,
-            Z_current_meas.pts_3d_exists[i]
-        );
 
-        JCamWRTPose *= (-1);
-
-        eCam = getCameraResidual(
-            X_var,
-            Z_current_meas.pts_2d_detected[i],
-            Z_current_meas.pts_3d_exists[i]
-        );
-
-        JPJt += JCamWRTPose.transpose() * Ps[0].inverse() * JCamWRTPose;
-        nJtPf += -JCamWRTPose.transpose() * Ps[0].inverse() * eCam;
     }
+    // setDHJacobianCamera(H_k, X_current_posterori, Z_current_meas.pts_3d_exists);
 
-    for(int i = 0; i < 1; i ++)
-    {
-        setDFJacobianDynamic(
-            JDynWRTXNow,
-            X_var,
-            true
-        );
-
-        JDynWRTXNow *= (-1);
-
-        eDyn = getDynamicResidual(
-            X_current_dynamic_priori,
-            X_var
-        );
-
-        std::cout<<eDyn<<std::endl;
-
-        JPJt += JDynWRTXNow.transpose() * Ps[1].inverse() * JDynWRTXNow;
-        nJtPf += -JDynWRTXNow.transpose() * Ps[1].inverse() * eDyn;
-    }
+    
+    // setAdaptiveQ();
+    // setAdaptiveR();
 }
 
+void kf::aiekf::setAdaptiveQ()
+{
+    Eigen::Vector2d innovation;
+    // innovation = get_reprojection_error(
+    //     Z_current_meas.pts_3d_exists,
+    //     Z_current_meas.pts_2d_detected,
+    //     Z_current_meas.pose_initial_SE3,
+    //     false
+    // );
+    
+    Q_k = QAdaptiveAlpha 
+            * Q_k 
+            + (1 - QAdaptiveAlpha) 
+            * (K_k * innovation * innovation.transpose() * K_k.transpose());
 
+}
+
+void kf::aiekf::setAdaptiveR()
+{
+    Eigen::Vector2d residual;
+    // residual = get_reprojection_error(
+    //     Z_current_meas.pts_3d_exists,
+    //     Z_current_meas.pts_2d_detected,
+    //     X_current_posterori.X_SE3,
+    //     false
+    // );
+
+}
+
+void kf::aiekf::setKalmanGain()
+{
+    K_k = X_current_dynamic_priori.PCov // R 9*9
+        * H_k.transpose()                  // R 9*2
+        * (H_k * X_current_camera_priori.PCov * H_k.transpose() + R_k).inverse(); // R 2*2
+}
+
+/*=======get Residual and Cost=======*/
 Eigen::VectorXd kf::aiekf::getDynamicResidual(
     STATE priori_X,
     STATE X
@@ -585,6 +577,9 @@ Eigen::VectorXd kf::aiekf::getDynamicResidual(
     returnResidual.head(posSize + angSize) = (priori_X.X_SE3 * X.X_SE3.inverse()).log();
     returnResidual.tail(velSize) = (priori_X.V_SE3 * X.V_SE3.inverse()).log().head(velSize);
     
+    // std::cout<<"in getDynamice"<<std::endl;
+    // std::cout<<returnResidual<<std::endl<<std::endl;;
+
     return returnResidual;
 }
 
@@ -614,6 +609,7 @@ Eigen::VectorXd kf::aiekf::getCameraResidual(
     return eCam;
 }
 
+
 double kf::aiekf::getCost(STATE X)
 {
     double eTotal = 0;
@@ -632,6 +628,7 @@ double kf::aiekf::getCost(STATE X)
     return eTotal;
 }
 
+/*=======utilities=======*/
 Eigen::Matrix3d kf::aiekf::skewSymmetricMatrix(const Eigen::Vector3d w)
 {
   Eigen::Matrix3d Omega;
