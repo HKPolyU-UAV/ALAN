@@ -256,22 +256,20 @@ void alan::LedNodelet::apiKF(int DOKF)
     {
     case kfINITIATE:
         /* code */
-        Z_current_meas.pose_initial_SE3 = pose_global_sophus;
-        // Z_
+        setMeasurement(pose_global_sophus);
         initKF();
         break;
     
     case kfREINITIATE:
         /* code */
-        Z_current_meas.pose_initial_SE3 = pose_global_sophus;
+        setMeasurement(pose_global_sophus);
         reinitKF();
         break;
 
     case kfNORMALKF:
         /* code */
-        Z_current_meas.pose_initial_SE3 = pose_epnp_sophus;
-        Z_current_meas.pts_3d_exists = pts_on_body_frame_in_corres_order;
-        Z_current_meas.pts_2d_detected = pts_detected_in_corres_order;
+        // Measurement Here;
+        setMeasurement(pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);
 
         run_AIEKF(
             led_pose_header.stamp.toSec() - led_pose_header_previous.stamp.toSec()
@@ -331,8 +329,7 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
         return false;
     }
     else
-    {          
-        // solve_pnp_initial_pose(pts_detected_in_corres_order, pts_on_body_frame_in_corres_order);        
+    {      
         apiKF(kfNORMALKF);
 
         return true;
