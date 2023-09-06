@@ -49,7 +49,7 @@ namespace vision{
             Sophus::SE3d& pose, 
             std::vector<Eigen::Vector3d> pts_3d_exists, 
             std::vector<Eigen::Vector2d> pts_2d_detected,
-            double BA_error
+            double& BA_error
         );
         virtual void solveJacobianCamera(
             Eigen::MatrixXd& Jacob, 
@@ -124,7 +124,7 @@ void vision::cameraModel::camOptimize(
     Sophus::SE3d& pose, 
     std::vector<Eigen::Vector3d> pts_3d_exists, 
     std::vector<Eigen::Vector2d> pts_2d_detected,
-    double BA_error
+    double& BA_error
 )
 {
     //execute Gaussian-Newton Method

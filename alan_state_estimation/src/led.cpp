@@ -256,23 +256,21 @@ void alan::LedNodelet::apiKF(int DOKF)
     {
     case kfINITIATE:
         /* code */
-        setMeasurement(pose_global_sophus);
-        initKF();
+        initKF(pose_global_sophus);
         break;
     
     case kfREINITIATE:
         /* code */
-        setMeasurement(pose_global_sophus);
-        reinitKF();
+        reinitKF(pose_global_sophus);
         break;
 
     case kfNORMALKF:
         /* code */
         // Measurement Here;
-        setMeasurement(pts_on_body_frame_in_corres_order, pts_detected_in_corres_order);
-
         run_AIEKF(
-            led_pose_header.stamp.toSec() - led_pose_header_previous.stamp.toSec()
+            led_pose_header.stamp.toSec() - led_pose_header_previous.stamp.toSec(),
+            pts_on_body_frame_in_corres_order, 
+            pts_detected_in_corres_order
         );
         break;
     
