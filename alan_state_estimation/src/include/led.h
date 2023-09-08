@@ -163,29 +163,29 @@ namespace alan
         //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
        
-            // double get_reprojection_error(std::vector<Eigen::Vector3d> pts_3d, 
-            //     std::vector<Eigen::Vector2d> pts_2d, 
-            //     Sophus::SE3d pose, 
-            //     bool draw_reproject) 
-            //         override
-            //     {
-            //         double e = 0;
+            double get_reprojection_error(std::vector<Eigen::Vector3d> pts_3d, 
+                std::vector<Eigen::Vector2d> pts_2d, 
+                Sophus::SE3d pose, 
+                bool draw_reproject) 
+                    override
+                {
+                    double e = 0;
 
-            //         Eigen::Vector2d reproject, error;
+                    Eigen::Vector2d reproject, error;
 
-            //         for(int i = 0; i < pts_3d.size(); i++)
-            //         {
-            //             reproject = reproject_3D_2D(pts_3d[i], pose);
-            //             error = pts_2d[i] - reproject;
-            //             e = e + error.norm();
+                    for(int i = 0; i < pts_3d.size(); i++)
+                    {
+                        reproject = reproject_3D_2D(pts_3d[i], pose);
+                        error = pts_2d[i] - reproject;
+                        e = e + error.norm();
 
-            //             if(draw_reproject)
-            //                 cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+                        if(draw_reproject)
+                            cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
                         
-            //         }
+                    }
 
-            //         return e;
-            //     };         
+                    return e;
+                };         
 
         //main process & kf
             // kf::MEASUREMENT global_meas_at_k; 
@@ -492,9 +492,6 @@ namespace alan
             {
                 double Q_val;
                 double R_val;
-                
-                int kf_size;
-                int kfZ_size;
 
                 nh.getParam("/alan_master/Q_val", Q_val);
                 nh.getParam("/alan_master/R_val", R_val);

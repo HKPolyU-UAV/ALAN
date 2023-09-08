@@ -282,13 +282,14 @@ void alan::LedNodelet::apiKF(int DOKF)
 
 void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 {
-    double t0 = ros::Time::now().toSec();
     std::vector<Eigen::Vector2d> pts_2d_detect;
+    double t0 = ros::Time::now().toSec();
     bool sufficient_pts = LED_pts_measurement(
         frame,
         depth,
         pts_2d_detect
     );
+    double t1 = ros::Time::now().toSec();
 
     if(!sufficient_pts)
     {
@@ -296,11 +297,16 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
         LED_tracker_initiated_or_tracked = false;
         return;
     }
-                       
+    double t2 = ros::Time::now().toSec();
     if(!search_corres_and_pose_predict(pts_2d_detect))
     {
         LED_tracker_initiated_or_tracked = false;                                    
     }
+    double t3 = ros::Time::now().toSec();
+
+    std::cout<<"==================="<<std::endl;
+    std::cout<<(t1 - t0)<<std::endl;
+    std::cout<<(t3 - t2)<<std::endl;
 }
 
 bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2d> pts_2d_detect)
@@ -316,7 +322,7 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
         {   
             pts_detected_in_corres_order.push_back(corres_global[i].pts_2d_correspond);             
             pts_on_body_frame_in_corres_order.push_back(pts_on_body_frame[i]);
-            corres_global[i].detected_ornot = false; //reset for next time step
+            corres_global[i].detected_ornot = false; // reset for next time step
         }        
     }
 
@@ -329,6 +335,16 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
     else
     {      
         apiKF(kfNORMALKF);
+        double reproject_error = get_reprojection_error(
+            pts_on_body_frame_in_corres_order,
+            pts_detected_in_corres_order,
+            pose_global_sophus,
+            true
+        );
+        
+        pose_global_sophus = returnResults.X.X_SE3;
+        BA_error = returnResults.residual_error;
+
 
         return true;
     }    
@@ -1024,6 +1040,8 @@ void alan::LedNodelet::correspondence_search_kmeans(std::vector<Eigen::Vector2d>
         pts.emplace_back(cv::Point2f(reproject_temp.x(), reproject_temp.y()));
     }
 
+    // double lala = get_reprojection_error()
+
     //first emplace back pts_on_body_frame in 2D at this frame
     //in preset order
 
@@ -1224,6 +1242,14 @@ void alan::LedNodelet::set_image_to_publish(double freq, const sensor_msgs::Comp
     for_visual_input.encoding = sensor_msgs::image_encodings::BGR8;
     for_visual_input.image = frame_input;
     this->pubimage_input.publish(for_visual_input.toImageMsg());   
+
+    if(BA_error > 100)
+    {
+        cv::imwrite("/home/patty/alan_ws/haha.jpg", display);
+        // cv::imwrite("/home/patty/alan_ws/lala.jpg", frame_input);
+        detect_no = 0;            
+        ros::shutdown();
+    }
     // cv::imwrite("/home/patty/alan_ws/src/alan/alan_state_estimation/src/test/in_camera_frame/"+ std::to_string(i)+ ".png", display); 
     // i++;
 }
