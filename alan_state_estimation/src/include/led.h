@@ -141,7 +141,7 @@ namespace alan
             message_filters::Subscriber<sensor_msgs::CompressedImage> subimage;
             message_filters::Subscriber<sensor_msgs::Image> subdepth;
             typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> MySyncPolicy;
-            typedef message_filters::Synchronizer<MySyncPolicy> sync;//(MySyncPolicy(10), subimage, subdepth);
+            typedef message_filters::Synchronizer<MySyncPolicy> sync;// (MySyncPolicy(10), subimage, subdepth);
             boost::shared_ptr<sync> sync_;                    
             ros::Subscriber ugv_pose_sub, uav_pose_sub;
             ros::Subscriber uav_setpt_sub;
@@ -209,7 +209,6 @@ namespace alan
 
             std::vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
             std::vector<Eigen::Vector2d> pts_detected_in_corres_order;
-
             
             bool LED_pts_measurement(
                 cv::Mat& frame, 
@@ -226,8 +225,20 @@ namespace alan
             int LED_no;
             int LED_r_no;
             int LED_g_no;
-            //functions       
-            void correspondence_search_kmeans(std::vector<Eigen::Vector2d> pts_2d_detected);        
+            int last_frame_no;
+            int current_frame_no;
+            std::vector<Eigen::Vector2d> pts_2d_detect_correct_order;
+            //functions    
+            void correspondence_search_reproject(
+                std::vector<Eigen::Vector3d> pts_3d_exists, 
+                std::vector<Eigen::Vector2d> pts_2d_detected
+            );
+            void correspondence_search_2D2DCompare(
+                std::vector<Eigen::Vector2d> pts_2d_detected_previous,
+                std::vector<Eigen::Vector2d> pts_2d_detected
+            );   
+            void correspondence_search_kmeans(std::vector<Eigen::Vector2d> pts_2d_detected);
+            void correspondence_search_kmeans_test(std::vector<Eigen::Vector2d> pts_2d_detected);        
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
                       
         //outlier rejection 

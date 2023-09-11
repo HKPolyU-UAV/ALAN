@@ -69,7 +69,6 @@ namespace kf
     {
     private:
         /* ================ states here ================ */
-        STATE XcurrentPosterori;      // X @ k
         STATE XpreviousPosterori;     // X @ k - 1
         STATE XprePreviousPosterori;  // X @ k - 2
         STATE XcurrentDynamicPriori;  // X @ k, priori
@@ -159,6 +158,7 @@ namespace kf
         ~aiekf(){
             std::cout<<"EXIT AIEKF"<<std::endl;
         };
+        STATE XcurrentPosterori;      // X @ k
 
         /* ================ main flow ================ */
         void initKF(Sophus::SE3d pose_initial_sophus);
@@ -183,8 +183,6 @@ namespace kf
 
         int MAX_ITERATION = 0;
         double CONVERGE_THRESHOLD = 0;
-
-        FINAL_RETURN returnResults;
     };
 }
 
@@ -260,6 +258,10 @@ void kf::aiekf::setPredict()
 
     XcurrentDynamicPriori.X_SE3 = 
         Sophus::SE3d::exp(dx.head(6)) * XpreviousPosterori.X_SE3 ;
+
+    // std::cout<<XcurrentDynamicPriori.X_SE3.matrix()<<std::endl;
+
+
 
     XcurrentDynamicPriori.V_SE3 = 
         XpreviousPosterori.V_SE3 * Sophus::SE3d(Eigen::Matrix3d::Identity(), dx.tail(3));
@@ -390,20 +392,25 @@ void kf::aiekf::doOptimize()
     int i = 0;
     double cost = 0, lastcost = INFINITY;
 
-    // ROS_BLUE_STREAM("OPTIMIZATION METRIC:...");
+    std::cout<<std::endl<<std::endl<<std::endl<<std::endl;
 
-    // std::cout<<"before cam residual:  "<<get_reprojection_error(
-    //     ZcurrentMeas.pts_3d_exists,
-    //     ZcurrentMeas.pts_2d_detected,
-    //     X_var.X_SE3,
-    //     false
-    // )<<std::endl;;
-    // std::cout<<"before dyn residual: "
-    //     <<getDynamicResidual(
-    //         XcurrentDynamicPriori,
-    //         X_var
-    //     ).norm()
-    //     <<std::endl<<std::endl;
+    ROS_BLUE_STREAM("OPTIMIZATION METRIC:...");
+
+    std::cout<<"before cam residual:  "<<get_reprojection_error(
+        ZcurrentMeas.pts_3d_exists,
+        ZcurrentMeas.pts_2d_detected,
+        X_var.X_SE3,
+        false
+    )<<std::endl;;
+    std::cout<<"before dyn residual: "
+        <<getDynamicResidual(
+            XcurrentDynamicPriori,
+            X_var
+        ).norm()
+        <<std::endl<<std::endl;
+    
+    std::cout<<"start:..."<<std::endl;
+    std::cout<<X_var.X_SE3.matrix()<<std::endl<<std::endl;
 
     /* ================================================================= */
     double t0 = ros::Time::now().toSec();
@@ -444,9 +451,15 @@ void kf::aiekf::doOptimize()
             break;
     }
 
-    double t1 = ros::Time::now().toSec();
-    std::cout<<"opti time: "<<t1 - t0 <<std::endl;
-    /* ================================================================= */
+    XcurrentPosterori = X_var;
+
+
+
+
+
+    // double t1 = ros::Time::now().toSec();
+    // std::cout<<"opti time: "<<t1 - t0 <<std::endl;
+    // /* ================================================================= */
 
     double e1 = get_reprojection_error(
         ZcurrentMeas.pts_3d_exists,
@@ -460,16 +473,14 @@ void kf::aiekf::doOptimize()
         X_var
     ).norm();
 
-    // std::cout<<"\nafter cam residual: "<<e1<<std::endl;
-    // std::cout<<"after dyn residual: "<<e2<<std::endl<<std::endl;
+    std::cout<<"\nafter cam residual: "<<e1<<std::endl;
+    std::cout<<"after dyn residual: "<<e2<<std::endl<<std::endl;
 
-    // std::cout<<"=================================="<<std::endl<<std::endl;
+    std::cout<<"=================================="<<std::endl<<std::endl;
 
-    // std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
+    std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
     // std::cout<<"dx.norm(): "<<dx.norm()<<std::endl<<dx<<std::endl;
 
-    returnResults.X = X_var;
-    returnResults.residual_error = e1 + e2;
 }
 
 void kf::aiekf::setGNBlocks(
@@ -680,7 +691,7 @@ double kf::aiekf::getCost(STATE X)
 /*=======set PostOptimize=======*/
 void kf::aiekf::setPostOptimize()
 {
-    setDHJacobianMeasurement(H_k, returnResults.X, ZcurrentMeas.mean3d);
+    setDHJacobianMeasurement(H_k, XcurrentPosterori, ZcurrentMeas.mean3d);
     setKalmanGain(); // R 9*5
     setPosterioriCovariance();
     setMisc();
@@ -730,8 +741,6 @@ void kf::aiekf::setPosterioriCovariance()
 
 void kf::aiekf::setMisc()
 {
-    returnResults.COV_MAT= XcurrentPosterori.PCov;
-    // returnResults.delta_now_then
     XprePreviousPosterori = XpreviousPosterori;
     XpreviousPosterori = XcurrentPosterori;
 

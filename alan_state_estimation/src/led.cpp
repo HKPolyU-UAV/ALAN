@@ -292,13 +292,34 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
     );
     double t1 = ros::Time::now().toSec();
 
+    current_frame_no = pts_2d_detect.size();
+
+    if(last_frame_no == 6 && current_frame_no == 6)
+    {
+
+    }
+    else if(last_frame_no < 6 && current_frame_no == 6)
+    {
+
+    }
+    else if(last_frame_no == 6 && current_frame_no < 6)
+    {
+
+    }
+    else
+    {
+
+    }
+
     if(!sufficient_pts)
     {
         ROS_RED_STREAM("INSUFFICIENT LED DETECTED");
         LED_tracker_initiated_or_tracked = false;
         return;
     }
-
+    
+    std::cout<<"==================="<<std::endl;
+    std::cout<<pts_2d_detect.size()<<std::endl;
     double t2 = ros::Time::now().toSec();
     if(!search_corres_and_pose_predict(pts_2d_detect))
     {
@@ -313,11 +334,7 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 
 bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2d> pts_2d_detect)
 {
-    double t0 = ros::Time::now().toSec();
-    correspondence_search_kmeans(pts_2d_detect);
-    double t1 = ros::Time::now().toSec();
-    // std::cout<<"====corr time===="<<std::endl;
-    // std::cout<<(t1 - t0)<<std::endl;
+    correspondence_search_kmeans(pts_2d_detect);   
 
     pts_on_body_frame_in_corres_order.clear();
     pts_detected_in_corres_order.clear(); 
@@ -337,27 +354,26 @@ bool alan::LedNodelet::search_corres_and_pose_predict(std::vector<Eigen::Vector2
     if(detect_no < 4)
     {
         std::cout<<"in search_corres: less than 4"<<std::endl;
+        for(auto what : pts_on_body_frame)
+        {
+            Eigen::Vector2d reproject;
+            reproject = reproject_3D_2D(what, pose_global_sophus);
+            cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+        }
+        cv::imwrite("/home/patty/alan_ws/lala.jpg", display);
         return false;
     }
     else
     {      
-        double t10 = ros::Time::now().toSec();
         apiKF(kfNORMALKF);
-        double reproject_error = get_reprojection_error(
+        pose_global_sophus = XcurrentPosterori.X_SE3;
+        
+        BA_error = get_reprojection_error(
             pts_on_body_frame_in_corres_order,
             pts_detected_in_corres_order,
             pose_global_sophus,
             true
         );
-        double t11 = ros::Time::now().toSec();
-
-        // std::cout<<"====opti time===="<<std::endl;
-        // std::cout<<(t11 - t10)<<std::endl;
-
-        
-        pose_global_sophus = returnResults.X.X_SE3;
-        BA_error = returnResults.residual_error;
-
 
         return true;
     }    
@@ -831,7 +847,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
 
         correspondence::matchid corres_temp;
         
-        std::vector<Eigen::Vector2d> pts_2d_detect_correct_order;
+        pts_2d_detect_correct_order.clear();
         
         for(auto what : final_corres)
         {
@@ -853,6 +869,7 @@ bool alan::LedNodelet::LED_tracking_initialize(cv::Mat& frame, cv::Mat depth)
         );
 
         detect_no = 6;
+        last_frame_no = 6;
 
         return true;
     }
@@ -980,7 +997,7 @@ bool alan::LedNodelet::reinitialization(std::vector<Eigen::Vector2d> pts_2d_dete
 
         correspondence::matchid corres_temp;
         
-        std::vector<Eigen::Vector2d> pts_2d_detect_correct_order;
+        pts_2d_detect_correct_order.clear();
         
         for(auto what : final_corres)
         {
@@ -1009,6 +1026,8 @@ bool alan::LedNodelet::reinitialization(std::vector<Eigen::Vector2d> pts_2d_dete
         return false;
 }
 
+/* ================ k-means utilities function below ================ */
+
 
 /* ================ k-means utilities function below ================ */
 
@@ -1027,8 +1046,6 @@ void alan::LedNodelet::correspondence_search_kmeans(std::vector<Eigen::Vector2d>
 
         pts.emplace_back(cv::Point2f(reproject_temp.x(), reproject_temp.y()));
     }
-
-    // double lala = get_reprojection_error()
 
     //first emplace back pts_on_body_frame in 2D at this frame
     //in preset order
@@ -1069,6 +1086,12 @@ void alan::LedNodelet::correspondence_search_kmeans(std::vector<Eigen::Vector2d>
     }
 }
 
+void alan::LedNodelet::correspondence_search_kmeans_test(std::vector<Eigen::Vector2d> pts_2d_detected)
+{
+    // for(auto what : pts_2d_detected_correct_)
+    
+
+}
 
 /* ================ Outlier Rejection utilities function below ================ */
     /* in outlier rejection, we first calculate the MAD (mean average deviation)
