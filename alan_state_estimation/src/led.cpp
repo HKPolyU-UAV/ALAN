@@ -474,42 +474,22 @@ bool alan::LedNodelet::LED_pts_measurement(
 }
 
 std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, cv::Mat depth)
-{    
-    
+{   
     cv::Mat depth_mask_src = depth.clone(), depth_mask_dst1, depth_mask_dst2;
 
-    cv::threshold(depth_mask_src, depth_mask_dst1, LANDING_DISTANCE * 1000, 50000, cv::THRESH_BINARY_INV); //filter out far depths
+    cv::threshold(depth_mask_src, depth_mask_dst1, LANDING_DISTANCE * 1000, 50000, cv::THRESH_BINARY_INV);
+    //filter out far depths
 
-    cv::threshold(depth_mask_src, depth_mask_dst2, 0.5, 50000, cv::THRESH_BINARY); //filter out zeros
+    cv::threshold(depth_mask_src, depth_mask_dst2, 0.5, 50000, cv::THRESH_BINARY); 
+    //filter out zeros
 
     cv::bitwise_and(depth_mask_dst1, depth_mask_dst2, depth_mask_src);
     
     depth_mask_src.convertTo(depth_mask_src, CV_8U);
-
-    
-    // cv::Mat d_img = depth;
-    // int size = d_img.cols * d_img.rows;
-
-    // double t0 = ros::Time::now().toSec();
-    // for(int i=0; i < size; i++)
-    // {
-    //     if(isnan(d_img.at<ushort>(i)))
-    //     {
-    //         d_img.at<ushort>(i) = 0;
-    //     }
-    //     if(d_img.at<ushort>(i) > 10000|| d_img.at<ushort>(i) < 100)
-    //     {
-    //         d_img.at<ushort>(i) = 0;
-    //     }
-    // }
-    // double t1 = ros::Time::now().toSec();
-
-    // std::cout<< (t1 - t0) * 1000<<std::endl;
    
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     cv::threshold(frame, frame, BINARY_THRES, 255, cv::THRESH_BINARY);
     frame_initial_thresholded = frame.clone();
-
 
     //detect frame after filter out background
     cv::bitwise_and(depth_mask_src, frame, frame); //filter out with depth information
@@ -530,9 +510,6 @@ std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, c
     detector->detect(frame, keypoints_rgb_d);
 	cv::drawKeypoints( frame, keypoints_rgb_d, im_with_keypoints,CV_RGB(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
 
-    // cv::imshow("frame", frame);
-    // cv::waitKey(10);
-    
     
     blobs_for_initialize = keypoints_rgb_d;
 
