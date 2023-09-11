@@ -88,7 +88,7 @@ namespace alan
     {
         //primary objects
             //frames
-            cv::Mat frame, display, hsv;
+            cv::Mat frame, display, hsv, frame_temp;
             cv::Mat frame_input;
             cv::Mat im_with_keypoints;
             cv::Mat frame_initial_thresholded;

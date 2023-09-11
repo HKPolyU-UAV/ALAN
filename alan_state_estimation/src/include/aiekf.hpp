@@ -239,11 +239,15 @@ void kf::aiekf::run_AIEKF(
     this->deltaT = deltaT_;
 
     setPredict(); 
-    setMeasurement(pts_on_body_frame_in_corres_order,pts_detected_in_corres_order);
 
+    setMeasurement(pts_on_body_frame_in_corres_order,pts_detected_in_corres_order);
+    
     setPreOptimize();
+    
     doOptimize();
+    
     setPostOptimize();
+    
 }
 
 /*=======set Predict=======*/
@@ -340,7 +344,7 @@ void kf::aiekf::calculatePtsAverage()
     if(n != ZcurrentMeas.pts_2d_detected.size())
     {
         ROS_RED_STREAM("MEASUREMENT GOT ERROR; SIZE DIFFERENT!");
-        ros::shutdown();
+        // ros::shutdown();
     }
 
     Eigen::Vector3d sum3d;
@@ -402,9 +406,11 @@ void kf::aiekf::doOptimize()
     //     <<std::endl<<std::endl;
 
     /* ================================================================= */
-    
+    double t0 = ros::Time::now().toSec();
     for(i = 0; i < MAX_ITERATION; i++)
     {
+        
+
         setGNBlocks(
             X_var,
             JPJt, 
@@ -438,6 +444,8 @@ void kf::aiekf::doOptimize()
             break;
     }
 
+    double t1 = ros::Time::now().toSec();
+    std::cout<<"opti time: "<<t1 - t0 <<std::endl;
     /* ================================================================= */
 
     double e1 = get_reprojection_error(
