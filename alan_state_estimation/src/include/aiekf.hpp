@@ -443,7 +443,7 @@ void kf::aiekf::doOptimize()
         if(cost > lastcost)
         {
             ROS_RED_STREAM("OPTIMIZATION DIVERGE!!!");
-            break;
+            // break;
         }
         lastcost = cost;
 
