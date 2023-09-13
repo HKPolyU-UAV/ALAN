@@ -95,6 +95,12 @@ namespace pc
     }
     return os;
   }
+
+  inline void pattyDebug(std::string debug_message)
+  {
+      ROS_INFO_STREAM(pc::RED << "DEBUG! -> " << debug_message << pc::ENDCOLOR);
+      ros::shutdown();
+  }
 } //namespace pc
 
 #define ROS_BLACK_STREAM(x)   ROS_INFO_STREAM(pc::BLACK   << x << pc::ENDCOLOR)

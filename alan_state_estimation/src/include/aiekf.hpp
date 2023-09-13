@@ -346,7 +346,7 @@ void kf::aiekf::calculatePtsAverage()
     if(n != ZcurrentMeas.pts_2d_detected.size())
     {
         ROS_RED_STREAM("MEASUREMENT GOT ERROR; SIZE DIFFERENT!");
-        // ros::shutdown();
+
     }
 
     Eigen::Vector3d sum3d;
@@ -408,16 +408,11 @@ void kf::aiekf::doOptimize()
             X_var
         ).norm()
         <<std::endl<<std::endl;
-    
-    std::cout<<"start:..."<<std::endl;
-    std::cout<<X_var.X_SE3.matrix()<<std::endl<<std::endl;
 
     /* ================================================================= */
     double t0 = ros::Time::now().toSec();
     for(i = 0; i < MAX_ITERATION; i++)
-    {
-        
-
+    {    
         setGNBlocks(
             X_var,
             JPJt, 
@@ -428,9 +423,8 @@ void kf::aiekf::doOptimize()
         //solve Adx = b
         dx = JPJt.ldlt().solve(nJtPf);
 
-        for(int i = 0; i < dx.size(); i++)
-            if(isnan(dx(i,0)))
-                break;
+        if(isnan(dx(0,0)))
+            break;
 
         dx_pose_se3 = dx.head(6);
         dx_velo_se3 << dx.tail(3), Eigen::Vector3d::Zero();
@@ -439,13 +433,19 @@ void kf::aiekf::doOptimize()
         X_var.V_SE3 = Sophus::SE3d::exp(dx_velo_se3) * X_var.V_SE3;
 
         cost = getCost(X_var);
-        lastcost = cost;
+        
+        std::cout<<"cost: "<<std::endl;
+        std::cout<<cost<<std::endl;
+        std::cout<<"lastcost:"<<std::endl;
+        std::cout<<lastcost<<std::endl;
+        std::cout<<std::endl;
 
-        if(lastcost > cost)
+        if(cost > lastcost)
         {
-            // ROS_RED_STREAM("OPTIMIZATION DIVERGE!!!");
+            ROS_RED_STREAM("OPTIMIZATION DIVERGE!!!");
             break;
         }
+        lastcost = cost;
 
         if(dx.norm() < CONVERGE_THRESHOLD)        
             break;
@@ -453,12 +453,8 @@ void kf::aiekf::doOptimize()
 
     XcurrentPosterori = X_var;
 
-
-
-
-
     // double t1 = ros::Time::now().toSec();
-    // std::cout<<"opti time: "<<t1 - t0 <<std::endl;
+    std::cout<<"end opti!"<<std::endl;
     // /* ================================================================= */
 
     double e1 = get_reprojection_error(
@@ -744,7 +740,6 @@ void kf::aiekf::setMisc()
     XprePreviousPosterori = XpreviousPosterori;
     XpreviousPosterori = XcurrentPosterori;
 
-    // ros::shutdown();
 }
 
 void kf::aiekf::setAdaptiveQ()

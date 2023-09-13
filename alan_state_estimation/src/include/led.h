@@ -103,7 +103,11 @@ namespace alan
 
             //LED config and correspondences
             std::vector<Eigen::Vector3d> pts_on_body_frame;
-            std::vector<correspondence::matchid> corres_global;
+
+            // detect_no, correspondences(in order of 0->5)
+            std::tuple<int, std::vector<correspondence::matchid>> corres_global_current;
+            std::tuple<int, std::vector<correspondence::matchid>> corres_global_previous;
+
             Eigen::VectorXd LEDEX;
 
             //poses
@@ -163,29 +167,30 @@ namespace alan
         //solve pose & tools
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
        
-            double get_reprojection_error(std::vector<Eigen::Vector3d> pts_3d, 
+            double get_reprojection_error(
+                std::vector<Eigen::Vector3d> pts_3d, 
                 std::vector<Eigen::Vector2d> pts_2d, 
                 Sophus::SE3d pose, 
-                bool draw_reproject) 
-                    override
+                bool draw_reproject
+            ) override
+            {
+                double e = 0;
+
+                Eigen::Vector2d reproject, error;
+
+                for(int i = 0; i < pts_3d.size(); i++)
                 {
-                    double e = 0;
+                    reproject = reproject_3D_2D(pts_3d[i], pose);
+                    error = pts_2d[i] - reproject;
+                    e = e + error.norm();
 
-                    Eigen::Vector2d reproject, error;
+                    if(draw_reproject)
+                        cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
+                    
+                }
 
-                    for(int i = 0; i < pts_3d.size(); i++)
-                    {
-                        reproject = reproject_3D_2D(pts_3d[i], pose);
-                        error = pts_2d[i] - reproject;
-                        e = e + error.norm();
-
-                        if(draw_reproject)
-                            cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
-                        
-                    }
-
-                    return e;
-                };         
+                return e;
+            };         
 
         //main process & kf
             // kf::MEASUREMENT global_meas_at_k; 
@@ -195,7 +200,6 @@ namespace alan
 
             void apiKF(int DOKF);
             void recursive_filtering(cv::Mat& frame, cv::Mat depth);        
-            bool search_corres_and_pose_predict(std::vector<Eigen::Vector2d> pts_2d_detect);
 
         //pnp + BA
             void solve_pnp_initial_pose(std::vector<Eigen::Vector2d> pts_2d, std::vector<Eigen::Vector3d> body_frame_pts);
@@ -216,6 +220,7 @@ namespace alan
                 std::vector<Eigen::Vector2d>& pts_2d_detected
             );
             std::vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
+            std::vector<Eigen::Vector2d> LED_extract_POI_alter(cv::Mat& frame, cv::Mat depth);
             std::vector<Eigen::Vector3d> pointcloud_generate(std::vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
             bool get_final_POI(std::vector<Eigen::Vector2d>& pts_2d_detected);
 
@@ -225,20 +230,21 @@ namespace alan
             int LED_no;
             int LED_r_no;
             int LED_g_no;
-            int last_frame_no;
-            int current_frame_no;
+            // int last_frame_no;
+            // int current_frame_no;
             std::vector<Eigen::Vector2d> pts_2d_detect_correct_order;
             //functions    
-            void correspondence_search_reproject(
-                std::vector<Eigen::Vector3d> pts_3d_exists, 
-                std::vector<Eigen::Vector2d> pts_2d_detected
+            void get_correspondence(
+                std::vector<Eigen::Vector2d>& pts_2d_detected
+            );
+            std::vector<Eigen::Vector2d> shift2D(
+                std::vector<Eigen::Vector2d>& pts_2D_previous,
+                std::vector<Eigen::Vector2d>& pts_detect_current
             );
             void correspondence_search_2D2DCompare(
-                std::vector<Eigen::Vector2d> pts_2d_detected_previous,
-                std::vector<Eigen::Vector2d> pts_2d_detected
+                std::vector<Eigen::Vector2d>& pts_2d_detected,
+                std::vector<Eigen::Vector2d>& pts_2d_detected_previous
             );   
-            void correspondence_search_kmeans(std::vector<Eigen::Vector2d> pts_2d_detected);
-            void correspondence_search_kmeans_test(std::vector<Eigen::Vector2d> pts_2d_detected);        
             bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
                       
         //outlier rejection 
@@ -292,8 +298,7 @@ namespace alan
                 RosTopicConfigs configs(nh, "/led");
 
                 doALOTofConfigs(nh);
-                
-                                         
+                                                 
             //subscribe                
                 subimage.subscribe(nh, configs.getTopicName(COLOR_SUB_TOPIC), 1);                
                 subdepth.subscribe(nh, configs.getTopicName(DEPTH_SUB_TOPIC), 1);                
@@ -351,7 +356,7 @@ namespace alan
                 camExtrinsic_config(nh);
                 LEDExtrinsicUAV_config(nh);
                 CamInGeneralBody_config(nh);
-                LEDInBody_OutlierSetting_config(nh);
+                LEDInBodyAndOutlierSetting_config(nh);
                 KF_config(nh);
 
                 led_twist_current.resize(6);
@@ -457,7 +462,7 @@ namespace alan
                 );
             }
 
-            inline void LEDInBody_OutlierSetting_config(ros::NodeHandle& nh)
+            inline void LEDInBodyAndOutlierSetting_config(ros::NodeHandle& nh)
             {
                 //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
