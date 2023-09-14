@@ -126,6 +126,7 @@ namespace alan
             geometry_msgs::PoseStamped ugv_pose_msg, 
                                        uav_pose_msg,
                                        uav_stpt_msg;            
+           
             
         //secondary objects
             // double temp = 0;
@@ -261,11 +262,11 @@ namespace alan
                 const sensor_msgs::CompressedImageConstPtr & rgbmsg
             );
             void terminal_msg_display(double hz);
-            void log(double ms);
-
+            void log(double ms);    
+            
             inline Sophus::SE3d posemsg_to_SE3(const geometry_msgs::PoseStamped pose);
             inline geometry_msgs::PoseStamped SE3_to_posemsg(const Sophus::SE3d pose_on_SE3, const std_msgs::Header msgHeader);
-   
+            
             Eigen::VectorXd led_twist_current;    
 
 //---------------------------------------------------------------------------------------
