@@ -188,6 +188,8 @@ namespace alan
             // int current_frame_no;
             std::vector<Eigen::Vector2d> pts_2d_detect_correct_order;
             cv::Point3f pcl_center_point_wo_outlier_previous;
+            Eigen::Vector3d led_3d_posi_in_camera_frame_depth;
+
             //functions    
             void get_correspondence(
                 std::vector<Eigen::Vector2d>& pts_2d_detected

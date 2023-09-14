@@ -300,15 +300,26 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
     std::vector<Eigen::Vector2d> pts_2d_detect;
 
     pts_2d_detect = LED_extract_POI_alter(frame, depth);
+
     detect_no = pts_2d_detect.size();
     std::cout<<"====="<<std::endl;
     std::cout<<detect_no<<std::endl;
 
+    // if(detect_no < 3)
+    // {
+    //     LED_tracker_initiated_or_tracked = false;
+    //     return;
+    // }
+    // reject_outlier(pts_2d_detect, depth);
+    
+    // std::cout<<detect_no<<std::endl;
+
     if(detect_no < 3)
     {
+        std::cout<<i<<std::endl;
         LED_tracker_initiated_or_tracked = false;
-        cv::imwrite("/home/patty/alan_ws/meas_less3" + std::to_string(i) + ".jpg", frame_input);
-
+        cv::imwrite("/home/patty/alan_ws/meas_less3" + std::to_string(detect_no) + "_"+  std::to_string(i) + ".jpg", frame_input);
+        i++;
         return;
     }
 
@@ -319,9 +330,10 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
 
     if(detect_no < 3)
     {
+        std::cout<<i<<std::endl;
         LED_tracker_initiated_or_tracked = false;
-        cv::imwrite("/home/patty/alan_ws/kmeans_less3_" + std::to_string(detect_no) + ".jpg", frame_input);
-
+        cv::imwrite("/home/patty/alan_ws/kmeans_less3_" + std::to_string(detect_no) + "_"+ std::to_string(i) + ".jpg", frame_input);
+        i++;
         return;
     }
 
@@ -687,6 +699,7 @@ std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI_alter(cv::Mat& fr
     cv::Mat final_ROI;
     frame.copyTo(final_ROI, ROI_mask);
     // final input should be final_ROI here!!!!!!!!!!!
+    cv::GaussianBlur(final_ROI, final_ROI, cv::Size(0,0), 1.0, 1.0, cv::BORDER_DEFAULT);
 
     // Blob method
     std::vector<cv::KeyPoint> keypoints_rgb_d;
@@ -714,8 +727,6 @@ std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI_alter(cv::Mat& fr
     std::vector<cv::Point2f> centers;
     cv::Mat labels;
 
-    
-
     // no k-means
         for(auto what : keypoints_rgb_d)
         {
@@ -723,10 +734,17 @@ std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI_alter(cv::Mat& fr
         }   
 
         frame_input = im_with_keypoints.clone();
+        int temp = pts_2d_detected.size();
 
         if(pts_2d_detected.size() > LED_no)
         {
             ROS_WARN("LED_No over detection!!!!");
+            // std::cout<<i<<std::endl;
+            // cv::imwrite("/home/patty/alan_ws/over_detect_" 
+            //             + std::to_string(temp) + "__" + std::to_string(i) + ".jpg", frame_input);
+            // cv::imwrite("/home/patty/alan_ws/over_detect_" 
+            //             + std::to_string(temp) + "__" + std::to_string(i) + "_origin.jpg", frame_temp);
+            // i++;
             // pc::pattyDebug("new method got shit!");
         }
 
@@ -1112,6 +1130,7 @@ void alan::LedNodelet::reject_outlier(std::vector<Eigen::Vector2d>& pts_2d_detec
         || calculate_MAD(norm_of_y_points) > MAD_y_threshold
         || calculate_MAD(norm_of_z_points) > MAD_z_threshold)
     {   
+        ROS_WARN("GOT SOME REJECTION TO DO!");
         // cout<<"got some rejection to do"<<endl;
         cv::kmeans(pts, 2, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
 
@@ -1163,17 +1182,11 @@ void alan::LedNodelet::reject_outlier(std::vector<Eigen::Vector2d>& pts_2d_detec
 
     }
 
-    
     led_3d_posi_in_camera_frame_depth = Eigen::Vector3d(
         pcl_center_point_wo_outlier_previous.x,
         pcl_center_point_wo_outlier_previous.y,
         pcl_center_point_wo_outlier_previous.z
     );
-
-    // cout<<"reject outlier"<<endl;
-    // cout<<led_3d_posi_in_camera_frame_depth.z()<<endl;
-
-
 }
 
 /* ================ UI utilities function below ================ */
