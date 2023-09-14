@@ -392,22 +392,22 @@ void kf::aiekf::doOptimize()
     int i = 0;
     double cost = 0, lastcost = INFINITY;
 
-    std::cout<<std::endl<<std::endl<<std::endl<<std::endl;
+    // std::cout<<std::endl<<std::endl<<std::endl<<std::endl;
 
-    ROS_BLUE_STREAM("OPTIMIZATION METRIC:...");
+    // ROS_BLUE_STREAM("OPTIMIZATION METRIC:...");
 
-    std::cout<<"before cam residual:  "<<get_reprojection_error(
-        ZcurrentMeas.pts_3d_exists,
-        ZcurrentMeas.pts_2d_detected,
-        X_var.X_SE3,
-        false
-    )<<std::endl;;
-    std::cout<<"before dyn residual: "
-        <<getDynamicResidual(
-            XcurrentDynamicPriori,
-            X_var
-        ).norm()
-        <<std::endl<<std::endl;
+    // std::cout<<"before cam residual:  "<<get_reprojection_error(
+    //     ZcurrentMeas.pts_3d_exists,
+    //     ZcurrentMeas.pts_2d_detected,
+    //     X_var.X_SE3,
+    //     false
+    // )<<std::endl;;
+    // std::cout<<"before dyn residual: "
+    //     <<getDynamicResidual(
+    //         XcurrentDynamicPriori,
+    //         X_var
+    //     ).norm()
+    //     <<std::endl<<std::endl;
 
     /* ================================================================= */
     double t0 = ros::Time::now().toSec();
@@ -434,15 +434,15 @@ void kf::aiekf::doOptimize()
 
         cost = getCost(X_var);
         
-        std::cout<<"cost: "<<std::endl;
-        std::cout<<cost<<std::endl;
-        std::cout<<"lastcost:"<<std::endl;
-        std::cout<<lastcost<<std::endl;
-        std::cout<<std::endl;
+        // std::cout<<"cost: "<<std::endl;
+        // std::cout<<cost<<std::endl;
+        // std::cout<<"lastcost:"<<std::endl;
+        // std::cout<<lastcost<<std::endl;
+        // std::cout<<std::endl;
 
         if(cost > lastcost)
         {
-            ROS_RED_STREAM("OPTIMIZATION DIVERGE!!!");
+            // ROS_RED_STREAM("OPTIMIZATION DIVERGE!!!");
             // break;
         }
         lastcost = cost;
@@ -454,7 +454,7 @@ void kf::aiekf::doOptimize()
     XcurrentPosterori = X_var;
 
     // double t1 = ros::Time::now().toSec();
-    std::cout<<"end opti!"<<std::endl;
+    // std::cout<<"end opti!"<<std::endl;
     // /* ================================================================= */
 
     double e1 = get_reprojection_error(
@@ -469,12 +469,12 @@ void kf::aiekf::doOptimize()
         X_var
     ).norm();
 
-    std::cout<<"\nafter cam residual: "<<e1<<std::endl;
-    std::cout<<"after dyn residual: "<<e2<<std::endl<<std::endl;
+    // std::cout<<"\nafter cam residual: "<<e1<<std::endl;
+    // std::cout<<"after dyn residual: "<<e2<<std::endl<<std::endl;
 
-    std::cout<<"=================================="<<std::endl<<std::endl;
+    // std::cout<<"=================================="<<std::endl<<std::endl;
 
-    std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
+    // std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
     // std::cout<<"dx.norm(): "<<dx.norm()<<std::endl<<dx<<std::endl;
 
 }

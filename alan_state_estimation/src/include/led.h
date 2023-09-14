@@ -125,16 +125,13 @@ namespace alan
 
             geometry_msgs::PoseStamped ugv_pose_msg, 
                                        uav_pose_msg,
-                                       uav_stpt_msg;
-            
+                                       uav_stpt_msg;            
             
         //secondary objects
             // double temp = 0;
             int i = 0;
             bool nodelet_activated = false;
-            int detect_no = 0;
-            double BA_error = 0;
-            double depth_avg_of_all = 0;
+            bool tracker_started = false;
             
             std::vector<cv::KeyPoint> blobs_for_initialize;
             int _width = 0, _height = 0;
@@ -164,9 +161,72 @@ namespace alan
             image_transport::Publisher pubimage_input;
             //functions
         
-        //solve pose & tools
-            void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);             
-       
+        
+        //main process & kf
+            void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);
+            void apiKF(int DOKF);
+            void recursive_filtering(cv::Mat& frame, cv::Mat depth);                
+        
+        //LED extraction tool
+            //objects
+            double LANDING_DISTANCE = 0;
+            int BINARY_THRES = 0;
+
+            std::vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
+            std::vector<Eigen::Vector2d> pts_detected_in_corres_order;
+            
+            std::vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
+            std::vector<Eigen::Vector2d> LED_extract_POI_alter(cv::Mat& frame, cv::Mat depth);
+            std::vector<Eigen::Vector3d> pointcloud_generate(std::vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
+
+        // correspondence search
+            //objects
+            int LED_no;
+            int LED_r_no;
+            int LED_g_no;
+            // int last_frame_no;
+            // int current_frame_no;
+            std::vector<Eigen::Vector2d> pts_2d_detect_correct_order;
+            //functions    
+            void get_correspondence(
+                std::vector<Eigen::Vector2d>& pts_2d_detected
+            );
+            std::vector<Eigen::Vector2d> shift2D(
+                std::vector<Eigen::Vector2d>& pts_2D_previous,
+                std::vector<Eigen::Vector2d>& pts_detect_current
+            );
+            void correspondence_search_2D2DCompare(
+                std::vector<Eigen::Vector2d>& pts_2d_detected,
+                std::vector<Eigen::Vector2d>& pts_2d_detected_previous
+            );
+                                  
+        // initialization
+            //objects
+            bool LED_tracker_initiated_or_tracked = false;
+            double MAD_dilate, MAD_max;
+            double MAD_x_threshold = 0, MAD_y_threshold = 0, MAD_z_threshold = 0;
+            double min_blob_size = 0;
+            //functions
+            bool initialization(cv::Mat& frame, cv::Mat depth);
+            void solve_pnp_initial_pose(
+                std::vector<Eigen::Vector2d> pts_2d, 
+                std::vector<Eigen::Vector3d> body_frame_pts
+            );
+            double calculate_MAD(std::vector<double> norm_of_points);
+                    
+        // publish
+            //objects
+            int error_no = 0;
+            int total_no = 0;
+            int detect_no = 0;
+            double BA_error = 0;
+            double depth_avg_of_all = 0;
+            
+            geometry_msgs::PoseStamped led_pose_estimated_msg;
+            geometry_msgs::TwistStamped led_twist_estimated;
+            nav_msgs::Odometry led_odom_estimated;            
+            // functions
+            void map_SE3_to_pose(Sophus::SE3d pose);                        
             double get_reprojection_error(
                 std::vector<Eigen::Vector3d> pts_3d, 
                 std::vector<Eigen::Vector2d> pts_2d, 
@@ -192,97 +252,12 @@ namespace alan
                 return e;
             };         
 
-        //main process & kf
-            // kf::MEASUREMENT global_meas_at_k; 
-            // Eigen::MatrixXd Q_init_;
-            // Eigen::MatrixXd R_init_;
-            // double Q_alpha_, R_beta_;
-
-            void apiKF(int DOKF);
-            void recursive_filtering(cv::Mat& frame, cv::Mat depth);        
-
-        //pnp + BA
-            void solve_pnp_initial_pose(std::vector<Eigen::Vector2d> pts_2d, std::vector<Eigen::Vector3d> body_frame_pts);
-            // void optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3d> pts_3d_exists, std::vector<Eigen::Vector2d> pts_2d_detected);
-            //     //converge problem need to be solved //-> fuck you, your Jacobian was wrong
-            // void solveJacobian(Eigen::Matrix<double, 2, 6>& Jacob, Sophus::SE3d pose, Eigen::Vector3d point_3d);
-        //LED extraction tool
-            //objects
-            double LANDING_DISTANCE = 0;
-            int BINARY_THRES = 0;
-
-            std::vector<Eigen::Vector3d> pts_on_body_frame_in_corres_order;
-            std::vector<Eigen::Vector2d> pts_detected_in_corres_order;
-            
-            bool LED_pts_measurement(
-                cv::Mat& frame, 
-                cv::Mat& depth, 
-                std::vector<Eigen::Vector2d>& pts_2d_detected
-            );
-            std::vector<Eigen::Vector2d> LED_extract_POI(cv::Mat& frame, cv::Mat depth);
-            std::vector<Eigen::Vector2d> LED_extract_POI_alter(cv::Mat& frame, cv::Mat depth);
-            std::vector<Eigen::Vector3d> pointcloud_generate(std::vector<Eigen::Vector2d> pts_2d_detected, cv::Mat depthimage);
-            bool get_final_POI(std::vector<Eigen::Vector2d>& pts_2d_detected);
-
-        //initiation & correspondence 
-            //objects
-            bool LED_tracker_initiated_or_tracked = false;
-            int LED_no;
-            int LED_r_no;
-            int LED_g_no;
-            // int last_frame_no;
-            // int current_frame_no;
-            std::vector<Eigen::Vector2d> pts_2d_detect_correct_order;
-            //functions    
-            void get_correspondence(
-                std::vector<Eigen::Vector2d>& pts_2d_detected
-            );
-            std::vector<Eigen::Vector2d> shift2D(
-                std::vector<Eigen::Vector2d>& pts_2D_previous,
-                std::vector<Eigen::Vector2d>& pts_detect_current
-            );
-            void correspondence_search_2D2DCompare(
-                std::vector<Eigen::Vector2d>& pts_2d_detected,
-                std::vector<Eigen::Vector2d>& pts_2d_detected_previous
-            );   
-            bool LED_tracking_initialize(cv::Mat& frame, cv::Mat depth);
-                      
-        //outlier rejection 
-            //objects
-            cv::Point3f pcl_center_point_wo_outlier_previous;
-            double MAD_dilate, MAD_max;
-            double MAD_x_threshold = 0, MAD_y_threshold = 0, MAD_z_threshold = 0;
-            double min_blob_size = 0;
-            //functions
-            void reject_outlier(std::vector<Eigen::Vector2d>& pts_2d_detect, cv::Mat depth);
-            double calculate_MAD(std::vector<double> norm_of_points);
-        
-        //depth compensation
-            //objects
-            Eigen::Vector3d led_3d_posi_in_camera_frame_depth;
-
-        //reinitialization
-            bool reinitialization(std::vector<Eigen::Vector2d> pts_2d_detect, cv::Mat depth);
-            
-        //publish
-            //objects
-            int error_no = 0;
-            int total_no = 0;
-            geometry_msgs::PoseStamped led_pose_estimated_msg;
-            geometry_msgs::TwistStamped led_twist_estimated;
-            nav_msgs::Odometry led_odom_estimated;            
-            //functions
-            void map_SE3_to_pose(Sophus::SE3d pose);
             void set_image_to_publish(
                 double hz, 
                 const sensor_msgs::CompressedImageConstPtr & rgbmsg
             );
             void terminal_msg_display(double hz);
             void log(double ms);
-            //functions
-            // inline Eigen::Vector3d q2rpy(Eigen::Quaterniond q);
-            // inline Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
-            // inline Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
 
             inline Sophus::SE3d posemsg_to_SE3(const geometry_msgs::PoseStamped pose);
             inline geometry_msgs::PoseStamped SE3_to_posemsg(const Sophus::SE3d pose_on_SE3, const std_msgs::Header msgHeader);
