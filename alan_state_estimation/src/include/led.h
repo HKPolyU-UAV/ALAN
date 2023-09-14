@@ -187,6 +187,7 @@ namespace alan
             // int last_frame_no;
             // int current_frame_no;
             std::vector<Eigen::Vector2d> pts_2d_detect_correct_order;
+            cv::Point3f pcl_center_point_wo_outlier_previous;
             //functions    
             void get_correspondence(
                 std::vector<Eigen::Vector2d>& pts_2d_detected
@@ -199,6 +200,7 @@ namespace alan
                 std::vector<Eigen::Vector2d>& pts_2d_detected,
                 std::vector<Eigen::Vector2d>& pts_2d_detected_previous
             );
+            void reject_outlier(std::vector<Eigen::Vector2d>& pts_2d_detect, cv::Mat depth);
                                   
         // initialization
             //objects
@@ -221,7 +223,7 @@ namespace alan
             int detect_no = 0;
             double BA_error = 0;
             double depth_avg_of_all = 0;
-            
+
             geometry_msgs::PoseStamped led_pose_estimated_msg;
             geometry_msgs::TwistStamped led_twist_estimated;
             nav_msgs::Odometry led_odom_estimated;            
