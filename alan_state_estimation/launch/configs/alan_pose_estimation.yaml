@@ -140,6 +140,27 @@ failsafe_on:
  #1 on, 
  #0 off
 
+# KF-related
+Q_val:
+ 10.0
+R_val_p:
+ 2.0
+R_val_v:
+ 2.0
+Q_alpha:
+ 0.3
+R_beta:
+ 0.4
+kf_size:
+ 9
+kfZ_size:
+ 5
+OPT_MAX_ITERATION:
+ 25
+CONVERGE_THRESHOLD:
+ 0.01
+
+
 
 
 
