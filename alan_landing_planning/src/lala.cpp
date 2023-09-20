@@ -28,15 +28,14 @@
 
 #include "include/bezier_lib/traj_sampling.h"
 
-#include <decomp_ros_msgs/PolyhedronArray.h>
-#include <decomp_geometry/polyhedron.h> 
+
 
 #include "alan_visualization/PolyhedronArray.h"
 #include "alan_visualization/Tangent.h"
 
 #include <mavros_msgs/AttitudeTarget.h>
 
-#include "visualization_msgs/Marker.h"
+#include <visualization_msgs/Marker.h>
 
 
 // #include <decomp_ros_utils/data_ros_utils.h>

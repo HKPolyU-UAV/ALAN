@@ -210,6 +210,10 @@ void kf::aiekf::initKF(Sophus::SE3d pose_initial_sophus)
             
     Q_k = this->Q_init;
     R_k = this->R_init;
+    std::cout<<"R_k"<<std::endl;
+    std::cout<<R_k<<std::endl;
+
+    // ros::shutdown();
 }
 
 void kf::aiekf::reinitKF(Sophus::SE3d pose_reinitial_sophus)
@@ -394,20 +398,20 @@ void kf::aiekf::doOptimize()
 
     // std::cout<<std::endl<<std::endl<<std::endl<<std::endl;
 
-    // ROS_BLUE_STREAM("OPTIMIZATION METRIC:...");
+    ROS_BLUE_STREAM("OPTIMIZATION METRIC:...");
 
-    // std::cout<<"before cam residual:  "<<get_reprojection_error(
-    //     ZcurrentMeas.pts_3d_exists,
-    //     ZcurrentMeas.pts_2d_detected,
-    //     X_var.X_SE3,
-    //     false
-    // )<<std::endl;;
-    // std::cout<<"before dyn residual: "
-    //     <<getDynamicResidual(
-    //         XcurrentDynamicPriori,
-    //         X_var
-    //     ).norm()
-    //     <<std::endl<<std::endl;
+    std::cout<<"before cam residual:  "<<get_reprojection_error(
+        ZcurrentMeas.pts_3d_exists,
+        ZcurrentMeas.pts_2d_detected,
+        X_var.X_SE3,
+        false
+    )<<std::endl;;
+    std::cout<<"before dyn residual: "
+        <<getDynamicResidual(
+            XcurrentDynamicPriori,
+            X_var
+        ).norm()
+        <<std::endl<<std::endl;
 
     /* ================================================================= */
     double t0 = ros::Time::now().toSec();
@@ -419,6 +423,10 @@ void kf::aiekf::doOptimize()
             nJtPf,
             info_matrix
         );
+
+        // std::cout<<"linear system here:..."<<std::endl<<std::endl;;
+        // std::cout<<JPJt<<std::endl<<std::endl;;
+        // std::cout<<nJtPf<<std::endl<<std::endl;;
 
         //solve Adx = b
         dx = JPJt.ldlt().solve(nJtPf);
@@ -469,13 +477,14 @@ void kf::aiekf::doOptimize()
         X_var
     ).norm();
 
-    // std::cout<<"\nafter cam residual: "<<e1<<std::endl;
-    // std::cout<<"after dyn residual: "<<e2<<std::endl<<std::endl;
+    std::cout<<"\nafter cam residual: "<<e1<<std::endl;
+    std::cout<<"after dyn residual: "<<e2<<std::endl<<std::endl;
 
-    // std::cout<<"=================================="<<std::endl<<std::endl;
+    std::cout<<"=================================="<<std::endl<<std::endl;
 
-    // std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
-    // std::cout<<"dx.norm(): "<<dx.norm()<<std::endl<<dx<<std::endl;
+    std::cout<<"gone thru: "<<i<<" th, end optimize"<<std::endl<<std::endl;;;
+    std::cout<<"dx.norm():\n "<<dx.norm()<<std::endl<<dx<<std::endl;
+    std::cout<<"=================================="<<std::endl<<std::endl;
 
 }
 
@@ -509,6 +518,8 @@ void kf::aiekf::setGNBlocks(
 
         JCamWRTPose *= (-1);
 
+        
+
         eCamPose = getCameraPoseResidual(
             X_var,
             ZcurrentMeas.pts_2d_detected[i],
@@ -518,6 +529,9 @@ void kf::aiekf::setGNBlocks(
         JPJt += JCamWRTPose.transpose() * Ps[0].block<2,2>(0,0) * JCamWRTPose;
         nJtPf += -JCamWRTPose.transpose() * Ps[0].block<2,2>(0,0) * eCamPose;
     }
+    std::cout<<Ps[0].block<2,2>(0,0)<<std::endl;
+    // std::cout<<"nJtPf"<<std::endl;
+    // std::cout<<nJtPf<<std::endl;
 
     for(int i = 0; i < 1; i ++)
     {
@@ -535,6 +549,9 @@ void kf::aiekf::setGNBlocks(
         JPJt += JCamWRTVelo.transpose() * Ps[0].block<3,3>(2,2) * JCamWRTVelo;
         nJtPf += -JCamWRTVelo.transpose() * Ps[0].block<3,3>(2,2) * eCamVelo;       
     }
+
+    // std::cout<<"nJtPf"<<std::endl;
+    // std::cout<<nJtPf<<std::endl;
 
     for(int i = 0; i < 1; i ++)
     {
@@ -555,6 +572,9 @@ void kf::aiekf::setGNBlocks(
         JPJt += JDynWRTXNow.transpose() * Ps[1] * JDynWRTXNow;
         nJtPf += -JDynWRTXNow.transpose() * Ps[1] * eDyn;       
     }
+    std::cout<<Ps[0].block<2,2>(0,0)<<std::endl;
+    // std::cout<<"nJtPf"<<std::endl;
+    // std::cout<<nJtPf<<std::endl;
 }
 
 void kf::aiekf::setDFJacobianDynamic(

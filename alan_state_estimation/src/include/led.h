@@ -487,10 +487,12 @@ namespace alan
             inline void KF_config(ros::NodeHandle& nh)
             {
                 double Q_val;
-                double R_val;
+                double R_val_p;
+                double R_val_v;
 
                 nh.getParam("/alan_master/Q_val", Q_val);
-                nh.getParam("/alan_master/R_val", R_val);
+                nh.getParam("/alan_master/R_val_p", R_val_p);
+                nh.getParam("/alan_master/R_val_v", R_val_v);
                 nh.getParam("/alan_master/Q_alpha", QAdaptiveAlpha);
                 nh.getParam("/alan_master/R_beta", RAdaptiveBeta);
                 nh.getParam("/alan_master/kf_size", kf_size);
@@ -504,7 +506,8 @@ namespace alan
 
                 R_init.resize(kfZ_size, kfZ_size);
                 R_init.setIdentity();
-                R_init = R_init * R_val;
+                R_init.block<2,2>(0,0) = R_init.block<2,2>(0,0) * R_val_p;
+                R_init.block<3,3>(2,2) = R_init.block<3,3>(2,2) * R_val_v;
             }
     };
 

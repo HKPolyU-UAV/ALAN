@@ -234,7 +234,6 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
         {
             ROS_CYAN_STREAM("WAITING FOR INITIALIZATION...");
         }
-
     }
     else
     {
@@ -244,7 +243,6 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
             ROS_RED_STREAM("TRACKER FAIL");
         else       
             map_SE3_to_pose(pose_global_sophus);
-        
     }
 
 }
@@ -302,15 +300,8 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
     pts_2d_detect = LED_extract_POI_alter(frame, depth);
 
     detect_no = pts_2d_detect.size();
-    std::cout<<"====="<<std::endl;
-    std::cout<<detect_no<<std::endl;
-
-    // if(detect_no < 3)
-    // {
-    //     LED_tracker_initiated_or_tracked = false;
-    //     return;
-    // }
-    // reject_outlier(pts_2d_detect, depth);
+    // std::cout<<"====="<<std::endl;
+    // std::cout<<detect_no<<std::endl;
     
     // std::cout<<detect_no<<std::endl;
 

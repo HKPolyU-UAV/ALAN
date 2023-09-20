@@ -24,13 +24,14 @@
  */
 
 #include "include/essential.h"
-#include <decomp_ros_msgs/PolyhedronArray.h>
+
 #include <decomp_geometry/polyhedron.h>
 
+#include "decomp_ros_msgs/PolyhedronArray.h"
 #include "alan_visualization/PolyhedronArray.h"
 #include "alan_landing_planning/TrajArray.h"
 
-#include "visualization_msgs/Marker.h"
+#include <visualization_msgs/Marker.h>
 
 #include "./include/rviz_vehicle.hpp"
 #include <tf/transform_broadcaster.h>
