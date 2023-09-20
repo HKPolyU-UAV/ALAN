@@ -30,17 +30,24 @@ cd {name alan}_ws && mkdir alan_third_party
 
 # install third party
 
+
+
+sudo apt install ros-noetic-sophus
+
+(if neccessary)
+cd /usr/include
+sudo ln -sf eigen3/Eigen Eigen
+
 cd alan_third_party
 
-git clone --recursive https://github.com/pattylo/osqp.git
-git clone https://github.com/pattylo/osqp-eigen.git
-git clone https://github.com/catkin/catkin_simple.git
+git clone --recursive https://github.com/pattylo/osqp.git && \
+git clone https://github.com/pattylo/osqp-eigen.git && \
+git clone https://github.com/catkin/catkin_simple.git && \
 git clone https://github.com/sikang/DecompUtil.git
-
 
 #for the above package, please do
 
-mkdir build && cd build && make && sudo make install
+mkdir build && cd build && cmake .. && make -j8 && sudo make install
 #then do compilation
 cd ~/{name alan}_ws
 catkin_make
