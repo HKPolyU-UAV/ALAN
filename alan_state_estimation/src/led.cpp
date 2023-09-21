@@ -315,6 +315,7 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
     }
 
     get_correspondence(pts_2d_detect);
+    pointcloud_generate(pts_2d_detect, depth);
     detect_no = pts_detected_in_corres_order.size();
     // std::cout<<detect_no<<std::endl;
     // std::cout<<"====="<<std::endl;
