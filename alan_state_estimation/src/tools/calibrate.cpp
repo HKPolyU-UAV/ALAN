@@ -189,7 +189,7 @@ int main(int argc, char** argv)
 
         calculate();  
         cal = false;   
-
+        std::cout<<"haha"<<std::endl;
         ros::spinOnce();
         cal_rate.sleep();
     }
