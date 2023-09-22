@@ -21,6 +21,7 @@ find_package(catkin COMPONENTS
   genmsg
   visualization_msgs
   tf
+  ros_vicon_sdk
 )
 
 find_package(OpenCV 4 REQUIRED)
@@ -47,6 +48,7 @@ catkin_package(
   roscpp
   std_msgs
   message_generation
+  ros_vicon_sdk
 )
 
 set(Sophus_LIBRARIES libSophus.so)
@@ -73,11 +75,13 @@ target_link_libraries(
   ${Sophus_INCLUDE_DIRS}
 )
 add_dependencies(
-  alan 
+  alan
   alan_state_estimation_generate_messages_cpp
   alan_landing_planning_generate_messages_cpp
   alan_visualization_generate_messages_cpp
 )
+
+# ========================
 
 add_executable(calibrate
   src/tools/calibrate.cpp
@@ -87,6 +91,57 @@ target_link_libraries(calibrate
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+
+add_dependencies(calibrate
+  ros_vicon_sdk_generate_messages_cpp
+)
+
+# ========================
+
+add_executable(calibrate_cam2ugv
+  src/tools/calibrate_cam2ugv.cpp
+)
+
+target_link_libraries(calibrate_cam2ugv
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
+add_dependencies(calibrate_cam2ugv
+  ros_vicon_sdk_generate_messages_cpp
+)
+
+# ========================
+
+add_executable(calibrate_led2uav
+  src/tools/calibrate_led2uav.cpp
+)
+
+target_link_libraries(calibrate_led2uav
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
+add_dependencies(calibrate_led2uav
+  ros_vicon_sdk_generate_messages_cpp
+)
+
+# ========================
+
+add_executable(calibrate_led_rela
+  src/tools/calibrate_led_rela.cpp
+)
+
+target_link_libraries(calibrate_led_rela
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
+add_dependencies(calibrate_led_rela
+  ros_vicon_sdk_generate_messages_cpp
+)
+
+# ========================
 
 add_executable(gazebo_uav
   src/tools/gazebo_uav.cpp

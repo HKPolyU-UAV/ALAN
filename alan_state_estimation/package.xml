@@ -46,6 +46,10 @@
   <exec_depend>roslaunch</exec_depend>
   <exec_depend>libpcl-all</exec_depend>
 
+  <build_depend>ros_vicon_sdk</build_depend>
+  <build_export_depend>ros_vicon_sdk</build_export_depend>
+  <exec_depend>ros_vicon_sdk</exec_depend>
+
   <depend>ifopt</depend>
 
 
