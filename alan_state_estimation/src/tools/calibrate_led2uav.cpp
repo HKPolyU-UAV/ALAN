@@ -16,11 +16,11 @@
 */
 
 /**
- * \file calibrate.cpp
- * \date 01/12/2022
+ * \file calibrate_led2uav.cpp
+ * \date 22/Sep/2022
  * \author pattylo
  * \copyright (c) AIRO-LAB, RCUAS of Hong Kong Polytechnic University
- * \brief ros node to calibrate extrinsic parameters
+ * \brief alan -> config relative pose between led and uav
  */
 
 #include "../include/tools/essential.h"
@@ -30,134 +30,71 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
 
+#include <sophus/se3.hpp>
+
+#include "../include/cameraModel.hpp"
+
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
+#include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
+
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 using namespace std;
 
-static geometry_msgs::PoseStamped uav_pose;
-static geometry_msgs::PoseStamped led_pose;
-static geometry_msgs::PoseStamped ledfront_pose;
-static geometry_msgs::PoseStamped cam_pose;
-static geometry_msgs::PoseStamped car_pose;
+static Sophus::SE3d ledPose;
+static Sophus::SE3d uavPose;
+static Sophus::SE3d led_in_uav_pose;
+static vision::cameraModel tool;
 
-static vector<double> later_deltas;
-static vector<double> later_delta2;
-bool cal = false;
 
-void uav_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
+void callback(
+    const geometry_msgs::PoseStamped::ConstPtr& led_pose, 
+    const geometry_msgs::PoseStamped::ConstPtr& uav_pose
+)
 {
-    uav_pose = *pose;
-}
+    ledPose = Sophus::SE3d(
+        Eigen::Quaterniond(
+            led_pose->pose.orientation.w,
+            led_pose->pose.orientation.x,
+            led_pose->pose.orientation.y,
+            led_pose->pose.orientation.z
+        ).toRotationMatrix(),
+        Eigen::Vector3d(
+            led_pose->pose.position.x,
+            led_pose->pose.position.y,
+            led_pose->pose.position.z
+        )
+    );
 
-void led_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
-{
-    led_pose = *pose;
-    cal = true;
+    uavPose = Sophus::SE3d(
+        Eigen::Quaterniond(
+            uav_pose->pose.orientation.w,
+            uav_pose->pose.orientation.x,
+            uav_pose->pose.orientation.y,
+            uav_pose->pose.orientation.z
+        ).toRotationMatrix(),
+        Eigen::Vector3d(
+            uav_pose->pose.position.x,
+            uav_pose->pose.position.y,
+            uav_pose->pose.position.z
+        )
+    );
 
-    double lateral_delta = ledfront_pose.pose.position.z - led_pose.pose.position.z;
+    // global * what = led
+    // what = global.inv * led
+    led_in_uav_pose = uavPose.inverse() * ledPose;
 
-    double vertical_delta = ledfront_pose.pose.position.x - led_pose.pose.position.x;
-}
+    std::cout<<led_in_uav_pose.translation()<<std::endl<<std::endl;;
+    std::cout<<tool.q2rpy(
+        Eigen::Quaterniond(
+            led_in_uav_pose.rotationMatrix()
+        )
+    )/ M_PI * 180<<std::endl<<std::endl;
+    std::cout<<"========"<<std::endl;
 
-void ledfront_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
-{
-    ledfront_pose = *pose;
-}
-
-void car_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
-{
-    car_pose = *pose;
-    cal = true;
-
-}
-
-void cam_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
-{
-    cam_pose = *pose;
-
-}
-
-void calculate()
-{
-    
-    double vertical_delta = ledfront_pose.pose.position.x - led_pose.pose.position.x;
-
-    // cout<<lateral_delta<<endl;
-
-    
-    
-    double later_avg;
-
-    if(cal)
-    {
-        // double lateral_delta = ledfront_pose.pose.position.z - led_pose.pose.position.z;
-        // cout<<lateral_delta<<endl;
-        // later_deltas.emplace_back(lateral_delta);
-        // cout<<later_deltas.size()<<endl;
-        // later_avg = accumulate(later_deltas.begin(), later_deltas.end(), 0.0) / later_deltas.size();
-        // cout<<"final average: "<<later_avg<<endl;
-
-    }
-
-    if(cal)
-    {
-        // double lateral_delta = led_pose.pose.position.z - uav_pose.pose.position.z;
-
-        // cout<<lateral_delta<<endl;
-        // later_delta2.emplace_back(lateral_delta);
-        // cout<<later_delta2.size()<<endl;
-        // later_avg = accumulate(later_delta2.begin(), later_delta2.end(), 0.0) / later_delta2.size();
-        // cout<<"final average: "<<later_avg<<endl;
-
-    }
-
-    if(cal)
-    {
-        // double lateral_delta = ledfront_pose.pose.position.x - led_pose.pose.position.x;
-
-        // cout<<lateral_delta<<endl;
-        // later_delta2.emplace_back(lateral_delta);
-        // cout<<later_delta2.size()<<endl;
-        // later_avg = accumulate(later_delta2.begin(), later_delta2.end(), 0.0) / later_delta2.size();
-        // cout<<"final average: "<<later_avg<<endl;
-
-    }
-
-    if(cal)
-    {
-        // double lateral_delta = led_pose.pose.position.x - uav_pose.pose.position.x;
-
-        // cout<<lateral_delta<<endl;
-        // later_delta2.emplace_back(lateral_delta);
-        // cout<<later_delta2.size()<<endl;
-        // later_avg = accumulate(later_delta2.begin(), later_delta2.end(), 0.0) / later_delta2.size();
-        // cout<<"final average: "<<later_avg<<endl;
-
-    }
-
-    if(cal)
-    {
-        // double lateral_delta = led_pose.pose.position.x - uav_pose.pose.position.x;
-
-        // cout<<lateral_delta<<endl;
-        // later_delta2.emplace_back(lateral_delta);
-        // cout<<later_delta2.size()<<endl;
-        // later_avg = accumulate(later_delta2.begin(), later_delta2.end(), 0.0) / later_delta2.size();
-        // cout<<"final average: "<<later_avg<<endl;
-
-    }
-
-    if(cal)
-    {
-        double lateral_delta = car_pose.pose.position.z - cam_pose.pose.position.z;
-
-        cout<<lateral_delta<<endl;
-        later_delta2.emplace_back(lateral_delta);
-        cout<<later_delta2.size()<<endl;
-        later_avg = accumulate(later_delta2.begin(), later_delta2.end(), 0.0) / later_delta2.size();
-        cout<<"final average: "<<later_avg<<endl;
-    }
-
-
-    
 
 }
 
@@ -166,35 +103,14 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "calibration");
     ros::NodeHandle nh;
 
-    ros::Subscriber uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-            ("/mavros/vision_pose/pose", 1, &uav_pose_callback);
+    message_filters::Subscriber<geometry_msgs::PoseStamped> sub_led_pose(nh, "/vrpn_client_node/gh034_led/pose",1);
+    message_filters::Subscriber<geometry_msgs::PoseStamped> sub_uav_pose(nh, "/vrpn_client_node/gh034_nano/pose",1);
+    typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, geometry_msgs::PoseStamped> MySyncPolicy;
+    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), sub_led_pose, sub_uav_pose);
+    sync.registerCallback(boost::bind(&callback, _1, _2));
 
-    ros::Subscriber led_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-            ("/vrpn_client_node/gh034_nano_led/pose", 1, &led_pose_callback);
+    ros::spin();
 
-    ros::Subscriber ledfront_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-            ("/vrpn_client_node/gh034_nano_led_front/pose", 1, &ledfront_pose_callback);
-    
-    ros::Subscriber cam_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-            ("/vrpn_client_node/gh034_cam/pose", 1, &cam_pose_callback);
-    
-    ros::Subscriber car_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-            ("/vrpn_client_node/gh034_car/pose", 1, &car_pose_callback);
-
-    later_deltas.clear();
-    ros::Rate cal_rate(300.0);
-
-    while (ros::ok())
-    {   
-        // cout<<later_deltas.size()<<endl;
-
-        calculate();  
-        cal = false;   
-        std::cout<<"haha"<<std::endl;
-        ros::spinOnce();
-        cal_rate.sleep();
-    }
-    
     
 
     return 0;

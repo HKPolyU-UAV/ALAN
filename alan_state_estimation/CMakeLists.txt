@@ -90,6 +90,7 @@ add_executable(calibrate
 target_link_libraries(calibrate
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
+  ${Sophus_INCLUDE_DIRS}
 )
 
 add_dependencies(calibrate
@@ -105,6 +106,7 @@ add_executable(calibrate_cam2ugv
 target_link_libraries(calibrate_cam2ugv
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
+  ${Sophus_INCLUDE_DIRS}
 )
 
 add_dependencies(calibrate_cam2ugv
@@ -120,6 +122,7 @@ add_executable(calibrate_led2uav
 target_link_libraries(calibrate_led2uav
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
+  ${Sophus_INCLUDE_DIRS}
 )
 
 add_dependencies(calibrate_led2uav
@@ -135,6 +138,7 @@ add_executable(calibrate_led_rela
 target_link_libraries(calibrate_led_rela
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
+  ${Sophus_INCLUDE_DIRS}
 )
 
 add_dependencies(calibrate_led_rela
