@@ -7,7 +7,10 @@ This research addresses the problem of a quadrotor UAV landing on a ground vehic
 </div>
 
 ### Video
-
+### Video
+<a href="https://www.youtube.com/watch?v=7wiCh46MQmc&ab_channel=AIRO-LAB%40HKPolyU
+" target="_blank"><img src="https://img.youtube.com/vi/7wiCh46MQmc/0.jpg" 
+alt="IMAGE ALT TEXT HERE" width="533" height="400" border="10" /></a>
 ### Software Installation
 #### Pre-Requisite
 

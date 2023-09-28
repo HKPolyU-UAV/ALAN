@@ -22,6 +22,7 @@ find_package(catkin COMPONENTS
   visualization_msgs
   tf
   ros_vicon_sdk
+  rosbag
 )
 
 find_package(OpenCV 4 REQUIRED)
