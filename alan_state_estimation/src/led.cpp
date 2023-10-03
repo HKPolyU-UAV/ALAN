@@ -164,7 +164,7 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose_led_inCamera_SE3)
 
     pose_led_inWorld_SE3 = 
         pose_cam_inWorld_SE3 
-        * pose_led_inUavBodyOffset_SE3 
+        // * pose_led_inUavBodyOffset_SE3 
         * pose_cam_inGeneralBodySE3 
         * pose_led_inCamera_SE3;
     
