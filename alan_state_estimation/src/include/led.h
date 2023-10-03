@@ -349,11 +349,6 @@ namespace alan
                 nh.getParam("/alan_master/BINARY_threshold", BINARY_THRES);     
                 nh.getParam("/alan_master/frame_width", _width);
                 nh.getParam("/alan_master/frame_height", _height);
-
-                // #define CAR_POSE_TOPIC POSE_SUB_TOPIC_A
-                // std::cout<<CAR_POSE_TOPIC<<std::endl;
-                // nh.getParam("/alan_master/CAR_POSE_TOPIC", CAR_POSE_TOPIC);
-                // nh.getParam("/alan_master/UAV_POSE_TOPIC", UAV_POSE_TOPIC);
             }
 
             inline void camIntrinsic_config(ros::NodeHandle& nh)
@@ -378,53 +373,52 @@ namespace alan
 
             inline void camExtrinsic_config(ros::NodeHandle& nh)
             {
-                cameraEX.resize(6);
-                XmlRpc::XmlRpcValue extrinsics_list;
+                // load cam on ugv extrinsics
+                XmlRpc::XmlRpcValue extrinsics_list_cam_ugv;            
+                nh.getParam("/alan_master/cam_ugv_extrinsics", extrinsics_list_cam_ugv);                
                 
-                nh.getParam("/alan_master/cam_ugv_extrinsics", extrinsics_list);                
-                
-                for(int i = 0; i < 6; i++)
-                {                    
-                    cameraEX(i) = extrinsics_list[i];                    
-                }
+                Eigen::Matrix4d extrinsic_temp;
 
+                for(int i = 0; i < 4; i++)
+                    for(int j = 0; j < 4; j++)
+                    {
+                        std::ostringstream ostr;
+                        ostr << extrinsics_list_cam_ugv[4 * i+ j];
+                        std::istringstream istr(ostr.str());
+                        istr >> extrinsic_temp(i, j);
+                    }
+
+                extrinsic_temp.block<3,3>(0,0) = Eigen::Quaterniond(extrinsic_temp.block<3,3>(0,0)).normalized().toRotationMatrix();
                 pose_cam_inUgvBody_SE3 = Sophus::SE3d(
-                    rpy2q(
-                        Eigen::Vector3d(
-                            cameraEX(3) / 180 * M_PI,
-                            cameraEX(4) / 180 * M_PI,
-                            cameraEX(5) / 180 * M_PI              
-                        )
-                    ),
-                    Eigen::Vector3d(
-                        cameraEX(0),
-                        cameraEX(1),
-                        cameraEX(2)
-                    )            
+                    extrinsic_temp
                 );
+
+                std::cout<<extrinsic_temp<<std::endl;            
             }
 
             inline void LEDExtrinsicUAV_config(ros::NodeHandle& nh)
             {
                 // load LED extrinsics
-                LEDEX.resize(6);
-                XmlRpc::XmlRpcValue extrinsics_list_led;
+                XmlRpc::XmlRpcValue extrinsics_list_led_uav;
+                nh.getParam("/alan_master/led_uav_extrinsics", extrinsics_list_led_uav);
 
-                nh.getParam("/alan_master/led_uav_extrinsics", extrinsics_list_led);
-
-                for(int i = 0; i < 6; i++)
-                {
-                    LEDEX(i) = extrinsics_list_led[i];
-                }
-
+                Eigen::Matrix4d extrinsic_temp;
+                
+                for(int i = 0; i < 4; i++)
+                    for(int j = 0; j < 4; j++)
+                    {
+                        std::ostringstream ostr;
+                        ostr << extrinsics_list_led_uav[4 * i+ j];
+                        std::istringstream istr(ostr.str());
+                        istr >> extrinsic_temp(i, j);
+                    }
+                
+                extrinsic_temp.block<3,3>(0,0) = Eigen::Quaterniond(extrinsic_temp.block<3,3>(0,0)).normalized().toRotationMatrix();
                 pose_led_inUavBodyOffset_SE3 = Sophus::SE3d(
-                    Eigen::Matrix3d::Identity(),
-                    Eigen::Vector3d(
-                        LEDEX(0),
-                        LEDEX(1),
-                        LEDEX(2)
-                    )
+                    extrinsic_temp
                 );
+
+                std::cout<<extrinsic_temp<<std::endl;
             }
 
             inline void CamInGeneralBody_config(ros::NodeHandle& nh)
