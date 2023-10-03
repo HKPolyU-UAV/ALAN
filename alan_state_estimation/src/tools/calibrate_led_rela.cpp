@@ -44,21 +44,38 @@
 
 using namespace std;
 
-static Sophus::SE3d camPose;
-static Sophus::SE3d ugvPose;
-static Sophus::SE3d cam_in_ugv_Pose;
-static vision::cameraModel tool;
+static Eigen::MatrixXd led_position;
+static Eigen::MatrixXd led_position_previous;
+static double iir_gain = 0.4;
+static bool start_iir = false;
 
 void led_posi_callback(const ros_vicon_sdk::PointArray::ConstPtr& msg)
 {
     for(auto& what : msg->PointArray)
     {
+        
         std::cout<<what.x<<std::endl;
         std::cout<<what.y<<std::endl;
         std::cout<<what.z<<std::endl;
         std::cout<<"=========="<<std::endl;
     }
 
+    for(int i = 0; i < msg->PointArray.size(); i++)
+    {
+        led_position.block<1,3>(i,0) = Eigen::Vector3d(
+            msg->PointArray[i].x,
+            msg->PointArray[i].x,
+            msg->PointArray[i].z
+        );
+    }
+
+    if(start_iir)
+    {
+        led_position = iir_gain * led_position + (1 - iir_gain) * led_position_previous;
+    }
+
+    led_position_previous = led_position;
+    start_iir = true;
 }
 
 int main(int argc, char** argv)
@@ -66,10 +83,29 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "calibration");
     ros::NodeHandle nh;
 
+    led_position.resize(6,3);
+    led_position_previous.resize(6,3);
+
     ros::Subscriber led_position_sub = nh.subscribe
         <ros_vicon_sdk::PointArray>("/led_detailed_positions", 1, &led_posi_callback);
 
     ros::spin();
+
+    std::cout<<std::endl;
+    std::cout<<"WRITING CALIBRATION DATA TO TXT..."<<std::endl;
+
+    std::remove("/home/patty/alan_ws/src/alan/alan_state_estimation/src/tools/calib_data/led_rela.txt");
+    std::ofstream save(
+        "/home/patty/alan_ws/src/alan/alan_state_estimation/src/tools/calib_data/led_rela.txt",
+        std::ios::app
+    );
+
+    save<<"led position:"<<std::endl;
+    save << led_position;
+    save<<std::endl<<std::endl;
+
+    save.close();
+
 
     
 

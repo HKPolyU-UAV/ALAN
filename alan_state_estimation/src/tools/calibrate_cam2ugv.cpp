@@ -47,7 +47,10 @@ using namespace std;
 static Sophus::SE3d camPose;
 static Sophus::SE3d ugvPose;
 static Sophus::SE3d cam_in_ugv_Pose;
+static Sophus::SE3d cam_in_ugv_Pose_previous;
 static vision::cameraModel tool;
+static double iir_gain = 0.4;
+static bool start_iir = false;
 
 
 void callback(
@@ -95,6 +98,18 @@ void callback(
     )/ M_PI * 180<<std::endl<<std::endl;
     std::cout<<"========"<<std::endl;
 
+    if(start_iir)
+    {
+        cam_in_ugv_Pose = Sophus::SE3d::exp(
+            (iir_gain * cam_in_ugv_Pose.log() 
+                + 
+            (1 - iir_gain) * cam_in_ugv_Pose_previous.log())
+        );
+    } 
+
+    cam_in_ugv_Pose_previous = cam_in_ugv_Pose;
+    start_iir = true;
+
 
 }
 
@@ -110,6 +125,32 @@ int main(int argc, char** argv)
     sync.registerCallback(boost::bind(&callback, _1, _2));
 
     ros::spin();
+
+    std::cout<<std::endl;
+    std::cout<<"WRITING CALIBRATION DATA TO TXT..."<<std::endl;
+
+    std::remove("/home/patty/alan_ws/src/alan/alan_state_estimation/src/tools/calib_data/cam2ugv.txt");
+    std::ofstream save(
+        "/home/patty/alan_ws/src/alan/alan_state_estimation/src/tools/calib_data/cam2ugv.txt",
+        std::ios::app
+    );
+
+    save<<"SE(3):"<<std::endl;
+    save << cam_in_ugv_Pose.matrix();
+    save<<std::endl<<std::endl;
+    
+    save<<"translation:"<<std::endl;
+    save<<cam_in_ugv_Pose.translation();
+    save<<std::endl<<std::endl;
+
+    save<<"rotation:"<<std::endl;
+    save<<tool.q2rpy(
+        Eigen::Quaterniond(
+            cam_in_ugv_Pose.rotationMatrix()
+        )
+    )/ M_PI * 180<<std::endl;
+
+    save.close();
 
     
 

@@ -47,46 +47,108 @@ using namespace std;
 static Sophus::SE3d ledPose;
 static Sophus::SE3d uavPose;
 static Sophus::SE3d led_in_uav_pose;
+static Sophus::SE3d led_in_uav_pose_previous;
 static vision::cameraModel tool;
+static double iir_gain = 0.4;
+static bool start_iir = false;
+
+
+void callback(
+    const geometry_msgs::PoseStamped::ConstPtr& led_pose, 
+    const geometry_msgs::PoseStamped::ConstPtr& uav_pose
+)
+{
+    ledPose = Sophus::SE3d(
+        Eigen::Quaterniond(
+            led_pose->pose.orientation.w,
+            led_pose->pose.orientation.x,
+            led_pose->pose.orientation.y,
+            led_pose->pose.orientation.z
+        ).toRotationMatrix(),
+        Eigen::Vector3d(
+            led_pose->pose.position.x,
+            led_pose->pose.position.y,
+            led_pose->pose.position.z
+        )
+    );
+
+    uavPose = Sophus::SE3d(
+        Eigen::Quaterniond(
+            uav_pose->pose.orientation.w,
+            uav_pose->pose.orientation.x,
+            uav_pose->pose.orientation.y,
+            uav_pose->pose.orientation.z
+        ).toRotationMatrix(),
+        Eigen::Vector3d(
+            uav_pose->pose.position.x,
+            uav_pose->pose.position.y,
+            uav_pose->pose.position.z
+        )
+    );
+
+    // global * what = led
+    // what = global.inv * led
+    led_in_uav_pose = uavPose.inverse() * ledPose;
+
+    std::cout<<led_in_uav_pose.translation()<<std::endl<<std::endl;;
+    std::cout<<tool.q2rpy(
+        Eigen::Quaterniond(
+            led_in_uav_pose.rotationMatrix()
+        )
+    )/ M_PI * 180<<std::endl<<std::endl;
+    std::cout<<"========"<<std::endl;
+
+    if(start_iir)
+    {
+        led_in_uav_pose = Sophus::SE3d::exp(
+            (iir_gain * led_in_uav_pose.log() 
+                + 
+            (1 - iir_gain) * led_in_uav_pose_previous.log())
+        );
+    } 
+
+    led_in_uav_pose_previous = led_in_uav_pose;
+    start_iir = true;
+}
 
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "calibration");
     ros::NodeHandle nh;
 
-    rosbag::Bag bag;
-    bag.open(
-        "/home/patty/alan_ws/misc/exp_09_calibration/0915_calib_led_2_uav.bag", 
-        rosbag::bagmode::Read
+    message_filters::Subscriber<geometry_msgs::PoseStamped> sub_led_pose(nh, "/vrpn_client_node/gh034_led/pose",1);
+    message_filters::Subscriber<geometry_msgs::PoseStamped> sub_uav_pose(nh, "/vrpn_client_node/gh034_nano/pose",1);
+    typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, geometry_msgs::PoseStamped> MySyncPolicy;
+    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), sub_led_pose, sub_uav_pose);
+    sync.registerCallback(boost::bind(&callback, _1, _2));
+
+    ros::spin();
+
+    std::cout<<std::endl;
+    std::cout<<"WRITING CALIBRATION DATA TO TXT..."<<std::endl;
+
+    std::remove("/home/patty/alan_ws/src/alan/alan_state_estimation/src/tools/calib_data/led2uav.txt");
+    std::ofstream save(
+        "/home/patty/alan_ws/src/alan/alan_state_estimation/src/tools/calib_data/led2uav.txt",
+        std::ios::app
     );
 
-    std::vector<std::string> topics;
-    topics.push_back(std::string("/vrpn_client_node/gh034_led/pose"));
-    topics.push_back(std::string("/vrpn_client_node/gh034_nano/pose"));
+    save<<"SE(3):"<<std::endl;
+    save << led_in_uav_pose.matrix();
+    save<<std::endl<<std::endl;
+    
+    save<<"translation:"<<std::endl;
+    save<<led_in_uav_pose.translation();
+    save<<std::endl<<std::endl;
 
-    rosbag::View view(bag, rosbag::TopicQuery(topics));
+    save<<"rotation:"<<std::endl;
+    save<<tool.q2rpy(
+        Eigen::Quaterniond(
+            led_in_uav_pose.rotationMatrix()
+        )
+    )/ M_PI * 180<<std::endl;
 
-    cout<<"hiiii"<<endl;
-
-    foreach(rosbag::MessageInstance const m, view)
-    {
-        cout<<"lala"<<endl;
-        std::cout<<m.getTopic()<<std::endl;
-        std::cout<<m.getTime()<<std::endl;
-        geometry_msgs::PoseStamped::ConstPtr p1  = m.instantiate<geometry_msgs::PoseStamped>();
-        if (p1 != NULL)
-        {
-            std::cout << p1->pose.position.x << std::endl;
-        }
-        else
-            cout<<"what what"<<endl;
-
-        std_msgs::Int32::ConstPtr i = m.instantiate<std_msgs::Int32>();
-        if (i != NULL)
-            std::cout << i->data << std::endl;
-    }
-
-    bag.close();
+    save.close();
 
     
 
