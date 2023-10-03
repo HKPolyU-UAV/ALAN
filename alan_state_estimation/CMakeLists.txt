@@ -35,6 +35,7 @@ roslaunch_add_file_check(launch)
 add_message_files(
   FILES
   alan_log.msg
+  temp.msg
 )
 
 

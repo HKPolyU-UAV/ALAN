@@ -46,28 +46,54 @@ using namespace std;
 
 static Eigen::MatrixXd led_position;
 static Eigen::MatrixXd led_position_previous;
+static Sophus::SE3d uavPose;
 static double iir_gain = 0.4;
 static bool start_iir = false;
 
-void led_posi_callback(const ros_vicon_sdk::PointArray::ConstPtr& msg)
+void callback(
+    const geometry_msgs::PoseStamped::ConstPtr& uav_pose,
+    const ros_vicon_sdk::PointArray::ConstPtr& led_posi
+)
 {
-    for(auto& what : msg->PointArray)
-    {
-        
-        std::cout<<what.x<<std::endl;
-        std::cout<<what.y<<std::endl;
-        std::cout<<what.z<<std::endl;
-        std::cout<<"=========="<<std::endl;
-    }
+    uavPose = Sophus::SE3d(
+        Eigen::Quaterniond(
+            uav_pose->pose.orientation.w,
+            uav_pose->pose.orientation.x,
+            uav_pose->pose.orientation.y,
+            uav_pose->pose.orientation.z
+        ).toRotationMatrix(),
+        Eigen::Vector3d(
+            uav_pose->pose.position.x,
+            uav_pose->pose.position.y,
+            uav_pose->pose.position.z
+        )
+    );
 
-    for(int i = 0; i < msg->PointArray.size(); i++)
+    std::cout<<"here uav:"<<std::endl;
+
+    std::cout<<uavPose.translation()<<std::endl<<std::endl;
+
+    
+
+    std::cout<<"lala"<<std::endl;
+    for(int i = 0; i < led_posi->PointArray.size(); i++)
     {
-        led_position.block<1,3>(i,0) = Eigen::Vector3d(
-            msg->PointArray[i].x,
-            msg->PointArray[i].x,
-            msg->PointArray[i].z
+        Eigen::Vector4d led_temp = Eigen::Vector4d(
+            led_posi->PointArray[i].x,
+            led_posi->PointArray[i].y,
+            led_posi->PointArray[i].z,
+            1
         );
+
+        led_temp.head(3) = led_temp.head(3) * 0.001;
+
+        std::cout<<led_temp<<std::endl;
+
+        std::cout<<"============"<<std::endl;
+
+        led_position.block<1,3>(i,0) = (uavPose.matrix().inverse() * led_temp).head(3);
     }
+    std::cout<<std::endl<<std::endl;
 
     if(start_iir)
     {
@@ -76,6 +102,7 @@ void led_posi_callback(const ros_vicon_sdk::PointArray::ConstPtr& msg)
 
     led_position_previous = led_position;
     start_iir = true;
+
 }
 
 int main(int argc, char** argv)
@@ -86,8 +113,11 @@ int main(int argc, char** argv)
     led_position.resize(6,3);
     led_position_previous.resize(6,3);
 
-    ros::Subscriber led_position_sub = nh.subscribe
-        <ros_vicon_sdk::PointArray>("/led_detailed_positions", 1, &led_posi_callback);
+    message_filters::Subscriber<geometry_msgs::PoseStamped> sub_uav_pose(nh, "/vrpn_client_node/gh034_nano/pose",1);
+    message_filters::Subscriber<ros_vicon_sdk::PointArray> sub_led_posi(nh, "/led_detailed_positions",1);
+    typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, ros_vicon_sdk::PointArray> MySyncPolicy;
+    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), sub_uav_pose, sub_led_posi);
+    sync.registerCallback(boost::bind(&callback, _1, _2));
 
     ros::spin();
 
@@ -106,8 +136,6 @@ int main(int argc, char** argv)
 
     save.close();
 
-
-    
 
     return 0;
 }
