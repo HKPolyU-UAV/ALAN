@@ -159,40 +159,12 @@ void alan::LedNodelet::uav_setpt_callback(const geometry_msgs::PoseStamped::Cons
 }
 
 void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose_led_inCamera_SE3)
-{   
-    // std::cout<<
-    //     (
-    //         pose_led_inWorld_SE3.inverse() * 
-    //         pose_uav_inWorld_SE3
-    //         // pose_uav_inWorld_SE3
-    //         // * pose_led_inCamera_SE3.inverse() 
-    //         // * pose_cam_inGeneralBodySE3.inverse()
-            
-    //         // * pose_cam_inWorld_SE3.inverse()
-    //     ).matrix()<<std::endl;
-    // std::cout<<"=========="<<std::endl<<std::endl;
-
-    std::cout<< 
-    (
-        pose_ugv_inWorld_SE3.inverse() * pose_uav_inWorld_SE3
-    ).matrix()
-    <<std::endl;
-
-    std::cout<<(pose_ugv_inWorld_SE3.translation() - pose_uav_inWorld_SE3.translation()).norm()<<std::endl;
-
+{
     pose_led_inWorld_SE3 = 
         pose_cam_inWorld_SE3 
         // * pose_led_inUavBodyOffset_SE3 
         * pose_cam_inGeneralBodySE3 
         * pose_led_inCamera_SE3;
-    
-
-    std::cout<< (
-        pose_uav_inWorld_SE3.translation() - pose_led_inWorld_SE3.translation()
-        ).norm() 
-        <<std::endl;
-    std::cout<<"=========="<<std::endl<<std::endl;
-    
     
     led_pose_header.frame_id = "world";
     led_pose_estimated_msg = SE3_to_posemsg(pose_led_inWorld_SE3, led_pose_header);
@@ -326,32 +298,26 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
     pts_2d_detect = LED_extract_POI_alter(frame, depth);
 
     detect_no = pts_2d_detect.size();
-    // std::cout<<"====="<<std::endl;
-    // std::cout<<detect_no<<std::endl;
-    
-    // std::cout<<detect_no<<std::endl;
 
     if(detect_no < 3)
     {
-        std::cout<<i<<std::endl;
+        // std::cout<<i<<std::endl;
         LED_tracker_initiated_or_tracked = false;
         cv::imwrite("/home/patty/alan_ws/meas_less3" + std::to_string(detect_no) + "_"+  std::to_string(i) + ".jpg", frame_input);
-        i++;
+        // i++;
         return;
     }
 
     get_correspondence(pts_2d_detect);
     pointcloud_generate(pts_2d_detect, depth);
     detect_no = pts_detected_in_corres_order.size();
-    // std::cout<<detect_no<<std::endl;
-    // std::cout<<"====="<<std::endl;
 
     if(detect_no < 3)
     {
-        std::cout<<i<<std::endl;
+        // std::cout<<i<<std::endl;
         LED_tracker_initiated_or_tracked = false;
-        cv::imwrite("/home/patty/alan_ws/kmeans_less3_" + std::to_string(detect_no) + "_"+ std::to_string(i) + ".jpg", frame_input);
-        i++;
+        // cv::imwrite("/home/patty/alan_ws/kmeans_less3_" + std::to_string(detect_no) + "_"+ std::to_string(i) + ".jpg", frame_input);
+        // i++;
         return;
     }
 
@@ -431,10 +397,7 @@ void alan::LedNodelet::get_correspondence(
     for(int i = 0; i < std::get<1>(corres_global_current).size(); i++)
     {            
         if(std::get<1>(corres_global_current)[i].detected_ornot)
-        {   
-            // std::cout<<"=========="<<std::endl;
-            // std::cout<<std::get<1>(corres_global_current)[i].pts_2d_correspond<<std::endl;
-            // std::cout<<"=========="<<std::endl;
+        {  
             pts_detected_in_corres_order.push_back(
                 std::get<1>(corres_global_current)[i].pts_2d_correspond
             );             
@@ -444,12 +407,7 @@ void alan::LedNodelet::get_correspondence(
         }        
     }
 
-    
-    
-    // std::cout<<"i here, "<<i<<std::endl;
-    i++;
-
-        
+    i++;        
 }
 
 std::vector<Eigen::Vector2d> alan::LedNodelet::shift2D(
@@ -1046,9 +1004,6 @@ void alan::LedNodelet::correspondence_search_2D2DCompare(
 
     for(auto what : pts_2d_detected_previous)
         pts.emplace_back(cv::Point2f(what.x(), what.y()));
-
-    // std::cout<<"in correspondence search kmeans"<<std::endl;
-    // std::cout<<pts_2d_detected_previous.size()<<std::endl;
     
     //first emplace back pts_on_body_frame in 2D at this frame
     //in preset order
@@ -1058,9 +1013,6 @@ void alan::LedNodelet::correspondence_search_2D2DCompare(
     
     std::vector<cv::Point2f> centers;
     cv::Mat labels;
-
-    // std::cout<<pts_2d_detected.size()<<std::endl;
-    // std::cout<<"+++++++++++++++"<<std::endl;
 
     cv::kmeans(pts, LED_no, labels, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1), 8, cv::KMEANS_PP_CENTERS, centers);
 
@@ -1312,10 +1264,6 @@ void alan::LedNodelet::log(double ms)
     logdata_entry_uav.header.stamp = led_pose_header.stamp;
 
     record_uav_pub.publish(logdata_entry_uav);
-
-    // std::cout<<"orientation: "<<abs(logdata_entry_led.orientation - logdata_entry_uav.orientation)<<std::endl;
-    // std::ofstream save("/home/patty/alan_ws/src/alan/alan_state_estimation/src/temp/lala.txt", std::ios::app);
-    // save<<abs(logdata_entry_led.orientation - logdata_entry_uav.orientation)<<std::endl;
 }
 
 void alan::LedNodelet::terminal_msg_display(double hz)
