@@ -483,7 +483,6 @@ void kf::aiekf::setGNBlocks(
     nJtPf.setZero();
 
     for(int i = 0; i < ZcurrentMeas.pts_3d_exists.size(); i++)
-    // i < ZcurrentMeas.pts_3d_exists.size()
     {
         // camera pose linear system
         setDHJacobianCamera(
@@ -540,8 +539,8 @@ void kf::aiekf::setGNBlocks(
             X_var
         );
         
-        JPJt += JDynWRTXNow.transpose() * Ps[1] * JDynWRTXNow;
-        nJtPf += -JDynWRTXNow.transpose() * Ps[1] * eDyn;       
+        // JPJt += JDynWRTXNow.transpose() * Ps[1] * JDynWRTXNow;
+        // nJtPf += -JDynWRTXNow.transpose() * Ps[1] * eDyn;       
     }
 
 }

@@ -160,7 +160,20 @@ void alan::LedNodelet::uav_setpt_callback(const geometry_msgs::PoseStamped::Cons
 
 void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose_led_inCamera_SE3)
 {   
-    pose_cam_inGeneralBodySE3 * pose_led_inCamera_SE3; //now we in body frame
+    std::cout<<
+        (
+            pose_led_inWorld_SE3.inverse() * 
+            pose_uav_inWorld_SE3
+            // pose_uav_inWorld_SE3
+            // * pose_led_inCamera_SE3.inverse() 
+            // * pose_cam_inGeneralBodySE3.inverse()
+            
+            // * pose_cam_inWorld_SE3.inverse()
+        ).matrix()<<std::endl;
+    std::cout<<"=========="<<std::endl<<std::endl;
+    
+    std::cout<< - pose_uav_inWorld_SE3.translation() + pose_led_inWorld_SE3.translation() <<std::endl;
+    std::cout<<"=========="<<std::endl<<std::endl;
 
     pose_led_inWorld_SE3 = 
         pose_cam_inWorld_SE3 

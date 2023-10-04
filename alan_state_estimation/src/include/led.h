@@ -334,7 +334,6 @@ namespace alan
                 POI_config(nh);
                 camIntrinsic_config(nh);
                 camExtrinsic_config(nh);
-                LEDExtrinsicUAV_config(nh);
                 CamInGeneralBody_config(nh);
                 LEDInBodyAndOutlierSetting_config(nh);
                 KF_config(nh);
@@ -394,31 +393,6 @@ namespace alan
                 );
 
                 std::cout<<extrinsic_temp<<std::endl;            
-            }
-
-            inline void LEDExtrinsicUAV_config(ros::NodeHandle& nh)
-            {
-                // load LED extrinsics
-                XmlRpc::XmlRpcValue extrinsics_list_led_uav;
-                nh.getParam("/alan_master/led_uav_extrinsics", extrinsics_list_led_uav);
-
-                Eigen::Matrix4d extrinsic_temp;
-                
-                for(int i = 0; i < 4; i++)
-                    for(int j = 0; j < 4; j++)
-                    {
-                        std::ostringstream ostr;
-                        ostr << extrinsics_list_led_uav[4 * i+ j];
-                        std::istringstream istr(ostr.str());
-                        istr >> extrinsic_temp(i, j);
-                    }
-                
-                extrinsic_temp.block<3,3>(0,0) = Eigen::Quaterniond(extrinsic_temp.block<3,3>(0,0)).normalized().toRotationMatrix();
-                pose_led_inUavBodyOffset_SE3 = Sophus::SE3d(
-                    extrinsic_temp
-                );
-
-                std::cout<<extrinsic_temp<<std::endl;
             }
 
             inline void CamInGeneralBody_config(ros::NodeHandle& nh)
