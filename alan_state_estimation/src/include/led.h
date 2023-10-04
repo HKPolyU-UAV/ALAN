@@ -126,8 +126,7 @@ namespace alan
             geometry_msgs::PoseStamped ugv_pose_msg, 
                                        uav_pose_msg,
                                        uav_stpt_msg;            
-           
-            
+                       
         //secondary objects
             // double temp = 0;
             int i = 0;
