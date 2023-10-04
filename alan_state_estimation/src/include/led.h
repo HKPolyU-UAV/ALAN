@@ -121,7 +121,6 @@ namespace alan
 
             Sophus::SE3d pose_cam_inGeneralBodySE3;
             Sophus::SE3d pose_cam_inUgvBody_SE3;
-            Sophus::SE3d pose_led_inUavBodyOffset_SE3;
 
             geometry_msgs::PoseStamped ugv_pose_msg, 
                                        uav_pose_msg,
@@ -160,7 +159,6 @@ namespace alan
             image_transport::Publisher pubimage;
             image_transport::Publisher pubimage_input;
             //functions
-        
         
         //main process & kf
             void solve_pose_w_LED(cv::Mat& frame, cv::Mat depth);
@@ -249,8 +247,7 @@ namespace alan
                     e = e + error.norm();
 
                     if(draw_reproject)
-                        cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);
-                    
+                        cv::circle(display, cv::Point(reproject(0), reproject(1)), 2.5, CV_RGB(0,255,0),-1);                    
                 }
 
                 return e;
@@ -266,7 +263,7 @@ namespace alan
             inline Sophus::SE3d posemsg_to_SE3(const geometry_msgs::PoseStamped pose);
             inline geometry_msgs::PoseStamped SE3_to_posemsg(const Sophus::SE3d pose_on_SE3, const std_msgs::Header msgHeader);
             
-            Eigen::VectorXd led_twist_current;    
+            Eigen::VectorXd led_twist_current;
 
 //---------------------------------------------------------------------------------------
             virtual void onInit()
@@ -275,6 +272,8 @@ namespace alan
                 ROS_INFO("LED Nodelet Initiated...");
 
                 RosTopicConfigs configs(nh, "/led");
+
+                std::remove("/home/patty/alan_ws/src/alan/alan_state_estimation/src/temp/cam2ugv.txt");
 
                 doALOTofConfigs(nh);
                                                  
@@ -355,18 +354,15 @@ namespace alan
                 Eigen::Vector4d intrinsics_value;
                 XmlRpc::XmlRpcValue intrinsics_list;
                 nh.getParam("/alan_master/cam_intrinsics_455", intrinsics_list);
-                                                
-                for(int i = 0; i < 4; i++)
-                {
-                    intrinsics_value[i] = intrinsics_list[i];
-                }
-                
-                cameraMat <<    
-                    // inherintance here -> modifying value for all super/sub classes
-                    intrinsics_value[0], 0, intrinsics_value[2], 
-                    0, intrinsics_value[1], intrinsics_value[3],
-                    0, 0,  1; 
 
+                for(int i = 0; i < 3; i++)
+                    for(int j = 0; j < 3; j++)
+                    {
+                        std::ostringstream ostr;
+                        ostr << intrinsics_list[3 * i+ j];
+                        std::istringstream istr(ostr.str());
+                        istr >> cameraMat(i, j);
+                    }
             }
 
             inline void camExtrinsic_config(ros::NodeHandle& nh)
@@ -390,6 +386,15 @@ namespace alan
                 pose_cam_inUgvBody_SE3 = Sophus::SE3d(
                     extrinsic_temp
                 );
+                Sophus::Vector6d temp;
+                temp << -0.21379937,
+                        0.69665049,
+                        0.04347424,
+                        -0.70877894,
+                        -0.02166329,
+                        -2.8979549;
+
+                std::cout<<Sophus::SE3d::exp(temp).matrix()<<std::endl;
             }
 
             inline void CamInGeneralBody_config(ros::NodeHandle& nh)
@@ -464,6 +469,11 @@ namespace alan
                 nh.getParam("/alan_master/kfZ_size", kfZ_size);
                 nh.getParam("/alan_master/OPT_MAX_ITERATION", MAX_ITERATION);
                 nh.getParam("/alan_master/CONVERGE_THRESHOLD", CONVERGE_THRESHOLD);
+
+                nh.getParam("/alan_master/KF_ON", KF_ON);
+
+                if(KF_ON)        
+                    ROS_GREEN_STREAM("KF IS ON!");                
 
                 Q_init.resize(kf_size, kf_size);
                 Q_init.setIdentity();

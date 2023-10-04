@@ -162,9 +162,10 @@ void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose_led_inCamera_SE3)
 {
     pose_led_inWorld_SE3 = 
         pose_cam_inWorld_SE3 
-        // * pose_led_inUavBodyOffset_SE3 
         * pose_cam_inGeneralBodySE3 
         * pose_led_inCamera_SE3;
+        
+    std::cout<<(pose_led_inWorld_SE3.translation() - pose_uav_inWorld_SE3.translation()).norm()<<std::endl;
     
     led_pose_header.frame_id = "world";
     led_pose_estimated_msg = SE3_to_posemsg(pose_led_inWorld_SE3, led_pose_header);

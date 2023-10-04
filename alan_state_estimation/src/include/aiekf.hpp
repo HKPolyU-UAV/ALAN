@@ -183,6 +183,8 @@ namespace kf
 
         int MAX_ITERATION = 0;
         double CONVERGE_THRESHOLD = 0;
+
+        bool KF_ON;
     };
 }
 
@@ -493,8 +495,6 @@ void kf::aiekf::setGNBlocks(
 
         JCamWRTPose *= (-1);
 
-        
-
         eCamPose = getCameraPoseResidual(
             X_var,
             ZcurrentMeas.pts_2d_detected[i],
@@ -518,9 +518,12 @@ void kf::aiekf::setGNBlocks(
         eCamVelo = getCameraVeloResidual(
             X_var
         );
-        
-        JPJt += JCamWRTVelo.transpose() * Ps[0].block<3,3>(2,2) * JCamWRTVelo;
-        nJtPf += -JCamWRTVelo.transpose() * Ps[0].block<3,3>(2,2) * eCamVelo;       
+
+        if(KF_ON)
+        {
+            JPJt += JCamWRTVelo.transpose() * Ps[0].block<3,3>(2,2) * JCamWRTVelo;
+            nJtPf += -JCamWRTVelo.transpose() * Ps[0].block<3,3>(2,2) * eCamVelo;       
+        }
     }
 
     for(int i = 0; i < 1; i ++)
@@ -539,8 +542,11 @@ void kf::aiekf::setGNBlocks(
             X_var
         );
         
-        JPJt += JDynWRTXNow.transpose() * Ps[1] * JDynWRTXNow;
-        nJtPf += -JDynWRTXNow.transpose() * Ps[1] * eDyn;       
+        if(KF_ON)
+        {
+            JPJt += JDynWRTXNow.transpose() * Ps[1] * JDynWRTXNow;
+            nJtPf += -JDynWRTXNow.transpose() * Ps[1] * eDyn;     
+        }
     }
 
 }
