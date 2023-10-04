@@ -539,8 +539,8 @@ void kf::aiekf::setGNBlocks(
             X_var
         );
         
-        // JPJt += JDynWRTXNow.transpose() * Ps[1] * JDynWRTXNow;
-        // nJtPf += -JDynWRTXNow.transpose() * Ps[1] * eDyn;       
+        JPJt += JDynWRTXNow.transpose() * Ps[1] * JDynWRTXNow;
+        nJtPf += -JDynWRTXNow.transpose() * Ps[1] * eDyn;       
     }
 
 }

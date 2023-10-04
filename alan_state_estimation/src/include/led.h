@@ -289,10 +289,10 @@ namespace alan
                 uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
                 //only used for validation stage
                     (configs.getTopicName(UAV_POSE_SUB_TOPIC), 1, &LedNodelet::uav_pose_callback, this);
-            
+
                 ugv_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
                     (configs.getTopicName(UGV_POSE_SUB_TOPIC), 1, &LedNodelet::ugv_pose_callback, this);
-
+                
                 uav_setpt_sub = nh.subscribe<geometry_msgs::PoseStamped>
                     ("/planner_server/traj/pose", 1, &LedNodelet::uav_setpt_callback, this);
             //publish
@@ -391,8 +391,6 @@ namespace alan
                 pose_cam_inUgvBody_SE3 = Sophus::SE3d(
                     extrinsic_temp
                 );
-
-                std::cout<<extrinsic_temp<<std::endl;            
             }
 
             inline void CamInGeneralBody_config(ros::NodeHandle& nh)
