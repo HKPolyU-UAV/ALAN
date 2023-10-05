@@ -66,6 +66,8 @@ void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConst
 
     if(aruco_tracker_initiated_or_tracked)
         log(t2- t1);
+    else
+        error_no++;
    
     char hz[40];
     char fps[5] = " fps";
@@ -87,6 +89,7 @@ void alan::ArucoNodelet::camera_callback(const sensor_msgs::CompressedImageConst
     // cv::imshow("aruco", this->frame);
     // cv::waitKey(20);
 
+    std::cout<<"fail: "<< error_no<<" / "<<total_no<<std::endl;
 }
 
 
@@ -535,7 +538,7 @@ void alan::ArucoNodelet::optimize(Sophus::SE3d& pose, std::vector<Eigen::Vector3
 //converge problem need to be solved //-> fuck you, your Jacobian was wrong
 {
     //execute Gaussian-Newton Method
-    std::cout<<"Bundle Adjustment Optimization"<<std::endl;
+    // std::cout<<"Bundle Adjustment Optimization"<<std::endl;
 
     const int MAX_ITERATION = 400;
 
