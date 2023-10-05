@@ -194,15 +194,17 @@ void kf::aiekf::initKF(Sophus::SE3d pose_initial_sophus)
     // ROS_GREEN_STREAM("initKF");
     setMeasurement(pose_initial_sophus);
 
-    XpreviousPosterori.X_SE3 = ZcurrentMeas.pose_initial_SE3;
-    XpreviousPosterori.V_SE3 = Sophus::SE3d(
+    veloMeasureIndi = 0;
+
+    XcurrentPosterori.X_SE3 = ZcurrentMeas.pose_initial_SE3;
+    XcurrentPosterori.V_SE3 = Sophus::SE3d(
         Eigen::Matrix3d::Identity(),
         Eigen::Vector3d::Zero()
     );
 
-    XpreviousPosterori.PCov.resize(kf_size, kf_size);
-    XpreviousPosterori.PCov.setIdentity();
-    XpreviousPosterori.PCov = XpreviousPosterori.PCov * R_init(0,0);
+    XcurrentPosterori.PCov.resize(kf_size, kf_size);
+    XcurrentPosterori.PCov.setIdentity();
+    XcurrentPosterori.PCov = XcurrentPosterori.PCov * R_init(0,0);
 
     if(kf_size != Q_init.rows())
     {
@@ -213,22 +215,29 @@ void kf::aiekf::initKF(Sophus::SE3d pose_initial_sophus)
     Q_k = this->Q_init;
     R_k = this->R_init;
 
-    // ros::shutdown();
+    XpreviousPosterori = XcurrentPosterori;
+
+    std::cout<<"init"<<std::endl;
+    std::cout<<XcurrentPosterori.PCov.trace()<<std::endl;
 }
 
 void kf::aiekf::reinitKF(Sophus::SE3d pose_reinitial_sophus)
 {
     setMeasurement(pose_reinitial_sophus);
+    
+    veloMeasureIndi = 0;
 
-    XpreviousPosterori.X_SE3 = ZcurrentMeas.pose_initial_SE3;
-    XpreviousPosterori.V_SE3 = Sophus::SE3d(
+    XcurrentPosterori.X_SE3 = ZcurrentMeas.pose_initial_SE3;
+    XcurrentPosterori.V_SE3 = Sophus::SE3d(
         Eigen::Matrix3d::Identity(),
         Eigen::Vector3d::Zero()
     );
-    XpreviousPosterori.PCov = XpreviousPosterori.PCov * R_init(0,0);
+    XcurrentPosterori.PCov = XcurrentPosterori.PCov * R_init(0,0);
 
     Q_k = Q_init;
     R_k = R_init;
+
+    XpreviousPosterori = XcurrentPosterori;
 }
 
 void kf::aiekf::run_AIEKF(
@@ -273,7 +282,7 @@ void kf::aiekf::setPredict()
     );
 
     XcurrentDynamicPriori.PCov = 
-        F_k * XpreviousPosterori.PCov * F_k.transpose() + Q_k;
+        F_k * XpreviousPosterori.PCov * F_k.transpose() + F_k * Q_k * F_k.transpose();
 }
 
 Eigen::VectorXd kf::aiekf::dfx()
@@ -577,6 +586,8 @@ void kf::aiekf::setDFJacobianDynamic(
     Jacob.block<3,3>(6,3) = 
         -1.0 * 
         skewSymmetricMatrix(X_var.X_SE3.rotationMatrix() * g);
+
+    Jacob.block<3,3>(6,3) *= deltaT;
 }
 
 void kf::aiekf::setDHJacobianCamera(
@@ -707,6 +718,8 @@ void kf::aiekf::setDHJacobianMeasurement(
 
     Jacob.block<2,9>(0,0) = Jacob_camera_pose;
     Jacob.block<3,9>(2,0) = Jacob_camera_velo;
+
+    // std::cout<<Jacob<<std::endl;
 }
 
 void kf::aiekf::setKalmanGain()

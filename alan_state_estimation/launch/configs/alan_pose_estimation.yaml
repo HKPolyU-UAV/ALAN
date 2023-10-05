@@ -34,7 +34,7 @@ LED_r_number: 3 #2
 LED_g_number: 3
 
 
-
+LED_temp: -0.04
 LED_positions:
 #6LEDs non-planar
   - x: 0.0910385
@@ -160,7 +160,7 @@ failsafe_on:
 Q_val:
  10.0
 R_val_p:
- 2.0
+ 0.5
 R_val_v:
  0.5
 Q_alpha:

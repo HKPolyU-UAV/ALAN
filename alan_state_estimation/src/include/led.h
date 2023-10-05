@@ -112,12 +112,17 @@ namespace alan
 
             //poses
             Sophus::SE3d pose_global_sophus;
+            Sophus::SE3d velo_global_sophus;
+            Eigen::MatrixXd covariance_global_sophus;
+
             Sophus::SE3d pose_epnp_sophus, pose_depth_sophus;
             
             Sophus::SE3d pose_cam_inWorld_SE3;
             Sophus::SE3d pose_ugv_inWorld_SE3;
             Sophus::SE3d pose_uav_inWorld_SE3;
+            
             Sophus::SE3d pose_led_inWorld_SE3;
+            Sophus::SE3d velo_led_inWorld_SE3;
 
             Sophus::SE3d pose_cam_inGeneralBodySE3;
             Sophus::SE3d pose_cam_inUgvBody_SE3;
@@ -225,10 +230,13 @@ namespace alan
             double depth_avg_of_all = 0;
 
             geometry_msgs::PoseStamped led_pose_estimated_msg;
-            geometry_msgs::TwistStamped led_twist_estimated;
-            nav_msgs::Odometry led_odom_estimated;            
+            nav_msgs::Odometry led_odom_estimated_msg;
             // functions
-            void map_SE3_to_pose(Sophus::SE3d pose);                        
+            void map_SE3_to_publish(
+                Sophus::SE3d pose, 
+                Sophus::SE3d velo,
+                Eigen::MatrixXd cov
+            );
             double get_reprojection_error(
                 std::vector<Eigen::Vector3d> pts_3d, 
                 std::vector<Eigen::Vector2d> pts_2d, 
@@ -261,7 +269,15 @@ namespace alan
             void log(double ms);    
             
             inline Sophus::SE3d posemsg_to_SE3(const geometry_msgs::PoseStamped pose);
-            inline geometry_msgs::PoseStamped SE3_to_posemsg(const Sophus::SE3d pose_on_SE3, const std_msgs::Header msgHeader);
+            inline geometry_msgs::PoseStamped SE3_to_posemsg(
+                const Sophus::SE3d pose_on_SE3, 
+                const std_msgs::Header msgHeader
+            );
+            inline nav_msgs::Odometry SE3_to_odommsg(
+                const Sophus::SE3d pose_on_SE3,
+                const Sophus::SE3d velo_on_SE3,
+                const std_msgs::Header msgHeader
+            );
             
             Eigen::VectorXd led_twist_current;
 
@@ -416,7 +432,9 @@ namespace alan
             {
                 //load LED potisions in body frame
                 XmlRpc::XmlRpcValue LED_list;
+                double temp_delta;
                 nh.getParam("/alan_master/LED_positions", LED_list); 
+                nh.getParam("/alan_master/LED_temp", temp_delta); 
 
                 std::vector<double> norm_of_x_points, norm_of_y_points, norm_of_z_points;
 
@@ -425,11 +443,14 @@ namespace alan
                 {
                     Eigen::Vector3d temp(LED_list[i]["x"], LED_list[i]["y"], LED_list[i]["z"]);
                     
+                    temp.x() -= temp_delta;
+
                     norm_of_x_points.push_back(temp.x());
                     norm_of_y_points.push_back(temp.y());
                     norm_of_z_points.push_back(temp.z());                    
                     std::cout<<"-----"<<std::endl;
-                    std::cout<<temp.x()<<" "<<temp.y()<<" "<<temp.z()<<" "<<std::endl;                    
+                    std::cout<<temp.x()<<" "<<temp.y()<<" "<<temp.z()<<" "<<std::endl; 
+                    
                     pts_on_body_frame.push_back(temp);
                 }   
                 std::cout<<std::endl;

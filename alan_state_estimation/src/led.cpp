@@ -126,6 +126,37 @@ geometry_msgs::PoseStamped alan::LedNodelet::SE3_to_posemsg(
     return returnPoseMsg;
 }
 
+nav_msgs::Odometry alan::LedNodelet::SE3_to_odommsg(
+    const Sophus::SE3d pose_on_SE3,
+    const Sophus::SE3d velo_on_SE3,
+    const std_msgs::Header msgHeader
+)
+{
+    nav_msgs::Odometry returnOdomMsg;
+    returnOdomMsg.header = msgHeader;
+
+    // pose
+    returnOdomMsg.pose.pose.position.x = pose_on_SE3.translation().x();
+    returnOdomMsg.pose.pose.position.y = pose_on_SE3.translation().y();
+    returnOdomMsg.pose.pose.position.z = pose_on_SE3.translation().z();
+
+    returnOdomMsg.pose.pose.orientation.w = pose_on_SE3.unit_quaternion().w();
+    returnOdomMsg.pose.pose.orientation.x = pose_on_SE3.unit_quaternion().x();
+    returnOdomMsg.pose.pose.orientation.y = pose_on_SE3.unit_quaternion().y();
+    returnOdomMsg.pose.pose.orientation.z = pose_on_SE3.unit_quaternion().z();
+
+    // twist
+    returnOdomMsg.twist.twist.linear.x = velo_on_SE3.translation().x();
+    returnOdomMsg.twist.twist.linear.y = velo_on_SE3.translation().y();
+    returnOdomMsg.twist.twist.linear.z = velo_on_SE3.translation().z();
+
+    returnOdomMsg.twist.twist.angular.x = velo_on_SE3.log()(3);
+    returnOdomMsg.twist.twist.angular.y = velo_on_SE3.log()(4);
+    returnOdomMsg.twist.twist.angular.z = velo_on_SE3.log()(5);
+
+    return returnOdomMsg;
+}
+
 void alan::LedNodelet::ugv_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& pose)
 {
     pose_cam_inWorld_SE3 = pose_ugv_inWorld_SE3 * pose_cam_inUgvBody_SE3;
@@ -158,46 +189,40 @@ void alan::LedNodelet::uav_setpt_callback(const geometry_msgs::PoseStamped::Cons
     uav_stpt_msg = *pose;
 }
 
-void alan::LedNodelet::map_SE3_to_pose(Sophus::SE3d pose_led_inCamera_SE3)
+void alan::LedNodelet::map_SE3_to_publish(
+    Sophus::SE3d pose_led_inCamera_SE3,
+    Sophus::SE3d velo_led_inCamera_SE3,
+    Eigen::MatrixXd cov_inCamera_SE3
+)
 {
     pose_led_inWorld_SE3 = 
         pose_cam_inWorld_SE3 
         * pose_cam_inGeneralBodySE3 
         * pose_led_inCamera_SE3;
+    
+    velo_led_inWorld_SE3 = 
+        pose_cam_inWorld_SE3
+        * pose_cam_inGeneralBodySE3
+        * velo_led_inCamera_SE3;
         
     std::cout<<(pose_led_inWorld_SE3.translation() - pose_uav_inWorld_SE3.translation()).norm()<<std::endl;
     
     led_pose_header.frame_id = "world";
-    led_pose_estimated_msg = SE3_to_posemsg(pose_led_inWorld_SE3, led_pose_header);
+    led_pose_estimated_msg = SE3_to_posemsg(
+        pose_led_inWorld_SE3, 
+        led_pose_header
+    );
 
     ledpose_pub.publish(led_pose_estimated_msg);
 
     //odom publish
-    // led_odom_estimated.header.stamp = led_pose_header;
-    // led_odom_estimated.header.frame_id = "world";
-
-    // led_odom_estimated.pose.pose.position.x = t_final.translation().x();
-    // led_odom_estimated.pose.pose.position.y = t_final.translation().y();
-    // led_odom_estimated.pose.pose.position.z = t_final.translation().z();
-
-    // led_odom_estimated.pose.pose.orientation.w = q_final.w();
-    // led_odom_estimated.pose.pose.orientation.x = q_final.x();
-    // led_odom_estimated.pose.pose.orientation.y = q_final.y();
-    // led_odom_estimated.pose.pose.orientation.z = q_final.z();
-
-    // led_odom_estimated.twist.twist.linear.x = led_twist_current(0);
-    // led_odom_estimated.twist.twist.linear.y = led_twist_current(1);
-    // led_odom_estimated.twist.twist.linear.z = led_twist_current(2);
-
-    // led_odom_estimated.twist.twist.angular.x = led_twist_current(3);
-    // led_odom_estimated.twist.twist.angular.y = led_twist_current(4);
-    // led_odom_estimated.twist.twist.angular.z = led_twist_current(5);
+    led_odom_estimated_msg = SE3_to_odommsg(
+        pose_led_inWorld_SE3,
+        velo_led_inWorld_SE3,
+        led_pose_header
+    );
     
-    // ledodom_pub.publish(led_odom_estimated);
-
-    // Sophus::SE3d led_twist_sophus = Sophus::SE3d(led_twist_current);
-    // led_twist_estimated.twist.linear.x = led_twist_sophus.ro         
- 
+    ledodom_pub.publish(led_odom_estimated_msg);
 }
 
 void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
@@ -227,7 +252,11 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
             else
                 apiKF(kfREINITIATE);            
             
-            map_SE3_to_pose(pose_global_sophus);
+            map_SE3_to_publish(
+                pose_global_sophus, 
+                velo_global_sophus,
+                covariance_global_sophus
+            );
         }
         else
         {
@@ -241,7 +270,11 @@ void alan::LedNodelet::solve_pose_w_LED(cv::Mat& frame, cv::Mat depth)
         if(!LED_tracker_initiated_or_tracked)
             ROS_RED_STREAM("TRACKER FAIL");
         else       
-            map_SE3_to_pose(pose_global_sophus);
+            map_SE3_to_publish(
+                pose_global_sophus, 
+                velo_global_sophus,
+                covariance_global_sophus
+            );
     }
 
 }
@@ -251,18 +284,22 @@ void alan::LedNodelet::apiKF(int DOKF)
     switch (DOKF)
     {
     case kfINITIATE:
-        /* code */
         initKF(pose_global_sophus);
+
+        pose_global_sophus = XcurrentPosterori.X_SE3;
+        velo_global_sophus = XcurrentPosterori.V_SE3;
+        covariance_global_sophus = XcurrentPosterori.PCov;
         break;
     
     case kfREINITIATE:
-        /* code */
         reinitKF(pose_global_sophus);
+
+        pose_global_sophus = XcurrentPosterori.X_SE3;
+        velo_global_sophus = XcurrentPosterori.V_SE3;
+        covariance_global_sophus = XcurrentPosterori.PCov;
         break;
 
     case kfNORMALKF:
-        /* code */
-        // Measurement Here;
         run_AIEKF(
             led_pose_header.stamp.toSec() - led_pose_header_previous.stamp.toSec(),
             pts_on_body_frame_in_corres_order, 
@@ -270,19 +307,8 @@ void alan::LedNodelet::apiKF(int DOKF)
         );
 
         pose_global_sophus = XcurrentPosterori.X_SE3;
-        
-        BA_error = get_reprojection_error(
-            pts_on_body_frame_in_corres_order,
-            pts_detected_in_corres_order,
-            pose_global_sophus,
-            true
-        );
-
-        if(BA_error > 4 * LED_no)
-        {
-            LED_tracker_initiated_or_tracked = false;
-            cv::imwrite("/home/patty/alan_ws/BA" + std::to_string(BA_error) + ".jpg", frame_input);
-        }
+        velo_global_sophus = XcurrentPosterori.V_SE3;
+        covariance_global_sophus = XcurrentPosterori.PCov;
 
         break;
     
@@ -323,6 +349,19 @@ void alan::LedNodelet::recursive_filtering(cv::Mat& frame, cv::Mat depth)
     }
 
     apiKF(kfNORMALKF);
+
+    BA_error = get_reprojection_error(
+        pts_on_body_frame_in_corres_order,
+        pts_detected_in_corres_order,
+        pose_global_sophus,
+        true
+    );
+
+    if(BA_error > 4 * LED_no)
+    {
+        LED_tracker_initiated_or_tracked = false;
+        // cv::imwrite("/home/patty/alan_ws/BA" + std::to_string(BA_error) + ".jpg", frame_input);
+    }
 }
 
 void alan::LedNodelet::get_correspondence(

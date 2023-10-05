@@ -23,7 +23,7 @@ TOPICLIST:
     SUBORPUB: 1
   
   - TOPICTYPE: "ODOM_PUB_TOPIC_A"
-    TOPICNAME: "/alan_state_estimation/led/uav/odom"
+    TOPICNAME: "/alan_state_estimation/LED/odom"
     SUBORPUB: 1
 
   - TOPICTYPE: "POSE_PUB_TOPIC_B"
