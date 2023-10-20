@@ -34,6 +34,14 @@
 static std::string log_file_1;
 static std::string log_file_2;
 static double starting_time;
+static geometry_msgs::PoseStamped ugv_pose;
+
+void ugv_callback(
+    const geometry_msgs::PoseStamped::ConstPtr& msg
+)
+{
+    ugv_pose = *msg;
+}
 
 void msg_callback(
     const alan_state_estimation::alan_log::ConstPtr& ledmsg,
@@ -54,8 +62,13 @@ void msg_callback(
          << ledmsg->orientation << ","
          << ledmsg->ms << ","
          << ledmsg->depth << ","
-         << ledmsg->header.stamp.now().toSec() - starting_time << "," << std::endl;
-    
+         << ledmsg->header.stamp.now().toSec() - starting_time << "," 
+         << ugv_pose.pose.position.x << ","
+         << ugv_pose.pose.position.y << "," 
+         << ugv_pose.pose.position.z << "," 
+         << ledmsg->vx << "," 
+         << ledmsg->vy << "," 
+         << ledmsg->vz << "," << std::endl;
     save.close();
 
 
@@ -93,6 +106,9 @@ int main(int argc, char** argv)
     sync_.reset(new sync( MySyncPolicy(10), subled, subuav));
     sync_->registerCallback(boost::bind(&msg_callback, _1, _2));   
 
+    ros::Subscriber ugv_sub = 
+        nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/gh034_car/pose", 1, ugv_callback);
+
     std::string path;
     std::string filename;
 
@@ -107,7 +123,7 @@ int main(int argc, char** argv)
 
     std::ofstream save(log_file_1, std::ios::app);
     save<<filename<<std::endl;
-    save<<"x,y,z,st_x,st_y,st_z,r,p,y,ori,ms,dpth,t"<<std::endl;
+    save<<"x,y,z,st_x,st_y,st_z,r,p,y,ori,ms,dpth,t,ugvx,ugvy,ugvz,vx,vy,vz,"<<std::endl;
     save.close();
 
 //// uav path

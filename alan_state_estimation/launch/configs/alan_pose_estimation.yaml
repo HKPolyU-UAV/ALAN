@@ -1,5 +1,5 @@
 LANDING_DISTANCE:
-  2.5
+  2.0
 
 cam_intrinsics_455: [ 
     415.8719177246094, 0.0, 423.2960510253906,
@@ -171,6 +171,8 @@ kf_size:
  9
 kfZ_size:
  5
+velo_IIR_alpha:
+ 0.04
 OPT_MAX_ITERATION:
  25
 CONVERGE_THRESHOLD:

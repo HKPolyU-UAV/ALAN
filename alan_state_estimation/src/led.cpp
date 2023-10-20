@@ -200,8 +200,10 @@ void alan::LedNodelet::map_SE3_to_publish(
         * pose_cam_inGeneralBodySE3 
         * pose_led_inCamera_SE3;
     
+    Sophus::SE3d temp = pose_cam_inWorld_SE3;
+    temp.translation().setZero();
     velo_led_inWorld_SE3 = 
-        pose_cam_inWorld_SE3
+        temp
         * pose_cam_inGeneralBodySE3
         * velo_led_inCamera_SE3;
         
@@ -555,10 +557,10 @@ void alan::LedNodelet::solve_pnp_initial_pose(std::vector<Eigen::Vector2d> pts_2
     camMat.at<double>(1,1) = cameraMat(1,1);
     camMat.at<double>(1,2) = cameraMat(1,2);
 
-
+    // either one
     // cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_EPNP);
-
     cv::solvePnP(pts_3d_, pts_2d_ ,camMat, distCoeffs, rvec, tvec, cv::SOLVEPNP_ITERATIVE);
+    
     //opt pnp algorithm
     //, cv::SOLVEPNP_EPNP
     //, cv::SOLVEPNP_IPPE
@@ -668,11 +670,6 @@ std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI_alter(cv::Mat& fr
 
     cv::threshold(depth_mask_src, depth_mask_dst1, LANDING_DISTANCE * 1000, 50000, cv::THRESH_BINARY_INV);
     //filter out far depths
-
-    // cv::threshold(depth_mask_src, depth_mask_dst2, 0.5, 50000, cv::THRESH_BINARY); 
-    // //filter out zeros
-
-    // cv::bitwise_and(depth_mask_dst1, depth_mask_dst2, depth_mask_src);
     
     depth_mask_dst1.convertTo(depth_mask_dst1, CV_8U);
    
@@ -1250,6 +1247,10 @@ void alan::LedNodelet::log(double ms)
     logdata_entry_led.set_px = uav_stpt_msg.pose.position.x;
     logdata_entry_led.set_py = uav_stpt_msg.pose.position.y;
     logdata_entry_led.set_pz = uav_stpt_msg.pose.position.z;
+
+    logdata_entry_led.vx = velo_led_inWorld_SE3.translation().x();
+    logdata_entry_led.vy = velo_led_inWorld_SE3.translation().y();
+    logdata_entry_led.vz = velo_led_inWorld_SE3.translation().z();
     
     Eigen::Vector3d rpy = q2rpy(
         Eigen::Quaterniond(pose_led_inWorld_SE3.rotationMatrix())

@@ -29,6 +29,7 @@
 #include "tools/essential.h"
 #include "cameraModel.hpp"
 #include <sophus/se3.hpp>
+#include <random>
 
 using namespace std;
 
@@ -98,6 +99,11 @@ namespace kf
         );
         void calculatePtsAverage();
 
+        // for velo
+        bool IIR_track = false;
+        Eigen::Vector3d current_velo;
+        Eigen::Vector3d previous_velo;
+
         /* ================ set PreOptimize ================ */
         void setPreOptimize();
 
@@ -150,8 +156,10 @@ namespace kf
         /* ================ utilities here ================ */
         int veloMeasureIndi = 0;
         double deltaT = 0;
-        Eigen::Vector3d g = {0,0,-9.81};
+        Eigen::Vector3d gravity = {0,0,-9.81};
         Eigen::Matrix3d skewSymmetricMatrix(const Eigen::Vector3d w);
+        std::default_random_engine generator;
+        std::normal_distribution<double> dist;
 
     public:
         aiekf(){};
@@ -178,6 +186,7 @@ namespace kf
         int kfZVelo_size = 3;
         Eigen::MatrixXd Q_init;
         Eigen::MatrixXd R_init;
+        double velo_IIR_alpha = 0.1;
         double QAdaptiveAlpha = 0;
         double RAdaptiveBeta = 0;   
 
@@ -219,6 +228,8 @@ void kf::aiekf::initKF(Sophus::SE3d pose_initial_sophus)
 
     std::cout<<"init"<<std::endl;
     std::cout<<XcurrentPosterori.PCov.trace()<<std::endl;
+
+    dist = std::normal_distribution<double>(0,0.01);
 }
 
 void kf::aiekf::reinitKF(Sophus::SE3d pose_reinitial_sophus)
@@ -303,7 +314,9 @@ Eigen::VectorXd kf::aiekf::dfx()
     
     returnDfx.tail<Sophus::SE3d::DoF/2>() = Sophus::SE3d(
         Eigen::Matrix3d::Identity(), 
-        XpreviousPosterori.X_SE3.rotationMatrix() * g
+        XpreviousPosterori.X_SE3.rotationMatrix() 
+            * (- gravity + Eigen::Vector3d(0,0,dist(generator)))
+            + gravity
     ).log().head(3);
 
     return returnDfx;
@@ -328,19 +341,34 @@ void kf::aiekf::setMeasurement(
 
     if(veloMeasureIndi == 0)
     {
+        current_velo = Eigen::Vector3d::Zero() / deltaT;
+        std::cout<<"why?"<<std::endl;
+        std::cout<<current_velo<<std::endl;
+
+        previous_velo = current_velo;
+
         ZcurrentMeas.velo_initial_SE3 = Sophus::SE3d(
             Eigen::Matrix3d::Identity(),
-            (XcurrentDynamicPriori.X_SE3 * XpreviousPosterori.X_SE3.inverse()).translation() 
-            / deltaT
+            current_velo
         ); 
         veloMeasureIndi++;
     }
     else
     {
+        current_velo = (XpreviousPosterori.X_SE3.translation() - XprePreviousPosterori.X_SE3.translation()) / deltaT;
+
+        if(IIR_track)
+        {
+            current_velo = velo_IIR_alpha * current_velo + (1 - velo_IIR_alpha) * previous_velo;   
+            // if(current_velo.norm() > 2)
+            //     ros::shutdown();    
+        }
+        previous_velo = current_velo;
+        IIR_track = true;
+
         ZcurrentMeas.velo_initial_SE3 = Sophus::SE3d(
             Eigen::Matrix3d::Identity(),
-            (XprePreviousPosterori.X_SE3 * XpreviousPosterori.X_SE3.inverse()).translation() 
-            / deltaT
+            current_velo
         );
         // use k-2 and k-1 pose difference
     }
@@ -583,9 +611,10 @@ void kf::aiekf::setDFJacobianDynamic(
     Jacob.block<3,3>(0,6).setIdentity();
     Jacob.block<3,3>(0,6) *= deltaT;
     //  .setConstant(deltaT);
+
     Jacob.block<3,3>(6,3) = 
         -1.0 * 
-        skewSymmetricMatrix(X_var.X_SE3.rotationMatrix() * g);
+        skewSymmetricMatrix(X_var.X_SE3.rotationMatrix() * (-gravity) );
 
     Jacob.block<3,3>(6,3) *= deltaT;
 }
@@ -746,7 +775,6 @@ void kf::aiekf::setMisc()
 {
     XprePreviousPosterori = XpreviousPosterori;
     XpreviousPosterori = XcurrentPosterori;
-
 }
 
 void kf::aiekf::setAdaptiveQ()

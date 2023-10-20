@@ -488,6 +488,7 @@ namespace alan
                 nh.getParam("/alan_master/R_beta", RAdaptiveBeta);
                 nh.getParam("/alan_master/kf_size", kf_size);
                 nh.getParam("/alan_master/kfZ_size", kfZ_size);
+                nh.getParam("/alan_master/velo_IIR_alpha", velo_IIR_alpha);
                 nh.getParam("/alan_master/OPT_MAX_ITERATION", MAX_ITERATION);
                 nh.getParam("/alan_master/CONVERGE_THRESHOLD", CONVERGE_THRESHOLD);
 
