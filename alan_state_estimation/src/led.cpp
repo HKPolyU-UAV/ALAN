@@ -65,6 +65,13 @@ void alan::LedNodelet::camera_callback(
         printf("\033c");
         ROS_RED_STREAM("RESET TERMINAL!");
     }           
+
+    std::cout<<frame.cols<<std::endl;
+    std::cout<<frame.rows<<std::endl;
+
+    std::cout<<depth.cols<<std::endl;
+    std::cout<<depth.rows<<std::endl;
+
            
     solve_pose_w_LED(frame, depth);
     

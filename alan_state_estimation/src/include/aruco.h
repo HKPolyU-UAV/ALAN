@@ -170,6 +170,12 @@ namespace alan
             Eigen::Quaterniond rpy2q(Eigen::Vector3d rpy);
             Eigen::Vector3d q_rotate_vector(Eigen::Quaterniond q, Eigen::Vector3d v);
 
+
+            //Fisheye
+            void fisheye_callback(const sensor_msgs::Image::ConstPtr& image);
+            cv::Mat fisheye_frame;
+            ros::Subscriber fisheye_sub;
+
             //log
             void log(double ms);
 //---------------------------------------------------------------------------------------
@@ -196,6 +202,10 @@ namespace alan
                     0, intrinsics_value[1], intrinsics_value[3],
                     0, 0,  1;    
 
+                cameraMatrix.at<double>(0,0) = 284.18060302734375;
+                cameraMatrix.at<double>(1,1) = 285.1946105957031;
+                cameraMatrix.at<double>(0,2) = 425.24481201171875;
+                cameraMatrix.at<double>(1,2) = 398.6476135253906;
 
                 distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
 
@@ -297,6 +307,8 @@ namespace alan
                 
                 record_uav_pub = nh.advertise<alan_state_estimation::alan_log>
                                 ("/alan_state_estimation/led/uav_log", 1);
+
+                
             }     
 
             public:

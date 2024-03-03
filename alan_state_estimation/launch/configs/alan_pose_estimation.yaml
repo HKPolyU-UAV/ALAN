@@ -14,6 +14,8 @@ cam_ugv_extrinsics: [
             0,           0,           0,           1
   ] 
 
+cam_ugv_euclidean_extrinsics_d455: [0.54446, 0.0, 0.0307356, 0.0, -20.0, 180.0] #xyzrpy
+
 # cam_ugv_extrinsics: [
 #     -0.875347,   0.156399,   0.457501,   0.438512,
 #     -0.149542,  -0.987417,  0.0514315,   0.181977,
@@ -25,7 +27,7 @@ cam_ugv_extrinsics: [
 cam_FOV_H: 90
 cam_FOV_V: 65
 
-final_corridor_height: 0.15
+final_corridor_height: 0.60
 final_corridor_length: 1.2
 
 landing_horizontal: 1.6
@@ -111,16 +113,16 @@ LED_positions:
   #   z: -0.03
 
 ARUCO_positions:
-  - x: 0.01
-    y: 0.0225
+  - x: 0.0
+    y: 0.4
     z: -0.055
-  - x: 0.01
+  - x: 0.0
     y: -0.0225
     z: -0.055
-  - x: 0.01
+  - x: 0.0
     y: -0.0225
     z: -0.010
-  - x: 0.01
+  - x: 0.0
     y: 0.0225
     z: -0.010
 
@@ -158,11 +160,11 @@ failsafe_on:
 
 # KF-related
 Q_val:
- 10.0
+ 0.016
 R_val_p:
- 0.5
+ 0.008
 R_val_v:
- 0.5
+ 0.016
 Q_alpha:
  0.3
 R_beta:

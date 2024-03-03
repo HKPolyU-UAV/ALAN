@@ -735,7 +735,7 @@ void alan::MsgSyncNodelet::setup_camera_config(ros::NodeHandle& nh)
     cameraEX.resize(6);
     XmlRpc::XmlRpcValue extrinsics_list;
     
-    nh.getParam("/alan_master/cam_ugv_extrinsics_d455", extrinsics_list);                
+    nh.getParam("/alan_master/cam_ugv_euclidean_extrinsics_d455", extrinsics_list);                
     
     for(int i = 0; i < 6; i++)
     {                    

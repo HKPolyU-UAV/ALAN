@@ -221,6 +221,7 @@ void set_physique_car_pose(Eigen::VectorXd xyzrpy)
     physique_car_pose.pose.orientation.z = xyzrpy(6);
 
     physique_car_pose.header.stamp = ros::Time::now();
+    physique_car_pose.header.frame_id = "world";
 
 }
 
