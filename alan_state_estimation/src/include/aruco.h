@@ -308,7 +308,8 @@ namespace alan
                 record_uav_pub = nh.advertise<alan_state_estimation::alan_log>
                                 ("/alan_state_estimation/led/uav_log", 1);
 
-                
+                fisheye_sub = nh.subscribe<sensor_msgs::Image>
+                                ("/camera/fisheye1/image_raw", 1, &ArucoNodelet::fisheye_callback, this);
             }     
 
             public:

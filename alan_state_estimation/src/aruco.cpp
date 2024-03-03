@@ -96,7 +96,7 @@ void alan::ArucoNodelet::fisheye_callback(const sensor_msgs::Image::ConstPtr& im
     );
     
 
-    std:vector<Eigen::Vector2d> pts_2d;
+    std::vector<Eigen::Vector2d> pts_2d;
     pose_w_aruco_pnp(undistorted_frame);
     // std::cout << aruco_detect(fisheye_frame, pts_2d) << std::endl;
 
