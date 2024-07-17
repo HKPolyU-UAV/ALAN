@@ -7,7 +7,8 @@
   <!-- <arg name="json_file_path"      default=""/> -->
 
   <!-- <arg name="json_file_path"      default="$(find alan_state_estimation)/launch/configs/alan_normal.json"/> -->
-  <arg name="json_file_path"      default="$(find alan_state_estimation)/launch/configs/alan.json"/>
+  <arg name="json_file_path"      default="configs/alan.json"/>
+
   <arg name="camera"              default="camera"/>
   <arg name="tf_prefix"           default="$(arg camera)"/>
   <arg name="external_manager"    default="false"/>
@@ -17,21 +18,21 @@
   <arg name="fisheye_height"      default="480"/>
   <arg name="enable_fisheye"      default="false"/>
 
-  <arg name="depth_width"         default="848"/>
-  <arg name="depth_height"        default="480"/>
+  <arg name="depth_width"         default="1280"/>
+  <arg name="depth_height"        default="720"/>
   <arg name="enable_depth"        default="true"/>
 
-  <arg name="infra_width"        default="848"/>
-  <arg name="infra_height"       default="480"/>
+  <arg name="infra_width"        default="1280"/>
+  <arg name="infra_height"       default="720"/>
   <arg name="enable_infra1"       default="true"/>
   <arg name="enable_infra2"       default="false"/>
 
 
 
 
-  <arg name="color_width"         default="848"/>
-  <arg name="color_height"        default="480"/>
-  <arg name="color_fps"           default="60"/>
+  <arg name="color_width"         default="1280"/>
+  <arg name="color_height"        default="720"/>
+  <arg name="color_fps"           default="30"/>
 
   <arg name="enable_color"        default="true"/>
 
@@ -40,8 +41,8 @@
 
 
   <arg name="fisheye_fps"         default="30"/>
-  <arg name="depth_fps"           default="60"/>
-  <arg name="infra_fps"           default="60"/>
+  <arg name="depth_fps"           default="30"/>
+  <arg name="infra_fps"           default="30"/>
   <arg name="gyro_fps"            default="200"/>
   <arg name="accel_fps"           default="250"/>
   <arg name="enable_gyro"         default="true"/>
