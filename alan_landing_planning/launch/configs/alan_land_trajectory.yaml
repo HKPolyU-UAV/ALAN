@@ -9,7 +9,7 @@ touch_down_height: 0.08
 touch_down_offset: -0.0
 ugv_height: 0.256
 
-landornot: true
+landornot: false
 
 
 final_landing_x: 0.1

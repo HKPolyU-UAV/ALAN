@@ -440,12 +440,12 @@ namespace ugv
                         
         ~ugvpath(){};
 
-        Eigen::Vector2d get_traj_wp(int& traj_i)
+        Eigen::Vector2d get_traj_wp(int& traj_i, int increment)
         {
             if(traj_i < trajectory.size())
             {
                 Eigen::Vector2d traj_now = trajectory[traj_i];
-                traj_i ++;
+                traj_i = traj_i + increment;
 
                 return traj_now;
             }

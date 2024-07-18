@@ -89,5 +89,6 @@
         "/opt/ros/melodic/lib/python3/dist-packages"
     ],
     "cmake.sourceDirectory": "${workspaceFolder}/cv_bridge",
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "editor.wordWrap": "off" 
 }

@@ -2,12 +2,12 @@ TOPICLIST:
 #msgsync.cpp
   #sub
   - TOPICTYPE: "POSE_PUB_TOPIC_A"
-    TOPICNAME: "/vrpn_client_node/gh034_car/pose"
+    TOPICNAME: "/vrpn_client_node/gh034_scout/pose"
     #/uav/mavros/vision_pose/pose #/mavros/local_position/pose
     SUBORPUB:  1
   
   - TOPICTYPE: "TWIST_PUB_TOPIC_A"
-    TOPICNAME: "/vrpn_client_node/gh034_car/twist" 
+    TOPICNAME: "/vrpn_client_node/gh034_scout/twist" 
     #/vrpn_client_node/gh034_car/pose #/imu_pose
     SUBORPUB:  1
   

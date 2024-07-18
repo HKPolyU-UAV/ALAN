@@ -586,6 +586,7 @@ void planner_server::planner_pub()
         // trajArray_pub.publish(optimal_traj_info_obj.optiTrajArray);        
         ctrl_pt_pub.publish(optimal_traj_info_obj.ctrl_pts_optimal);
     }
+    
     // std::cout<<uav_traj_desired.pose.position.x<<std::endl;
 
     Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);

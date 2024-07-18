@@ -1,7 +1,7 @@
 
 <launch>
 
-  <arg name="vicon_server" default="192.168.10.1"/>
+  <arg name="vicon_server" default="192.168.50.142"/>
 
   <node pkg="vrpn_client_ros" type="vrpn_client_node" name="vrpn_client_node" output="screen">
     <rosparam subst_value="true">
@@ -22,7 +22,8 @@
       #- SecondTracker
     </rosparam>
 
-    <remap from="/vrpn_client_node/gh034_control/pose" to="/uav/mavros/vision_pose/pose" />
+    <!-- <remap from="/vrpn_client_node/gh034_control/pose" to="/uav/mavros/vision_pose/pose" /> -->
+    <!-- <remap from="/vrpn_client_node/gh034_control/pose" to="/uav/mavros/vision_pose/pose" /> -->
   </node>
 
 </launch>

@@ -5,9 +5,10 @@
 	<!-- <arg name="fcu_url" default="udp://:14950@192.168.10.84:14955" /> -->
 	<!-- <arg name="gcs_url" default="udp://:14560@192.168.1.89:14550" /> -->
 
-	<arg name="fcu_url" default="tcp://192.168.10.80:5760" />
+	<arg name="fcu_url" default="tcp://192.168.50.80:5760" />
 	<!-- tcp: //: 5760 @ 192.168.1.130 @ 5760 -->
-	<arg name="gcs_url" default="udp://:14560@192.168.10.92:14550"/>	
+	<!-- <arg name="gcs_url" default="udp://:14550@192.168.50.37:14550"/>	 -->
+	<arg name="gcs_url" default="udp://@192.168.50.37"/>	
 	<!-- udp://:14560@192.168.10.100:14550 -->
 	<arg name="tgt_system" default="1" />
 	<arg name="tgt_component" default="1" />

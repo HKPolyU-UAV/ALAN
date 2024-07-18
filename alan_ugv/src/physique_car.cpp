@@ -1,8 +1,3 @@
-/*
-    physique_car for simulation in RVIZ
-    do not launch this in VICON!
-*/
-
 #include "./include/essential.h"
 #include "./include/RosTopicConfigs.h"
 #include "./include/ugvpath.hpp"
@@ -11,6 +6,9 @@
 #include <gazebo_msgs/ModelStates.h>
 #include <type_traits>
 #include <tf/tf.h>
+#include <std_msgs/Bool.h>
+#include <std_msgs/Int32.h>
+#include <std_msgs/Float32.h>
 
 using namespace std;
 
@@ -38,6 +36,7 @@ static int pub_freq = 0;
 static std::string environs;
 
 static bool static_ornot = false;
+static bool accelerate = false;
 
 static double ang_vel;
 static double radius;
@@ -414,6 +413,12 @@ Eigen::Vector2d ugv_poistion_controller_PID(Eigen::Vector3d pose_XYyaw, Eigen::V
     return output;
 }
 
+static float accelerate_scale = 1.0;
+void accelerate_callback(const std_msgs::Float32::ConstPtr& msg)
+{
+    accelerate_scale = msg->data;
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "physique_car");
@@ -424,6 +429,8 @@ int main(int argc, char** argv)
     nh.getParam("/physique_car/pub_freq", pub_freq);
 
     nh.getParam("/physique_car/static_ornot", static_ornot);
+
+    nh.getParam("/physique_car/accelerate", accelerate);
 
     
     nh.getParam("/physique_car/ang_vel", ang_vel);
@@ -460,7 +467,7 @@ int main(int argc, char** argv)
         std::cout<<"hi...here...lala"<<std::endl;
         physique_car_state_sub = 
             nh.subscribe<geometry_msgs::PoseStamped>(
-                "/vrpn_client_node/gh034_car/pose", 
+                "/vrpn_client_node/gh034_scout/pose", 
                 1, 
                 physique_car_state_callback<geometry_msgs::PoseStamped::ConstPtr>
             );
@@ -468,7 +475,10 @@ int main(int argc, char** argv)
     }
 
     ros::Subscriber physique_car_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>
-                        ("/vrpn_client_node/gh034_car/twist", 1, &physique_car_vel_callback);
+                        ("/vrpn_client_node/gh034_scout/twist", 1, &physique_car_vel_callback);
+
+    ros::Subscriber accelerate_scale_sub = nh.subscribe<std_msgs::Float32>
+                        ("/acc_scale", 1, &accelerate_callback);
     
     ros::Publisher physique_car_vel_pub = nh.advertise<geometry_msgs::Twist>
                         ("/cmd_vel", 1, true);
@@ -555,7 +565,7 @@ int main(int argc, char** argv)
         // physique_car_twist_pub.publish(physique_car_twist);
         // physique_car_imu_pub.publish(physique_car_imu);
 
-        target_posi = circle_traj.get_traj_wp(traj_i);
+        target_posi = circle_traj.get_traj_wp(traj_i, accelerate_scale);
 
         // std::cout<<target_posi<<std::endl;
 
@@ -575,7 +585,6 @@ int main(int argc, char** argv)
             set_physique_pose_predicted(twist_final);
         }
             
-        
 
         twist_pub_object.linear.x = twist_final(0);
         twist_pub_object.angular.z = twist_final(1);
@@ -583,8 +592,6 @@ int main(int argc, char** argv)
         
         physique_car_vel_pub.publish(twist_pub_object);
         physique_car_posi_predicted_pub.publish(physique_car_pose_predicted);
-
-    
                   
         ros::spinOnce();
         physique_car_rate.sleep();

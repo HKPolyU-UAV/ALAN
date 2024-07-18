@@ -587,22 +587,6 @@ std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, c
     depth_mask_src.convertTo(depth_mask_src, CV_8U);
 
     
-<<<<<<< HEAD
-    cv::Mat d_img = depth;
-    int size = d_img.cols * d_img.rows;
-
-    // for(int i=0; i < size; i++)
-    // {
-    //     if(isnan(d_img.at<ushort>(i)))
-    //     {
-    //         d_img.at<ushort>(i) = 0;
-    //     }
-    //     if(d_img.at<ushort>(i) > 10000|| d_img.at<ushort>(i) < 100)
-    //     {
-    //         d_img.at<ushort>(i) = 0;
-    //     }
-    // }
-=======
 //     cv::Mat d_img = depth;
 //     int size = d_img.cols * d_img.rows;
 
@@ -617,7 +601,6 @@ std::vector<Eigen::Vector2d> alan::LedNodelet::LED_extract_POI(cv::Mat& frame, c
 //             d_img.at<ushort>(i) = 0;
 //         }
 //     }
->>>>>>> ab84884aa8887e506f0a343a82b92bd5bbca3d1d
    
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     cv::threshold(frame, frame, BINARY_THRES, 255, cv::THRESH_BINARY);
