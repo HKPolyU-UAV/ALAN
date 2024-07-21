@@ -26,6 +26,7 @@ find_package(catkin COMPONENTS
   # nlopt
   # qpOASES
   # OsqpEigen
+  ros_utilities
 
 )
 
@@ -107,6 +108,7 @@ include_directories(
   ${Sophus_INCLUDE_DIRS}
   ${IPOPT_LIBRARIES}
   ${DECOMP_UTIL_INCLUDE_DIRS}
+  ros_utilities
 
   # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
@@ -150,9 +152,11 @@ target_link_libraries(planner_node
   # qpOASES
   osqp::osqp
   OsqpEigen#::OsqpEigen
-  
-  
   )
+add_dependencies(
+  planner_node
+  airo_message_generate_messages_cpp
+)
 
 add_executable(lala
    src/lala.cpp

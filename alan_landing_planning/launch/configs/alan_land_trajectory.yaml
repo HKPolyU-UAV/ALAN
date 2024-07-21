@@ -9,8 +9,9 @@ touch_down_height: 0.08
 touch_down_offset: -0.0
 ugv_height: 0.256
 
-landornot: false
+landornot: true
 
+meetup_thres: 0.2
 
 final_landing_x: 0.1
 

@@ -12,6 +12,8 @@
 #include <thread>
 #include <tf/tf.h>
 
+#include "airo_message/ReferencePreview.h"
+
 #define IDLE "IDLE"
 #define ARMED "ARMED"
 #define TOOKOFF "TOOKOFF"
@@ -51,6 +53,7 @@ private:
     ros::Publisher trajArray_pub;
     ros::Publisher ctrl_pt_pub;
     ros::Publisher kill_attitude_target_pub;
+    ros::Publisher airo_setpt_pub;
     
     //service
     ros::ServiceClient uav_arming_client;
@@ -162,6 +165,10 @@ private:
 
     bool prerequisite_set = false;
     int sample_square_root = 0;
+
+    // rebuttle backstepping controller
+    airo_message::Reference airo_setpt;
+    double meetup_thres;
 
 
 //rotation function

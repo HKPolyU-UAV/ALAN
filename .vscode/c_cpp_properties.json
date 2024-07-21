@@ -11,7 +11,8 @@
                 "/opt/ros/melodic/include/**",
                 "./cv_bridge/include/**",
                 "/usr/include/**",
-                "/usr/local/include/osqp"
+                "/usr/local/include/osqp",
+                "/home/jeremy/alan_ws/src/alan/ros_utilities/**"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",

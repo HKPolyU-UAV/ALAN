@@ -1,0 +1,6 @@
+[submodule "airo_message"]
+	path = airo_message
+	url = https://github.com/HKPolyU-UAV/airo_message.git
+[submodule "ros_utilities"]
+	path = ros_utilities
+	url = https://github.com/pattylo/ros_utilities.git

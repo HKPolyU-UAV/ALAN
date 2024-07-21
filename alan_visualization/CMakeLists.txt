@@ -26,6 +26,7 @@ find_package(catkin COMPONENTS
   # nlopt
   # qpOASES
   # OsqpEigen
+  ros_utilities
 
 )
 
@@ -101,6 +102,7 @@ include_directories(
   ${Sophus_INCLUDE_DIRS}
   ${IPOPT_LIBRARIES}
   ${DECOMP_UTIL_INCLUDE_DIRS}
+  ros_utilities
 
   # ${CMAKE_CURRENT_SOURCE_DIR}/src/include/ncnn
 )
@@ -145,6 +147,19 @@ target_link_libraries(vis
   #   PkgConfig::gstreamer-app
   #   PkgConfig::gstreamer-video
   )
+
+
+add_executable(vicon_tracking
+  src/vicon_tracking.cpp
+)
+
+target_link_libraries(vicon_tracking
+  ${catkin_LIBRARIES}
+)
+
+# add_dependencies(
+#   vicon_tracking
+# )
 ###################################################
 
 

@@ -7,7 +7,7 @@
         <param name="/environs" type="string" value="VICON"/>
 
         <!-- static -->
-        <param name="/static_ornot" type="bool" value="true"/>
+        <param name="/static_ornot" type="bool" value="false"/>
 
         <!-- accelerate -->
         <param name="/accelerate" type="bool" value="false"/>

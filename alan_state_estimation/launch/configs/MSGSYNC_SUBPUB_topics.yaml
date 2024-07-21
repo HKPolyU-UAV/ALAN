@@ -23,14 +23,14 @@ TOPICLIST:
     SUBORPUB:  0
 
   - TOPICTYPE: "POSE_SUB_TOPIC_B"
-    TOPICNAME: "/vrpn_client_node/gh034_car/pose"
+    TOPICNAME: "/vrpn_client_node/gh034_scout/pose"
     #gazebo-> /vrpn_client_node/gh034_nano/pose (from virtual)
     #vicon -> /vrpn_client_node/gh034_nano/pose
     #field -> /imu_pose (w/tf)
     SUBORPUB:  0
   
   - TOPICTYPE: "TWIST_SUB_TOPIC_B"
-    TOPICNAME: "/vrpn_client_node/gh034_car/twist"
+    TOPICNAME: "/vrpn_client_node/gh034_scout/twist"
     #gazebo-> /vrpn_client_node/gh034_nano/twist (from virtual)
     #vicon -> /vrpn_client_node/gh034_nano/twist
     #field -> /imu_odom (w/tf)

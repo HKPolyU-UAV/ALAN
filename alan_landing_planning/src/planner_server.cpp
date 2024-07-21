@@ -452,7 +452,7 @@ bool planner_server::go_to_rendezvous_pt_and_follow()
 
 
     if(
-        uav_in_ugv_frame_posi.norm() - following_norm < 0.4 &&
+        uav_in_ugv_frame_posi.norm() - following_norm < meetup_thres &&
         prerequisite_set
     )
         return true;
@@ -586,7 +586,7 @@ void planner_server::planner_pub()
         // trajArray_pub.publish(optimal_traj_info_obj.optiTrajArray);        
         ctrl_pt_pub.publish(optimal_traj_info_obj.ctrl_pts_optimal);
     }
-    
+
     // std::cout<<uav_traj_desired.pose.position.x<<std::endl;
 
     Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
@@ -949,6 +949,8 @@ void planner_server::config(ros::NodeHandle& _nh)
     nh.getParam("/alan_master_planner_node/d_order", d_order);
 
     nh.getParam("/alan_master_planner_node/PID_gain", pid_gain_list);
+
+    nh.getParam("/alan_master_planner_node/meetup_thres", meetup_thres);
 
     std::cout<<pid_gain_list.size()<<std::endl;
     std::cout<<"here! hi:..."<<std::endl;
