@@ -16,6 +16,15 @@ Cite us!
   year={2024},
   publisher={IEEE}
 }
+
+@inproceedings{lo2023landing,
+  title={Landing a Quadrotor on a Ground Vehicle without Exteroceptive Airborne Sensors: A Non-Robocentric Framework and Implementation},
+  author={Lo, Li-Yu and Li, Boyang and Wen, Chih-Yung and Chang, Ching-Wei},
+  booktitle={2023 IEEE 26th International Conference on Intelligent Transportation Systems (ITSC)},
+  pages={6080--6087},
+  year={2023},
+  organization={IEEE}
+}
 ```
 
 ### Video
