@@ -3,8 +3,20 @@
 
 ### Abstract
 <div align="justify">
-This research addresses the problem of a quadrotor UAV landing on a ground vehicle. Yet, unlike most existing literature, we transfer most sensing and computing tasks to the ground vehicle, designing the landing system in a non-robocentric fashion. Such a framework greatly alleviates the payload burden, allowing more resource allocation for the quadrotor UAV. To validate the proposed framework, the implementation starts with relative pose estimation through detection and tracking of LED markers on an aerial vehicle. The 6 DoF orientation and position information is then returned through a PnP-based algorithm. Successively, by considering the visibility and dynamic constraints, the motion planning module computes an optimized landing trajectory, such that the aerial vehicle stays within a safety corridor and performs the landing mission. Through experiments, we demonstrate the applicability of this research work, in which a quadrotor could be guided remotely and landed on a moving ground vehicle smoothly without the support from any airborne exteroceptive sensors and computers.
+In this work, we propose a novel dynamic landing solution utilizing an on-ground sensor suite, eliminating the need for airborne exteroceptive sensors and expensive computational units. All localization and control modules operate in a noninertial frame. The system begins with a relative state estimator that tracks the unmanned aerial vehicle’s (UAV) state via onboard light-emitting diode (LED) markers and an on-ground camera. The state is geometrically expressed on a manifold and estimated using an iterated extended Kalman filter (IEKF) algorithm. A motion planning module is then developed to guide the landing process, leveraging the differential flatness property to formulate it as a minimum jerk trajectory. Considering visibility and dynamic constraints, the problem is solved using quadratic programming (QP), with the final motion primitive represented through piecewise polynomials. A series of experiments validate the applicability of the proposed approach, achieving successful landings of an 18×18 cm quadrotor on a 43×43 cm platform, demonstrating performance comparable to conventional methods. In addition, comprehensive hardware and software details are provided for future reference within the research community.
 </div>
+<br/>
+
+Cite us!
+```
+@article{lo2024experimental,
+  title={Experimental Non-Robocentric Dynamic Landing of Quadrotor UAVs with On-Ground Sensor Suite},
+  author={Lo, Li-Yu and Li, Boyang and Wen, Chih-Yung and Chang, Ching-Wei},
+  journal={IEEE Transactions on Instrumentation and Measurement},
+  year={2024},
+  publisher={IEEE}
+}
+```
 
 ### Video
 <a href="https://www.youtube.com/watch?v=7wiCh46MQmc&ab_channel=AIRO-LAB%40HKPolyU
@@ -88,7 +100,7 @@ The above packages salute the contribution of the following academic paper:
   publisher={IEEE}
 }
 ```
-Further details will be released once the manuscript is accepted.
+
 
 <!-- Now, below shows the architecture of the software platform: -->
 
