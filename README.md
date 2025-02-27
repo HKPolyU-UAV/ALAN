@@ -1,5 +1,5 @@
 # ALAN ("A"utonomous "L"anding using "A" "N"on-Robocentric Framework)
-## Towards Non-Robocentric Dynamic Landing of a Quadrotor: A New Framework
+## Experimental Non-Robocentric Dynamic Landing of Quadrotor UAVs with On-Ground Sensor Suite
 
 ### Abstract
 <div align="justify">
