@@ -73,7 +73,16 @@ planner_server::planner_server(ros::NodeHandle& _nh, int pub_freq)
 
     uav_set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
             ("/uav/mavros/set_mode");
-    
+
+
+    // 2024 Rebuttal
+    // REBUTTAL ########################################################################
+    uav_setpt_pub = nh.advertise<geometry_msgs::PoseStamped>
+            ("/alan_uav/setpt", 1, true);
+    // REBUTTAL ########################################################################
+
+
+
     config(nh);
 
     ros::Rate rate(_pub_freq);
@@ -592,6 +601,25 @@ void planner_server::planner_pub()
     // std::cout<<uav_traj_desired.pose.position.x<<std::endl;
 
     Eigen::Vector4d twist_result = pid_controller(uav_traj_pose, target_traj_pose);
+
+
+    // 2024 Rebuttal
+    // REBUTTAL ########################################################################
+    uav_setpt_posemsg.header.stamp = ros::Time::now();
+
+    uav_setpt_posemsg.pose.position.x = target_traj_pose(0);
+    uav_setpt_posemsg.pose.position.y = target_traj_pose(1);
+    uav_setpt_posemsg.pose.position.z = target_traj_pose(2);
+
+    q_target = rpy2q(Eigen::Vector3d(0,0,target_traj_pose(3)));
+    uav_setpt_posemsg.pose.orientation.w = q_target.w();
+    uav_setpt_posemsg.pose.orientation.x = q_target.x();
+    uav_setpt_posemsg.pose.orientation.y = q_target.y();
+    uav_setpt_posemsg.pose.orientation.z = q_target.z();
+
+    uav_setpt_pub.publish(uav_setpt_posemsg);
+    // REBUTTAL ########################################################################
+    
 
     uav_traj_twist_desired.linear.x = twist_result(0);
     uav_traj_twist_desired.linear.y = twist_result(1);

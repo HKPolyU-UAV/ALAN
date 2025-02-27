@@ -21,11 +21,12 @@ find_package(catkin COMPONENTS
   genmsg
   visualization_msgs
   tf
+  ros_utilities
 )
 
 find_package(Eigen3 REQUIRED)
 
-find_package(Sophus REQUIRED)
+# find_package(Sophus REQUIRED)
 find_package(osqp REQUIRED)
 find_package(OsqpEigen REQUIRED)
 find_package(decomp_util REQUIRED)
@@ -46,23 +47,21 @@ add_message_files(
 generate_messages(DEPENDENCIES std_msgs sensor_msgs)
 
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
+  
   CATKIN_DEPENDS 
   geometry_msgs 
   mavros_msgs 
   roscpp
   std_msgs
   message_generation
-
 )
 
-set(Sophus_LIBRARIES libSophus.so)
-
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
-  ${Sophus_INCLUDE_DIRS}
   ${DECOMP_UTIL_INCLUDE_DIRS}
+  ros_utilities
 )
 
 
@@ -72,14 +71,14 @@ add_executable(vis
    
 target_link_libraries(vis
   ${catkin_LIBRARIES}
-  )
+)
 
-  add_dependencies(
-    planner_node
-    alan_visualization_generate_messages_cpp
-    alan_landing_planning_generate_messages_cpp
-    decomp_ros_msgs_generate_messages_cpp
-  )
+add_dependencies(
+  planner_node
+  alan_visualization_generate_messages_cpp
+  alan_landing_planning_generate_messages_cpp
+  decomp_ros_msgs_generate_messages_cpp
+)
 
 
 
@@ -92,9 +91,23 @@ ${catkin_LIBRARIES}
 )
 
 add_dependencies(
-    data
-    alan_state_estimation_generate_messages_cpp
-  )
+  data
+  alan_state_estimation_generate_messages_cpp
+)
+
+
+add_executable(vicon_tracking
+  src/vicon_tracking.cpp
+)
+
+target_link_libraries(vicon_tracking
+  ${catkin_LIBRARIES}
+)
+
+add_dependencies(
+  vicon_tracking
+  alan_state_estimation_generate_messages_cpp
+)
 ###################################################
 
 

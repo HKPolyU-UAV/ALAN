@@ -28,10 +28,7 @@
     </node>  -->
 
     <!-- MsgSyncNodelet -->
-    <!-- <node pkg="nodelet" type="nodelet" name="msgsync" args="load alan/MsgSyncNodelet alan_master" output="screen">
-        <rosparam command="load" file="$(find alan_state_estimation)/launch/configs/MSGSYNC_SUBPUB_topics.yaml" />
-    </node>  -->
-
+    <!-- <node pkg="now
     <!-- <node name="gazebo_uav" pkg="alan_state_estimation" type="gazebo_uav" output="screen">
     </node> -->
 

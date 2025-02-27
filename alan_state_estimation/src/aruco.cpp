@@ -40,8 +40,8 @@ void alan::ArucoNodelet::fisheye_callback(const sensor_msgs::Image::ConstPtr& im
 
     fisheye_frame = fisheye_ptr->image;
 
-    // cv::imshow("fisheye", fisheye_frame);
-    // cv::waitKey(10);
+    cv::imshow("fisheye", fisheye_frame);
+    cv::waitKey(10);
 
     cv::Mat undistorted_frame;
     
@@ -86,18 +86,58 @@ void alan::ArucoNodelet::fisheye_callback(const sensor_msgs::Image::ConstPtr& im
 
     // std::cout<<KNew_matrix<<std::endl;
 
+    
+
+
     cv::fisheye::undistortImage(
         fisheye_frame, 
         undistorted_frame, 
         K_matrix, 
         D_matrix,
-        K_matrix,
-        fisheye_frame.size()
+        K_matrix
+        // fisheye_frame.size()
     );
+
+
+    std::vector<cv::Point2f> corners;
+
+    cv::Point2f pt_temp;
+
+    pt_temp = cv::Point2f(0,0);
+    corners.emplace_back(pt_temp);
+
+    pt_temp = cv::Point2f(848,0);
+    corners.emplace_back(pt_temp);
+
+    pt_temp = cv::Point2f(0,800);
+    corners.emplace_back(pt_temp);
+
+    pt_temp = cv::Point2f(848,800);
+    corners.emplace_back(pt_temp);
+
+    std::vector<cv::Point2f> undistorted_corners;
+
+    cv::fisheye::undistortPoints(
+        corners,
+        undistorted_corners,
+        K_matrix,
+        D_matrix,
+        R_matrix, 
+        K_matrix
+    );
+
+    std::cout<<"here"<<std::endl;
+    for (auto what : undistorted_corners)
+    {
+        std::cout<<what<<std::endl;
+    }
+    std::cout<<std::endl;
     
+    std::cout<<undistorted_frame.size<<std::endl;
 
     std::vector<Eigen::Vector2d> pts_2d;
     pose_w_aruco_pnp(undistorted_frame);
+
     // std::cout << aruco_detect(fisheye_frame, pts_2d) << std::endl;
 
 

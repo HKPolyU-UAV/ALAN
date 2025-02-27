@@ -79,7 +79,7 @@ private:
     ros::Publisher trajArray_pub;
     ros::Publisher ctrl_pt_pub;
     ros::Publisher kill_attitude_target_pub;
-    
+
     //service
     ros::ServiceClient uav_arming_client;
     ros::ServiceClient uav_set_mode_client;
@@ -90,6 +90,13 @@ private:
     void ugvAlanMsgCallback(const alan_landing_planning::AlanPlannerMsg::ConstPtr& msg);
     void ugvPosePredictedMsgCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
     void sfcMsgCallback(const alan_visualization::PolyhedronArray::ConstPtr& msg);
+
+    // 2024 Rebuttal
+    // REBUTTAL ########################################################################
+    ros::Publisher uav_setpt_pub;
+    geometry_msgs::PoseStamped uav_setpt_posemsg;
+    Eigen::Quaterniond q_target;
+    // REBUTTAL ########################################################################
 
 
 //main brain
